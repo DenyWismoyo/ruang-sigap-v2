@@ -3,10 +3,7 @@ import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
 
-// Pastikan admin diinisialisasi (biasanya sudah ada di index.ts functions Anda)
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
+import { getFirestore } from "firebase-admin/firestore";
 
 const REGION = "asia-southeast2";
 const COOLDOWN_SECONDS = 30; // JEDA MINIMAL (30 Detik)
@@ -29,7 +26,7 @@ export const extractSuratDataAIV2 = onCall({
     }
 
     const uid = request.auth.uid;
-    const db = admin.firestore();
+    const db = getFirestore("database-siyap");
     const rateLimitRef = db.collection('rate_limits').doc(`ai_ocr_${uid}`);
 
     // 2. RATE LIMITING & ANTI-SPAM (Backend Validation)

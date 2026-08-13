@@ -151,9 +151,37 @@ export const useTugasActions = () => {
       if (!userProfile) return false;
       setIsProcessing(true);
       try {
-          const tugasRef = doc(db, 'tugas', taskId);
-          await updateDoc(tugasRef, updates);
-          await updateDoc(doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', taskId), updates);
+          const { getDoc, getDocs, query, collection, where } = await import('firebase/firestore');
+          const taskSnap = await getDoc(doc(db, 'tugas', taskId));
+          if (!taskSnap.exists()) return false;
+          const taskData = taskSnap.data() as Tugas;
+
+          const batch = writeBatch(db);
+          batch.update(doc(db, 'tugas', taskId), updates);
+
+          const usersSnap = await getDocs(query(collection(db, 'users'), where('opdId', '==', taskData.opdId)));
+          
+          // Chunking into batches of 500
+          let currentBatch = writeBatch(db);
+          let count = 0;
+          currentBatch.update(doc(db, 'tugas', taskId), updates);
+          count++;
+
+          usersSnap.forEach(userDoc => {
+              const uid = userDoc.data().uid || userDoc.id;
+              currentBatch.set(doc(db, 'tugasPerPengguna', uid, 'tugas', taskId), updates, { merge: true });
+              count++;
+              if (count === 500) {
+                  currentBatch.commit();
+                  currentBatch = writeBatch(db);
+                  count = 0;
+              }
+          });
+
+          if (count > 0) {
+              await currentBatch.commit();
+          }
+
           addToast('Detail tugas diperbarui.', 'success');
           return true;
       } catch (err: any) {
@@ -165,15 +193,44 @@ export const useTugasActions = () => {
   };
 
   const deleteTask = async (task: Tugas) => {
-      if (!userProfile || !effectiveJabatan) return false;
+      if (!userProfile || !effectiveJabatan || !task.id) return false;
       setIsProcessing(true);
       try {
-          await deleteDoc(doc(db, 'tugas', task.id!));
-          await deleteDoc(doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', task.id!));
+          const { getDocs, query, collection, where } = await import('firebase/firestore');
+          const usersSnap = await getDocs(query(collection(db, 'users'), where('opdId', '==', task.opdId)));
+          
+          let currentBatch = writeBatch(db);
+          let count = 0;
+          currentBatch.delete(doc(db, 'tugas', task.id));
+          count++;
+
+          // Delete from komentarTugas as well
+          const komentarSnap = await getDocs(query(collection(db, 'komentarTugas'), where('tugasId', '==', task.id)));
+          komentarSnap.forEach(kDoc => {
+              currentBatch.delete(kDoc.ref);
+              count++;
+          });
+
+          usersSnap.forEach(userDoc => {
+              const uid = userDoc.data().uid || userDoc.id;
+              currentBatch.delete(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!));
+              count++;
+              if (count >= 490) { // Safety margin
+                  currentBatch.commit();
+                  currentBatch = writeBatch(db);
+                  count = 0;
+              }
+          });
+
+          if (count > 0) {
+              await currentBatch.commit();
+          }
+
           if (task.suratId) await logActivity(task.suratId, getActorName(), `Menghapus tugas: "${task.judulTugas}"`);
           addToast("Tugas berhasil dihapus.", "success");
           return true;
       } catch (error: any) {
+          console.error("Delete Task Error:", error);
           addToast("Gagal menghapus tugas.", 'error');
           return false;
       } finally {

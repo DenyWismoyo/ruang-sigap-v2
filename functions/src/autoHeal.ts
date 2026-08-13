@@ -10,7 +10,7 @@ export const runAutoHeal = functions.region('asia-southeast2').https.onCall(asyn
     }
 
     try {
-        const batch = db.batch();
+        const operations: { ref: any, data: any }[] = [];
         let healedCount = 0;
         let suratHealedCount = 0;
         let metadataFixedCount = 0;
@@ -27,7 +27,7 @@ export const runAutoHeal = functions.region('asia-southeast2').https.onCall(asyn
                     needsHealing = true;
                 }
             });
-            if (needsHealing) { batch.update(doc.ref, updates); healedCount++; }
+            if (needsHealing) { operations.push({ ref: doc.ref, data: updates }); healedCount++; }
         });
 
         // --- TAHAP 2: Perbaikan Surat "Baru" Terbengkalai (> 7 Hari) ---
@@ -39,7 +39,7 @@ export const runAutoHeal = functions.region('asia-southeast2').https.onCall(asyn
             .limit(200).get();
 
         staleSuratSnap.docs.forEach(doc => {
-            batch.update(doc.ref, { statusPenyelesaian: 'Diarsipkan', catatanSistem: 'Auto-archive: 7 hari tanpa aksi.' });
+            operations.push({ ref: doc.ref, data: { statusPenyelesaian: 'Diarsipkan', catatanSistem: 'Auto-archive: 7 hari tanpa aksi.' } });
             suratHealedCount++;
         });
 
@@ -62,16 +62,25 @@ export const runAutoHeal = functions.region('asia-southeast2').https.onCall(asyn
                 const recipientNames = (latestDisp.penerimaSnapshot || [])
                     .map((p: any) => p.nama).join(', ');
 
-                batch.update(doc.ref, {
-                    'infoTampilan.recipientNames': recipientNames || 'Disposisi Terkirim',
-                    'infoTampilan.senderName': latestDisp.dariJabatanNama || 'Pimpinan'
+                operations.push({
+                    ref: doc.ref, 
+                    data: {
+                        'infoTampilan.recipientNames': recipientNames || 'Disposisi Terkirim',
+                        'infoTampilan.senderName': latestDisp.dariJabatanNama || 'Pimpinan'
+                    }
                 });
                 metadataFixedCount++;
             }
         }
 
-        if (healedCount > 0 || suratHealedCount > 0 || metadataFixedCount > 0) {
-            await batch.commit();
+        if (operations.length > 0) {
+            const chunkSize = 450;
+            for (let i = 0; i < operations.length; i += chunkSize) {
+                const chunk = operations.slice(i, i + chunkSize);
+                const batch = db.batch();
+                chunk.forEach(op => batch.update(op.ref, op.data));
+                await batch.commit();
+            }
         }
 
         return { 

@@ -5,23 +5,42 @@
 // kebutuhan pengiriman notifikasi berbasis template di masa depan.
 
 export async function sendWhatsAppNotification(to: string, templateName: string, templateParams: string[]) {
-    
     // Pastikan nomor tujuan menggunakan format internasional tanpa '+' atau '0' di depan.
-    // Contoh: 6281234567890
     const formattedTo = to.startsWith('0') ? '62' + to.substring(1) : to;
 
-    const consoleMessage = `
-    --- SIMULASI PENGIRIMAN NOTIFIKASI WHATSAPP ---
-    Tujuan: ${formattedTo}
-    Template: ${templateName}
-    Parameter: ${JSON.stringify(templateParams)}
-    -------------------------------------------
-    `;
-    console.log(consoleMessage);
-    
-    // Ketika nanti Anda siap mengintegrasikan dengan layanan WhatsApp sungguhan,
-    // kode untuk memanggil API eksternal akan ditempatkan di sini.
-    // Untuk sekarang, fungsi ini hanya mencatat ke konsol.
-    return Promise.resolve();
-}
+    const apiUrl = process.env.NEXT_PUBLIC_WA_API_URL;
+    const apiKey = process.env.NEXT_PUBLIC_WA_API_KEY;
 
+    if (!apiUrl) {
+        console.warn("[WhatsApp Mock] API URL belum diatur di .env. Menggunakan console log.");
+        console.log(`[WA] To: ${formattedTo}, Template: ${templateName}, Params:`, templateParams);
+        return Promise.resolve();
+    }
+
+    try {
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${apiKey}`
+            },
+            body: JSON.stringify({
+                target: formattedTo,
+                template: templateName,
+                variables: templateParams
+            })
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`Gagal mengirim WA ke ${formattedTo}:`, errorText);
+            return Promise.resolve(); // Non-blocking: biarkan proses aplikasi lanjut meski WA gagal
+        }
+
+        console.log(`Pesan WA berhasil dikirim ke ${formattedTo} (Template: ${templateName})`);
+        return Promise.resolve();
+    } catch (error) {
+        console.error("Error memanggil API WhatsApp:", error);
+        return Promise.resolve(); // Non-blocking
+    }
+}

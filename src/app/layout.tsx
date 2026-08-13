@@ -8,6 +8,7 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import AppProviders from "@/context/AppProviders";
 import { ServiceWorkerReset } from "@/components/ServiceWorkerReset"; // [BARU] Import komponen reset
+import OfflineSyncManager from "@/components/OfflineSyncManager"; // [BARU] Import offline sync manager
 
 // const inter = Inter({ subsets: ["latin"] });
 
@@ -44,6 +45,7 @@ export default function RootLayout({
         <ServiceWorkerReset />
 
         <AppProviders>
+            <OfflineSyncManager />
             {children}
         </AppProviders>
       </body>

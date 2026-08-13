@@ -7,7 +7,7 @@
 "use client";
 
 import { useContext, createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User, UserCredential, signInWithCustomToken } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
 import { db, auth, functions } from '@/lib/firebase';
 import { 
   collection, query, where, getDocs, doc, getDoc, Timestamp
@@ -37,6 +37,8 @@ interface AuthContextType {
   setActingJabatan: (jabatanId: string | null) => void;
   // Ekspor fungsi signInWithCustomToken agar bisa dipakai di komponen Login
   signInWithToken: (token: string) => Promise<UserCredential>;
+  signInWithGoogle: () => Promise<UserCredential>;
+  linkGoogleFromLogin: (nip: string, pass: string, credential: AuthCredential, pendingUser: User) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,6 +107,37 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const signInWithToken = async (token: string): Promise<UserCredential> => {
       return await signInWithCustomToken(auth, token);
   }
+
+  const signInWithGoogle = async (): Promise<UserCredential> => {
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: 'select_account' });
+    return await signInWithPopup(auth, provider);
+  };
+
+  const linkGoogleFromLogin = async (nip: string, pass: string, credential: AuthCredential, pendingUser: User): Promise<void> => {
+    if (!nip || !pass) throw new Error("NIP dan password tidak boleh kosong.");
+    let email = '';
+    try {
+      const getEmailFromNip = httpsCallable(functions, 'getEmailFromNip');
+      const result: any = await getEmailFromNip({ nip });
+      email = result.data.email;
+    } catch (error: any) {
+      throw new Error(error.message || "Gagal mengambil data email dari NIP.");
+    }
+    if (!email) throw new Error("Data email tidak ditemukan untuk NIP tersebut.");
+
+    // Hapus user Google sementara agar kredensialnya bisa dipakai oleh akun NIP
+    if (pendingUser) {
+      await pendingUser.delete();
+    }
+
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    await linkWithCredential(userCredential.user, credential);
+    
+    const setNipClaim = httpsCallable(functions, 'setNipClaim');
+    await setNipClaim({ nip });
+    await userCredential.user.getIdToken(true);
+  };
 
   const logOut = useCallback(async () => {
     // Bersihkan Cache & LocalStorage
@@ -201,7 +234,12 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
                 profile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
             } else { throw new Error("Profil tidak ditemukan."); }
         
-            if (profile.status === 'nonaktif') { await logOut(); setLoading(false); return; }
+            if (profile.status === 'nonaktif') { 
+                await logOut(); 
+                setLoading(false); 
+                window.location.href = '/login?error=account_deactivated';
+                return; 
+            }
             setUserProfile(profile);
             
             // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
@@ -254,7 +292,8 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
         opdConfig, 
         // opdTemplatList dihapus dari value
         loading, logIn, logInWithNip, logOut, setActingJabatan,
-        isImpersonating, originalUserUid, signInWithToken
+        isImpersonating, originalUserUid, signInWithToken,
+        signInWithGoogle, linkGoogleFromLogin
     }}>
       {children} 
     </AuthContext.Provider>

@@ -19,12 +19,12 @@ import ThemeToggleButton from './components/ThemeToggleButton';
 import Sidebar, { navItems, sections } from './components/Sidebar'; 
 import BottomNavBar from './components/BottomNavBar';       
 import MobileMenuSheet from './components/MobileMenuSheet'; 
+import NotificationBanner from './components/NotificationBanner'; 
 import MegaMenuPanel from './components/MegaMenuPanel';     
 import SmartFab from './components/SmartFab'; // [BARU] Import SmartFab
 
 import { app, db } from '@/lib/firebase'; 
 import { getMessaging, onMessage } from "firebase/messaging"; 
-import { getFCMToken } from '@/lib/firebase-messaging';
 import { doc, updateDoc, arrayUnion } from 'firebase/firestore';
 import Toast from './components/Toast';
 import FullPageLoader from './components/FullPageLoader';
@@ -84,19 +84,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
     if (!loading && user && userProfile && typeof window !== 'undefined' && 'Notification' in window && app) {
         const setupFCM = async () => {
              try {
-                 // 1. Langsung panggil getFCMToken. 
-                 // Ini akan memicu pop-up "Allow Notifications" di browser jika user belum pernah memberikan izin.
-                 const token = await getFCMToken();
-                 
-                 // 2. Jika user mengizinkan (Allow) dan token berhasil dibuat, simpan ke Firestore
-                 if (token && userProfile.nip) {
-                     await updateDoc(doc(db, 'users', userProfile.nip), { 
-                         fcmTokens: arrayUnion(token) 
-                     });
-                     console.log("✅ FCM Token berhasil di-generate dan disimpan ke database.");
-                 }
-
-                 // 3. Setup listener untuk notifikasi yang masuk saat aplikasi sedang DIBUKA (Foreground)
+                 // Setup listener untuk notifikasi yang masuk saat aplikasi sedang DIBUKA (Foreground)
                  // Hanya daftarkan listener jika permission sudah 'granted'
                  if (Notification.permission === 'granted') {
                      unsubscribe = onMessage(getMessaging(app), (pl) => { 
@@ -193,6 +181,8 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
+              {/* --- TOP NAVBAR --- */}
+              <NotificationBanner />
               <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-card/80 backdrop-blur-md border-b border-border h-16 transition-all duration-200">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>

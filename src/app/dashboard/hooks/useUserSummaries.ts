@@ -16,13 +16,6 @@ import { ActionableSuratItem, Disposisi, Surat, Tugas, WelcomeSummary } from '@/
 // --- Hook 1: Mengambil Surat & Disposisi ---
 export const useUserSuratSummary = (effectiveJabatanId?: string, cachedSuratList: Surat[] = []) => {
   const [actionableItems, setActionableItems] = useState<ActionableSuratItem[]>([]);
-  const [welcomeSummary, setWelcomeSummary] = useState<WelcomeSummary>({
-      disposisiBaru: 0,
-      tindakLanjutMenunggu: 0,
-      suratMenungguDisposisi: 0,
-      tugasAktif: 0,
-      tugasLewatBatasWaktu: 0
-  });
   
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -52,14 +45,6 @@ export const useUserSuratSummary = (effectiveJabatanId?: string, cachedSuratList
 
         try {
             const data = docSnap.data();
-            
-            // 1. Set Angka Summary untuk Notifikasi Lonceng
-            setWelcomeSummary(prev => ({
-                ...prev,
-                disposisiBaru: data.disposisiBaruCount || 0,
-                tindakLanjutMenunggu: data.tindakLanjutCount || 0,
-                suratMenungguDisposisi: data.suratMenungguDisposisi || 0,
-            }));
 
             const pendingDisposisiMap = data.pendingDisposisi || {};
             const disposisiList = Object.values(pendingDisposisiMap) as (Disposisi & { needsAcknowledge: boolean })[];
@@ -139,7 +124,7 @@ export const useUserSuratSummary = (effectiveJabatanId?: string, cachedSuratList
     return () => unsub();
   }, [effectiveJabatanId]);
 
-  return { actionableItems, welcomeSummary, isLoading, error, mutate: () => {} };
+  return { actionableItems, isLoading, error, mutate: () => {} };
 };
 
 // --- Hook 2: Mengambil Tugas ---

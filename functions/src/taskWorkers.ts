@@ -7,8 +7,7 @@ import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
 
-// (Opsional) Pastikan Anda memodifikasi import ini sesuai lokasi fungsi FCM Anda
-// import { sendFcmMessageByUid } from "./utils/fcm"; 
+import { sendFcmMessageByUid } from "./index";
 
 // Mencegah error "app already initialized" saat di-deploy bersama fungsi lain
 if (!admin.apps.length) {
@@ -33,8 +32,6 @@ export const sendReminderTask = functions.region('asia-southeast2').tasks.taskQu
         if (pending[docId] && pending[docId].needsAcknowledge) {
             console.log(`Mengirim FCM Pengingat Disposisi untuk user: ${uid}`);
             
-            // Hapus komentar pada baris di bawah ini jika fungsi FCM Anda sudah di-import
-            /*
             await sendFcmMessageByUid(
                 uid, 
                 "⏰ Pengingat: Disposisi Menunggu", 
@@ -42,7 +39,6 @@ export const sendReminderTask = functions.region('asia-southeast2').tasks.taskQu
                 "/dashboard/ruang-kerja", 
                 "pending-disposisi"
             );
-            */
         }
     } else if (type === 'tugas') {
         const pending = summaryData.pendingTugas || {};
@@ -50,8 +46,6 @@ export const sendReminderTask = functions.region('asia-southeast2').tasks.taskQu
         if (pending[docId]) {
             console.log(`Mengirim FCM Pengingat Tugas untuk user: ${uid}`);
             
-            // Hapus komentar pada baris di bawah ini jika fungsi FCM Anda sudah di-import
-            /*
             await sendFcmMessageByUid(
                 uid, 
                 "📋 Pengingat: Tugas Menunggu", 
@@ -59,7 +53,6 @@ export const sendReminderTask = functions.region('asia-southeast2').tasks.taskQu
                 "/dashboard/tugas", 
                 "pending-tugas"
             );
-            */
         }
     }
 });

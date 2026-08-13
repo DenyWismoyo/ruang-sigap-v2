@@ -13,8 +13,9 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Logo from '../../app/dashboard/components/Logo';
 import { ArrowLeft, Mail, Briefcase, FileText, Sparkles, Loader2 } from 'lucide-react';
-import { signInWithCustomToken } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { signInWithCustomToken, GoogleAuthProvider, User, AuthCredential } from 'firebase/auth';
+import { auth, db } from '@/lib/firebase';
+import { collection, query, where, getDocs, doc, getDoc } from 'firebase/firestore';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
@@ -43,7 +44,16 @@ function LoginComponent() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { logIn, logInWithNip } = useUserAuth();
+  
+  // States untuk sinkronisasi Google
+  const [isLinking, setIsLinking] = useState(false);
+  const [pendingCredential, setPendingCredential] = useState<AuthCredential | null>(null);
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
+  const [linkNip, setLinkNip] = useState('');
+  const [linkPassword, setLinkPassword] = useState('');
+  const [linkedProfile, setLinkedProfile] = useState<any>(null);
+
+  const { logIn, logInWithNip, signInWithGoogle, linkGoogleFromLogin } = useUserAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -60,6 +70,11 @@ function LoginComponent() {
                 setLoading(false);
                 console.error("Impersonation login error:", error);
             });
+    }
+
+    const errorParam = searchParams.get('error');
+    if (errorParam === 'account_deactivated') {
+        setError("Akun Anda telah dinonaktifkan. Silakan hubungi Administrator OPD Anda (Mungkin batas kuota pengguna telah tercapai).");
     }
   }, [searchParams, router]);
 
@@ -87,6 +102,83 @@ function LoginComponent() {
     setIdentifier('');
     setPassword('');
     setError('');
+  };
+
+  const handleGoogleLogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const result = await signInWithGoogle();
+      const idTokenResult = await result.user.getIdTokenResult();
+      
+      // Jika sudah memiliki NIP claim, berarti sudah tertaut
+      if (idTokenResult.claims.nip) {
+        router.push('/dashboard');
+        return;
+      }
+      
+      // Cek di Firestore untuk jaga-jaga jika claim telat update
+      const q = query(collection(db, "users"), where("uid", "==", result.user.uid));
+      const snapshot = await getDocs(q);
+      
+      if (!snapshot.empty) {
+        router.push('/dashboard');
+        return;
+      }
+      
+      // Belum tertaut, minta input NIP
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      if (!credential) {
+          throw new Error("Gagal mendapatkan kredensial Google.");
+      }
+      setPendingCredential(credential);
+      setPendingUser(result.user);
+      setIsLinking(true);
+      
+    } catch (err: any) {
+      if (err.code !== 'auth/popup-closed-by-user') {
+          setError(err.message || "Login Google gagal.");
+          console.error(err);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const checkNipProfile = async () => {
+    if (!linkNip) return;
+    setLoading(true);
+    try {
+        const userDocRef = doc(db, "users", linkNip);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+            setLinkedProfile(userDocSnap.data());
+        } else {
+            setError("NIP tidak ditemukan di sistem.");
+            setLinkedProfile(null);
+        }
+    } catch(err) {
+        console.error(err);
+        setError("Gagal mengecek data NIP.");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleLinkAccount = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pendingCredential || !pendingUser) return;
+    setError('');
+    setLoading(true);
+    try {
+        await linkGoogleFromLogin(linkNip, linkPassword, pendingCredential, pendingUser);
+        router.push('/dashboard');
+    } catch(err: any) {
+        setError(err.message || "Gagal menautkan akun. Pastikan password benar.");
+        console.error(err);
+    } finally {
+        setLoading(false);
+    }
   };
 
   if (searchParams.get('impersonate_token')) {
@@ -175,54 +267,145 @@ function LoginComponent() {
                 </Alert>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <Tabs value={loginMode} onValueChange={(value) => handleModeChange(value as 'nip' | 'email')} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="nip">Pengguna (NIP)</TabsTrigger>
-                  <TabsTrigger value="email">Staf/Admin (Email)</TabsTrigger>
-                </TabsList>
-              </Tabs>
-              
-              <div>
-                {/* [PERBAIKAN DARK MODE] */}
-                <Label htmlFor="identifier" className="text-sm font-bold text-foreground">
-                  {loginMode === 'nip' ? 'NIP' : 'Email'}
-                </Label>
-                <Input
-                  id="identifier"
-                  type={loginMode === 'nip' ? 'text' : 'email'}
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  placeholder={loginMode === 'nip' ? 'Masukkan NIP Anda' : 'Masukkan email Anda'}
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Masukkan password"
-                  required
-                  className="mt-1"
-                />
-              </div>
-              
-              <div>
-                <Button 
-                  type="submit" 
-                  disabled={loading}
-                  className="w-full"
-                >
-                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {loading ? 'Memproses...' : 'Login'}
-                </Button>
-              </div>
-            </form>
+            {!isLinking ? (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <Tabs value={loginMode} onValueChange={(value) => handleModeChange(value as 'nip' | 'email')} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="nip">Pengguna (NIP)</TabsTrigger>
+                    <TabsTrigger value="email">Staf/Admin (Email)</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                
+                <div>
+                  {/* [PERBAIKAN DARK MODE] */}
+                  <Label htmlFor="identifier" className="text-sm font-bold text-foreground">
+                    {loginMode === 'nip' ? 'NIP' : 'Email'}
+                  </Label>
+                  <Input
+                    id="identifier"
+                    type={loginMode === 'nip' ? 'text' : 'email'}
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    placeholder={loginMode === 'nip' ? 'Masukkan NIP Anda' : 'Masukkan email Anda'}
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Masukkan password"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div>
+                  <Button 
+                    type="submit" 
+                    disabled={loading}
+                    className="w-full"
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {loading ? 'Memproses...' : 'Login'}
+                  </Button>
+                  
+                  {/* Tombol Login Google Super Minimalis */}
+                  <div className="mt-4 text-center">
+                    <button 
+                      type="button" 
+                      onClick={handleGoogleLogin}
+                      disabled={loading}
+                      className="text-xs text-muted-foreground hover:text-foreground underline opacity-60 hover:opacity-100 transition-opacity"
+                    >
+                      Alternatif: Login dengan Google
+                    </button>
+                  </div>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleLinkAccount} className="space-y-6">
+                <Alert className="mb-4">
+                    <AlertDescription>
+                        Akun Google ini belum tertaut. Silakan masukkan NIP dan Password Anda untuk menautkan secara permanen.
+                    </AlertDescription>
+                </Alert>
+                
+                <div>
+                  <Label htmlFor="linkNip" className="text-sm font-bold text-foreground">
+                    Masukkan NIP Anda
+                  </Label>
+                  <div className="flex gap-2 mt-1">
+                      <Input
+                        id="linkNip"
+                        type="text"
+                        value={linkNip}
+                        onChange={(e) => {
+                            setLinkNip(e.target.value);
+                            setLinkedProfile(null);
+                        }}
+                        placeholder="Contoh: 198001012005011001"
+                        required
+                        className="flex-1"
+                      />
+                      <Button type="button" variant="secondary" onClick={checkNipProfile} disabled={loading || !linkNip}>
+                          Cek
+                      </Button>
+                  </div>
+                </div>
+
+                {linkedProfile && (
+                    <div className="p-3 bg-muted rounded-md text-sm">
+                        <p className="font-semibold text-foreground">{linkedProfile.namaLengkap}</p>
+                        <p className="text-muted-foreground text-xs">{linkedProfile.jabatanNama}</p>
+                    </div>
+                )}
+                
+                <div>
+                  <Label htmlFor="linkPassword">Konfirmasi Password NIP</Label>
+                  <Input
+                    id="linkPassword"
+                    type="password"
+                    value={linkPassword}
+                    onChange={(e) => setLinkPassword(e.target.value)}
+                    placeholder="Password akun Anda"
+                    required
+                    className="mt-1"
+                  />
+                </div>
+                
+                <div className="flex gap-2">
+                  <Button 
+                    type="button" 
+                    variant="outline"
+                    onClick={() => {
+                        setIsLinking(false);
+                        setPendingCredential(null);
+                        setLinkedProfile(null);
+                        if (pendingUser) pendingUser.delete().catch(console.error);
+                        setPendingUser(null);
+                    }}
+                    disabled={loading}
+                    className="w-1/3"
+                  >
+                    Batal
+                  </Button>
+                  <Button 
+                    type="submit" 
+                    disabled={loading || !linkedProfile}
+                    className="flex-1"
+                  >
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Tautkan & Login
+                  </Button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
 

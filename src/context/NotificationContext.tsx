@@ -21,7 +21,8 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 export const NotificationProvider = ({ children }: { children: ReactNode }) => {
-  const { user } = useUserAuth(); // Dependency ke Auth
+  const { user, actingJabatanProfile, jabatanProfile } = useUserAuth(); // Dependency ke Auth
+  const effectiveJabatanId = actingJabatanProfile?.id || jabatanProfile?.id || user?.uid;
   
   const [notifikasiList, setNotifikasiList] = useState<Notification[]>([]);
   const [welcomeSummary, setWelcomeSummary] = useState<WelcomeSummary>({
@@ -67,19 +68,26 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
 
     setIsLoading(true);
 
+    let unsubSummary = () => {};
+    let unsubNotif = () => {};
+
     // 1. Listener Summary (Angka-angka dashboard)
-    const summaryRef = doc(db, 'userSummaries', user.uid);
-    const unsubSummary = onSnapshot(summaryRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data() as WelcomeSummary;
-            setWelcomeSummary(prev => ({ ...prev, ...data }));
-            
-            // Update App Badge
-            const total = (data.suratBaruCount || 0) + (data.tugasBaruCount || 0);
-            updateAppBadge(total);
-        }
+    if (effectiveJabatanId) {
+        const summaryRef = doc(db, 'userSummaries', effectiveJabatanId);
+        unsubSummary = onSnapshot(summaryRef, (docSnap) => {
+            if (docSnap.exists()) {
+                const data = docSnap.data() as WelcomeSummary;
+                setWelcomeSummary(prev => ({ ...prev, ...data }));
+                
+                // Update App Badge
+                const total = (data.suratBaruCount || 0) + (data.tugasBaruCount || 0);
+                updateAppBadge(total);
+            }
+            setIsLoading(false);
+        }, (err) => console.warn("Gagal subscribe summary:", err));
+    } else {
         setIsLoading(false);
-    }, (err) => console.warn("Gagal subscribe summary:", err));
+    }
 
     // 2. Listener Notifikasi (Lonceng)
     const notifQuery = query(
@@ -88,7 +96,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         orderBy('timestamp', 'desc'), 
         limit(5)
     );
-    const unsubNotif = onSnapshot(notifQuery, (snapshot) => {
+    unsubNotif = onSnapshot(notifQuery, (snapshot) => {
       setNotifikasiList(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification)));
     }, (err) => console.warn("Gagal subscribe notif:", err));
     
@@ -96,7 +104,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
         unsubSummary();
         unsubNotif();
     };
-  }, [user]);
+  }, [user, effectiveJabatanId]);
 
   return (
     <NotificationContext.Provider value={{

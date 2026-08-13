@@ -22,7 +22,8 @@ import MobileAgendaCarousel from '@/app/dashboard/components/home/MobileAgendaCa
 
 // --- IMPORT HOOKS SSOT ---
 import { useMasterData } from '@/app/dashboard/hooks/useMasterData';
-import { useAgendaData } from '@/app/dashboard/hooks/useAgendaData'; 
+import { useAgendaData } from '@/app/dashboard/hooks/useAgendaData';
+import { useJadwalActions } from '@/app/dashboard/hooks/useJadwalActions'; 
 
 // --- Helper Components untuk Agenda Desktop ---
 const AgendaItem = ({ surat }: { surat: EnrichedSuratAgenda }) => (
@@ -156,7 +157,8 @@ export default function DashboardPage() {
   // --- 1. DATA FETCHING VIA HOOKS (SSOT) ---
   // Ditambahkan jabatanMap & getUserNameByJabatanId untuk memindai nama Pimpinan
   const { isLoading: isMasterLoading, jabatanMap, getUserNameByJabatanId } = useMasterData(true); 
-  const { agendaUndangan, jadwalInternalList, isLoading: isAgendaLoading } = useAgendaData(); 
+  const { agendaUndangan, jadwalInternalList, isLoading: isAgendaLoading, refetch } = useAgendaData(); 
+  const { handleApprove, handleReject, handleDelete } = useJadwalActions(); 
 
   // --- LOGIKA PENCARIAN OTOMATIS NAMA PIMPINAN ---
   const resolvePenerimaName = useCallback((surat: EnrichedSuratAgenda) => {
@@ -439,10 +441,10 @@ export default function DashboardPage() {
             onClose={() => setIsDetailModalOpen(false)}
             jadwal={selectedJadwal}
             isAdmin={isAdminOrTU} 
-            onApprove={() => {}} 
-            onReject={() => {}}
+            onApprove={(id) => handleApprove(id, () => { setIsDetailModalOpen(false); refetch(); })} 
+            onReject={(id, reason) => handleReject(id, reason, () => { setIsDetailModalOpen(false); refetch(); })}
             onEdit={() => {}}
-            onDelete={() => {}}
+            onDelete={(id) => handleDelete(id, () => { setIsDetailModalOpen(false); refetch(); })}
         />
     </div>
   );

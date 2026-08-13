@@ -421,6 +421,19 @@ export const useSuratActions = () => {
         // [SINKRONISASI UI INSTAN]
         optimisticRemoveDisposisi(disposisi.id);
 
+        // Tambah notifikasi untuk pengirim
+        if (senderProfile?.uid) {
+            const notifRef = doc(collection(db, 'notifications'));
+            batch.set(notifRef, {
+                userId: senderProfile.uid,
+                userNip: senderProfile.nip,
+                message: `Disposisi dikembalikan oleh ${getActorName()}. Alasan: ${alasan}`,
+                link: `/dashboard/surat/${disposisi.suratId}`,
+                isRead: false,
+                timestamp: serverTimestamp() as Timestamp,
+            });
+        }
+
         await batch.commit();
         addToast('Disposisi dikembalikan.', 'success');
         refreshData(); 
@@ -437,12 +450,23 @@ export const useSuratActions = () => {
       if (!userProfile) return false;
       setIsProcessing(true);
       try {
-          const suratRef = doc(db, 'surat', originalSurat.id);
+          if (newFile) {
+              const { storage, ref, uploadBytesResumable, getDownloadURL } = await import('@/lib/firebase');
+              const fileRef = ref(storage, `surat_files/${Date.now()}_${newFile.name}`);
+              const uploadTask = await uploadBytesResumable(fileRef, newFile);
+              const downloadURL = await getDownloadURL(uploadTask.ref);
+              
+              updatedData.fileUrl = downloadURL;
+              updatedData.fileName = newFile.name;
+          }
+
+          const suratRef = doc(db, 'surat', originalSurat.id!);
           await updateDoc(suratRef, updatedData);
           addToast("Surat berhasil diperbarui.", "success");
           refreshData(); 
           return true;
-      } catch (err) {
+      } catch (err: any) {
+          console.error("Error update surat:", err);
           addToast("Gagal memperbarui surat.", "error");
           return false;
       } finally {
@@ -454,11 +478,31 @@ export const useSuratActions = () => {
       if (!userProfile || !surat.id) return false;
       setIsProcessing(true);
       try {
-          await deleteDoc(doc(db, 'surat', surat.id));
-          addToast("Surat berhasil dihapus.", "success");
+          // Cari dokumen terkait (disposisi dan tindakLanjut)
+          const [disposisiSnap, tlSnap] = await Promise.all([
+              import('firebase/firestore').then(m => m.getDocs(m.query(m.collection(db, 'disposisi'), m.where('suratId', '==', surat.id)))),
+              import('firebase/firestore').then(m => m.getDocs(m.query(m.collection(db, 'tindakLanjut'), m.where('suratId', '==', surat.id))))
+          ]);
+
+          const refsToDelete = [
+              doc(db, 'surat', surat.id),
+              ...disposisiSnap.docs.map(d => d.ref),
+              ...tlSnap.docs.map(d => d.ref)
+          ];
+
+          // Chunking into batches of 500
+          for (let i = 0; i < refsToDelete.length; i += 500) {
+              const chunk = refsToDelete.slice(i, i + 500);
+              const batch = writeBatch(db);
+              chunk.forEach(ref => batch.delete(ref));
+              await batch.commit();
+          }
+
+          addToast("Surat berhasil dihapus beserta data terkait.", "success");
           refreshData(); 
           return true;
       } catch (err) {
+          console.error("Error delete surat:", err);
           addToast("Gagal menghapus surat.", "error");
           return false;
       } finally {

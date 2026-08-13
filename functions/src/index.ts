@@ -2987,7 +2987,7 @@ export const resetUserSummaryCount = functions.region(REGION).https.onCall(async
  * Helper baru untuk mengirim notifikasi berdasarkan UID.
  * Mengambil NIP, fcmTokens, dan totalNotifCount sebelum mengirim.
  */
-const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string) => {
+export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string) => {
   try {
     // 1. Cari NIP dan tokens berdasarkan UID
     const userQuery = await db.collection("users").where("uid", "==", uid).limit(1).get();
