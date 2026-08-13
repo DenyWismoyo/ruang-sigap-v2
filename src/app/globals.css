@@ -533,4 +533,31 @@
   .score-badge-low {
     @apply bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-500/20 dark:text-rose-400 dark:border-rose-500/30;
   }
+  
+  /* ==========================================
+     TAMBAHAN UPGRADE UI
+     ========================================== */
+  .interactive-card {
+    @apply hover:shadow-xl hover:-translate-y-1 active:translate-y-0 active:shadow-md transition-all duration-200;
+  }
+  
+  .nav-link-hover {
+    @apply relative overflow-hidden;
+  }
+  .nav-link-hover::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-full h-0.5 bg-primary origin-left scale-x-0 transition-transform duration-300 ease-out;
+  }
+  .nav-link-hover:hover::after {
+    @apply scale-x-100;
+  }
+  
+  .animate-gradient-shift {
+    animation: gradient-shift 8s ease infinite;
+  }
+  
+  .page-enter-animation {
+    @apply animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out;
+  }
 }
+

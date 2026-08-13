@@ -87,6 +87,7 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
 
   const [linkedSurat, setLinkedSurat] = useState<Surat | null>(null);
   const [suratSearch, setSuratSearch] = useState('');
+  const [cachedSurat, setCachedSurat] = useState<Surat[]>([]);
   const [suratResults, setSuratResults] = useState<Surat[]>([]);
 
   const [stafSearch, setStafSearch] = useState('');
@@ -214,27 +215,40 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
   }, [isMandiri, atasanSearch, actingJabatanProfile, userCache, jabatanProfile]);
 
 
-  // Search Surat
+  // Load Cache Surat saat Modal Terbuka
   useEffect(() => {
-    const fetchSurat = async () => {
-        if (suratSearch.length < 3 || !userProfile?.opdId) { 
-            setSuratResults([]);
-            return;
-        }
-        try {
-            const q = query(
-                collection(db, 'surat'),
-                where('opdId', '==', userProfile.opdId), 
-                where('searchKeywords', 'array-contains', suratSearch.toLowerCase()),
-                limit(5)
-            );
-            const snapshot = await getDocs(q);
-            setSuratResults(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()} as Surat)));
-        } catch (error) { console.error("Error fetching surat:", error); setSuratResults([]); }
-    };
-    const debounce = setTimeout(fetchSurat, 300);
-    return () => clearTimeout(debounce);
-  }, [suratSearch, userProfile]); 
+    if (isOpen && userProfile?.opdId && !initialData && !suratTerkait) {
+         const fetchRecentSurat = async () => {
+             try {
+                // Ambil 50 surat terakhir untuk client-side filtering instan
+                const q = query(
+                    collection(db, 'surat'),
+                    where('opdId', '==', userProfile.opdId),
+                    orderBy('tanggalDiterima', 'desc'),
+                    limit(50)
+                );
+                const snapshot = await getDocs(q);
+                setCachedSurat(snapshot.docs.map(doc => ({id: doc.id, ...doc.data()} as Surat)));
+             } catch (error) { console.error("Error fetching recent surat:", error); }
+         };
+         fetchRecentSurat();
+    }
+  }, [isOpen, userProfile, initialData, suratTerkait]);
+
+  // Client-Side Search Surat (Instant, No Debounce)
+  useEffect(() => {
+       if (suratSearch.length < 2) {
+           setSuratResults([]);
+           return;
+       }
+       const searchLower = suratSearch.toLowerCase();
+       const results = cachedSurat.filter(s => 
+           s.perihal.toLowerCase().includes(searchLower) || 
+           s.nomorSurat.toLowerCase().includes(searchLower) ||
+           (s.searchKeywords && s.searchKeywords.some(kw => kw.includes(searchLower)))
+       ).slice(0, 5);
+       setSuratResults(results);
+  }, [suratSearch, cachedSurat]);
 
   // Handle Submit
   const handleSubmit = async (e: React.FormEvent) => {
@@ -310,14 +324,14 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-2xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl sm:rounded-xl rounded-none bg-card border-border flex flex-col p-0 gap-0 overflow-hidden">
+        <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b border-border shadow-sm z-10 bg-card">
           <DialogTitle className="text-xl font-semibold">Tugas Baru</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 overflow-y-auto px-6">
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 px-4 sm:px-6">
+            <div className="space-y-4 py-4">
               {error && <p className="p-3 text-sm text-center text-red-700 bg-red-100 dark:bg-red-900/20 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700">{error}</p>}
 
               <div className="grid grid-cols-5 gap-4 items-end">
@@ -360,7 +374,7 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
                             value={suratSearch} 
                             onChange={e => {
                               setSuratSearch(e.target.value);
-                              if (e.target.value.length >= 3) setSuratPopoverOpen(true); else setSuratPopoverOpen(false);
+                              if (e.target.value.length >= 2) setSuratPopoverOpen(true); else setSuratPopoverOpen(false);
                             }}
                           />
                         </PopoverTrigger>
@@ -384,7 +398,7 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
                                       </div>
                                   </CommandItem>
                               )) : (
-                                <CommandEmpty>{suratSearch.length < 3 ? 'Ketik min 3 huruf' : 'Surat tidak ditemukan.'}</CommandEmpty>
+                                <CommandEmpty>{suratSearch.length < 2 ? 'Ketik min 2 huruf' : 'Surat tidak ditemukan.'}</CommandEmpty>
                               )}
                             </CommandList>
                           </Command>
@@ -591,14 +605,14 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
             </div>
           </ScrollArea>
           
-          <DialogFooter className="mt-6 p-4 border-t border-border sticky bottom-0 bg-muted/50">
-              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+          <DialogFooter className="p-4 sm:p-6 border-t border-border mt-auto bg-card shadow-sm z-10 flex flex-row justify-end space-x-2">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full sm:w-auto">
                 Batal
-              </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-                {loading ? <Loader2 size={16} className="animate-spin mr-2"/> : <Send size={16} className="mr-2"/>}
+            </Button>
+            <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+                {loading ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}
                 {loading ? 'Menyimpan...' : 'Simpan & Tugaskan'}
-              </Button>
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

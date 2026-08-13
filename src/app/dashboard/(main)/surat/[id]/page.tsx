@@ -15,6 +15,7 @@ import { useSuratDetail } from '@/app/dashboard/hooks/useSuratDetail';
 import { useMasterData } from '@/app/dashboard/hooks/useMasterData';
 
 import dynamic from 'next/dynamic';
+import { motion } from 'framer-motion';
 
 // --- KOMPONEN PRIORITAS 1 (Static Import agar instan) ---
 import CachedPdfViewer from '@/app/dashboard/(main)/surat/[id]/components/CachedPdfViewer';
@@ -98,9 +99,17 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
           Detail Surat
         </h3>
       </div>
-      <div className="p-4 space-y-4">
+      <motion.div 
+        className="p-4 space-y-4"
+        initial="hidden"
+        animate="show"
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }}
+      >
         {/* Nomor Surat */}
-        <div className="flex gap-3 items-start">
+        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} className="flex gap-3 items-start">
           <FileText size={16} className="text-muted-foreground mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Nomor Surat</p>
@@ -111,25 +120,25 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
               </button>
             </div>
           </div>
-        </div>
+        </motion.div>
 
         {/* Pengirim */}
-        <div className="flex gap-3 items-start">
+        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} className="flex gap-3 items-start">
           <User size={16} className="text-muted-foreground mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Pengirim</p>
             <p className="text-sm font-semibold text-foreground leading-tight">{surat.pengirim}</p>
           </div>
-        </div>
+        </motion.div>
 
         {/* Tanggal Surat */}
-        <div className="flex gap-3 items-start">
+        <motion.div variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} className="flex gap-3 items-start">
           <Calendar size={16} className="text-muted-foreground mt-0.5 shrink-0" />
           <div className="flex-1 min-w-0">
             <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">Tanggal Surat</p>
             <p className="text-sm font-semibold text-foreground leading-tight">{surat.tanggalSurat.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
           </div>
-        </div>
+        </motion.div>
 
         {surat.jenisSurat === 'Undangan' && surat.detailAgenda && (
           <>
@@ -166,7 +175,7 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
             </div>
           </>
         )}
-      </div>
+      </motion.div>
     </div>
   );
 };
@@ -319,6 +328,7 @@ export default function DetailSuratPage() {
   const jabatanMap = useMemo(() => rawJabatanMap || new Map(), [rawJabatanMap]);
 
   const { 
+    isProcessing: isActionProcessing,
     terimaDisposisi, 
     updateSurat, 
     kembalikanDisposisi,

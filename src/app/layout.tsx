@@ -3,22 +3,36 @@
 // [INTEGRASI] Menambahkan ServiceWorkerReset untuk membersihkan cache PWA yang bermasalah.
 
 import type { Metadata } from "next";
-// import { Inter } from "next/font/google"; // Disable jika error build
+import { Inter, Sora } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import AppProviders from "@/context/AppProviders";
 import { ServiceWorkerReset } from "@/components/ServiceWorkerReset"; // [BARU] Import komponen reset
 import OfflineSyncManager from "@/components/OfflineSyncManager"; // [BARU] Import offline sync manager
 
-// const inter = Inter({ subsets: ["latin"] });
+const inter = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+});
+
+const sora = Sora({
+  subsets: ["latin"],
+  variable: "--font-sora",
+});
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | SIGAP',
-    default: 'SIGAP - Sistem Integrasi & Administrasi Persuratan',
+    template: "%s | SIGAP",
+    default: "SIGAP - Sistem Integrasi & Administrasi Persuratan",
   },
-  description: "SIGAP: Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi.",
-  keywords: ['SIGAP', 'e-office', 'administrasi persuratan', 'birokrasi modern'],
+  description:
+    "SIGAP: Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi.",
+  keywords: [
+    "SIGAP",
+    "e-office",
+    "administrasi persuratan",
+    "birokrasi modern",
+  ],
 };
 
 export default function RootLayout({
@@ -35,8 +49,9 @@ export default function RootLayout({
       </head>
       <body
         className={cn(
-          "min-h-screen bg-background font-sans antialiased"
-          // inter.className 
+          "min-h-screen bg-background font-sans antialiased",
+          inter.variable,
+          sora.variable
         )}
       >
         {/* [BARU] ServiceWorkerReset dipasang di sini (paling atas dalam body).
@@ -45,8 +60,8 @@ export default function RootLayout({
         <ServiceWorkerReset />
 
         <AppProviders>
-            <OfflineSyncManager />
-            {children}
+          <OfflineSyncManager />
+          {children}
         </AppProviders>
       </body>
     </html>

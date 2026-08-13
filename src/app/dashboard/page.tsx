@@ -5,6 +5,7 @@ import { useUserAuth } from '@/context/AuthContext';
 import { JadwalTempat, CombinedAgendaItem, EnrichedSuratAgenda } from '@/types'; 
 import Link from 'next/link';
 import { toJpeg } from 'html-to-image';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
@@ -26,35 +27,41 @@ import { useMasterData } from '@/app/dashboard/hooks/useMasterData';
 import { useAgendaData } from '@/app/dashboard/hooks/useAgendaData';
 import { useJadwalActions } from '@/app/dashboard/hooks/useJadwalActions'; 
 
-// --- Helper Components untuk Agenda Desktop ---
+const itemVariants = {
+    hidden: { opacity: 0, x: -10 },
+    visible: { opacity: 1, x: 0 }
+};
+
 const AgendaItem = ({ surat }: { surat: EnrichedSuratAgenda }) => (
-    <Link href={`/dashboard/surat/${surat.id}`} className="block p-3 bg-muted/50 rounded-lg border border-border hover:bg-accent hover:shadow-sm transition-all duration-200">
-        <div className="flex items-start justify-between">
-            <p className="font-semibold text-foreground flex-1 pr-4 line-clamp-2">{surat.perihal}</p>
-            <div className="text-center bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 rounded-lg px-2 py-1 flex-shrink-0">
-                <div className="text-xs">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>
-                <div className="font-bold text-base">{surat.detailAgenda?.jam}</div>
+    <motion.div variants={itemVariants} whileHover={{ x: 2 }}>
+        <Link href={`/dashboard/surat/${surat.id}`} className="block p-3 bg-muted/50 rounded-none border border-border interactive-card transition-all duration-200 h-full">
+            <div className="flex items-start justify-between">
+                <p className="font-semibold text-foreground flex-1 pr-4 line-clamp-2">{surat.perihal}</p>
+                <div className="text-center bg-indigo-100 dark:bg-indigo-900/50 text-indigo-800 dark:text-indigo-300 rounded-none px-2 py-1 flex-shrink-0">
+                    <div className="text-xs">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { weekday: 'short', day: '2-digit', month: 'short' })}</div>
+                    <div className="font-bold text-base">{surat.detailAgenda?.jam}</div>
+                </div>
             </div>
-        </div>
-        <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground font-medium">
-            <User size={12} className="text-primary" />
-            <span className="truncate">{surat.pengirim}</span>
-        </div>
-        <div className="mt-2 space-y-1 text-sm text-muted-foreground border-t border-border/50 pt-2">
-            <div className="flex items-center gap-1"><MapPin size={14}/> <strong>Lokasi:</strong>&nbsp;{surat.detailAgenda?.lokasi}</div>
-            {surat.disposisiStatus === 'Sudah Didisposisi' ? (
-            <div className="flex items-start text-blue-600 dark:text-blue-400 gap-1">
-                <Send size={14} className="mt-0.5 flex-shrink-0" />
-                <div className="line-clamp-2"><strong>Kepada:</strong>&nbsp;{surat.penerimaDisposisi}</div>
+            <div className="flex items-center gap-1.5 mt-2 text-xs text-muted-foreground font-medium">
+                <User size={12} className="text-primary" />
+                <span className="truncate">{surat.pengirim}</span>
             </div>
-            ) : (
-            <div className="flex items-center text-yellow-600 dark:text-yellow-400 gap-1">
-                <Info size={14} />
-                <strong>Status:</strong>&nbsp;{surat.penerimaDisposisi}
+            <div className="mt-2 space-y-1 text-sm text-muted-foreground border-t border-border/50 pt-2">
+                <div className="flex items-center gap-1"><MapPin size={14}/> <strong>Lokasi:</strong>&nbsp;{surat.detailAgenda?.lokasi}</div>
+                {surat.disposisiStatus === 'Sudah Didisposisi' ? (
+                <div className="flex items-start text-blue-600 dark:text-blue-400 gap-1">
+                    <Send size={14} className="mt-0.5 flex-shrink-0" />
+                    <div className="line-clamp-2"><strong>Kepada:</strong>&nbsp;{surat.penerimaDisposisi}</div>
+                </div>
+                ) : (
+                <div className="flex items-center text-yellow-600 dark:text-yellow-400 gap-1">
+                    <Info size={14} />
+                    <strong>Status:</strong>&nbsp;{surat.penerimaDisposisi}
+                </div>
+                )}
             </div>
-            )}
-        </div>
-    </Link>
+        </Link>
+    </motion.div>
 );
 
 const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
@@ -334,47 +341,68 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
              
              {/* --- KOLOM KIRI (MAIN CONTENT - AGENDA) Span 9 --- */}
-             <div className="lg:col-span-9 space-y-6">
+             <motion.div 
+                 initial={{ opacity: 0, y: 20 }} 
+                 whileInView={{ opacity: 1, y: 0 }} 
+                 viewport={{ once: true }} 
+                 transition={{ duration: 0.5 }}
+                 className="lg:col-span-9 space-y-6"
+             >
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <Card ref={agendaRef} className="card-solid flex flex-col h-full">
+                <Card ref={agendaRef} className="card-solid flex flex-col h-fit rounded-none border-t-4 border-t-indigo-500 shadow-md">
                     <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                         <div className="flex items-center gap-2">
                             <CalendarClock className="w-5 h-5 text-indigo-500"/>
                             <h2 className="text-lg font-bold text-foreground">Agenda Undangan OPD</h2>
                         </div>
                         <div className="flex items-center space-x-2 w-full md:w-auto">
-                            <div className="flex items-center bg-muted rounded-lg p-1 flex-grow md:flex-grow-0">
-                                <button onClick={() => setAgendaFilter('hariIni')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'hariIni' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}>Hari Ini</button>
-                                <button onClick={() => setAgendaFilter('akanDatang')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'akanDatang' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}>Akan Datang</button>
+                            <div className="flex items-center bg-muted rounded-lg p-1 flex-grow md:flex-grow-0 relative">
+                                <button onClick={() => setAgendaFilter('hariIni')} className={`relative px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'hariIni' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                                    <span className="relative z-10">Hari Ini</span>
+                                    {agendaFilter === 'hariIni' && <motion.div layoutId="agenda-filter-bg" className="absolute inset-0 bg-background shadow rounded-md z-0" />}
+                                </button>
+                                <button onClick={() => setAgendaFilter('akanDatang')} className={`relative px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'akanDatang' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
+                                    <span className="relative z-10">Akan Datang</span>
+                                    {agendaFilter === 'akanDatang' && <motion.div layoutId="agenda-filter-bg" className="absolute inset-0 bg-background shadow rounded-md z-0" />}
+                                </button>
                             </div>
-                            <div className="flex items-center bg-muted rounded-lg p-1">
+                            <div className="flex items-center bg-muted rounded-lg p-1 relative">
                                 <button onClick={() => setAgendaUndanganView('table')} className={`p-1.5 rounded ${agendaUndanganView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`} title="Tampilan Tabel"><List size={16} /></button>
                                 <button onClick={() => setAgendaUndanganView('card')} className={`p-1.5 rounded ${agendaUndanganView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`} title="Tampilan Kartu"><LayoutGrid size={16} /></button>
                             </div>
                             <Button variant="outline" size="sm" onClick={handleExportAgenda} className="h-8 text-xs"><Download size={14} className="mr-1"/> Export</Button>
                         </div>
                     </div>
-                    <div className="p-0">
+                    <AnimatePresence mode="wait">
+                    <motion.div 
+                        key={agendaFilter}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 10 }}
+                        transition={{ duration: 0.2 }}
+                        className="p-0"
+                    >
                         {agendaFilter === 'hariIni' && (todayAgendas.length > 0 ?
                             (agendaUndanganView === 'card' ?
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">{todayAgendas.map(surat => <AgendaItem key={surat.id} surat={surat} />)}</div>
+                                <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-1 lg:grid-cols-2 gap-3 p-4">{todayAgendas.map(surat => <AgendaItem key={surat.id} surat={surat} />)}</motion.div>
                                 : <AgendaTable agendas={todayAgendas} />
                             )
                             : <div className="text-center py-12 text-muted-foreground"><Calendar size={48} className="mx-auto text-muted-foreground/30 mb-2"/><p className="font-medium">Tidak ada agenda undangan untuk hari ini.</p></div>
                         )}
                         {agendaFilter === 'akanDatang' && (Object.keys(groupedUpcomingAgendas).length > 0 ?
                             (agendaUndanganView === 'card' ?
-                                <div className="space-y-6 p-4">{Object.entries(groupedUpcomingAgendas).map(([date, agendasOnDate]) => (<div key={date}><h3 className="text-sm font-bold text-muted-foreground border-b border-border pb-2 mb-3 uppercase tracking-wider">{date}</h3><div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{agendasOnDate.map(surat => <AgendaItem key={surat.id} surat={surat} />)}</div></div>))}</div>
+                                <motion.div initial="hidden" animate="visible" variants={{ visible: { transition: { staggerChildren: 0.05 } } }} className="space-y-6 p-4">{Object.entries(groupedUpcomingAgendas).map(([date, agendasOnDate]) => (<div key={date}><h3 className="text-sm font-bold text-muted-foreground border-b border-border pb-2 mb-3 uppercase tracking-wider">{date}</h3><div className="grid grid-cols-1 lg:grid-cols-2 gap-3">{agendasOnDate.map(surat => <AgendaItem key={surat.id} surat={surat} />)}</div></div>))}</motion.div>
                                 : <AgendaTable agendas={upcomingAgendas} />
                             )
                             : <div className="text-center py-12 text-muted-foreground"><Calendar size={48} className="mx-auto text-muted-foreground/30 mb-2"/><p className="font-medium">Tidak ada agenda undangan untuk waktu mendatang.</p></div>
                         )}
-                    </div>
+                    </motion.div>
+                    </AnimatePresence>
                 </Card>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
-                <Card className="card-solid flex flex-col">
+                <Card className="card-solid flex flex-col h-fit rounded-none border-t-4 border-t-blue-600 shadow-md">
                     <div className="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-center bg-muted/30 gap-3">
                         <h3 className="text-lg font-bold flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-blue-600"/> Agenda Internal Bulan Ini</h3>
                         <div className="flex bg-muted rounded-lg p-1">
@@ -389,7 +417,7 @@ export default function DashboardPage() {
                            ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4"> 
                                 {agendaInternalBulanIni.map(jadwal => (
-                                    <div key={jadwal.id} onClick={() => { setSelectedJadwal(jadwal); setIsDetailModalOpen(true); }} className="p-3 bg-background rounded-lg border border-border hover:bg-muted cursor-pointer transition-colors shadow-sm">
+                                    <div key={jadwal.id} onClick={() => { setSelectedJadwal(jadwal); setIsDetailModalOpen(true); }} className="p-3 bg-background rounded-none border border-border hover:bg-muted cursor-pointer transition-colors shadow-sm">
                                         <p className="font-semibold text-foreground text-sm line-clamp-2">{jadwal.kegiatan}</p>
                                         <div className="mt-2 space-y-1 text-xs text-muted-foreground">
                                             <p className="flex items-center"><CalendarDays size={12} className="mr-2 text-primary"/> {jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) : 'N/A'}</p>
@@ -408,18 +436,29 @@ export default function DashboardPage() {
                     </div>
                 </Card>
 
-             </div>
+             </motion.div>
 
             {/* --- KOLOM KANAN (SIDEBAR WIDGET) Span 3 --- */}
             <div className='lg:col-span-3 space-y-6'>
                 {/* [QUICK ACCESS] Grid 3x3 untuk menu pintasan */}
-                <div className="grid grid-cols-3 gap-3">
+                <motion.div 
+                    initial="hidden"
+                    animate="visible"
+                    variants={{
+                        hidden: { opacity: 0 },
+                        visible: { opacity: 1, transition: { staggerChildren: 0.04 } }
+                    }}
+                    className="grid grid-cols-3 gap-3"
+                >
                     {quickAccessLinks.map((link, index) => (
-                        <div key={link.href} className="fade-in" style={{ animationDelay: `${index * 50}ms`}}>
+                        <motion.div key={link.href} variants={{
+                            hidden: { opacity: 0, scale: 0.95 },
+                            visible: { opacity: 1, scale: 1 }
+                        }}>
                             <QuickAccessCard href={link.href} label={link.label} icon={link.icon} colorClass={link.colorClass} />
-                        </div>
+                        </motion.div>
                     ))}
-                </div>
+                </motion.div>
             </div>
         </div>
 

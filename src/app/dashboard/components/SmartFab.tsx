@@ -57,24 +57,42 @@ export default function SmartFab() {
 
   const action = getAction();
 
-  if (!action) return null;
-
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0, opacity: 0 }}
-        className="fixed bottom-20 right-4 z-40 md:hidden" // Posisi strategis di atas navbar
-      >
-        <Button
-          onClick={action.onClick}
-          className={`rounded-full shadow-lg h-14 px-6 ${action.color} text-white flex items-center gap-2 transition-transform active:scale-95`}
+      {action && (
+        <motion.div
+          key="smart-fab-container"
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0, opacity: 0, y: 20 }}
+          transition={{ type: "spring", stiffness: 260, damping: 20 }}
+          className="fixed bottom-20 right-4 z-40 md:hidden" // Posisi strategis di atas navbar
         >
-          {action.icon}
-          <span className="font-semibold">{action.label}</span>
-        </Button>
-      </motion.div>
+          {/* Pulse Ring */}
+          <motion.div
+            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
+            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
+            className={`absolute inset-0 rounded-full ${action.color.split(' ')[0]} blur-sm`}
+          />
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={action.label}
+              initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
+              animate={{ rotate: 0, opacity: 1, scale: 1 }}
+              exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <Button
+                onClick={action.onClick}
+                className={`relative rounded-full shadow-lg h-14 px-6 ${action.color} text-white flex items-center gap-2 transition-transform active:scale-95 border-2 border-transparent`}
+              >
+                {action.icon}
+                <span className="font-semibold">{action.label}</span>
+              </Button>
+            </motion.div>
+          </AnimatePresence>
+        </motion.div>
+      )}
     </AnimatePresence>
   );
 }

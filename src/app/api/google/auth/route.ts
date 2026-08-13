@@ -3,9 +3,10 @@ import { OAuth2Client } from 'google-auth-library';
 import type { NextRequest } from 'next/server';
 
 export async function GET(request: NextRequest) {
-  // [FIX] Hardcode URL Produksi untuk memastikan konsistensi mutlak
-  // Ini mencegah error "invalid_grant" akibat mismatch http/https atau localhost
-  const redirectURI = 'https://disposisi-opd.web.app/api/google/callback';
+  // Deteksi environment (lokal atau produksi) secara otomatis
+  const host = request.headers.get('host');
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  const redirectURI = `${protocol}://${host}/api/google/callback`;
 
   console.log(`[Google Auth] Initiating auth flow with redirect: ${redirectURI}`);
 

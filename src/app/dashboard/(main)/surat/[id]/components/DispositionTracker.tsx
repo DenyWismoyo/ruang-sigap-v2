@@ -10,6 +10,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { motion } from "framer-motion";
 
 interface DispositionTrackerProps {
   disposisiList: Disposisi[];
@@ -68,7 +69,15 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
               <div className="p-0 bg-background">
                 {/* Penyesuaian padding mobile */}
                 <ScrollArea className="max-h-[400px] md:max-h-[500px] w-full px-3 py-4 md:px-5 md:py-6">
-                    <div className="relative space-y-0 pl-1 md:pl-2 pb-2">
+                    <motion.div 
+                        className="relative space-y-0 pl-1 md:pl-2 pb-2"
+                        initial="hidden"
+                        animate="show"
+                        variants={{
+                            hidden: { opacity: 0 },
+                            show: { opacity: 1, transition: { staggerChildren: 0.15 } }
+                        }}
+                    >
                       
                       {sortedDisposisi.map((disp, index) => {
                         const isLast = index === sortedDisposisi.length - 1;
@@ -83,14 +92,23 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                         
                         return (
                           // Penyesuaian gap bawah mobile
-                          <div key={disp.id} className="relative z-10 pl-5 md:pl-6 pb-6 md:pb-8 group last:pb-2">
+                          <motion.div 
+                            key={disp.id} 
+                            variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
+                            className="relative z-10 pl-5 md:pl-6 pb-6 md:pb-8 group last:pb-2"
+                          >
                             {/* Garis Vertikal Timeline */}
                             {!isLast && (
                                 <div className="absolute left-[3px] top-4 bottom-[-12px] md:bottom-[-16px] w-[2px] bg-border z-0" />
                             )}
                             
                             {/* Dot Node */}
-                            <div className="absolute left-[-2px] top-1.5 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-primary z-10 ring-4 ring-background shadow-sm" />
+                            <motion.div 
+                                initial={{ scale: 0 }}
+                                animate={{ scale: 1 }}
+                                transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 + (index * 0.15) }}
+                                className="absolute left-[-2px] top-1.5 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-primary z-10 ring-4 ring-background shadow-sm" 
+                            />
                             
                             {/* Konten Disposisi */}
                             <div className="flex flex-col gap-2.5 md:gap-3 mt-[-4px]">
@@ -193,10 +211,10 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                                     </div>
                                 </div>
                             </div>
-                          </div>
+                          </motion.div>
                         );
                       })}
-                    </div>
+                    </motion.div>
                 </ScrollArea>
               </div>
           </CollapsibleContent>

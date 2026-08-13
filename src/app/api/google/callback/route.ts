@@ -5,8 +5,11 @@ import { db } from '@/lib/firebase-admin';
 import { google } from 'googleapis';
 
 export async function GET(request: NextRequest) {
-  // [FIX] Hardcode URL Produksi (HARUS SAMA PERSIS dengan file Auth)
-  const redirectURI = 'https://disposisi-opd.web.app/api/google/callback';
+  // Deteksi environment (lokal atau produksi) secara otomatis
+  const host = request.headers.get('host');
+  const protocol = host?.includes('localhost') ? 'http' : 'https';
+  const baseDomain = `${protocol}://${host}`;
+  const redirectURI = `${baseDomain}/api/google/callback`;
 
   console.log(`[Google Callback] Processing callback on: ${redirectURI}`);
 
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest) {
   // 1. Handle Error dari Google (misal user klik Cancel)
   if (error) {
       console.error("[Google Callback] Google Error:", error);
-      return NextResponse.redirect(`https://disposisi-opd.web.app/dashboard/profil?error=google_auth_denied`);
+      return NextResponse.redirect(`${baseDomain}/dashboard/profil?error=google_auth_denied`);
   }
 
   // 2. Validasi Parameter Dasar
@@ -45,7 +48,7 @@ export async function GET(request: NextRequest) {
   // 3. Validasi Koneksi Database Server
   if (!db) {
     console.error("[Google Callback] Server Error: Database connection missing.");
-    return NextResponse.redirect(`https://disposisi-opd.web.app/dashboard/profil?success=false&error=server_config_missing`);
+    return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=false&error=server_config_missing`);
   }
   
   let userId;
@@ -97,9 +100,8 @@ export async function GET(request: NextRequest) {
     console.error('[Google Callback] Critical Error during token exchange/save:', error.response?.data || error);
     const errorMessage = error.message || 'token_failed';
     // Redirect dengan pesan error yang aman
-    return NextResponse.redirect(`https://disposisi-opd.web.app/dashboard/profil?success=false&error=${encodeURIComponent(errorMessage)}`);
+    return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=false&error=${encodeURIComponent(errorMessage)}`);
   }
 
-  // Redirect sukses kembali ke halaman profil
-  return NextResponse.redirect('https://disposisi-opd.web.app/dashboard/profil?success=true');
+return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=true`);
 }

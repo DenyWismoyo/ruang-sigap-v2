@@ -13,6 +13,7 @@ import { logActivity } from '@/lib/activityLogger';
 import { useToast } from '@/context/ToastContext';
 import { Surat, Disposisi, UserProfile, TindakLanjut } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
+import { updateLogbook } from '@/lib/logbookUtils';
 
 export interface TindakLanjutPayload {
     isiLaporan: string;
@@ -332,6 +333,24 @@ export const useSuratActions = () => {
         batch.update(suratRef, suratUpdates);
         
         await batch.commit();
+
+        // --- [AUTO LOGBOOK] ---
+        try {
+            const logDesc = isFinal 
+                ? `Menyelesaikan surat: "${surat.perihal}"`
+                : `Tindak Lanjut Surat: "${surat.perihal}" - ${payload.judulLaporan || 'Proses'}`;
+                
+            await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+                id: `auto_tinjut_${tindakLanjutRef.id}_${Date.now()}`,
+                deskripsi: logDesc,
+                selesai: isFinal
+            });
+            console.log("Auto-logbook tindak lanjut berhasil.");
+        } catch (logErr) {
+            console.error("Gagal auto-logbook tindak lanjut:", logErr);
+        }
+        // --- [AKHIR AUTO LOGBOOK] ---
+
         addToast(isFinal ? "Surat diselesaikan." : "Laporan dikirim.", "success");
         refreshData();
         return true;

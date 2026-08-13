@@ -41,7 +41,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from '@/components/ui/scroll-area'; 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatDateRelative } from '@/lib/utils';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 
 import type { UserProfile, Jabatan, OpdConfig, WelcomeSummary } from '@/types'; 
 
@@ -65,10 +65,15 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null); 
   const megaMenuTimerRef = useRef<NodeJS.Timeout | null>(null); 
+  const mainScrollRef = useRef<HTMLElement>(null);
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const { scrollY } = useScroll({ container: mainScrollRef });
+  const headerBoxShadow = useTransform(scrollY, [0, 50], ["none", "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.05)"]);
+  const headerBgOpacity = useTransform(scrollY, [0, 50], [0.5, 0.8]);
 
   const shouldShowLoader = loading && !userProfile;
 
@@ -183,7 +188,10 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 
               {/* --- TOP NAVBAR --- */}
               <NotificationBanner />
-              <header className="sticky top-0 z-30 flex items-center justify-between p-4 glass-card border-b-0 border-border h-16 transition-all duration-200">
+              <motion.header 
+                style={{ boxShadow: headerBoxShadow }}
+                className="sticky top-0 z-30 flex items-center justify-between p-4 glass-card border-b-0 border-border h-16 transition-colors duration-200"
+              >
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
@@ -193,7 +201,13 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-accent-foreground hover:bg-accent/50">
-                        <Bell size={20} />
+                        <motion.div 
+                          whileHover={{ rotate: 15 }}
+                          animate={totalNotifCount > 0 ? { rotate: [0, -15, 15, -10, 10, 0] } : {}}
+                          transition={{ repeat: totalNotifCount > 0 ? Infinity : 0, repeatDelay: 5, duration: 0.6 }}
+                        >
+                          <Bell size={20} />
+                        </motion.div>
                         {totalNotifCount > 0 && <span className="absolute top-1.5 right-1.5 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-background"></span></span>}
                       </Button>
                     </PopoverTrigger>
@@ -213,35 +227,46 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </Popover>
                   <ThemeToggleButton />
                   <div className="relative">
-                      <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group p-1 rounded-full hover:bg-accent transition-all">
+                      <motion.button whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group p-1 rounded-full hover:bg-accent transition-all">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center font-bold text-primary-foreground text-sm shadow-sm group-hover:shadow-md transition-all">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
                           <span className="hidden md:inline text-sm font-medium text-foreground pr-2">{userProfile.namaLengkap.split(' ')[0]}</span>
                           <ChevronDown size={14} className="hidden md:inline text-muted-foreground transition-transform group-hover:translate-y-0.5"/>
-                      </button>
+                      </motion.button>
                       <AnimatePresence>
                         {isProfileDropdownOpen && (
-                            <motion.div key="profile-dropdown" className="absolute right-0 mt-2 w-64 bg-popover rounded-xl shadow-xl border border-border z-50 origin-top-right overflow-hidden" initial={{ opacity: 0, scale: 0.95, y: -10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: -10 }} onMouseLeave={() => setIsProfileDropdownOpen(false)}>
-                                <div className="p-4 border-b border-border bg-muted/30"><p className="font-semibold text-foreground truncate">{userProfile.namaLengkap}</p><p className="text-xs text-muted-foreground truncate">{actingJabatanProfile?.namaJabatan || userProfile.email}</p></div>
+                            <motion.div 
+                                key="profile-dropdown" 
+                                className="absolute right-0 mt-2 w-64 bg-popover rounded-xl shadow-xl border border-border z-50 origin-top-right overflow-hidden" 
+                                initial="hidden" 
+                                animate="show" 
+                                exit="hidden"
+                                variants={{
+                                    hidden: { opacity: 0, scale: 0.95, y: -10 },
+                                    show: { opacity: 1, scale: 1, y: 0, transition: { staggerChildren: 0.05 } }
+                                }}
+                                onMouseLeave={() => setIsProfileDropdownOpen(false)}
+                            >
+                                <motion.div variants={{ hidden: { opacity: 0, y: -10 }, show: { opacity: 1, y: 0 } }} className="p-4 border-b border-border bg-muted/30"><p className="font-semibold text-foreground truncate">{userProfile.namaLengkap}</p><p className="text-xs text-muted-foreground truncate">{actingJabatanProfile?.namaJabatan || userProfile.email}</p></motion.div>
                                 {(jabatanProfile || pltJabatanList.length > 0) && (
-                                    <div className="p-2 border-b border-border"><label className="block px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Switch Role</label>
+                                    <motion.div variants={{ hidden: { opacity: 0, y: -10 }, show: { opacity: 1, y: 0 } }} className="p-2 border-b border-border"><label className="block px-2 pb-1.5 pt-1 text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Switch Role</label>
                                         {jabatanProfile && <button onClick={() => { setActingJabatan(null); setIsProfileDropdownOpen(false); }} className={`w-full flex items-center px-3 py-2 text-left text-sm rounded-md transition-colors ${!actingJabatanProfile || actingJabatanProfile?.id === jabatanProfile?.id ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-accent'}`}>{(!actingJabatanProfile || actingJabatanProfile?.id === jabatanProfile?.id) && <CheckCircle size={14} className="mr-2"/>}<div className="flex-1 truncate">{jabatanProfile?.namaJabatan} <span className="text-xs opacity-70">(Definitif)</span></div></button>}
                                         {pltJabatanList.map((plt: Jabatan) => <button key={plt.id} onClick={() => { setActingJabatan(plt.id!); setIsProfileDropdownOpen(false); }} className={`w-full flex items-center px-3 py-2 mt-1 text-left text-sm rounded-md transition-colors ${actingJabatanProfile?.id === plt.id ? 'bg-primary/10 text-primary font-medium' : 'text-foreground hover:bg-accent'}`}>{actingJabatanProfile?.id === plt.id && <CheckCircle size={14} className="mr-2"/>}<div className="flex-1 truncate">{plt.namaJabatan} <span className="text-xs text-yellow-600 dark:text-yellow-400">(Plt.)</span></div></button>)}
-                                    </div>
+                                    </motion.div>
                                 )}
-                                <div className="p-1.5">
+                                <motion.div variants={{ hidden: { opacity: 0, y: -10 }, show: { opacity: 1, y: 0 } }} className="p-1.5">
                                     <Link href="/dashboard/profil" onClick={() => setIsProfileDropdownOpen(false)} className="flex items-center px-3 py-2 text-sm text-foreground rounded-md hover:bg-accent transition-colors"><UserCircle size={16} className="mr-2 text-muted-foreground"/> Profil & Akun</Link>
                                     <button onClick={handleLogoutClick} className="w-full flex items-center px-3 py-2 text-left text-sm text-red-600 dark:text-red-400 rounded-md hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"><LogOut size={16} className="mr-2"/> Logout</button>
-                                </div>
+                                </motion.div>
                             </motion.div>
                         )}
                       </AnimatePresence>
                   </div>
                 </div>
-              </header>
+              </motion.header>
               
               {/* [FIX UI] Main Content Area */}
               {/* 'pb-20' (80px) sudah cukup untuk BottomNavBar (64px) + Margin (16px) */}
-              <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 bg-muted/10 relative scroll-smooth">
+              <main ref={mainScrollRef} className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 bg-muted/10 relative scroll-smooth">
                 <ScrollToTop />
                 <div className="w-full min-h-full flex flex-col">
                     <Breadcrumbs />

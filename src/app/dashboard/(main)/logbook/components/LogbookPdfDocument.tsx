@@ -1,41 +1,49 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { UserProfile, LogbookHarian } from '@/types';
-
-// Register font (Opsional, kita pakai Helvetica standar dulu agar ringan dan kompatibel)
-// Font.register({ family: 'Roboto', src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf' });
 
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
     backgroundColor: '#FFFFFF',
-    padding: 40, // Margin kertas
+    padding: 40,
     fontSize: 11,
     fontFamily: 'Helvetica',
     lineHeight: 1.5,
   },
   header: {
-    marginBottom: 20,
     textAlign: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: '#000',
-    borderBottomStyle: 'solid',
-    paddingBottom: 10,
+    marginBottom: 5,
   },
   headerTop: {
-    fontSize: 12,
+    fontSize: 14,
+    fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
   title: {
-    fontSize: 14,
-    fontWeight: 'bold',
+    fontSize: 16,
+    fontFamily: 'Helvetica-Bold',
     textTransform: 'uppercase',
     marginVertical: 4,
   },
-  subtitle: {
-    fontSize: 10,
-    marginBottom: 2,
+  divider1: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#000000',
+    marginTop: 10,
+  },
+  divider2: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#000000',
+    marginTop: 2,
+    marginBottom: 20,
+  },
+  reportTitle: {
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center',
+    textDecoration: 'underline',
+    marginBottom: 20,
   },
   // Info Pegawai Section
   infoContainer: {
@@ -48,10 +56,10 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     width: 100,
-    fontWeight: 'bold',
+    fontFamily: 'Helvetica-Bold',
   },
   infoSeparator: {
-    width: 10,
+    width: 15,
     textAlign: 'center',
   },
   infoValue: {
@@ -59,54 +67,55 @@ const styles = StyleSheet.create({
   },
   // Table Styles
   table: {
-    width: 'auto',
+    width: '100%',
     borderStyle: 'solid',
     borderWidth: 1,
     borderColor: '#000',
-    borderRightWidth: 0,
     borderBottomWidth: 0,
+    borderRightWidth: 0,
     marginBottom: 20,
   },
   tableRow: {
-    margin: 'auto',
     flexDirection: 'row',
   },
   tableColHeader: {
     borderStyle: 'solid',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
     borderColor: '#000',
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#e6e6e6',
     padding: 8,
     textAlign: 'center',
-    fontWeight: 'bold',
+    justifyContent: 'center',
   },
   tableCol: {
     borderStyle: 'solid',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
     borderColor: '#000',
-    padding: 5,
+    padding: 8,
   },
   // Kolom widths
-  colNo: { width: '8%' },
-  colDate: { width: '20%' },
-  colDesc: { width: '60%' },
-  colStatus: { width: '12%' },
+  colNo: { width: '8%', textAlign: 'center' },
+  colDate: { width: '22%' },
+  colDesc: { width: '55%' },
+  colStatus: { width: '15%', textAlign: 'center' },
   
   tableCellHeader: {
     fontSize: 10,
-    fontWeight: 'bold',
+    fontFamily: 'Helvetica-Bold',
   },
   tableCell: {
     fontSize: 10,
   },
+  tableCellBold: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+  },
   
   // Footer / Tanda Tangan
   footer: {
-    marginTop: 30,
+    marginTop: 20,
     flexDirection: 'row',
     justifyContent: 'flex-end',
   },
@@ -115,14 +124,21 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   signatureSpace: {
-    height: 60,
+    height: 70,
   },
-  signatureLine: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#000',
-    marginTop: 2,
-    marginHorizontal: 20,
+  signatureName: {
+    fontFamily: 'Helvetica-Bold',
+    textDecoration: 'underline',
   },
+  pageNumber: {
+    position: 'absolute',
+    bottom: 20,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 9,
+    color: '#888',
+  }
 });
 
 interface LogbookPdfProps {
@@ -142,13 +158,10 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
         const dateStr = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
         
-        if (daily.kegiatan.length === 0) {
-             // Opsional: Masukkan baris kosong jika hari kerja tapi tidak ada kegiatan?
-             // Untuk sekarang kita skip hari kosong agar hemat kertas
-        } else {
-            daily.kegiatan.forEach(k => {
+        if (daily.kegiatan.length > 0) {
+            daily.kegiatan.forEach((k, idx) => {
                 allActivities.push({
-                    fullDate: `${dayName}, ${dateStr}`,
+                    fullDate: idx === 0 ? `${dayName},\n${dateStr}` : '', // Show date only on first item of the day for cleaner look
                     deskripsi: k.deskripsi,
                     status: k.selesai ? 'Selesai' : 'Proses',
                     tugas: k.tugasTerkaitJudul
@@ -160,12 +173,15 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Header / Kop */}
+                {/* Header / Kop Resmi */}
                 <View style={styles.header}>
                     <Text style={styles.headerTop}>PEMERINTAH KOTA SURAKARTA</Text>
                     <Text style={styles.title}>{opdNama.toUpperCase()}</Text>
-                    <Text style={styles.subtitle}>LAPORAN KINERJA HARIAN PEGAWAI</Text>
                 </View>
+                <View style={styles.divider1} />
+                <View style={styles.divider2} />
+
+                <Text style={styles.reportTitle}>LAPORAN KINERJA HARIAN PEGAWAI</Text>
 
                 {/* Info Pegawai */}
                 <View style={styles.infoContainer}>
@@ -185,7 +201,7 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                         <Text style={styles.infoValue}>{jabatanNama}</Text>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoLabel}>Periode</Text>
+                        <Text style={styles.infoLabel}>Periode Laporan</Text>
                         <Text style={styles.infoSeparator}>:</Text>
                         <Text style={styles.infoValue}>{periode}</Text>
                     </View>
@@ -194,48 +210,48 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                 {/* Tabel */}
                 <View style={styles.table}>
                     {/* Table Header */}
-                    <View style={styles.tableRow}>
-                        <View style={{ ...styles.tableColHeader, ...styles.colNo }}>
+                    <View style={styles.tableRow} wrap={false}>
+                        <View style={[styles.tableColHeader, styles.colNo]}>
                             <Text style={styles.tableCellHeader}>No</Text>
                         </View>
-                        <View style={{ ...styles.tableColHeader, ...styles.colDate }}>
-                            <Text style={styles.tableCellHeader}>Hari/Tanggal</Text>
+                        <View style={[styles.tableColHeader, styles.colDate]}>
+                            <Text style={styles.tableCellHeader}>Hari / Tanggal</Text>
                         </View>
-                        <View style={{ ...styles.tableColHeader, ...styles.colDesc }}>
+                        <View style={[styles.tableColHeader, styles.colDesc]}>
                             <Text style={styles.tableCellHeader}>Uraian Kegiatan</Text>
                         </View>
-                        <View style={{ ...styles.tableColHeader, ...styles.colStatus }}>
+                        <View style={[styles.tableColHeader, styles.colStatus]}>
                             <Text style={styles.tableCellHeader}>Status</Text>
                         </View>
                     </View>
 
-                    {/* Table Rows */}
+                    {/* Table Rows - wrap={false} prevents rows from being cut in half across pages */}
                     {allActivities.length > 0 ? (
                         allActivities.map((item, index) => (
-                            <View style={styles.tableRow} key={index}>
-                                <View style={{ ...styles.tableCol, ...styles.colNo }}>
-                                    <Text style={{ ...styles.tableCell, textAlign: 'center' }}>{index + 1}</Text>
+                            <View style={styles.tableRow} key={index} wrap={false}>
+                                <View style={[styles.tableCol, styles.colNo]}>
+                                    <Text style={styles.tableCell}>{index + 1}</Text>
                                 </View>
-                                <View style={{ ...styles.tableCol, ...styles.colDate }}>
-                                    <Text style={styles.tableCell}>{item.fullDate}</Text>
+                                <View style={[styles.tableCol, styles.colDate]}>
+                                    <Text style={styles.tableCellBold}>{item.fullDate}</Text>
                                 </View>
-                                <View style={{ ...styles.tableCol, ...styles.colDesc }}>
+                                <View style={[styles.tableCol, styles.colDesc]}>
                                     <Text style={styles.tableCell}>{item.deskripsi}</Text>
                                     {item.tugas && (
-                                        <Text style={{ fontSize: 8, color: '#444', fontStyle: 'italic', marginTop: 2 }}>
-                                            [Terkait Tugas: {item.tugas}]
+                                        <Text style={{ fontSize: 9, color: '#444', fontStyle: 'italic', marginTop: 4 }}>
+                                            [Tugas: {item.tugas}]
                                         </Text>
                                     )}
                                 </View>
-                                <View style={{ ...styles.tableCol, ...styles.colStatus }}>
-                                    <Text style={{ ...styles.tableCell, textAlign: 'center' }}>{item.status}</Text>
+                                <View style={[styles.tableCol, styles.colStatus]}>
+                                    <Text style={styles.tableCell}>{item.status}</Text>
                                 </View>
                             </View>
                         ))
                     ) : (
-                        <View style={styles.tableRow}>
-                             <View style={{ ...styles.tableCol, width: '100%' }}>
-                                <Text style={{ ...styles.tableCell, textAlign: 'center', padding: 20 }}>
+                        <View style={styles.tableRow} wrap={false}>
+                             <View style={[styles.tableCol, { width: '100%', textAlign: 'center' }]}>
+                                <Text style={[styles.tableCell, { padding: 15 }]}>
                                     Tidak ada data kegiatan untuk periode ini.
                                 </Text>
                              </View>
@@ -243,20 +259,20 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                     )}
                 </View>
 
-                {/* Footer / Tanda Tangan */}
-                <View style={styles.footer}>
+                {/* Footer / Tanda Tangan - wrap={false} prevents signature block from splitting */}
+                <View style={styles.footer} wrap={false}>
                     <View style={styles.signatureBlock}>
-                        <Text>Surakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
-                        <Text>Yang Melaporkan,</Text>
+                        <Text style={styles.tableCell}>Surakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
+                        <Text style={styles.tableCell}>Yang Melaporkan,</Text>
                         <View style={styles.signatureSpace} />
-                        <Text style={{ fontWeight: 'bold', textDecoration: 'underline' }}>{userProfile.namaLengkap}</Text>
-                        <Text>NIP. {userProfile.nip}</Text>
+                        <Text style={styles.signatureName}>{userProfile.namaLengkap}</Text>
+                        <Text style={styles.tableCell}>NIP. {userProfile.nip}</Text>
                     </View>
                 </View>
                 
                 {/* Nomor Halaman (Bottom Center) */}
-                <Text style={{ position: 'absolute', bottom: 20, left: 0, right: 0, textAlign: 'center', fontSize: 9, color: '#888' }} render={({ pageNumber, totalPages }) => (
-                    `${pageNumber} / ${totalPages}`
+                <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+                    `Halaman ${pageNumber} dari ${totalPages}`
                 )} fixed />
             </Page>
         </Document>

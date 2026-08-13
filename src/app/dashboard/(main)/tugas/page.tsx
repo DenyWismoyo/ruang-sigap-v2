@@ -18,6 +18,7 @@ import TaskList from './components/TaskList';
 import ConfirmModal from '@/app/dashboard/components/ConfirmModal'; 
 import { SkeletonCard } from '@/app/dashboard/components/skeletons/SkeletonCard'; 
 import Link from 'next/link';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Hooks SSOT
 import { useTugasData, TaskStatusFilter, TaskAssignmentFilter, TaskTypeFilter } from '@/app/dashboard/hooks/useTugasData';
@@ -208,15 +209,29 @@ export default function TugasSayaPage() {
         </TabsList>
         
         <div className="mt-6">
-            {isLoading ? renderSkeleton() : (
-              <TaskList 
-                  tugasList={filteredTasks} 
-                  onOpenDetail={setSelectedTask} 
-                  onStatusChange={handleStatusChange} 
-                  onDeleteTask={handleDeleteTask}
-                  userCache={userMap} 
-              />
-            )}
+            <AnimatePresence mode="wait">
+                {isLoading ? (
+                    <motion.div key="loading" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        {renderSkeleton()}
+                    </motion.div>
+                ) : (
+                  <motion.div 
+                      key={activeStatusTab}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -10 }}
+                      transition={{ duration: 0.2 }}
+                  >
+                      <TaskList 
+                          tugasList={filteredTasks} 
+                          onOpenDetail={setSelectedTask} 
+                          onStatusChange={handleStatusChange} 
+                          onDeleteTask={handleDeleteTask}
+                          userCache={userMap} 
+                      />
+                  </motion.div>
+                )}
+            </AnimatePresence>
         </div>
       </Tabs>
       

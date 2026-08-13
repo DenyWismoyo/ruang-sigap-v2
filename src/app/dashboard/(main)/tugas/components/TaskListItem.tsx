@@ -90,7 +90,7 @@ export default function TaskListItem({ tugas, isExpanded, onToggleExpand, onOpen
     };
 
     return (
-        <Card className={`transition-all duration-200 ${tugas.status === 'Selesai' ? 'bg-muted/50' : 'bg-card'}`}>
+        <Card className={`transition-all duration-200 hover:shadow-md hover:border-primary/50 group ${tugas.status === 'Selesai' ? 'bg-muted/50 opacity-80 hover:opacity-100' : 'bg-card'}`}>
             <CardHeader 
               className="flex flex-row items-center p-4"
             >

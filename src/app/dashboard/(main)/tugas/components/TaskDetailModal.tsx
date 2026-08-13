@@ -34,8 +34,8 @@ const SuratViewerModal = ({ isOpen, onClose, suratData }: { isOpen: boolean, onC
     if (!isOpen || !suratData) return null;
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="w-full max-w-4xl h-[90vh] bg-card border-border flex flex-col p-0 gap-0">
-                <DialogHeader className="flex-shrink-0 p-4 border-b border-border"><DialogTitle>{suratData.perihal}</DialogTitle></DialogHeader>
+            <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-xl rounded-none bg-card border-border flex flex-col p-0 gap-0 overflow-hidden">
+                <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-border bg-card z-10"><DialogTitle>{suratData.perihal}</DialogTitle></DialogHeader>
                 <div className="flex-1 p-2 overflow-hidden"><CachedPdfViewer fileUrl={suratData.fileUrl} fileName={suratData.fileName} /></div>
             </DialogContent>
         </Dialog>
@@ -178,8 +178,8 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-full sm:max-w-3xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
-          <DialogHeader className="flex-shrink-0 p-4 border-b border-border">
+        <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl sm:rounded-xl rounded-none bg-card border-border flex flex-col p-0 gap-0 overflow-hidden">
+          <DialogHeader className="flex-shrink-0 p-4 sm:p-6 border-b border-border bg-card z-10">
              <div className="flex justify-between items-center">
                  <DialogTitle className="truncate pr-4">{tugas.judulTugas}</DialogTitle>
                  <div className="flex gap-2">
@@ -189,8 +189,8 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
              </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1">
-            <div className="p-6 space-y-6">
+          <ScrollArea className="flex-1 px-2 sm:px-4">
+            <div className="p-4 sm:p-6 space-y-6">
                {/* Info Dasar */}
                <div className="grid grid-cols-2 gap-4 text-sm">
                   <div><Label className="text-muted-foreground">Dari</Label><p className="font-medium">{assigner?.namaLengkap || '...'}</p></div>

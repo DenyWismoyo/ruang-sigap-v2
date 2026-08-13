@@ -25,19 +25,21 @@ const cardVariants = cva(
 
 export interface CardProps extends React.ComponentProps<"div">, VariantProps<typeof cardVariants> {
   size?: "default" | "sm"
+  interactive?: boolean
 }
 
 function Card({
   className,
   variant,
   size = "default",
+  interactive = false,
   ...props
 }: CardProps) {
   return (
     <div
       data-slot="card"
       data-size={size}
-      className={cn(cardVariants({ variant }), className)}
+      className={cn(cardVariants({ variant }), interactive && "hover:-translate-y-1 hover:shadow-xl hover:scale-[1.01] transition-all duration-400 ease-spring-smooth cursor-pointer", className)}
       {...props}
     />
   )

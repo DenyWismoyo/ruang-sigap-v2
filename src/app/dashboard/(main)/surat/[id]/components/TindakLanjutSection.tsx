@@ -16,6 +16,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
+import { motion } from 'framer-motion';
 import { TindakLanjut, Disposisi, UserProfile, Surat } from '@/types';
 import { ClipboardCheck, ExternalLink, CheckCircle, Loader2, X, Plus, Palette, ListTodo, Paperclip, Pencil } from 'lucide-react';
 import { useGoogleDriveUploader } from '@/app/dashboard/hooks/useGoogleDriveUploader';
@@ -620,14 +621,23 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
                 <h3 className="font-semibold text-sm md:text-base text-foreground mb-4">Riwayat Catatan Progres</h3>
                 
                 {tindakLanjutList.length > 0 ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                    <motion.div 
+                        className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start"
+                        initial="hidden"
+                        animate="show"
+                        variants={{
+                            hidden: { opacity: 0 },
+                            show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                        }}
+                    >
                         {tindakLanjutList.map(tl => {
                             const pelapor = userCache.get(tl.jabatanId);
                             const richTl = tl as any; 
                             
                             return (
-                                <Card key={tl.id} className={`overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 border ${getWarnaClass(richTl.warnaLabel || 'default')}`}>
-                                    <div className="p-3.5">
+                                <motion.div key={tl.id} variants={{ hidden: { opacity: 0, y: 15 }, show: { opacity: 1, y: 0 } }}>
+                                    <Card className={`overflow-hidden h-full shadow-sm hover:shadow-md transition-all duration-200 border ${getWarnaClass(richTl.warnaLabel || 'default')}`}>
+                                        <div className="p-3.5">
                                         {/* Judul */}
                                         {richTl.judulLaporan && (
                                             <h4 className="font-bold text-sm md:text-base mb-1.5 leading-snug">{richTl.judulLaporan}</h4>
@@ -680,10 +690,11 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
                                         </div>
                                         <span className="shrink-0 pl-2">{tl.tanggalLaporan?.toDate ? tl.tanggalLaporan.toDate().toLocaleDateString('id-ID', {day:'numeric', month:'short', hour:'2-digit', minute:'2-digit'}) : 'Baru saja...'}</span>
                                     </div>
-                                </Card>
+                                    </Card>
+                                </motion.div>
                             );
                         })}
-                    </div>
+                    </motion.div>
                 ) : (
                     <div className="text-center py-8 border-2 border-dashed border-border rounded-xl">
                         <ClipboardCheck size={32} className="mx-auto text-muted-foreground/30 mb-2" />

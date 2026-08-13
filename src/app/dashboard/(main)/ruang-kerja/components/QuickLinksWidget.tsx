@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogT
 import { Link as LinkIcon, Plus, Trash2, Loader2, Globe, ExternalLink } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/context/ToastContext';
+import { motion } from 'framer-motion';
 
 export default function QuickLinksWidget() {
     const { userProfile } = useUserAuth();
@@ -145,9 +146,17 @@ export default function QuickLinksWidget() {
                             <p>Belum ada tautan tersimpan.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2 p-3">
+                        <motion.div 
+                            className="grid grid-cols-2 gap-2 p-3"
+                            initial="hidden"
+                            animate="show"
+                            variants={{
+                                hidden: { opacity: 0 },
+                                show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                            }}
+                        >
                             {links.map(link => (
-                                <div key={link.id} className="group relative flex items-center p-2 rounded-md border border-border bg-background hover:border-primary/50 hover:shadow-sm transition-all">
+                                <motion.div key={link.id} variants={{ hidden: { opacity: 0, scale: 0.9 }, show: { opacity: 1, scale: 1 } }} className="group relative flex items-center p-2 rounded-md border border-border bg-background hover:border-primary/50 hover:shadow-sm transition-all">
                                     <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center min-w-0 gap-2.5" title={link.url}>
                                         <div className="w-7 h-7 rounded-full bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center flex-shrink-0 text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-800 overflow-hidden">
                                             {/* Menggunakan Google Favicon Service untuk ikon otomatis */}
@@ -168,9 +177,9 @@ export default function QuickLinksWidget() {
                                     >
                                         <Trash2 size={12} />
                                     </button>
-                                </div>
+                                </motion.div>
                             ))}
-                        </div>
+                        </motion.div>
                     )}
                  </ScrollArea>
             </CardContent>

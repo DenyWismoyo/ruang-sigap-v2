@@ -5,6 +5,7 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { ChevronRight, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const routeMapping: Record<string, string> = {
   dashboard: 'Beranda',
@@ -40,19 +41,29 @@ export default function Breadcrumbs() {
 
   return (
     <nav aria-label="breadcrumb" className="mb-4 hidden md:block">
-      <ol className="flex items-center space-x-2 text-sm text-muted-foreground">
-        <li className="flex items-center">
+      <motion.ol 
+        initial="hidden" 
+        animate="show" 
+        variants={{
+          hidden: { opacity: 0 },
+          show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+        }} 
+        className="flex items-center space-x-2 text-sm text-muted-foreground"
+      >
+        <motion.li variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }} className="flex items-center">
           <Link href="/dashboard" className="hover:text-primary transition-colors">
             <Home size={16} />
           </Link>
-        </li>
+        </motion.li>
         {pathNames.map((link, index) => {
+          if (link === 'dashboard') return null; // Skip kata 'dashboard' (sudah ada di ikon Home)
+          
           const isLast = index === pathNames.length - 1;
           const href = `/${pathNames.slice(0, index + 1).join('/')}`;
           
-          // Jika segmen URL adalah ID (panjang > 20), ganti teksnya jadi "Detail"
+          // Jika segmen URL adalah ID (panjang >= 20), ganti teksnya jadi "Detail"
           let displayName = routeMapping[link] || link;
-          if (link.length > 20) displayName = 'Detail';
+          if (link.length >= 20) displayName = 'Detail Dokumen';
 
           // Capitalize jika tidak ada di mapping
           if (displayName === link) {
@@ -61,8 +72,10 @@ export default function Breadcrumbs() {
 
           return (
             <React.Fragment key={index}>
-              <ChevronRight size={14} className="text-muted-foreground/50" />
-              <li>
+              <motion.div variants={{ hidden: { opacity: 0, scale: 0.5 }, show: { opacity: 1, scale: 1 } }}>
+                <ChevronRight size={14} className="text-muted-foreground/50" />
+              </motion.div>
+              <motion.li variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}>
                 {isLast ? (
                   <span className="font-semibold text-foreground cursor-default">
                     {displayName}
@@ -72,11 +85,11 @@ export default function Breadcrumbs() {
                     {displayName}
                   </Link>
                 )}
-              </li>
+              </motion.li>
             </React.Fragment>
           );
         })}
-      </ol>
+      </motion.ol>
     </nav>
   );
 }

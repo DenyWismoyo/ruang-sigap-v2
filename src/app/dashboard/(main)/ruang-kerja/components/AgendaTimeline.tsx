@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { MapPin, Send, Info, CalendarDays, FileSignature } from 'lucide-react';
 import { Button } from '@/components/ui/button'; 
 import { useRouter } from 'next/navigation'; // Tambahkan useRouter
+import { motion } from 'framer-motion';
 
 // Tipe gabungan (Salin dari ruang-kerja/page.tsx)
 type CombinedAgendaItem = {
@@ -66,7 +67,10 @@ const AgendaTimelineItem = ({ item, onInternalClick, onQuickNotulensi }: {
   };
 
   return (
-    <div className="relative flex items-start gap-4 group w-full text-left">
+    <motion.div 
+      variants={{ hidden: { opacity: 0, x: 20 }, show: { opacity: 1, x: 0 } }}
+      className="relative flex items-start gap-4 group w-full text-left"
+    >
       {/* Waktu */}
       <div className="flex-shrink-0 w-16 text-right pt-1">
         <span className="font-bold text-sm text-foreground">{item.time}</span>
@@ -121,7 +125,7 @@ const AgendaTimelineItem = ({ item, onInternalClick, onQuickNotulensi }: {
 
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
 
@@ -190,7 +194,15 @@ const AgendaTimeline = ({ items = [], onInternalClick, onQuickNotulensi }: Agend
             <h3 className="font-semibold text-foreground text-base mb-3 pt-2 border-t border-border first:border-t-0 first:pt-0">
               {date}
             </h3>
-            <div className="relative">
+            <motion.div 
+              className="relative"
+              initial="hidden"
+              animate="show"
+              variants={{
+                hidden: { opacity: 0 },
+                show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+              }}
+            >
               {itemsOnDate.map((item, index) => (
                 <AgendaTimelineItem 
                   key={item.id} 
@@ -199,7 +211,7 @@ const AgendaTimeline = ({ items = [], onInternalClick, onQuickNotulensi }: Agend
                   onQuickNotulensi={onQuickNotulensi} 
                 />
               ))}
-            </div>
+            </motion.div>
           </div>
         ))
       )}

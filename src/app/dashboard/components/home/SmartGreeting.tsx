@@ -40,23 +40,40 @@ export default function SmartGreeting({ userName }: { userName: string }) {
     }
   }, []);
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.15, delayChildren: 0.1 } }
+  };
+  const iconVariants = {
+    hidden: { rotate: -20, scale: 0 },
+    visible: { rotate: 0, scale: 1, transition: { type: "spring", bounce: 0.6 } }
+  };
+  const textVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 }
+  };
+  const userVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { delay: 0.4, duration: 0.5 } }
+  };
+
   return (
     <motion.div 
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.8, ease: "easeOut" }}
+      variants={containerVariants}
+      initial="hidden"
+      animate="visible"
       className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
     >
-      <div className="p-3 bg-card rounded-full shadow-sm border border-border w-fit">
+      <motion.div variants={iconVariants} className="p-3 bg-card rounded-full shadow-sm border border-border w-fit">
         {greetingData.icon}
-      </div>
+      </motion.div>
       <div>
-        <h1 className="text-3xl font-bold text-foreground">
-          {greetingData.text}, <span className="text-primary">{userName}</span>!
-        </h1>
-        <p className="text-muted-foreground mt-1">
+        <motion.h1 variants={textVariants} className="text-3xl font-bold text-foreground">
+          {greetingData.text}, <motion.span variants={userVariants} className="text-primary inline-block">{userName}</motion.span>!
+        </motion.h1>
+        <motion.p variants={textVariants} className="text-muted-foreground mt-1">
           {greetingData.subText}
-        </p>
+        </motion.p>
       </div>
     </motion.div>
   );

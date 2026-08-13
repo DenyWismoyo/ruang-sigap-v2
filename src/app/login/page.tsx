@@ -11,6 +11,7 @@ import React, { useState, useEffect, Suspense } from 'react';
 import { useUserAuth } from '../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { motion } from 'framer-motion';
 import Logo from '../../app/dashboard/components/Logo';
 import { ArrowLeft, Mail, Briefcase, FileText, Sparkles, Loader2 } from 'lucide-react';
 import { signInWithCustomToken, GoogleAuthProvider, User, AuthCredential } from 'firebase/auth';
@@ -198,19 +199,41 @@ function LoginComponent() {
     );
   }
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { opacity: 1, transition: { staggerChildren: 0.12, delayChildren: 0.2 } }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  };
+
   return (
     // [PERBAIKAN DARK MODE]
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 relative overflow-hidden">
       
+      {/* Background Animated Gradient */}
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-blue-500/10 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-blue-900/20 animate-gradient-shift z-0" />
+
       {/* [PERBAIKAN DARK MODE] */}
-      <Card className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-2xl border-border">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95, y: 20 }} 
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
+        className="z-10 w-full max-w-4xl"
+      >
+      <Card className="w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-2xl border-border interactive-card">
         
         {/* === Kolom 1: Sisi Informatif === */}
         {/* [PERBAIKAN DARK MODE] */}
-        <div className="relative hidden md:flex flex-col justify-center bg-card p-8 lg:p-12">
+        <div className="relative hidden md:flex flex-col justify-center bg-card p-8 lg:p-12 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent z-0 pointer-events-none" />
           <div className="relative z-10 w-full">
             <div>
-              <Logo className="h-16" />
+              <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ type: "spring", bounce: 0.5, delay: 0.1 }}>
+                <Logo className="h-16" />
+              </motion.div>
               {/* [PERBAIKAN DARK MODE] */}
               <h1 className="text-3xl font-bold mt-6 text-foreground">
                 Transformasi Digital untuk Birokrasi Modern.
@@ -220,34 +243,39 @@ function LoginComponent() {
               </p>
             </div>
             
-            <div className="mt-10">
+            <motion.div 
+              variants={containerVariants}
+              initial="hidden"
+              animate="visible"
+              className="mt-10"
+            >
               <ul className="space-y-5">
-                <li className="flex items-start gap-4">
+                <motion.li variants={itemVariants} className="flex items-start gap-4 hover:-translate-y-1 transition-transform cursor-default">
                   <Mail size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     {/* [PERBAIKAN DARK MODE] */}
                     <h3 className="font-semibold text-foreground">Disposisi Digital</h3>
                     <p className="text-sm text-muted-foreground">Lacak alur surat secara real-time.</p>
                   </div>
-                </li>
-                <li className="flex items-start gap-4">
+                </motion.li>
+                <motion.li variants={itemVariants} className="flex items-start gap-4 hover:-translate-y-1 transition-transform cursor-default">
                   <Briefcase size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     {/* [PERBAIKAN DARK MODE] */}
                     <h3 className="font-semibold text-foreground">Ruang Kerja Terpusat</h3>
                     <p className="text-sm text-muted-foreground">Semua disposisi, tugas, dan agenda.</p>
                   </div>
-                </li>
-                 <li className="flex items-start gap-4">
+                </motion.li>
+                 <motion.li variants={itemVariants} className="flex items-start gap-4 hover:-translate-y-1 transition-transform cursor-default">
                   <FileText size={20} className="text-primary mt-1 shrink-0" />
                   <div>
                     {/* [PERBAIKAN DARK MODE] */}
                     <h3 className="font-semibold text-foreground">Laporan E-Kinerja</h3>
                     <p className="text-sm text-muted-foreground">Catat logbook harian dan unggah bukti.</p>
                   </div>
-                </li>
+                </motion.li>
               </ul>
-            </div>
+            </motion.div>
           </div>
         </div>
 
@@ -281,39 +309,48 @@ function LoginComponent() {
                   <Label htmlFor="identifier" className="text-sm font-bold text-foreground">
                     {loginMode === 'nip' ? 'NIP' : 'Email'}
                   </Label>
-                  <Input
-                    id="identifier"
-                    type={loginMode === 'nip' ? 'text' : 'email'}
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder={loginMode === 'nip' ? 'Masukkan NIP Anda' : 'Masukkan email Anda'}
-                    required
-                    className="mt-1"
-                  />
+                  <div className="focus-within:scale-[1.01] transition-transform duration-200">
+                    <Input
+                      id="identifier"
+                      type={loginMode === 'nip' ? 'text' : 'email'}
+                      value={identifier}
+                      onChange={(e) => setIdentifier(e.target.value)}
+                      placeholder={loginMode === 'nip' ? 'Masukkan NIP Anda' : 'Masukkan email Anda'}
+                      required
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
                 
                 <div>
                   <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Masukkan password"
-                    required
-                    className="mt-1"
-                  />
+                  <div className="focus-within:scale-[1.01] transition-transform duration-200">
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Masukkan password"
+                      required
+                      className="mt-1"
+                    />
+                  </div>
                 </div>
                 
                 <div>
-                  <Button 
-                    type="submit" 
-                    disabled={loading}
-                    className="w-full"
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {loading ? 'Memproses...' : 'Login'}
-                  </Button>
+                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                    <Button 
+                      type="submit" 
+                      disabled={loading}
+                      className="w-full relative overflow-hidden"
+                    >
+                      <span className="relative z-10 flex items-center">
+                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        {loading ? 'Memproses...' : 'Login'}
+                      </span>
+                      {!loading && <div className="absolute inset-0 z-0 bg-white/20 -translate-x-full hover:animate-shimmer" />}
+                    </Button>
+                  </motion.div>
                   
                   {/* Tombol Login Google Super Minimalis */}
                   <div className="mt-4 text-center">
@@ -410,6 +447,7 @@ function LoginComponent() {
         </div>
 
       </Card>
+      </motion.div>
 
       <div className="mt-8 text-center">
         {/* [PERBAIKAN DARK MODE] */}

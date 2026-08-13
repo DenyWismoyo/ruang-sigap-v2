@@ -69,18 +69,13 @@ export default function PageTransition({
       
       <motion.div
         key={pathname}
-        // [OPTIMASI] Mulai dari posisi sedikit lebih dekat (y: 5) agar pergerakan lebih halus
-        initial={{ opacity: 0, y: 5 }} 
+        initial={{ opacity: 0, y: 12 }} 
         animate={{ opacity: 1, y: 0 }}
-        // [OPTIMASI] Hapus exit animation.
-        // Saat user klik menu, halaman lama langsung hilang, halaman baru fade-in.
-        // Ini memberikan persepsi "instan".
-        // exit={{ opacity: 0, y: -5 }} 
         transition={{
-          duration: 0.15, // Percepat durasi dari default (biasanya 0.3s)
-          ease: "easeOut",
+          duration: 0.25, 
+          ease: [0.22, 1, 0.36, 1], 
         }}
-        className="w-full h-full"
+        className="w-full h-full relative"
       >
         {children}
       </motion.div>

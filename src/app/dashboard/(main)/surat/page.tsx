@@ -19,6 +19,7 @@ import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { formatDateRelative } from '@/lib/utils';
 import dynamic from 'next/dynamic';
+import { motion, AnimatePresence } from 'framer-motion';
 
 // Icons
 import { 
@@ -110,7 +111,7 @@ const SuratCard = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s:string) => s.trim()))).join(', ') : null;
 
     return (
-        <Card className={`transition-all duration-200 hover:shadow-md border-l-4 ${borderColorClass} overflow-hidden`}>
+        <Card className={`transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-l-4 ${borderColorClass} overflow-hidden group`}>
             <div className="p-3.5 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
                 <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
@@ -227,7 +228,7 @@ const SuratRow = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s: string) => s.trim()))).join(', ') : null;
 
     return (
-        <TableRow className="hover:bg-muted/50 transition-colors group">
+        <TableRow className="hover:bg-muted/60 hover:shadow-sm transition-all duration-200 group bg-card">
             <TableCell className="font-semibold cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
                 <div className="text-primary hover:underline line-clamp-2">{surat.perihal}</div>
                 <p className="text-xs text-muted-foreground font-normal truncate">{surat.nomorSurat}</p>
@@ -678,7 +679,14 @@ export default function KotakMasukPage() {
 
                 {/* --- TAB CONTENT 1: DAFTAR SURAT --- */}
                 <TabsContent value="daftar-surat" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    
+                    <AnimatePresence mode="wait">
+                        <motion.div 
+                            key={`daftar-surat-${statusFilter}-${jenisFilter}`}
+                            initial={{ opacity: 0, y: 10 }} 
+                            animate={{ opacity: 1, y: 0 }} 
+                            exit={{ opacity: 0, y: -10 }} 
+                            transition={{ duration: 0.2 }}
+                        >
                     {/* Filters */}
                     <div className="flex flex-col md:flex-row gap-3 mb-6">
                         <div className="relative flex-1">
@@ -728,38 +736,45 @@ export default function KotakMasukPage() {
                         <>
                             {/* Mobile List */}
                             <div className="md:hidden space-y-4">
-                                {suratList.map(surat => {
+                                {suratList.map((surat, index) => {
                                     const actionItem = getActionItem(surat.id);
                                     return (
-                                        <SuratCard 
-                                            key={surat.id} surat={surat} 
-                                            actionItem={actionItem}
-                                            recipientNames={surat.infoTampilan?.recipientNames}
-                                            onNavigate={() => { setIsNavigating(true); router.push(`/dashboard/surat/${surat.id}`); }} 
-                                            onQuickTrack={setQuickTrackSurat}
-                                            onQuickPreview={setQuickPreviewSurat}
-                                            onQuickArchive={setQuickArchiveSurat}
-                                            onCopyNomor={handleCopyNomor}
-                                            onQuickAccept={handleQuickAccept}
-                                            onQuickReport={handleQuickReport}
-                                            isActionProcessing={isActionProcessing}
-                                            canArchive={canArchive}
-                                        />
+                                        <motion.div
+                                            key={surat.id}
+                                            initial={{ opacity: 0, y: 20 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            transition={{ duration: 0.3, delay: index * 0.05 }}
+                                        >
+                                            <SuratCard 
+                                                key={`card-${surat.id}`} surat={surat} 
+                                                actionItem={actionItem}
+                                                recipientNames={surat.infoTampilan?.recipientNames}
+                                                onNavigate={() => { setIsNavigating(true); router.push(`/dashboard/surat/${surat.id}`); }} 
+                                                onQuickTrack={setQuickTrackSurat}
+                                                onQuickPreview={setQuickPreviewSurat}
+                                                onQuickArchive={setQuickArchiveSurat}
+                                                onCopyNomor={handleCopyNomor}
+                                                onQuickAccept={handleQuickAccept}
+                                                onQuickReport={handleQuickReport}
+                                                isActionProcessing={isActionProcessing}
+                                                canArchive={canArchive}
+                                            />
+                                        </motion.div>
                                     );
                                 })}
                             </div>
 
                             {/* Desktop Table */}
-                            <Card className="hidden md:block overflow-hidden border border-border shadow-sm">
+                            <div className="hidden md:block">
                                 <Table>
-                                    <TableHeader className="bg-muted/50">
+                                    <TableHeader>
                                         <TableRow>
-                                            <TableHead className="font-bold">Perihal / Nomor</TableHead>
-                                            <TableHead className="font-bold">Pengirim</TableHead>
-                                            <TableHead className="font-bold">Jenis</TableHead>
-                                            <TableHead className="font-bold">Status</TableHead>
-                                            <TableHead className="font-bold">Info Disposisi</TableHead>
-                                            <TableHead className="font-bold text-right">Aksi / Tgl</TableHead>
+                                            <TableHead>Perihal / Nomor</TableHead>
+                                            <TableHead>Pengirim</TableHead>
+                                            <TableHead>Jenis</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Info Disposisi</TableHead>
+                                            <TableHead className="text-right">Aksi / Tgl</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -785,31 +800,43 @@ export default function KotakMasukPage() {
                                         })}
                                     </TableBody>
                                 </Table>
-                            </Card>
+                            </div>
+                        </>
+                    )}
 
                             {hasMore && (
-                                <div className="mt-6 text-center">
-                                    <Button variant="outline" onClick={() => loadMore()} disabled={isMoreLoading} className="w-full md:w-auto shadow-sm">
-                                        {isMoreLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <ChevronDown className="mr-2 h-4 w-4"/>}
-                                        {isMoreLoading ? 'Memuat...' : 'Muat Lebih Banyak'}
+                                <div className="flex justify-center mb-8">
+                                    <Button variant="outline" onClick={() => loadMore()} disabled={isMoreLoading}>
+                                        {isMoreLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                                        Tampilkan Lebih Banyak
                                     </Button>
                                 </div>
                             )}
-                        </>
-                    )}
+                        </motion.div>
+                    </AnimatePresence>
                 </TabsContent>
 
                 {/* --- TAB CONTENT 2: PEMANTAUAN --- */}
                 <TabsContent value="pemantauan" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
-                    <PemantauanTab onNavigate={() => setIsNavigating(true)} />
+                    <AnimatePresence mode="wait">
+                        <motion.div
+                            key="pemantauan-tab"
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.2 }}
+                        >
+                            <PemantauanTab onNavigate={() => setIsNavigating(true)} />
+                        </motion.div>
+                    </AnimatePresence>
                 </TabsContent>
 
             </Tabs>
 
             {/* --- MODAL QUICK TRACK --- */}
             <Dialog open={!!quickTrackSurat} onOpenChange={(open) => !open && setQuickTrackSurat(null)}>
-                <DialogContent className="sm:max-w-xl bg-card border-border">
-                    <DialogHeader className="pb-4 border-b border-border">
+                <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl rounded-none bg-card border-border flex flex-col p-0 gap-0 overflow-hidden">
+                    <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b border-border bg-card z-10 shrink-0">
                         <DialogTitle className="flex items-start gap-2 text-left">
                             <Activity className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
                             <span className="line-clamp-2 leading-tight">Pantau: {quickTrackSurat?.perihal}</span>
@@ -827,7 +854,7 @@ export default function KotakMasukPage() {
                         />
                     )}
 
-                    <div className="pt-4 border-t border-border flex justify-end gap-2">
+                    <div className="p-4 sm:p-6 pt-4 border-t border-border flex justify-end gap-2 bg-card mt-auto shrink-0 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                         <Button variant="outline" onClick={() => setQuickTrackSurat(null)}>Tutup</Button>
                         <Button onClick={() => {
                             setQuickTrackSurat(null);
@@ -842,7 +869,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK PREVIEW PDF --- */}
             <Dialog open={!!quickPreviewSurat} onOpenChange={(open) => !open && setQuickPreviewSurat(null)}>
-                <DialogContent className="sm:max-w-4xl w-[95vw] h-[85vh] md:h-[90vh] bg-card border-border p-0 gap-0 flex flex-col overflow-hidden">
+                <DialogContent className="w-full h-[100dvh] sm:max-w-4xl sm:w-[95vw] sm:h-[90vh] sm:rounded-xl rounded-none bg-card border-border p-0 gap-0 flex flex-col overflow-hidden">
                     <DialogHeader className="p-4 border-b border-border bg-muted/30 flex-shrink-0">
                         <DialogTitle className="flex items-start gap-2 text-left pr-6">
                             <Eye className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
@@ -877,7 +904,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK ARCHIVE --- */}
             <Dialog open={!!quickArchiveSurat} onOpenChange={(open) => !open && setQuickArchiveSurat(null)}>
-                <DialogContent className="sm:max-w-md bg-card border-border">
+                <DialogContent className="w-full sm:max-w-md sm:rounded-xl rounded-b-xl bg-card border-border">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="h-5 w-5" />
@@ -907,8 +934,8 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK REPORT --- */}
             <Dialog open={!!quickReportSurat} onOpenChange={(open) => !open && resetQuickReportForm()}>
-                <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0' : 'sm:max-w-lg w-[95vw]'} bg-card border-border p-0 overflow-hidden flex flex-col transition-all duration-300`}>
-                    <DialogHeader className="px-5 pt-5 pb-3 bg-muted/30 border-b border-border flex flex-row items-start justify-between">
+                <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0' : 'w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl rounded-none'} bg-card border-border p-0 overflow-hidden flex flex-col transition-all duration-300`}>
+                    <DialogHeader className="px-4 py-3 sm:px-5 sm:pt-5 sm:pb-3 bg-muted/30 border-b border-border flex flex-row items-start justify-between shrink-0">
                         <div className="flex-1 pr-4">
                             <DialogTitle className="flex items-center gap-2 text-foreground">
                                 <MessageSquare className="h-5 w-5 text-blue-600" />

@@ -7,6 +7,7 @@ import React, { useState } from 'react';
 import { Disposisi, UserProfile } from '@/types';
 import { Loader2, Users } from 'lucide-react';
 import { formatDateRelative } from '@/lib/utils';
+import { motion } from 'framer-motion';
 import Avatar from '@/app/dashboard/components/Avatar';
 import { useSuratActions } from '@/app/dashboard/hooks/useSuratActions'; 
 
@@ -127,7 +128,15 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
           </div>
           <div className="p-3 md:p-6 overflow-y-auto max-h-96">
             {disposisiList.length > 0 ? (
-              <ul className="space-y-3 md:space-y-4">
+              <motion.ul 
+                className="space-y-3 md:space-y-4"
+                initial="hidden"
+                animate="show"
+                variants={{
+                  hidden: { opacity: 0 },
+                  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
+                }}
+              >
                 {disposisiList.map(d => {
                   const isRecipient = userProfile && d.kepadaJabatanId.includes(userProfile.jabatanId);
                   const canBeReturned = isRecipient && d.status !== 'Dikembalikan';
@@ -137,7 +146,11 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
 
                   return (
                     // Penyesuaian Padding Mobile
-                    <li key={d.id} className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-muted border border-border">
+                    <motion.li 
+                      key={d.id} 
+                      variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
+                      className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-muted border border-border"
+                    >
                       <div className="flex justify-between items-start">
                         <div className="flex items-start space-x-2.5 md:space-x-3 min-w-0">
                             {/* Penyesuaian Ukuran Avatar Mobile */}
@@ -163,10 +176,10 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                           <p className="text-[10px] md:text-xs text-muted-foreground">{formatDateRelative(d.tanggalDisposisi)}</p>
                           {canBeReturned && (<button onClick={() => openReturnModal(d)} title="Kembalikan Disposisi" className="px-2 py-1 text-[10px] md:text-xs font-bold text-white bg-yellow-500 rounded-md hover:bg-yellow-600 transition-colors">Kembalikan</button>)}
                       </div>
-                    </li>
+                    </motion.li>
                   )
                 })}
-              </ul>
+              </motion.ul>
             ) : (<p className="mt-4 text-xs md:text-sm text-muted-foreground text-center py-4">Belum ada riwayat disposisi.</p>)}
           </div>
       </div>

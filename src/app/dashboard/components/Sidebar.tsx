@@ -11,6 +11,7 @@
 "use client";
 
 import React, { memo, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import Logo from './Logo';
 import {
     LayoutDashboard, Mail, ClipboardCheck, BookOpen,
@@ -172,7 +173,12 @@ const Sidebar = memo(({
   }, [isAdminOpd, opdConfig]);
 
   return (
-    <aside className="relative w-20 bg-card text-foreground flex flex-col border-r border-border h-full z-50">
+    <motion.aside 
+        initial={{ x: -20, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className="relative w-20 bg-card text-foreground flex flex-col border-r border-border h-full z-50"
+    >
       <div className="p-4 h-16 flex items-center justify-center border-b border-border">
         <Logo className="h-8 w-10" />
       </div>
@@ -188,11 +194,23 @@ const Sidebar = memo(({
                     key={section.id}
                     onMouseEnter={() => onMenuEnter(section.id)}
                     className={`group relative flex items-center justify-center w-full px-2 py-3 transition-colors
-                        ${isActive ? 'bg-accent text-accent-foreground' : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'}
+                        ${isActive ? 'text-accent-foreground' : 'text-muted-foreground hover:text-accent-foreground hover:bg-accent/50'}
                     `}
                  >
-                     <div className="relative">
-                        <Icon className={`w-6 h-6 ${isActive ? 'text-primary' : ''}`} />
+                     {isActive && (
+                         <motion.div layoutId="sidebar-active-bg" className="absolute inset-x-2 inset-y-1 bg-accent rounded-xl z-0 shadow-sm" />
+                     )}
+                     <div className="relative z-10 flex items-center justify-center">
+                        {isActive && (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="absolute inset-0 bg-primary/20 blur-md rounded-full"
+                            />
+                        )}
+                        <motion.div animate={{ scale: isActive ? 1.15 : 1 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
+                            <Icon className={`w-6 h-6 relative z-10 ${isActive ? 'text-primary' : ''}`} />
+                        </motion.div>
                         {hasNotif && (
                             <span className="absolute -top-1 -right-1 flex h-3 w-3">
                               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -200,9 +218,14 @@ const Sidebar = memo(({
                             </span>
                         )}
                      </div>
-                     <span className="absolute left-16 ml-2 hidden group-hover:block px-2 py-1 text-xs font-semibold text-popover-foreground bg-popover rounded-md shadow-md whitespace-nowrap z-50 border border-border animate-in fade-in slide-in-from-left-2 duration-200">
+                     <motion.span 
+                        initial={{ opacity: 0, x: -8 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: false }}
+                        className="absolute left-16 ml-2 hidden group-hover:block px-2 py-1 text-xs font-semibold text-popover-foreground bg-popover rounded-md shadow-md whitespace-nowrap z-50 border border-border"
+                     >
                         {section.title}
-                     </span>
+                     </motion.span>
                  </button>
              )
          })}
@@ -211,14 +234,19 @@ const Sidebar = memo(({
       <div className="p-2 border-t border-border text-center flex flex-col items-center gap-2">
           {isAdminOpd && opdConfig && (
             <div className="w-10 h-1 bg-muted rounded-full overflow-hidden" title={`Kuota: ${opdConfig.penggunaAktifSaatIni}/${opdConfig.kuotaPengguna}`}>
-               <div className="bg-primary h-full" style={{ width: `${quotaPercentage}%` }} />
+               <motion.div 
+                  initial={{ width: 0 }}
+                  animate={{ width: `${quotaPercentage}%` }}
+                  transition={{ type: "spring", stiffness: 100, damping: 20 }}
+                  className="bg-primary h-full" 
+               />
             </div>
           )}
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary cursor-default" title={userProfile.namaLengkap}>
+          <motion.div whileHover={{ scale: 1.1 }} whileTap={{ rotate: 360, scale: 0.9 }} transition={{ type: "spring" }} className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary cursor-default" title={userProfile.namaLengkap}>
              {userProfile.namaLengkap.charAt(0)}
-          </div>
+          </motion.div>
       </div>
-    </aside>
+    </motion.aside>
   );
 });
 

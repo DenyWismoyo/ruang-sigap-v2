@@ -16,6 +16,10 @@ module.exports = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-inter)', 'sans-serif'],
+        heading: ['var(--font-sora)', 'sans-serif'],
+      },
       colors: { 
         // Ini adalah "jembatan" ajaib.
         // Ini memberitahu Tailwind untuk menggunakan variabel CSS dari globals.css
@@ -58,6 +62,10 @@ module.exports = {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      transitionTimingFunction: {
+        'spring-bounce': 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'spring-smooth': 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
       keyframes: { // Diperlukan oleh shadcn
         "accordion-down": {
           from: { height: 0 },
@@ -87,6 +95,19 @@ module.exports = {
         "pop-out": {
           "from": { opacity: "1", transform: "scale(1) translateY(0)" },
           "to": { opacity: "0", transform: "scale(0.95) translateY(-10%)" },
+        },
+        // --- TAMBAHAN UPGRADE UI ---
+        "gradient-shift": {
+          "0%, 100%": { "background-size": "200% 200%", "background-position": "left center" },
+          "50%": { "background-size": "200% 200%", "background-position": "right center" },
+        },
+        "scale-in": {
+          from: { opacity: "0", transform: "scale(0.95)" },
+          to: { opacity: "1", transform: "scale(1)" },
+        },
+        "slide-right": {
+          from: { opacity: "0", transform: "translateX(-20px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
         }
         // --- ---
       },
@@ -102,6 +123,10 @@ module.exports = {
         // --- TAMBAHAN BARU (POIN 4) ---
         "pop-in": "pop-in 0.2s ease-out",
         "pop-out": "pop-out 0.15s ease-in",
+        // --- TAMBAHAN UPGRADE UI ---
+        "gradient-shift": "gradient-shift 8s ease infinite",
+        "scale-in": "scale-in 0.25s ease-out forwards",
+        "slide-right": "slide-right 0.3s ease-out forwards",
         // --- ---
       },
     },
