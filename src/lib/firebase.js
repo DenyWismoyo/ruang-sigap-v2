@@ -26,24 +26,25 @@ const firebaseConfig = {
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
-// Inisialisasi Firestore dengan Named Database "database-siyap"
+// Inisialisasi Firestore dengan Named Database
 export const db = (() => {
+  const dbName = process.env.NEXT_PUBLIC_FIRESTORE_DATABASE || "database-siyap";
   if (typeof window !== "undefined") {
     try {
       const firestoreInstance = initializeFirestore(app, {
         localCache: persistentLocalCache({
           tabManager: persistentMultipleTabManager()
         })
-      }, "database-siyap"); 
-      console.log("Mode offline Firestore (Multi-Tab Cache) aktif [database-siyap].");
+      }, dbName); 
+      console.log(`Mode offline Firestore (Multi-Tab Cache) aktif [${dbName}].`);
       return firestoreInstance;
     } catch (error) {
       console.warn("Gagal mengaktifkan Multi-Tab Cache, fallback ke getFirestore", error);
-      return getFirestore(app, "database-siyap");
+      return getFirestore(app, dbName);
     }
   } else {
     // SSR / API Routes
-    return getFirestore(app, "database-siyap");
+    return getFirestore(app, dbName);
   }
 })();
 
@@ -62,6 +63,13 @@ if (typeof window !== "undefined") {
     console.error("Gagal menginisialisasi Firebase Messaging:", err);
   }
 }
+
+import { httpsCallable } from "firebase/functions";
+
+// Ekspor custom httpsCallable untuk development
+export const callCloudFunction = (functionName) => {
+  return httpsCallable(functions, functionName);
+};
 
 // Export utils agar mempermudah import di file lain
 export { ref, uploadBytesResumable, getDownloadURL, getToken, onMessage };

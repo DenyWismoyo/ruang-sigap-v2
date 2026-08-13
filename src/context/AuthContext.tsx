@@ -12,7 +12,7 @@ import { db, auth, functions } from '@/lib/firebase';
 import { 
   collection, query, where, getDocs, doc, getDoc, Timestamp
 } from 'firebase/firestore';
-import { httpsCallable } from "firebase/functions";
+import { callCloudFunction } from "@/lib/firebase";
 import { useQueryClient } from '@tanstack/react-query';
 
 import { 
@@ -70,7 +70,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     // Logika login email tetap sama...
     let nip: string;
     try {
-      const checkAdminEmail = httpsCallable(functions, 'checkAdminEmail');
+      const checkAdminEmail = callCloudFunction("checkAdminEmail");
       const adminResult: any = await checkAdminEmail({ email });
       nip = adminResult.data.nip;
       if (!nip) throw new Error("Gagal mendapatkan NIP dari email admin.");
@@ -78,7 +78,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
       throw new Error(error.message || "Gagal memvalidasi email admin.");
     }
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    const setNipClaim = httpsCallable(functions, 'setNipClaim');
+    const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true); 
     return userCredential;
@@ -89,7 +89,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     if (!nip || !pass) throw new Error("NIP dan password tidak boleh kosong.");
     let email = '';
     try {
-      const getEmailFromNip = httpsCallable(functions, 'getEmailFromNip');
+      const getEmailFromNip = callCloudFunction("getEmailFromNip");
       const result: any = await getEmailFromNip({ nip });
       email = result.data.email;
     } catch (error: any) {
@@ -97,7 +97,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     }
     if (!email) throw new Error("Data email tidak ditemukan untuk NIP tersebut.");
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    const setNipClaim = httpsCallable(functions, 'setNipClaim');
+    const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true);
     return userCredential;
@@ -118,7 +118,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     if (!nip || !pass) throw new Error("NIP dan password tidak boleh kosong.");
     let email = '';
     try {
-      const getEmailFromNip = httpsCallable(functions, 'getEmailFromNip');
+      const getEmailFromNip = callCloudFunction("getEmailFromNip");
       const result: any = await getEmailFromNip({ nip });
       email = result.data.email;
     } catch (error: any) {
@@ -134,7 +134,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     const userCredential = await signInWithEmailAndPassword(auth, email, pass);
     await linkWithCredential(userCredential.user, credential);
     
-    const setNipClaim = httpsCallable(functions, 'setNipClaim');
+    const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true);
   };

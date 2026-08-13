@@ -46,6 +46,24 @@ export default function RootLayout({
         <meta name="application-name" content="SIGAP" />
         <meta name="theme-color" content="#0284c7" />
         <link rel="manifest" href="/manifest.json" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.addEventListener('error', function(e) {
+                if (e.message && e.message.toLowerCase().includes('loading chunk')) {
+                  console.warn('ChunkLoadError intercepted. Hard reloading...');
+                  window.location.reload();
+                }
+              }, true);
+              window.addEventListener('unhandledrejection', function(e) {
+                if (e.reason && e.reason.message && e.reason.message.toLowerCase().includes('loading chunk')) {
+                  console.warn('ChunkLoadError (Promise) intercepted. Hard reloading...');
+                  window.location.reload();
+                }
+              });
+            `
+          }}
+        />
       </head>
       <body
         className={cn(

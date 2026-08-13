@@ -7,7 +7,7 @@ import * as functions from "firebase-functions/v1";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
 
-import { sendFcmMessageByUid } from "./index";
+import { sendFcmMessageByUid } from "./utils/helpers";
 
 // Mencegah error "app already initialized" saat di-deploy bersama fungsi lain
 if (!admin.apps.length) {

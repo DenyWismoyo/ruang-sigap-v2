@@ -1,11 +1,12 @@
-// Lokasi: src/app/dashboard/components/AutoHealButton.tsx
+﻿// Lokasi: src/app/dashboard/components/AutoHealButton.tsx
 "use client";
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Stethoscope, Loader2, AlertTriangle } from 'lucide-react';
-import { getFunctions, httpsCallable } from 'firebase/functions';
+import { callCloudFunction } from "@/lib/firebase";
 import { db } from '@/lib/firebase';
+import { getFunctions } from 'firebase/functions';
 import { useToast } from '@/context/ToastContext';
 import ConfirmModal from '@/app/dashboard/components/ConfirmModal';
 
@@ -21,7 +22,7 @@ export default function AutoHealButton() {
         try {
             // Memanggil fungsi dari region yang tepat[cite: 7]
             const functionsInstance = getFunctions(db.app, 'asia-southeast2');
-            const runAutoHeal = httpsCallable(functionsInstance, 'runAutoHeal');
+            const runAutoHeal = callCloudFunction("runAutoHeal");
             
             const result = await runAutoHeal();
             const data = result.data as any;

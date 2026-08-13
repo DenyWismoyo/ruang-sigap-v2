@@ -1,4 +1,4 @@
-// Lokasi: src/app/dashboard/laporan-langganan/page.tsx
+﻿// Lokasi: src/app/dashboard/laporan-langganan/page.tsx
 // [REFACTOR SHADCN (Fase 4)]
 // - Mengganti SEMUA modal kustom (.modal-backdrop) dengan <Dialog> shadcn/ui.
 // - Mengganti SEMUA form HTML standar dengan <Input>, <Label>, <Select>, <Textarea>, <Button>, <Checkbox> shadcn/ui.
@@ -14,8 +14,9 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
+import { getFunctions } from 'firebase/functions';
 import { collection, doc, getDocs, onSnapshot, setDoc, Timestamp, addDoc, query, where, orderBy, deleteDoc, updateDoc, writeBatch, getDoc } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions'; // <-- TAMBAHAN AUTO HEAL
+import { callCloudFunction } from "@/lib/firebase"; // <-- TAMBAHAN AUTO HEAL
 import { useUserAuth } from '@/context/AuthContext'; 
 import { OPD, OpdConfig, PaymentHistory, PricingPackage, Tagihan } from '@/types'; 
 import { DollarSign, Save, X, Loader2, Clock, CheckCircle, FileText, Search, Edit, Trash2, Plus, Users, Eye, BarChart, FileWarning, Receipt, Settings, AlertTriangle, Stethoscope } from 'lucide-react'; // <-- TAMBAHAN Stethoscope
@@ -896,7 +897,7 @@ const LaporanLanggananPage = () => {
                 setConfirmModal(prev => ({ ...prev, isProcessing: true }));
                 try {
                     const functionsInstance = getFunctions(db.app, 'asia-southeast2');
-                    const runAutoHeal = httpsCallable(functionsInstance, 'runAutoHeal');
+                    const runAutoHeal = callCloudFunction("runAutoHeal");
                     const result = await runAutoHeal();
                     const data = result.data as any;
                     
@@ -985,7 +986,7 @@ const LaporanLanggananPage = () => {
                                             return (
                                                 <TableRow key={opd.id}>
                                                     <TableCell className={`font-semibold ${(opd as any).indent ? 'pl-6' : ''}`}>
-                                                        {(opd as any).indent ? '↳ ' : ''}{opd.namaOpd}
+                                                        {(opd as any).indent ? 'â†³ ' : ''}{opd.namaOpd}
                                                     </TableCell>
                                                     <TableCell>{config?.packageName || 'N/A'}</TableCell>
                                                     <TableCell className={`font-medium ${isExpired ? 'text-red-600' : ''}`}>{config ? config.langgananAktifHingga.toDate().toLocaleDateString('id-ID') : '-'}</TableCell>

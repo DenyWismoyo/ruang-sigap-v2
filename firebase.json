@@ -1,6 +1,14 @@
 {
+  "firestore": [
+    {
+      "database": "database-siyap",
+      "rules": "firestore.rules",
+      "indexes": "firestore.indexes.json"
+    }
+  ],
   "functions": {
-    "source": "functions"
+    "source": "functions",
+    "codebase": "dev-siyap"
   },
   "hosting": {
     "target": "sigap-opd",

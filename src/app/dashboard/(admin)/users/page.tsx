@@ -15,7 +15,7 @@ import { initializeApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { db, app, functions } from '@/lib/firebase'; 
 import { doc, updateDoc, setDoc, collection, writeBatch, addDoc, Timestamp, serverTimestamp, getDocs, query, where, deleteDoc } from 'firebase/firestore'; 
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { callCloudFunction } from "@/lib/firebase";
 import { UserProfile, FunctionalRole, OPD, Jabatan, RiwayatMutasi, TipeMutasi } from '@/types'; 
 import { useUserAuth } from '@/context/AuthContext';
 import { useMasterData } from '@/app/dashboard/hooks/useMasterData'; 
@@ -296,7 +296,7 @@ export default function ManajemenUserPage() {
                     const batch = writeBatch(db);
                     usersToDelete.forEach(u => { if (u.id) batch.delete(doc(db, 'users', u.id)); });
                     await batch.commit();
-                    const deleteAuthFunction = httpsCallable(functions, 'deleteUserByAdmin');
+                    const deleteAuthFunction = callCloudFunction("deleteUserByAdmin");
                     const authPromises = usersToDelete.map(u => deleteAuthFunction({ uid: u.uid }).catch(e => console.warn(`Auth del fail ${u.uid}:`, e)));
                     await Promise.all(authPromises);
                     
@@ -316,7 +316,7 @@ export default function ManajemenUserPage() {
                 setIsProcessing(true);
                 try {
                     if (user.id) await deleteDoc(doc(db, 'users', user.id));
-                    try { const deleteAuthFunction = httpsCallable(functions, 'deleteUserByAdmin'); await deleteAuthFunction({ uid: user.uid }); } catch (authError: any) { console.warn("Auth del fail:", authError); }
+                    try { const deleteAuthFunction = callCloudFunction("deleteUserByAdmin"); await deleteAuthFunction({ uid: user.uid }); } catch (authError: any) { console.warn("Auth del fail:", authError); }
                     
                     setTimeout(() => queryClient.invalidateQueries({ queryKey: ['master', 'opdData', user.opdId] }), 2000);
                     setFlashMessage('success', `Pengguna ${user.namaLengkap} dihapus.`);

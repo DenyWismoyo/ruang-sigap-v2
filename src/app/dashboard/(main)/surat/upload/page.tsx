@@ -1,4 +1,4 @@
-// Lokasi: src/app/dashboard/surat/upload/page.tsx
+﻿// Lokasi: src/app/dashboard/surat/upload/page.tsx
 // [UPDATE] Mendaftarkan Pimpinan Tertinggi secara otomatis pada 'terlibatJabatanIds' saat upload default.
 // [UPDATE] Implementasi Anti-Spam Rate Limiter di sisi Klien (UI Cooldown).
 // [UPDATE CLOUD FUNCTION] Memindahkan proses request Gemini API ke Backend (Firebase Cloud Functions).
@@ -8,9 +8,10 @@
 
 import React, { useState, useEffect, Suspense, useMemo, useRef } from 'react';
 import { db, storage } from '@/lib/firebase';
+import { getFunctions } from 'firebase/functions';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { getFunctions, httpsCallable } from 'firebase/functions'; 
+import { callCloudFunction } from "@/lib/firebase"; 
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -275,7 +276,7 @@ function UploadSuratComponent() {
             const base64ImageData = canvas.toDataURL('image/jpeg', 0.6).split(',')[1];
 
             const functionsInstance = getFunctions(db.app, 'asia-southeast2');
-            const extractDataAI = httpsCallable(functionsInstance, 'extractSuratDataAIV2');
+            const extractDataAI = callCloudFunction("extractSuratDataAIV2");
             
             const result = await extractDataAI({ base64Image: base64ImageData });
             const parsedData = result.data as any;

@@ -1,4 +1,4 @@
-// Lokasi: src/app/dashboard/components/DelegasiWidget.tsx
+﻿// Lokasi: src/app/dashboard/components/DelegasiWidget.tsx
 // [MODIFIKASI]
 // - Mengganti dropdown kustom dengan <Popover> + <Command> (untuk pencarian).
 // - Mengganti <select> durasi dengan <Select> Shadcn.
@@ -14,8 +14,9 @@
 import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { Jabatan, UserProfile } from '@/types'; // [PERBAIKAN] Impor UserProfile
-import { getFunctions, httpsCallable } from "firebase/functions";
+import { callCloudFunction } from "@/lib/firebase";
 import { db } from '@/lib/firebase';
+import { getFunctions } from 'firebase/functions';
 import { collection, query, where, getDocs, doc, getDoc, limit } from 'firebase/firestore';
 import { Users, ChevronDown, Clock, X, Loader2, LogOut, CheckCircle, Search } from 'lucide-react';
 
@@ -149,7 +150,7 @@ export default function DelegasiWidget({ userCache }: { userCache: Map<string, U
         setIsProcessing(true);
         setError('');
         try {
-            const aturDelegasi = httpsCallable(functions, 'aturDelegasiSementara');
+            const aturDelegasi = callCloudFunction("aturDelegasiSementara");
             await aturDelegasi({
                 delegatedToJabatanId: selectedJabatanId,
                 durasi: selectedDurasi,
@@ -169,7 +170,7 @@ export default function DelegasiWidget({ userCache }: { userCache: Map<string, U
         if (!window.confirm("Apakah Anda yakin ingin menonaktifkan delegasi sementara?")) return;
         setIsProcessing(true);
         try {
-            const batalkanDelegasi = httpsCallable(functions, 'batalkanDelegasiSementara');
+            const batalkanDelegasi = callCloudFunction("batalkanDelegasiSementara");
             await batalkanDelegasi();
             setIsDropdownOpen(false);
             window.location.reload();

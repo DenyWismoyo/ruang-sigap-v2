@@ -212,7 +212,11 @@ function LoginComponent() {
   return (
     // [PERBAIKAN DARK MODE]
     <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 relative overflow-hidden">
-      
+      {/* Theme Toggle Button */}
+      <div className="absolute top-6 right-6 z-50">
+        <ThemeToggleCompact />
+      </div>
+
       {/* Background Animated Gradient */}
       <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-purple-500/10 to-blue-500/10 dark:from-indigo-900/20 dark:via-purple-900/20 dark:to-blue-900/20 animate-gradient-shift z-0" />
 
@@ -236,10 +240,10 @@ function LoginComponent() {
               </motion.div>
               {/* [PERBAIKAN DARK MODE] */}
               <h1 className="text-3xl font-bold mt-6 text-foreground">
-                Transformasi Digital untuk Birokrasi Modern.
+                NataKarya: ERP Birokrasi Modern.
               </h1>
               <p className="text-lg text-muted-foreground mt-4">
-                SIGAP mengorkestrasikan seluruh alur kerja Anda dalam satu platform cerdas.
+                NataKarya mengorkestrasikan seluruh alur kerja Anda dalam satu platform cerdas.
               </p>
             </div>
             
@@ -464,6 +468,8 @@ function LoginComponent() {
 }
 
 // Komponen wrapper yang menyertakan Suspense
+import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
+
 export default function LoginPage() {
     return (
         <Suspense fallback={

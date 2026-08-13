@@ -7,7 +7,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { db, functions } from "@/lib/firebase";
 import { collection, query, where, orderBy, limit, onSnapshot, doc } from "firebase/firestore";
-import { httpsCallable } from "firebase/functions";
+import { callCloudFunction } from "@/lib/firebase";
 import { useUserAuth } from "@/context/AuthContext"; // Kita butuh user dari Auth
 import { Notification, WelcomeSummary } from "@/types";
 
@@ -48,7 +48,7 @@ export const NotificationProvider = ({ children }: { children: ReactNode }) => {
     setWelcomeSummary(prev => ({ ...prev, [fieldToReset]: 0 }));
     
     try {
-      const resetCountFn = httpsCallable(functions, 'resetUserSummaryCount');
+      const resetCountFn = callCloudFunction("resetUserSummaryCount");
       await resetCountFn({ fieldToReset });
     } catch (error) { console.error(`Gagal reset ${fieldToReset}:`, error); }
   };

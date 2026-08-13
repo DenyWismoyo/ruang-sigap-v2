@@ -1,0 +1,23 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // =========================================================================
+    // FUNGSI BANTUAN (HELPERS)
+    // =========================================================================
+    function isAuthenticated() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    // =========================================================================
+    // ATURAN UMUM (BASE RULES)
+    // Sesuai permintaan "jangan terlalu ketat", semua pengguna yang berhasil
+    // login (terautentikasi) diizinkan untuk membaca dan menulis data. 
+    // Keamanan tingkat lanjut dan isolasi data (Lintas OPD) saat ini 
+    // ditangani oleh UI Frontend dan Backend Functions.
+    // =========================================================================
+    match /{document=**} {
+      allow read, write: if isAuthenticated();
+    }
+  }
+}

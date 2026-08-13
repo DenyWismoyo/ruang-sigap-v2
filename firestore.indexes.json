@@ -21,6 +21,30 @@
       "collectionGroup": "surat",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "statusPenyelesaian", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "terlibatJabatanIds", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "terlibatJabatanIds", "arrayConfig": "CONTAINS" },
+        { "fieldPath": "tanggalDiterima", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "jenisSurat", "order": "ASCENDING" },
         { "fieldPath": "reminderSent", "order": "ASCENDING" },
         { "fieldPath": "detailAgenda.tanggal", "order": "ASCENDING" }
@@ -52,6 +76,31 @@
       ]
     },
     {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "tanggalDibuat", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "penerimaTugasJabatanId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "kategoriTugas", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "disposisi",
       "queryScope": "COLLECTION",
       "fields": [
@@ -68,11 +117,51 @@
       ]
     },
     {
+      "collectionGroup": "disposisi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "dariJabatanId", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "notifications",
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "userId", "order": "ASCENDING" },
         { "fieldPath": "timestamp", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "users",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "tindakLanjut",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "terlibatJabatanIds", "arrayConfig": "CONTAINS" }
+      ]
+    },
+    {
+      "collectionGroup": "keuangan",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "tanggal", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "talent_assessments",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "opdId", "order": "ASCENDING" },
+        { "fieldPath": "tahun", "order": "ASCENDING" }
       ]
     }
   ]
