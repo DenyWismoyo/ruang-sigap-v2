@@ -11,7 +11,7 @@ import React, { useMemo } from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Star, TrendingUp, FileText, Users } from 'lucide-react';
-import { MatrixBox } from '@/app/dashboard/components/MatrixBox';
+import { MatrixBox } from '@/app/dashboard/(main)/talenta/components/MatrixBox';
 import { UserProfile } from '@/types';
 import { TalentAssessment } from '@/app/dashboard/hooks/useTalentData';
 

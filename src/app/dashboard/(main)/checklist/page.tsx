@@ -9,10 +9,10 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { db } from '../../../lib/firebase'; // PERBAIKAN PATH
+import { db } from '@/lib/firebase'; // PERBAIKAN PATH
 import { collection, query, where, onSnapshot, doc, updateDoc, addDoc, deleteDoc, Timestamp, getDoc, setDoc, orderBy, getDocs } from 'firebase/firestore';
-import { useUserAuth } from '../../../context/AuthContext'; // PERBAIKAN PATH
-import { ChecklistBoard, ChecklistItem, LogbookKegiatan, LogbookHarian, Tugas, UserProfile } from '../../../types'; // PERBAIKAN PATH
+import { useUserAuth } from '@/context/AuthContext'; // PERBAIKAN PATH
+import { ChecklistBoard, ChecklistItem, LogbookKegiatan, LogbookHarian, Tugas, UserProfile } from '@/types'; // PERBAIKAN PATH
 import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks } from 'lucide-react';
 import Link from 'next/link';
 import FormTugas from '../tugas/components/FormTugas'; // PERBAIKAN PATH (tetap)
@@ -26,33 +26,33 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/app/dashboard/components/ui/dialog'; // PERBAIKAN PATH
+} from '@/components/ui/dialog'; // PERBAIKAN PATH
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/app/dashboard/components/ui/dropdown-menu'; // PERBAIKAN PATH
-import { Button } from '@/app/dashboard/components/ui/button'; // PERBAIKAN PATH
-import { Input } from '@/app/dashboard/components/ui/input'; // PERBAIKAN PATH
-import { Label } from '@/app/dashboard/components/ui/label'; // PERBAIKAN PATH
-import { Textarea } from '@/app/dashboard/components/ui/textarea'; // PERBAIKAN PATH
-import { Alert, AlertDescription, AlertTitle } from '@/app/dashboard/components/ui/alert'; // PERBAIKAN PATH
+} from '@/components/ui/dropdown-menu'; // PERBAIKAN PATH
+import { Button } from '@/components/ui/button'; // PERBAIKAN PATH
+import { Input } from '@/components/ui/input'; // PERBAIKAN PATH
+import { Label } from '@/components/ui/label'; // PERBAIKAN PATH
+import { Textarea } from '@/components/ui/textarea'; // PERBAIKAN PATH
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'; // PERBAIKAN PATH
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/dashboard/components/ui/select'; // PERBAIKAN PATH
+} from '@/components/ui/select'; // PERBAIKAN PATH
 import {
   Tabs,
   TabsList,
   TabsTrigger,
   TabsContent,
-} from '@/app/dashboard/components/ui/tabs'; // PERBAIKAN PATH
-import { ScrollArea } from '@/app/dashboard/components/ui/scroll-area'; // PERBAIKAN PATH
-import { Progress } from '@/app/dashboard/components/ui/progress'; // PERBAIKAN PATH
+} from '@/components/ui/tabs'; // PERBAIKAN PATH
+import { ScrollArea } from '@/components/ui/scroll-area'; // PERBAIKAN PATH
+import { Progress } from '@/components/ui/progress'; // PERBAIKAN PATH
 // --- Akhir Impor Shadcn ---
 
 

@@ -11,7 +11,7 @@ import { useUserAuth } from '@/context/AuthContext';
 import { ChecklistBoard, ChecklistItem, LogbookKegiatan, LogbookHarian, Tugas, UserProfile } from '@/types';
 import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText } from 'lucide-react';
 import Link from 'next/link';
-import FormTugas from '@/app/dashboard/tugas/components/FormTugas';
+import FormTugas from '@/app/dashboard/(main)/tugas/components/FormTugas';
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/hooks/useGoogleDriveUploader';
 
 import { useVirtualizer } from '@tanstack/react-virtual';

@@ -17,29 +17,29 @@ import { useMasterData } from '@/app/dashboard/hooks/useMasterData';
 import dynamic from 'next/dynamic';
 
 // --- KOMPONEN PRIORITAS 1 (Static Import agar instan) ---
-import CachedPdfViewer from '@/app/dashboard/surat/[id]/components/CachedPdfViewer';
+import CachedPdfViewer from '@/app/dashboard/(main)/surat/[id]/components/CachedPdfViewer';
 import ConfirmModal from '@/app/dashboard/components/ConfirmModal';
 
 // --- KOMPONEN PRIORITAS 2 & MODAL (Dynamic Import / Lazy Loading) ---
-const FormDisposisi = dynamic(() => import('@/app/dashboard/surat/[id]/components/FormDisposisi'), { 
+const FormDisposisi = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/FormDisposisi'), { 
     ssr: false, 
     loading: () => <div className="p-4 text-center text-sm text-muted-foreground animate-pulse">Menyiapkan form disposisi...</div> 
 });
-const RiwayatDisposisi = dynamic(() => import('@/app/dashboard/surat/[id]/components/RiwayatDisposisi'), { 
+const RiwayatDisposisi = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/RiwayatDisposisi'), { 
     ssr: false, 
     loading: () => <div className="p-4 text-center text-sm text-muted-foreground animate-pulse">Memuat riwayat disposisi...</div> 
 });
-const TindakLanjutSection = dynamic(() => import('@/app/dashboard/surat/[id]/components/TindakLanjutSection'), { 
+const TindakLanjutSection = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/TindakLanjutSection'), { 
     ssr: false, 
     loading: () => <div className="p-4 text-center text-sm text-muted-foreground animate-pulse">Memuat form tindak lanjut...</div> 
 });
-const ActivityLogSection = dynamic(() => import('@/app/dashboard/surat/[id]/components/ActivityLogSection'), { ssr: false });
-const PenerimaanDisposisiModal = dynamic(() => import('@/app/dashboard/surat/[id]/components/PenerimaanDisposisiModal'), { ssr: false });
-const FormTugas = dynamic(() => import('@/app/dashboard/tugas/components/FormTugas'), { ssr: false });
+const ActivityLogSection = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/ActivityLogSection'), { ssr: false });
+const PenerimaanDisposisiModal = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/PenerimaanDisposisiModal'), { ssr: false });
+const FormTugas = dynamic(() => import('@/app/dashboard/(main)/tugas/components/FormTugas'), { ssr: false });
 
 
 // Khusus DispositionTracker menggunakan ".then" karena bukan default export
-const DispositionTracker = dynamic(() => import('@/app/dashboard/surat/[id]/components/DispositionTracker').then(mod => mod.DispositionTracker), { 
+const DispositionTracker = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/DispositionTracker').then(mod => mod.DispositionTracker), { 
     ssr: false, 
     loading: () => <div className="p-4 text-center text-sm text-muted-foreground animate-pulse">Memuat jejak disposisi...</div> 
 });

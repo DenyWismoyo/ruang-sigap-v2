@@ -183,7 +183,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 
               {/* --- TOP NAVBAR --- */}
               <NotificationBanner />
-              <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-card/80 backdrop-blur-md border-b border-border h-16 transition-all duration-200">
+              <header className="sticky top-0 z-30 flex items-center justify-between p-4 glass-card border-b-0 border-border h-16 transition-all duration-200">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>

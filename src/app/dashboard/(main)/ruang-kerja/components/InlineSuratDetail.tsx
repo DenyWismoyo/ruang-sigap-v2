@@ -11,7 +11,7 @@ import React, { useState } from 'react';
 import { Surat } from '@/types';
 import { FileText, User, Calendar, MapPin, ChevronDown, ChevronUp, Maximize2, AlignLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import CachedPdfViewer from '@/app/dashboard/surat/[id]/components/CachedPdfViewer';
+import CachedPdfViewer from '@/app/dashboard/(main)/surat/[id]/components/CachedPdfViewer';
 import Link from 'next/link';
 
 interface InlineSuratDetailProps {

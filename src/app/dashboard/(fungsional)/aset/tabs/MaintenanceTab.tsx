@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import MaintenanceModal from '@/app/dashboard/aset/components/MaintenanceModal';
+import MaintenanceModal from '@/app/dashboard/(fungsional)/aset/components/MaintenanceModal';
 import { useAssetData } from '@/app/dashboard/hooks/useAssetData';
 import { useMaintenanceData } from '@/app/dashboard/hooks/useMaintenanceData'; // [BARU]
 

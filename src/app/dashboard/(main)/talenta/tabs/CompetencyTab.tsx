@@ -16,7 +16,7 @@ import { Radar } from 'react-chartjs-2';
 import { Chart as ChartJS, RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend } from 'chart.js';
 import { UserProfile, KompetensiItem, RiwayatDiklat } from '@/types';
 import { BrainCircuit, Target, AlertTriangle, CheckCircle2, Search, ChevronsUpDown, Check } from 'lucide-react';
-import PlanCreationModal from '@/app/dashboard/components/PlanCreationModal'; 
+import PlanCreationModal from '@/app/dashboard/(main)/talenta/components/PlanCreationModal'; 
 import { cn } from '@/lib/utils';
 import { TalentAssessment, TalentDataCombined } from '@/app/dashboard/hooks/useTalentData';
 

@@ -11,9 +11,10 @@ import {
     Download, Briefcase, ClipboardCheck, ListChecks, 
     FolderArchive, BookOpen, Archive, FileText, Megaphone, User
 } from 'lucide-react';
-import JadwalDetailModal from '@/app/dashboard/jadwal/components/JadwalDetailModal'; 
+import JadwalDetailModal from '@/app/dashboard/(main)/jadwal/components/JadwalDetailModal'; 
 import RuangKerjaSkeleton from '@/app/dashboard/components/skeletons/RuangKerjaSkeleton';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 
 // --- IMPORT KOMPONEN BARU ---
 import SmartGreeting from '@/app/dashboard/components/home/SmartGreeting';
@@ -336,7 +337,7 @@ export default function DashboardPage() {
              <div className="lg:col-span-9 space-y-6">
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <div ref={agendaRef} className="bg-card rounded-xl shadow-md border border-border">
+                <Card ref={agendaRef} className="card-solid flex flex-col h-full">
                     <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
                         <div className="flex items-center gap-2">
                             <CalendarClock className="w-5 h-5 text-indigo-500"/>
@@ -370,10 +371,10 @@ export default function DashboardPage() {
                             : <div className="text-center py-12 text-muted-foreground"><Calendar size={48} className="mx-auto text-muted-foreground/30 mb-2"/><p className="font-medium">Tidak ada agenda undangan untuk waktu mendatang.</p></div>
                         )}
                     </div>
-                </div>
+                </Card>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
-                <div className="bg-card rounded-xl shadow-md border border-border flex flex-col">
+                <Card className="card-solid flex flex-col">
                     <div className="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-center bg-muted/30 gap-3">
                         <h3 className="text-lg font-bold flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-blue-600"/> Agenda Internal Bulan Ini</h3>
                         <div className="flex bg-muted rounded-lg p-1">
@@ -405,7 +406,7 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </div>
-                </div>
+                </Card>
 
              </div>
 

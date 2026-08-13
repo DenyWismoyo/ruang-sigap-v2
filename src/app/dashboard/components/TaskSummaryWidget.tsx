@@ -14,8 +14,8 @@ import { useUserAuth } from '@/context/AuthContext';
 import { CheckSquare } from 'lucide-react';
 
 // --- Impor Baru ---
-import TaskListItem from '../tugas/components/TaskListItem';
-import TaskDetailModal from '../tugas/components/TaskDetailModal';
+import TaskListItem from '@/app/dashboard/(main)/tugas/components/TaskListItem';
+import TaskDetailModal from '@/app/dashboard/(main)/tugas/components/TaskDetailModal';
 import ConfirmModal from './ConfirmModal';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';

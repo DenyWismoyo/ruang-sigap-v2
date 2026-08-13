@@ -22,7 +22,7 @@ import { saveAs } from 'file-saver';
 import ConfirmModal from '@/app/dashboard/components/ConfirmModal'; 
 import { useToast } from '@/context/ToastContext';
 import { useTheme } from '@/context/ThemeContext';
-import FormTugas from '@/app/dashboard/tugas/components/FormTugas';
+import FormTugas from '@/app/dashboard/(main)/tugas/components/FormTugas';
 
 // [BARU] Import komponen modal yang sudah diekstrak
 import NotulensiFormModal from './components/NotulensiFormModal';

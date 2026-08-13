@@ -6,10 +6,10 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { useUserAuth } from '../../../context/AuthContext'; 
-import { db } from '../../../lib/firebase'; 
+import { useUserAuth } from '@/context/AuthContext'; 
+import { db } from '@/lib/firebase'; 
 import { collection, query, where, Timestamp, onSnapshot, getDocs, orderBy, documentId } from 'firebase/firestore';
-import { Surat, Disposisi, SuratAgendaItem, JadwalTempat, UserProfile } from '../../../types'; 
+import { Surat, Disposisi, SuratAgendaItem, JadwalTempat, UserProfile } from '@/types'; 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
@@ -20,8 +20,8 @@ import {
 import JadwalDetailModal from '../jadwal/components/JadwalDetailModal'; 
 import { useJadwalActions } from '@/app/dashboard/hooks/useJadwalActions';
 import RuangKerjaSkeleton from '@/app/dashboard/components/skeletons/RuangKerjaSkeleton';
-import { Button } from '@/app/dashboard/components/ui/button';
-import { ScrollArea } from '@/app/dashboard/components/ui/scroll-area';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 // Tipe gabungan
 type CombinedAgendaItem = {

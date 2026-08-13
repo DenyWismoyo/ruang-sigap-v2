@@ -10,7 +10,7 @@ import React, { useState, useEffect } from 'react';
 import { db, storage } from '@/lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, doc, getDoc, Timestamp } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { useUserAuth } from '../../../../context/AuthContext'; // Path relatif ke src/context
+import { useUserAuth } from '@/context/AuthContext'; // Path relatif ke src/context
 import { Tugas, TugasKomentar, UserProfile, SubTugas, Surat } from '@/types';
 import { X, Trash2, Plus, MessageSquare, Link as LinkIcon, Mail, Loader2, Send } from 'lucide-react';
 import { formatDateRelative } from '@/lib/utils';
@@ -18,16 +18,16 @@ import CachedPdfViewer from '../../surat/[id]/components/CachedPdfViewer'; // Pa
 import { useTugasActions } from '@/app/dashboard/hooks/useTugasActions'; // Path relatif ke src/app/dashboard/hooks
 
 // Shadcn (Path relatif ke src/components)
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/app/dashboard/components/ui/dialog';
-import { Button } from '@/app/dashboard/components/ui/button';
-import { Input } from '@/app/dashboard/components/ui/input';
-import { Label } from '@/app/dashboard/components/ui/label';
-import { Checkbox } from '@/app/dashboard/components/ui/checkbox';
-import { Badge } from '@/app/dashboard/components/ui/badge';
-import { Popover, PopoverContent, PopoverTrigger } from '@/app/dashboard/components/ui/popover';
-import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/app/dashboard/components/ui/command';
-import { ScrollArea } from '@/app/dashboard/components/ui/scroll-area';
-import { Progress } from '@/app/dashboard/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Badge } from '@/components/ui/badge';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Progress } from '@/components/ui/progress';
 
 // Modal Surat (Sub-komponen)
 const SuratViewerModal = ({ isOpen, onClose, suratData }: { isOpen: boolean, onClose: () => void, suratData: Surat | null }) => {

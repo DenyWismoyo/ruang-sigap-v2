@@ -60,7 +60,7 @@ import PemantauanTab from './components/PemantauanTab';
 import { getWarnaClass } from './[id]/components/TindakLanjutSection';
 
 // Dynamic Import untuk PDF Viewer
-const CachedPdfViewer = dynamic(() => import('@/app/dashboard/surat/[id]/components/CachedPdfViewer'), { 
+const CachedPdfViewer = dynamic(() => import('@/app/dashboard/(main)/surat/[id]/components/CachedPdfViewer'), { 
     ssr: false, 
     loading: () => <div className="h-full flex items-center justify-center bg-muted/30 rounded-lg"><Loader2 className="animate-spin text-primary" /></div> 
 });
@@ -789,7 +789,7 @@ export default function KotakMasukPage() {
 
                             {hasMore && (
                                 <div className="mt-6 text-center">
-                                    <Button variant="outline" onClick={loadMore} disabled={isMoreLoading} className="w-full md:w-auto shadow-sm">
+                                    <Button variant="outline" onClick={() => loadMore()} disabled={isMoreLoading} className="w-full md:w-auto shadow-sm">
                                         {isMoreLoading ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <ChevronDown className="mr-2 h-4 w-4"/>}
                                         {isMoreLoading ? 'Memuat...' : 'Muat Lebih Banyak'}
                                     </Button>

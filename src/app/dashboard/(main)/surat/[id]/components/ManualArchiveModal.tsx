@@ -8,7 +8,7 @@
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
-import { Surat, UserProfile, Jabatan } from '../../../../../types';
+import { Surat, UserProfile, Jabatan } from '@/types';
 import { X, Loader2, Archive, Search, User } from 'lucide-react';
 import Avatar from '@/app/dashboard/components/Avatar';
 

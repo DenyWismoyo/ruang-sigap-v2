@@ -7,10 +7,10 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { db } from '../../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, where, Timestamp } from 'firebase/firestore';
-import { OPD } from '../../../types';
-import { useUserAuth } from '../../../context/AuthContext';
+import { OPD } from '@/types';
+import { useUserAuth } from '@/context/AuthContext';
 import { Mail, CheckCircle, Clock } from 'lucide-react';
 // [DIHAPUS] Import statis Chart.js dihapus
 // import { Chart, registerables } from 'chart.js/auto';

@@ -15,7 +15,7 @@ import { FileText, Download, Search, Printer, QrCode } from 'lucide-react';
 import { utils, writeFile } from 'xlsx';
 import { db } from '@/lib/firebase'; // Untuk ambil nama OPD jika perlu
 import { doc, getDoc } from 'firebase/firestore';
-import QrAuditModal from '@/app/dashboard/components/QrAuditModal';
+import QrAuditModal from '@/app/dashboard/(fungsional)/keuangan/components/QrAuditModal';
 
 export default function BukuKasTab({ userProfile }: { userProfile: UserProfile }) {
     const { transaksiList, isLoading } = useKeuanganData(userProfile);

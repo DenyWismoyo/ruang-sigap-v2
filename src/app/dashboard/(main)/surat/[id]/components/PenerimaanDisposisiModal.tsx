@@ -11,7 +11,7 @@
 "use client";
 
 import React from 'react';
-import { Surat, Disposisi } from '../../../../../types';
+import { Surat, Disposisi } from '@/types';
 // [MODIFIKASI] Hapus 'Archive'
 import { Info, FileText, CheckCircle, Loader2 } from 'lucide-react';
 

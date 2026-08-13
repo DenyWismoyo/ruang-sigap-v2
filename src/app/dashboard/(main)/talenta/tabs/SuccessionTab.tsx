@@ -15,8 +15,8 @@ import {
 } from 'lucide-react';
 import { TalentDataCombined } from '@/app/dashboard/hooks/useTalentData';
 import { useSuccessionData } from '@/app/dashboard/hooks/useSuccessionData'; 
-import JobProjectionView from '@/app/dashboard/components/succession/JobProjectionView';
-import CandidateAnalysisView from '@/app/dashboard/components/succession/CandidateAnalysisView';
+import JobProjectionView from '@/app/dashboard/(main)/talenta/components/succession/JobProjectionView';
+import CandidateAnalysisView from '@/app/dashboard/(main)/talenta/components/succession/CandidateAnalysisView';
 
 interface SuccessionTabProps {
     combinedData: TalentDataCombined[];

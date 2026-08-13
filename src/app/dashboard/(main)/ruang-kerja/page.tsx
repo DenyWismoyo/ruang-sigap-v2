@@ -17,20 +17,20 @@ import {
   RuangKerjaItem
 } from '@/types';
 
-import AgendaTimeline from '@/app/dashboard/ruang-kerja/components/AgendaTimeline'; 
-import VisionaryFeed from '@/app/dashboard/ruang-kerja/components/VisionaryFeed'; 
+import AgendaTimeline from '@/app/dashboard/(main)/ruang-kerja/components/AgendaTimeline'; 
+import VisionaryFeed from '@/app/dashboard/(main)/ruang-kerja/components/VisionaryFeed'; 
 import RuangKerjaSkeleton from '@/app/dashboard/components/skeletons/RuangKerjaSkeleton'; 
-import QuickAddTask from '@/app/dashboard/ruang-kerja/components/QuickAddTask';
-import StickyNoteWidget from '@/app/dashboard/ruang-kerja/components/StickyNoteWidget';
-import QuickLinksWidget from '@/app/dashboard/ruang-kerja/components/QuickLinksWidget'; 
-import EmptyStateWidget from '@/app/dashboard/ruang-kerja/components/EmptyStateWidget'; 
+import QuickAddTask from '@/app/dashboard/(main)/ruang-kerja/components/QuickAddTask';
+import StickyNoteWidget from '@/app/dashboard/(main)/ruang-kerja/components/StickyNoteWidget';
+import QuickLinksWidget from '@/app/dashboard/(main)/ruang-kerja/components/QuickLinksWidget'; 
+import EmptyStateWidget from '@/app/dashboard/(main)/ruang-kerja/components/EmptyStateWidget'; 
 
-const QuickPreviewModal = dynamic(() => import('@/app/dashboard/ruang-kerja/components/QuickPreviewModal'), { ssr: false });
-const QuickDisposisiModal = dynamic(() => import('@/app/dashboard/ruang-kerja/components/QuickDisposisiModal'), { ssr: false });
-const JadwalDetailModal = dynamic(() => import('@/app/dashboard/jadwal/components/JadwalDetailModal'), { ssr: false });
-const QuickEditTaskModal = dynamic(() => import('@/app/dashboard/ruang-kerja/components/QuickEditTaskModal'), { ssr: false }); 
-const RuangKerjaTutorialModal = dynamic(() => import('@/app/dashboard/ruang-kerja/components/RuangKerjaTutorialModal'), { ssr: false });
-const NotulensiFormModal = dynamic(() => import('../notulensi/components/NotulensiFormModal'), { ssr: false });
+const QuickPreviewModal = dynamic(() => import('@/app/dashboard/(main)/ruang-kerja/components/QuickPreviewModal'), { ssr: false });
+const QuickDisposisiModal = dynamic(() => import('@/app/dashboard/(main)/ruang-kerja/components/QuickDisposisiModal'), { ssr: false });
+const JadwalDetailModal = dynamic(() => import('@/app/dashboard/(main)/jadwal/components/JadwalDetailModal'), { ssr: false });
+const QuickEditTaskModal = dynamic(() => import('@/app/dashboard/(main)/ruang-kerja/components/QuickEditTaskModal'), { ssr: false }); 
+const RuangKerjaTutorialModal = dynamic(() => import('@/app/dashboard/(main)/ruang-kerja/components/RuangKerjaTutorialModal'), { ssr: false });
+const NotulensiFormModal = dynamic(() => import('@/app/dashboard/(fungsional)/notulensi/components/NotulensiFormModal'), { ssr: false });
 const ConfirmModal = dynamic(() => import('@/app/dashboard/components/ConfirmModal'), { ssr: false });
 
 import { useUserAuth } from '@/context/AuthContext'; 

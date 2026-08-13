@@ -12,7 +12,7 @@ import {
   DialogTitle,
   DialogClose,
 } from "@/components/ui/dialog";
-import CachedPdfViewer from '@/app/dashboard/surat/[id]/components/CachedPdfViewer';
+import CachedPdfViewer from '@/app/dashboard/(main)/surat/[id]/components/CachedPdfViewer';
 import { X } from 'lucide-react';
 
 interface QuickPreviewModalProps {

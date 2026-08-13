@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils"
+import { cn } from '@/lib/utils'
 
 function Skeleton({
   className,
@@ -6,9 +6,7 @@ function Skeleton({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      // --- MODIFIKASI BARIS INI ---
-      className={cn("animate-pulse rounded-md bg-muted", className)}
-      // --- ---
+      className={cn("animate-pulse rounded-xl bg-slate-200/50 dark:bg-slate-800/50", className)}
       {...props}
     />
   )

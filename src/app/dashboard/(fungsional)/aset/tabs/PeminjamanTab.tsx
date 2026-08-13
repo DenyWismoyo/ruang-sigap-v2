@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/context/ToastContext';
-import BorrowModal from '@/app/dashboard/aset/components/BorrowModal';
+import BorrowModal from '@/app/dashboard/(fungsional)/aset/components/BorrowModal';
 import { useAssetData } from '@/app/dashboard/hooks/useAssetData';
 import { usePeminjamanData } from '@/app/dashboard/hooks/usePeminjamanData'; // [BARU]
 

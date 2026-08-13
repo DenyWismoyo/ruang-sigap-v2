@@ -9,9 +9,9 @@ import { useUserAuth } from '@/context/AuthContext';
 
 // --- Impor Tabs ---
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import InventarisTab from '@/app/dashboard/aset/tabs/InventarisTab';
-import PeminjamanTab from '@/app/dashboard/aset/tabs/PeminjamanTab';
-import MaintenanceTab from '@/app/dashboard/aset/tabs/MaintenanceTab';
+import InventarisTab from '@/app/dashboard/(fungsional)/aset/tabs/InventarisTab';
+import PeminjamanTab from '@/app/dashboard/(fungsional)/aset/tabs/PeminjamanTab';
+import MaintenanceTab from '@/app/dashboard/(fungsional)/aset/tabs/MaintenanceTab';
 
 export default function ManajemenAsetPage() {
     const { userProfile, loading } = useUserAuth();

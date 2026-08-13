@@ -1,13 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'; // <-- Impor useRef
-import { db } from '../../../lib/firebase';
+import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs, orderBy } from 'firebase/firestore';
-import { useUserAuth } from '../../../context/AuthContext';
-import { KnowledgeArticle, OPD, UserProfile } from '../../../types';
+import { useUserAuth } from '@/context/AuthContext';
+import { KnowledgeArticle, OPD, UserProfile } from '@/types';
 import { Plus, Search, Edit, Trash2, X, Save, HelpCircle, Eye, Link as LinkIcon, Building, Loader2, BookText, FileQuestion, LifeBuoy, Upload } from 'lucide-react'; // <-- Impor Upload
-import { useToast } from '../../../context/ToastContext';
-import { useTheme } from '../../../context/ThemeContext'; 
+import { useToast } from '@/context/ToastContext';
+import { useTheme } from '@/context/ThemeContext'; 
 import dynamic from 'next/dynamic'; 
 import ReactMarkdown from 'react-markdown'; 
 import remarkGfm from 'remark-gfm'; 
@@ -20,10 +20,10 @@ import {
   DialogTitle,
   DialogFooter,
   DialogDescription,
-} from '@/app/dashboard/components/ui/dialog';
-import { Button } from '@/app/dashboard/components/ui/button';
-import { Input } from '@/app/dashboard/components/ui/input';
-import { Label } from '@/app/dashboard/components/ui/label';
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 // HAPUS: import { Textarea } from "@/components/ui/textarea"; // Diganti MDEditor
 import {
   Select,
@@ -31,9 +31,9 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/app/dashboard/components/ui/select';
-import { Checkbox } from '@/app/dashboard/components/ui/checkbox';
-import { ScrollArea } from '@/app/dashboard/components/ui/scroll-area';
+} from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
   Card,
   CardContent,
@@ -41,7 +41,7 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from '@/app/dashboard/components/ui/card';
+} from '@/components/ui/card';
 // --- Akhir Impor Shadcn ---
 
 // --- Impor MDEditor (Editor Markdown) ---

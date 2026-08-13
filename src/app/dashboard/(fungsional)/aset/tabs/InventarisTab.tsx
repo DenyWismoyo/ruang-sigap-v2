@@ -8,11 +8,11 @@ import { db } from '@/lib/firebase';
 import { deleteDoc, doc, getDoc } from 'firebase/firestore';
 import { AsetInventaris, UserProfile } from '@/types';
 import { Plus, Search, FilePenLine, Trash2, QrCode, MapPin, Box, MoreVertical, Printer, User, Upload, FileText, Download, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
-import AssetFormModal from '@/app/dashboard/aset/components/AssetFormModal';
-import QrCodeModal from '@/app/dashboard/aset/components/QrCodeModal';
-import RoomInventoryModal from '@/app/dashboard/aset/components/RoomInventoryModal';
-import AssetImportModal from '@/app/dashboard/aset/components/AssetImportModal';
-import { BeritaAcaraPdf } from '@/app/dashboard/aset/components/BeritaAcaraPdf';
+import AssetFormModal from '@/app/dashboard/(fungsional)/aset/components/AssetFormModal';
+import QrCodeModal from '@/app/dashboard/(fungsional)/aset/components/QrCodeModal';
+import RoomInventoryModal from '@/app/dashboard/(fungsional)/aset/components/RoomInventoryModal';
+import AssetImportModal from '@/app/dashboard/(fungsional)/aset/components/AssetImportModal';
+import { BeritaAcaraPdf } from '@/app/dashboard/(fungsional)/aset/components/BeritaAcaraPdf';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

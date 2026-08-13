@@ -9,7 +9,7 @@
 import React, { useState, useMemo } from 'react'; 
 import { useUserAuth } from '@/context/AuthContext';
 import { Tugas, UserProfile } from '@/types';
-import TaskDetailModal from '@/app/dashboard/components/TaskDetailModal';
+import TaskDetailModal from '@/app/dashboard/(main)/tugas/components/TaskDetailModal';
 import { Briefcase, CheckCircle, Clock, AlertTriangle, Filter, User as UserIcon, Loader2 } from 'lucide-react';
 
 // --- Import Hooks SSOT ---
