@@ -70,6 +70,7 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
         if (!userDocSnap.exists) {
             throw new functions.https.HttpsError("not-found", `Dokumen user untuk NIP ${nip} tidak ditemukan.`);
         }
+        
         const userData = userDocSnap.data() as UserProfile;
         
         if (userData.uid !== uid) {
@@ -79,6 +80,10 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
         const jabatanDoc = await db.collection("jabatan").doc(userData.jabatanId).get();
         const level = jabatanDoc.exists ? jabatanDoc.data()?.level : 9;
 
+        const opdDocSnap = await db.collection("opd_config").doc(userData.opdId).get();
+        const opdData = opdDocSnap.exists ? opdDocSnap.data() : null;
+        const appTheme = userData.app_theme || opdData?.default_theme || "sigap";
+
         const newClaims = {
             ...currentClaims,
             role: userData.role,
@@ -86,6 +91,7 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
             jabatanId: userData.jabatanId,
             level: level,
             nip: nip,
+            app_theme: appTheme,
         };
 
         if (!isEqual(currentClaims, newClaims)) {
@@ -101,7 +107,6 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
         throw new functions.https.HttpsError("internal", error.message);
     }
 });
-
 
 // =================================================================================================
 // --- FUNGSI BARU: PENGAMBILAN DATA GLOBAL (DIPANGGIL DARI AUTHCONTEXT) ---

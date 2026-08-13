@@ -99,6 +99,10 @@ export interface UserProfile {
   level?: number; 
   searchKeywords?: string[]; 
   additionalRoles?: FunctionalRole[]; 
+  impersonateUid?: string; // Menyimpan UID asli jika sedang mode impresonate
+  
+  // Fitur Multi-UI Theme (Opsi Tema)
+  app_theme?: AppTheme;
 }
 
 export interface ServiceTemplate {
@@ -115,8 +119,8 @@ export interface ServiceTemplate {
   isActive: boolean;
 }
 
-export interface Jabatan { id?: string; namaJabatan: string; level: number; opdId: string; idAtasan: string | null; pltUserId?: string | null; pltMulaiTanggal?: Timestamp | null; pltSelesaiTanggal?: Timestamp | null; status?: 'aktif' | 'nonaktif'; delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; }
-export interface OpdConfig { id?: string; packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; langgananAktifHingga: Timestamp; paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; kuotaPengguna: number; penggunaAktifSaatIni: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; }
+export interface Jabatan extends BaseEntity { id?: string; namaJabatan: string; level: number; opdId: string; idAtasan: string | null; pltUserId?: string | null; pltMulaiTanggal?: Timestamp | null; pltSelesaiTanggal?: Timestamp | null; status?: 'aktif' | 'nonaktif'; delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; }
+export interface OpdConfig { id?: string; packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; langgananAktifHingga: Timestamp; paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; kuotaPengguna: number; penggunaAktifSaatIni: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; default_theme?: AppTheme; }
 export interface WelcomeSummary { disposisiBaru: number; tindakLanjutMenunggu: number; tugasAktif: number; tugasLewatBatasWaktu: number; suratMenungguDisposisi: number; suratBaruCount?: number; tugasBaruCount?: number; }
 
 export interface Surat { 
@@ -356,6 +360,7 @@ export interface RiwayatPenghargaan {
 }
 
 export type TipeMutasi = 'Mutasi Antar OPD' | 'Rotasi Internal' | 'Promosi' | 'Demosi';
+export type SortOrder = 'asc' | 'desc';
 
 export interface RiwayatMutasi {
   id?: string;

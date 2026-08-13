@@ -182,6 +182,9 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
       setUser(currentUser);
       if (currentUser) {
         const idTokenResult = await currentUser.getIdTokenResult();
+        const idToken = await currentUser.getIdToken();
+        document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=3600; SameSite=Strict`;
+        
         if (idTokenResult.claims.impersonated && idTokenResult.claims.originalUid) {
           setIsImpersonating(true);
           setOriginalUserUid(idTokenResult.claims.originalUid as string);
@@ -190,6 +193,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
           setOriginalUserUid(null);
         }
       } else {
+        document.cookie = "firebase-auth-token=; path=/; max-age=0; SameSite=Strict";
         // Jika tidak ada user, stop loading
         setIsImpersonating(false);
         setOriginalUserUid(null);
