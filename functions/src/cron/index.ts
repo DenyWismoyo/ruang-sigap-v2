@@ -13,7 +13,7 @@ export const sendAgendaReminders = onSchedule(
         logger.log("Running scheduled function to send agenda reminders...");
         const now = new Date();
         const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-        const seventyFiveMinutesFromNow = new Date(now.getTime() + 75 * 60 * 60 * 1000);
+        const seventyFiveMinutesFromNow = new Date(now.getTime() + 75 * 60 * 1000);
         try {
             const agendaQuery = db.collection("surat")
                 .where("jenisSurat", "==", "Undangan")

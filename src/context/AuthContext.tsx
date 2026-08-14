@@ -66,6 +66,29 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     manajemenAset: false, persetujuanDraf: false, formBuilder: false
   };
 
+  // [BARU] Fungsi helper untuk memastikan cookie tema langsung di-set sebelum redirect!
+  const syncThemeCookie = async (nip: string) => {
+    try {
+      const userDocRef = doc(db, "users", nip);
+      const userDocSnap = await getDoc(userDocRef);
+      let theme = 'sigap';
+      if (userDocSnap.exists()) {
+          const profile = userDocSnap.data();
+          theme = profile.app_theme;
+          if (!theme && profile.opdId) {
+              const configRef = doc(db, 'opdConfigs', profile.opdId);
+              const configSnap = await getDoc(configRef);
+              if (configSnap.exists()) {
+                  theme = configSnap.data().default_theme;
+              }
+          }
+      }
+      document.cookie = `app-theme=${theme || 'sigap'}; path=/; max-age=2592000; SameSite=Strict`;
+    } catch(e) {
+      console.error("Gagal sinkronisasi tema cookie:", e);
+    }
+  };
+
   const logIn = async (email: string, pass: string): Promise<UserCredential> => {
     // Logika login email tetap sama...
     let nip: string;
@@ -81,6 +104,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true); 
+    await syncThemeCookie(nip);
     return userCredential;
   };
 
@@ -100,6 +124,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true);
+    await syncThemeCookie(nip);
     return userCredential;
   };
 
@@ -137,6 +162,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
     await userCredential.user.getIdToken(true);
+    await syncThemeCookie(nip);
   };
 
   const logOut = useCallback(async () => {
@@ -249,12 +275,19 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
             // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
             const configRef = doc(db, 'opdConfigs', profile.opdId);
             const configSnap = await getDoc(configRef);
+            let currentOpdConfig: OpdConfig | null = null;
             if (configSnap.exists()) {
-                const dbData = configSnap.data() as OpdConfig;
-                setOpdConfig({ id: configSnap.id, ...dbData, features: { ...defaultFeatures, ...dbData.features } } as OpdConfig);
+                currentOpdConfig = { id: configSnap.id, ...configSnap.data() } as OpdConfig;
+                setOpdConfig({ ...currentOpdConfig, features: { ...defaultFeatures, ...currentOpdConfig.features } });
             } else {
-                setOpdConfig({ packageName: 'Dasar', langgananAktifHingga: Timestamp.fromMillis(0), paymentStatus: 'Kedaluwarsa', kuotaPengguna: 0, penggunaAktifSaatIni: 0, features: defaultFeatures });
+                currentOpdConfig = { id: profile.opdId, name: 'OPD Default', features: defaultFeatures, packageName: 'Dasar', langgananAktifHingga: Timestamp.fromMillis(0), paymentStatus: 'Kedaluwarsa', kuotaPengguna: 0, penggunaAktifSaatIni: 0 } as OpdConfig;
+                setOpdConfig(currentOpdConfig);
             }
+
+            // [PERBAIKAN TEMA] Sinkronisasi Cookie app-theme agar middleware membaca UI yang tepat
+            // Prioritas: 1. app_theme dari profil user (jika ada override) -> 2. default_theme dari OPD -> 3. sigap
+            const userTheme = profile.app_theme || currentOpdConfig?.default_theme || 'sigap';
+            document.cookie = `app-theme=${userTheme}; path=/; max-age=2592000; SameSite=Strict`; // Berlaku 30 hari
             
             // 3. Ambil Jabatan & PLT (Penting untuk hak akses)
             const pltQuery = query(collection(db, 'jabatan'), where("opdId", "==", profile.opdId), where("pltUserId", "==", user.uid), where("pltMulaiTanggal", "<=", Timestamp.now()));

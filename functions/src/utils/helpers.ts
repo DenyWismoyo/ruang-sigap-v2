@@ -7,21 +7,24 @@ import { UserProfile } from "../types";
 
 
 // --- [MODIFIKASI FASE 1] Helper Cache Baru untuk Nama Pengguna ---
-export const userNameCache = new Map<string, string>();
-export const userIdCache = new Map<string, string>(); // Cache lama tetap ada
+const CACHE_TTL_MS = 5 * 60 * 1000;
+interface CacheEntry { value: string; expiry: number; }
+export const userNameCache = new Map<string, CacheEntry>();
+export const userIdCache = new Map<string, CacheEntry>(); // Cache lama tetap ada
 export const getUserNameFromJabatanId = async (jabatanId: string): Promise<string> => {
-  if (userNameCache.has(jabatanId)) {
-    return userNameCache.get(jabatanId) || "Nama Tidak Ditemukan";
+  const cached = userNameCache.get(jabatanId);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.value;
   }
   const usersQuery = db.collection("users").where("jabatanId", "==", jabatanId).limit(1);
   const userSnapshot = await usersQuery.get();
   if (userSnapshot.empty) {
     logger.warn(`No user found for jabatanId in cache helper: ${jabatanId}`);
-    userNameCache.set(jabatanId, "Jabatan Kosong"); // Cache negatif
+    userNameCache.set(jabatanId, { value: "Jabatan Kosong", expiry: Date.now() + CACHE_TTL_MS }); // Cache negatif
     return "Jabatan Kosong";
   }
   const userName = (userSnapshot.docs[0].data() as UserProfile).namaLengkap || "Tanpa Nama";
-  userNameCache.set(jabatanId, userName);
+  userNameCache.set(jabatanId, { value: userName, expiry: Date.now() + CACHE_TTL_MS });
   return userName;
 };
 export const getUserNameFromUid = async (uid: string): Promise<string> => {
@@ -180,8 +183,9 @@ export const createCalendarEvent = async (
 // FUNGSI BARU: VALIDASI LOGIN (DIPANGGIL DARI AUTHCONTEXT)
 // =================================================================================================
 export const getUserIdFromJabatanId = async (jabatanId: string): Promise<string | null> => {
-  if (userIdCache.has(jabatanId)) {
-    return userIdCache.get(jabatanId) || null;
+  const cached = userIdCache.get(jabatanId);
+  if (cached && cached.expiry > Date.now()) {
+    return cached.value;
   }
   const usersQuery = db.collection("users").where("jabatanId", "==", jabatanId).where("status", "==", "aktif").limit(1);
   const userSnapshot = await usersQuery.get();
@@ -190,7 +194,7 @@ export const getUserIdFromJabatanId = async (jabatanId: string): Promise<string 
     return null;
   }
   const userId = userSnapshot.docs[0].data().uid;
-  userIdCache.set(jabatanId, userId);
+  userIdCache.set(jabatanId, { value: userId, expiry: Date.now() + CACHE_TTL_MS });
   return userId;
 };
 export const updateUserSummary = (userId: string, field: string, incrementValue: number) => {
@@ -213,7 +217,7 @@ export const checkPermission = async (context: functions.https.CallableContext, 
         throw new functions.https.HttpsError("permission-denied", "Hanya pimpinan (level 5 ke atas) yang diizinkan.");
     }
 };
-export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string) => {
+export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string, nip?: string) => {
   try {
     // 1. Cari NIP dan tokens berdasarkan UID
     const userQuery = await db.collection("users").where("uid", "==", uid).limit(1).get();

@@ -1,0 +1,66 @@
+[data-tenant="natakarya"] {
+  /* --- NATAKARYA PREMIUM LIGHT MODE --- */
+  --background: 240 100% 99%; /* Very subtle blue tint */
+  --foreground: 240 10% 10%;
+  
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 10%;
+  
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 10%;
+  
+  /* Vibrant Indigo Primary */
+  --primary: 250 84% 54%;
+  --primary-foreground: 0 0% 100%;
+  
+  /* Soft Purple Secondary */
+  --secondary: 260 84% 95%; 
+  --secondary-foreground: 260 84% 40%;
+  
+  --muted: 240 20% 96%;
+  --muted-foreground: 240 10% 45%;
+  
+  --accent: 250 84% 95%;
+  --accent-foreground: 250 84% 54%;
+  
+  --destructive: 348 83% 47%;
+  --destructive-foreground: 0 0% 100%;
+  
+  --border: 240 20% 90%;
+  --input: 240 20% 90%;
+  --ring: 250 84% 54%;
+  
+  --radius: 1.25rem; /* Highly rounded corners for a modern feel */
+}
+
+.dark [data-tenant="natakarya"] {
+  /* --- NATAKARYA PREMIUM DARK MODE --- */
+  --background: 240 10% 4%;
+  --foreground: 240 10% 96%;
+  
+  --card: 240 10% 6%;
+  --card-foreground: 240 10% 96%;
+  
+  --popover: 240 10% 8%;
+  --popover-foreground: 240 10% 96%;
+  
+  /* Brighter Indigo for Dark Mode */
+  --primary: 250 84% 65%;
+  --primary-foreground: 240 10% 4%;
+  
+  --secondary: 260 40% 15%;
+  --secondary-foreground: 260 84% 75%;
+  
+  --muted: 240 10% 15%;
+  --muted-foreground: 240 10% 65%;
+  
+  --accent: 250 40% 15%;
+  --accent-foreground: 250 84% 65%;
+  
+  --destructive: 348 83% 55%;
+  --destructive-foreground: 240 10% 4%;
+  
+  --border: 240 10% 20%;
+  --input: 240 10% 20%;
+  --ring: 250 84% 65%;
+}

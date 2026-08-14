@@ -97,7 +97,7 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
         if (!isEqual(currentClaims, newClaims)) {
             await admin.auth().setCustomUserClaims(uid, newClaims);
             logger.log(`Custom claims LENGKAP berhasil diatur untuk UID ${uid}.`);
-            return { success: true, message: "Claims diatur." };
+            return { success: true, message: "Claims diatur.", appTheme: appTheme };
         }
         
         return { success: true, message: "Claims sudah sesuai." };
@@ -137,12 +137,19 @@ export const getGlobalOpdData = functions.region(REGION).https.onCall(async (dat
             // Kita filter untuk memastikan hanya string yang masuk ke opdIdsToQuery (string[])
             opdIdsToQuery = allOpds.map(doc => doc.id).filter(Boolean) as string[];
         } else {
-            const opdSnapshot = await db.collection("opd").get();
-            allOpds = opdSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OPD));
-            
-            const subOpdIds = allOpds
-                .filter(opd => opd.idOpdInduk === userOpdId)
-                .map(opd => opd.id!); // Asumsi id pasti ada jika difilter
+            // [OPTIMASI] Hanya ambil OPD sendiri dan sub-OPD nya (tidak perlu full scan)
+            const subOpdQuery = await db.collection("opd").where("idOpdInduk", "==", userOpdId).get();
+            const subOpdDocs = subOpdQuery.docs.map(doc => ({ id: doc.id, ...doc.data() } as OPD));
+            const subOpdIds = subOpdDocs.map(opd => opd.id!);
+
+            // Ambil OPD Induk (OPD user sendiri)
+            const parentOpdDoc = await db.collection("opd").doc(userOpdId).get();
+            if (parentOpdDoc.exists) {
+                 allOpds = [{ id: parentOpdDoc.id, ...parentOpdDoc.data() } as OPD, ...subOpdDocs];
+            } else {
+                 allOpds = [...subOpdDocs];
+            }
+
             opdIdsToQuery = [userOpdId, ...subOpdIds];
         }
 
@@ -349,35 +356,40 @@ export const importUsers = functions.region(REGION).runWith({ timeoutSeconds: 54
     }
     let successCount = 0;
     const errors: string[] = [];
-    for (const user of usersToImport) {
-        try {
-            const passwordToUse = user.password || `SIGAP${user.nip}`;
-            const userRecord = await admin.auth().createUser({
-                email: user.email,
-                password: passwordToUse,
-                displayName: user.namaLengkap,
-                emailVerified: true,
-            });
-            const jabatanDoc = await db.collection("jabatan").doc(user.jabatanId).get();
-            const level = jabatanDoc.exists ? jabatanDoc.data()?.level : 9;
+    // [OPTIMASI] Eksekusi Paralel dengan Batch
+    const BATCH_SIZE = 10;
+    for (let i = 0; i < usersToImport.length; i += BATCH_SIZE) {
+        const batch = usersToImport.slice(i, i + BATCH_SIZE);
+        await Promise.all(batch.map(async (user) => {
+            try {
+                const passwordToUse = user.password || `SIGAP${user.nip}`;
+                const userRecord = await admin.auth().createUser({
+                    email: user.email,
+                    password: passwordToUse,
+                    displayName: user.namaLengkap,
+                    emailVerified: true,
+                });
+                const jabatanDoc = await db.collection("jabatan").doc(user.jabatanId).get();
+                const level = jabatanDoc.exists ? jabatanDoc.data()?.level : 9;
 
-            await admin.auth().setCustomUserClaims(userRecord.uid, {
-                role: user.role, opdId: user.opdId, jabatanId: user.jabatanId,
-                mustResetPassword: !user.password, level: level,
-                nip: user.nip
-            });
-            await db.collection("users").doc(user.nip).set({
-                uid: userRecord.uid, namaLengkap: user.namaLengkap, nip: user.nip,
-                email: user.email, opdId: user.opdId, jabatanId: user.jabatanId,
-                role: user.role, status: "aktif",
-            });
-            successCount++;
-        } catch (error: any) {
-            logger.error(`Failed to import user ${user.email}:`, error);
-            errors.push(`Gagal mengimpor ${user.email}: ${error.message}`);
-        }
+                await admin.auth().setCustomUserClaims(userRecord.uid, {
+                    role: user.role, opdId: user.opdId, jabatanId: user.jabatanId,
+                    mustResetPassword: !user.password, level: level,
+                    nip: user.nip
+                });
+                await db.collection("users").doc(user.nip).set({
+                    uid: userRecord.uid, namaLengkap: user.namaLengkap, nip: user.nip,
+                    email: user.email, opdId: user.opdId, jabatanId: user.jabatanId,
+                    role: user.role, status: "aktif",
+                });
+            } catch (error: any) {
+                logger.error(`Failed to import user ${user.email}:`, error);
+                errors.push(`Gagal mengimpor ${user.email}: ${error.message}`);
+            }
+        }));
+        successCount += batch.length;
     }
-    return { success: successCount > 0, message: `Berhasil mengimpor ${successCount} dari ${usersToImport.length} pengguna.`, errors };
+    return { success: successCount > 0, message: `Selesai memproses pengguna.`, errors };
 });
 export const getImpersonationToken = functions.region(REGION).https.onCall(async (data, context) => {
     await checkPermission(context, ["admin_opd", "super_admin"]);
@@ -420,19 +432,10 @@ export const resetUserSummaryCount = functions.region(REGION).https.onCall(async
     try {
         const summaryRef = db.collection("userSummaries").doc(uid);
         
-        // Cek apakah dokumen ada sebelum mencoba meng-update
-        const docSnap = await summaryRef.get();
-        
-        if (docSnap.exists) {
-            await summaryRef.update({
-                [fieldToReset]: 0 // Reset hitungan ke 0
-            });
-        } else {
-            // Jika dokumen belum ada, buat dengan nilai 0
-            await summaryRef.set({
-                [fieldToReset]: 0
-            }, { merge: true });
-        }
+        // [OPTIMASI] Langsung gunakan set dengan merge: true untuk menghemat 1 read operation
+        await summaryRef.set({
+            [fieldToReset]: 0
+        }, { merge: true });
         
         logger.log(`User ${uid} successfully reset count for ${fieldToReset}.`);
         return { success: true, message: "Hitungan berhasil di-reset." };

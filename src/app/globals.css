@@ -4,6 +4,7 @@
 
 @layer base {
   :root {
+
     /* --- MODE TERANG (CANVAS EFFECT) --- */
     
     /* Background & Card disamakan ke Putih Murni */
@@ -35,9 +36,10 @@
     --ring: 222.2 84% 4.9%;
     
     --radius: 0.5rem;
-  }
+    }
 
   .dark {
+
     /* --- MODE GELAP (SOLID LINE EFFECT) --- */
     
     /* Background & Card disamakan ke Zinc 950 (Sangat Gelap) */
@@ -67,7 +69,13 @@
     --border: 215 13.8% 30.1%;
     --input: 215 13.8% 30.1%;
     --ring: 212.7 26.8% 83.9%;
-  }
+    }
+}
+
+@layer base {
+  
+
+  
 }
 
 @layer base {

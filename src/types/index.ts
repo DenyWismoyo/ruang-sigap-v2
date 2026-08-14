@@ -1,6 +1,8 @@
 import { Timestamp } from "firebase/firestore";
 import { ReactNode } from "react";
 
+export type AppTheme = 'sigap' | 'natakarya';
+
 // [UPDATE] Tambahkan Role Baru
 export type FunctionalRole = 
   | 'pengurus_barang' 

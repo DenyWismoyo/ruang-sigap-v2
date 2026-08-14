@@ -12,7 +12,7 @@ import { useUserAuth } from '../../context/AuthContext';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import Logo from '@/app/dashboard/components/Logo';
+import Logo from '@/app/dashboard/sigap/components/Logo';
 import { ArrowLeft, Mail, Briefcase, FileText, Sparkles, Loader2 } from 'lucide-react';
 import { signInWithCustomToken, GoogleAuthProvider, User, AuthCredential } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
