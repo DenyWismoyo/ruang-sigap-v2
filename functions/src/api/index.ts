@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions/v1";
+import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { db, REGION } from "../config/firebase";
@@ -6,10 +6,14 @@ import { checkPermission } from "../utils/helpers";
 import { UserProfile, Jabatan, OPD } from "../types";
 import { isEqual } from "lodash";
 
-export const checkAdminEmail = functions.region(REGION).https.onCall(async (data, context) => {
+export const checkAdminEmail = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     const email = data.email;
     if (!email) {
-        throw new functions.https.HttpsError("invalid-argument", "Email wajib diisi.");
+        throw new HttpsError("invalid-argument", "Email wajib diisi.");
     }
     const usersRef = db.collection("users");
     const querySnapshot = await usersRef
@@ -18,49 +22,57 @@ export const checkAdminEmail = functions.region(REGION).https.onCall(async (data
         .get();
     
     if (querySnapshot.empty) {
-        throw new functions.https.HttpsError("not-found", "Email tidak terdaftar atau akun tidak aktif.");
+        throw new HttpsError("not-found", "Email tidak terdaftar atau akun tidak aktif.");
     }
     
     const userData = querySnapshot.docs[0].data() as UserProfile;
     if (userData.role === 'user') {
-        throw new functions.https.HttpsError("permission-denied", "Pengguna biasa harus login menggunakan NIP.");
+        throw new HttpsError("permission-denied", "Pengguna biasa harus login menggunakan NIP.");
     }
     return { nip: userData.nip };
 });
-export const getEmailFromNip = functions.region(REGION).https.onCall(async (data, context) => {
+export const getEmailFromNip = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     const nip = data.nip;
     if (!nip) {
-        throw new functions.https.HttpsError("invalid-argument", "NIP wajib diisi.");
+        throw new HttpsError("invalid-argument", "NIP wajib diisi.");
     }
     const userDocRef = db.collection("users").doc(nip);
     const userDocSnap = await userDocRef.get();
     
     if (!userDocSnap.exists) {
-        throw new functions.https.HttpsError("not-found", "NIP tidak terdaftar.");
+        throw new HttpsError("not-found", "NIP tidak terdaftar.");
     }
     
     const userData = userDocSnap.data() as UserProfile;
     if (userData.status !== "aktif") {
-        throw new functions.https.HttpsError("permission-denied", "Akun ini tidak aktif.");
+        throw new HttpsError("permission-denied", "Akun ini tidak aktif.");
     }
     if (userData.role !== 'user') {
-        throw new functions.https.HttpsError("permission-denied", "Login NIP hanya untuk pengguna biasa. Admin/Staf TU harap login menggunakan Email.");
+        throw new HttpsError("permission-denied", "Login NIP hanya untuk pengguna biasa. Admin/Staf TU harap login menggunakan Email.");
     }
     if (!userData.email) {
-        throw new functions.https.HttpsError("internal", "Data email untuk pengguna ini tidak ditemukan. Hubungi Admin.");
+        throw new HttpsError("internal", "Data email untuk pengguna ini tidak ditemukan. Hubungi Admin.");
     }
     
     return { email: userData.email };
 });
-export const setNipClaim = functions.region(REGION).https.onCall(async (data, context) => {
+export const setNipClaim = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     const uid = context.auth?.uid;
     const nip = data.nip;
 
     if (!uid) {
-         throw new functions.https.HttpsError("unauthenticated", "Pengguna tidak terautentikasi.");
+         throw new HttpsError("unauthenticated", "Pengguna tidak terautentikasi.");
     }
     if (!nip) {
-         throw new functions.https.HttpsError("invalid-argument", "NIP wajib diisi.");
+         throw new HttpsError("invalid-argument", "NIP wajib diisi.");
     }
 
     try {
@@ -68,13 +80,13 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
         const currentClaims = userRecord.customClaims || {};
         const userDocSnap = await db.collection("users").doc(nip).get();
         if (!userDocSnap.exists) {
-            throw new functions.https.HttpsError("not-found", `Dokumen user untuk NIP ${nip} tidak ditemukan.`);
+            throw new HttpsError("not-found", `Dokumen user untuk NIP ${nip} tidak ditemukan.`);
         }
         
         const userData = userDocSnap.data() as UserProfile;
         
         if (userData.uid !== uid) {
-             throw new functions.https.HttpsError("permission-denied", `UID token tidak cocok dengan UID di dokumen user.`);
+             throw new HttpsError("permission-denied", `UID token tidak cocok dengan UID di dokumen user.`);
         }
         
         const jabatanDoc = await db.collection("jabatan").doc(userData.jabatanId).get();
@@ -104,23 +116,27 @@ export const setNipClaim = functions.region(REGION).https.onCall(async (data, co
 
     } catch (error: any) {
         logger.error(`Gagal mengatur custom claims lengkap untuk UID ${uid}:`, error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
 
 // =================================================================================================
 // --- FUNGSI BARU: PENGAMBILAN DATA GLOBAL (DIPANGGIL DARI AUTHCONTEXT) ---
 // =================================================================================================
-export const getGlobalOpdData = functions.region(REGION).https.onCall(async (data, context) => {
+export const getGlobalOpdData = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "Pengguna tidak terautentikasi.");
+        throw new HttpsError("unauthenticated", "Pengguna tidak terautentikasi.");
     }
 
     const userOpdId = context.auth.token.opdId as string;
     const userRole = context.auth.token.role as string;
     
     if (!userOpdId) {
-         throw new functions.https.HttpsError("permission-denied", "Token pengguna tidak memiliki opdId.");
+         throw new HttpsError("permission-denied", "Token pengguna tidak memiliki opdId.");
     }
 
     let allOpds: OPD[] = []; // Deklarasikan di scope atas
@@ -180,7 +196,7 @@ export const getGlobalOpdData = functions.region(REGION).https.onCall(async (dat
 
     } catch (error: any) {
         logger.error(`Gagal mengambil data global OPD untuk ${userOpdId}:`, error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
 
@@ -191,15 +207,19 @@ export const getGlobalOpdData = functions.region(REGION).https.onCall(async (dat
  * [BARU] Mengambil cache global (semua user, jabatan, opd)
  * Hanya untuk Pimpinan Pusat (level <= 2).
  */
-export const getGlobalUserCache = functions.region(REGION).https.onCall(async (data, context) => {
+export const getGlobalUserCache = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     // 1. Verifikasi otorisasi (Plan 4.2)
     if (!context.auth || !context.auth.token.level) {
-         throw new functions.https.HttpsError("unauthenticated", "Request had no authentication.");
+         throw new HttpsError("unauthenticated", "Request had no authentication.");
     }
     // Cek HANYA level
     if (context.auth.token.level > 2) {
         logger.warn(`User ${context.auth.uid} (level ${context.auth.token.level}) attempted to call getGlobalUserCache.`);
-        throw new functions.https.HttpsError('permission-denied', 'Hanya Pimpinan Pusat (Level 1 atau 2) yang dapat memanggil fungsi ini.');
+        throw new HttpsError('permission-denied', 'Hanya Pimpinan Pusat (Level 1 atau 2) yang dapat memanggil fungsi ini.');
     }
     logger.log(`getGlobalUserCache called by Pimpinan Pusat (UID: ${context.auth.uid})`);
 
@@ -222,7 +242,7 @@ export const getGlobalUserCache = functions.region(REGION).https.onCall(async (d
 
     } catch (error: any) {
         logger.error(`Gagal mengambil data global cache:`, error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
 // =================================================================================================
@@ -231,13 +251,17 @@ export const getGlobalUserCache = functions.region(REGION).https.onCall(async (d
 // =================================================================================================
 // --- FUNGSI BARU: PENGELOLAAN USER SUMMARY UNTUK EFISIENSI ---
 // =================================================================================================
-export const aturDelegasiSementara = functions.region(REGION).https.onCall(async (data, context) => {
+export const aturDelegasiSementara = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, [], true);
     const { delegatedToJabatanId, durasi, alasan } = data;
     const pimpinanJabatanId = context.auth?.token.jabatanId as string;
     const pimpinanNama = context.auth?.token.name;
     if (!delegatedToJabatanId || !durasi) {
-        throw new functions.https.HttpsError("invalid-argument", "Data tidak lengkap.");
+        throw new HttpsError("invalid-argument", "Data tidak lengkap.");
     }
     let berlakuHingga: Date;
     const now = new Date();
@@ -250,7 +274,7 @@ export const aturDelegasiSementara = functions.region(REGION).https.onCall(async
             if (now > berlakuHingga) berlakuHingga.setDate(berlakuHingga.getDate() + 1);
             break;
         case "manual": berlakuHingga = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); break;
-        default: throw new functions.https.HttpsError("invalid-argument", "Durasi tidak valid.");
+        default: throw new HttpsError("invalid-argument", "Durasi tidak valid.");
     }
     try {
         const jabatanRef = db.collection("jabatan").doc(pimpinanJabatanId);
@@ -278,10 +302,14 @@ export const aturDelegasiSementara = functions.region(REGION).https.onCall(async
         return { success: true, message: "Delegasi berhasil diaktifkan." };
     } catch (error: any) {
         logger.error("Error aturDelegasiSementara:", error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
-export const batalkanDelegasiSementara = functions.region(REGION).https.onCall(async (data, context) => {
+export const batalkanDelegasiSementara = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, [], true);
     const pimpinanJabatanId = context.auth?.token.jabatanId as string;
     try {
@@ -291,10 +319,14 @@ export const batalkanDelegasiSementara = functions.region(REGION).https.onCall(a
         return { success: true, message: "Delegasi berhasil dinonaktifkan." };
     } catch (error: any) {
         logger.error("Error batalkanDelegasiSementara:", error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
-export const resetPassword = functions.region(REGION).https.onCall(async (data, context) => {
+export const resetPassword = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, ["admin_opd", "super_admin"]);
     const { uid, method, newPassword } = data;
     const adminEmail = context.auth?.token.email;
@@ -303,7 +335,7 @@ export const resetPassword = functions.region(REGION).https.onCall(async (data, 
         const currentClaims = userToReset.customClaims || {};
         if (method === "email") {
             if (!userToReset.email) {
-                throw new functions.https.HttpsError("not-found", "User does not have an email address.");
+                throw new HttpsError("not-found", "User does not have an email address.");
             }
             const link = await admin.auth().generatePasswordResetLink(userToReset.email);
             logger.info(`Generated password reset link for ${userToReset.email}: ${link}`);
@@ -314,25 +346,29 @@ export const resetPassword = functions.region(REGION).https.onCall(async (data, 
             };
         } else if (method === "temporary") {
             if (!newPassword || newPassword.length < 6) {
-                throw new functions.https.HttpsError("invalid-argument", "Temporary password must be at least 6 characters.");
+                throw new HttpsError("invalid-argument", "Temporary password must be at least 6 characters.");
             }
             await admin.auth().updateUser(uid, { password: newPassword });
             await admin.auth().setCustomUserClaims(uid, { ...currentClaims, mustResetPassword: true });
             logger.log(`Temporary password set for user ${uid} by ${adminEmail}`);
             return { success: true, message: "Password sementara berhasil diatur. Pengguna akan diminta mengubahnya saat login." };
         } else {
-            throw new functions.https.HttpsError("invalid-argument", "Invalid reset method specified.");
+            throw new HttpsError("invalid-argument", "Invalid reset method specified.");
         }
     } catch (error: any) {
         logger.error("Error in resetPassword function:", error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
-export const bulkUpdateUserStatus = functions.region(REGION).https.onCall(async (data, context) => {
+export const bulkUpdateUserStatus = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, ["admin_opd", "super_admin"]);
     const { userIds, status } = data;
     if (!Array.isArray(userIds) || !["aktif", "nonaktif"].includes(status)) {
-        throw new functions.https.HttpsError("invalid-argument", "Invalid arguments provided.");
+        throw new HttpsError("invalid-argument", "Invalid arguments provided.");
     }
     try {
         const batch = db.batch();
@@ -345,14 +381,18 @@ export const bulkUpdateUserStatus = functions.region(REGION).https.onCall(async 
         return { success: true, message: `${userIds.length} pengguna berhasil diperbarui.` };
     } catch (error: any) {
         logger.error("Error in bulkUpdateUserStatus:", error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
-export const importUsers = functions.region(REGION).runWith({ timeoutSeconds: 540 }).https.onCall(async (data, context) => {
+export const importUsers = onCall({ region: REGION, timeoutSeconds: 540 }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, ["admin_opd", "super_admin"]);
     const usersToImport: Array<{ email: string, password?: string, namaLengkap: string, nip: string, role: string, opdId: string, jabatanId: string }> = data.users;
     if (!Array.isArray(usersToImport)) {
-        throw new functions.https.HttpsError("invalid-argument", "Expected an array of users.");
+        throw new HttpsError("invalid-argument", "Expected an array of users.");
     }
     let successCount = 0;
     const errors: string[] = [];
@@ -391,13 +431,17 @@ export const importUsers = functions.region(REGION).runWith({ timeoutSeconds: 54
     }
     return { success: successCount > 0, message: `Selesai memproses pengguna.`, errors };
 });
-export const getImpersonationToken = functions.region(REGION).https.onCall(async (data, context) => {
+export const getImpersonationToken = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     await checkPermission(context, ["admin_opd", "super_admin"]);
     const { targetUid, reason } = data;
     const adminUid = context.auth?.token.uid;
     const adminEmail = context.auth?.token.email;
     if (!targetUid || !reason) {
-        throw new functions.https.HttpsError("invalid-argument", "Target UID and reason are required.");
+        throw new HttpsError("invalid-argument", "Target UID and reason are required.");
     }
     try {
         await db.collection("impersonationLogs").add({
@@ -411,22 +455,26 @@ export const getImpersonationToken = functions.region(REGION).https.onCall(async
         return { success: true, token: customToken };
     } catch (error: any) {
         logger.error("Error in getImpersonationToken:", error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
 
 // [MODIFIKASI PENYEMPURNAAN LANJUTAN (Batch 3)]
 // Menambahkan logika 'tag' (grouping) berdasarkan isi pesan.
 // [MODIFIKASI PWA BADGE] Menambahkan totalCount ke payload notifikasi.
-export const resetUserSummaryCount = functions.region(REGION).https.onCall(async (data, context) => {
+export const resetUserSummaryCount = onCall({ region: REGION }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "Request had no authentication.");
+        throw new HttpsError("unauthenticated", "Request had no authentication.");
     }
     const uid = context.auth.uid;
     const { fieldToReset } = data; // e.g., "suratBaruCount" or "tugasBaruCount"
 
     if (!fieldToReset || (fieldToReset !== "suratBaruCount" && fieldToReset !== "tugasBaruCount")) {
-        throw new functions.https.HttpsError("invalid-argument", "Field yang akan di-reset tidak valid.");
+        throw new HttpsError("invalid-argument", "Field yang akan di-reset tidak valid.");
     }
 
     try {
@@ -441,7 +489,7 @@ export const resetUserSummaryCount = functions.region(REGION).https.onCall(async
         return { success: true, message: "Hitungan berhasil di-reset." };
     } catch (error: any) {
         logger.error(`Error resetting count for user ${uid} (Field: ${fieldToReset}):`, error);
-        throw new functions.https.HttpsError("internal", error.message);
+        throw new HttpsError("internal", error.message);
     }
 });
 

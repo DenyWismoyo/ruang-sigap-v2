@@ -1,4 +1,4 @@
-import * as functions from "firebase-functions/v1";
+import { HttpsError } from "firebase-functions/v2/https";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { google } from "googleapis";
@@ -203,18 +203,18 @@ export const updateUserSummary = (userId: string, field: string, incrementValue:
     [field]: admin.firestore.FieldValue.increment(incrementValue),
   }, {merge: true});
 };
-export const checkPermission = async (context: functions.https.CallableContext, requiredRoles: string[], checkLevel = false) => {
+export const checkPermission = async (context: { auth?: any }, requiredRoles: string[], checkLevel = false) => {
     if (!context.auth) {
-        throw new functions.https.HttpsError("unauthenticated", "Request had no authentication.");
+        throw new HttpsError("unauthenticated", "Request had no authentication.");
     }
     const role = context.auth.token.role as string;
     const level = context.auth.token.level as number;
     const allowedRoles = [...requiredRoles, "super_admin"];
     if (!allowedRoles.includes(role)) {
-         throw new functions.https.HttpsError("permission-denied", `User must be one of: ${allowedRoles.join(", ")}.`);
+         throw new HttpsError("permission-denied", `User must be one of: ${allowedRoles.join(", ")}.`);
     }
     if (checkLevel && (typeof level !== "number" || level > 5)) {
-        throw new functions.https.HttpsError("permission-denied", "Hanya pimpinan (level 5 ke atas) yang diizinkan.");
+        throw new HttpsError("permission-denied", "Hanya pimpinan (level 5 ke atas) yang diizinkan.");
     }
 };
 export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string, nip?: string) => {

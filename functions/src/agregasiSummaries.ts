@@ -5,7 +5,7 @@
 // [FIX CRITICAL BUG]: Menggunakan FieldValue.delete() untuk mencegah Ghosting Feed akibat masalah 'merge: true'.
 // [MIGRASI DATABASE]: Menambahkan getFirestore dan trigger .database('database-siyap')
 
-import * as functions from "firebase-functions/v1";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { getFunctions } from "firebase-admin/functions";
 import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
@@ -13,10 +13,15 @@ import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
 const db = getFirestore("database-siyap"); // <-- Inisialisasi Database Baru
 
 // 1. Trigger saat ada Disposisi Dibuat/Diubah/Dihapus
-export const syncDisposisiToSummary = functions.region('asia-southeast2').firestore
-  .database('database-siyap') // <-- Arahkan trigger ke database-siyap
-  .document('disposisi/{docId}')
-  .onWrite(async (change, context) => {
+export const syncDisposisiToSummary = onDocumentWritten({
+    document: 'disposisi/{docId}',
+    database: 'database-siyap',
+    region: 'asia-southeast2'
+}, async (event: any) => {
+    const change = event.data;
+    const context = { params: event.params } as any;
+    // @ts-ignore
+    const _c = context;
     const dispId = context.params.docId;
     const dataAfter = change.after.exists ? change.after.data() : null;
     const dataBefore = change.before.exists ? change.before.data() : null;
@@ -93,13 +98,18 @@ export const syncDisposisiToSummary = functions.region('asia-southeast2').firest
 });
 
 // 2. Trigger saat ada Tugas Dibuat/Diubah/Dihapus
-export const syncTugasToSummary = functions.region('asia-southeast2').firestore
-  .database('database-siyap') // <-- Arahkan trigger ke database-siyap
-  .document('tugas/{docId}')
-  .onWrite(async (change, context) => {
-      const tugasId = context.params.docId;
-      const dataAfter = change.after.exists ? change.after.data() : null;
-      const dataBefore = change.before.exists ? change.before.data() : null;
+export const syncTugasToSummary = onDocumentWritten({
+    document: 'tugas/{docId}',
+    database: 'database-siyap',
+    region: 'asia-southeast2'
+}, async (event: any) => {
+    const change = event.data;
+    const context = { params: event.params } as any;
+    // @ts-ignore
+    const _c = context;
+    const tugasId = context.params.docId;
+    const dataAfter = change.after.exists ? change.after.data() : null;
+    const dataBefore = change.before.exists ? change.before.data() : null;
 
       const jabId = dataAfter?.kepadaJabatanId || dataBefore?.kepadaJabatanId;
       if (!jabId) return;

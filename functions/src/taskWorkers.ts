@@ -3,7 +3,7 @@
 // Menggunakan sintaksis API Firebase Functions v1.
 // [MIGRASI DATABASE]: Menambahkan getFirestore("database-siyap")
 
-import * as functions from "firebase-functions/v1";
+import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
 
@@ -16,7 +16,8 @@ if (!admin.apps.length) {
 const db = getFirestore("database-siyap"); // <-- Inisialisasi Database Baru
 
 // PENTING: Nama variabel 'sendReminderTask' otomatis akan menjadi nama Queue di Cloud Tasks
-export const sendReminderTask = functions.region('asia-southeast2').tasks.taskQueue().onDispatch(async (data: any) => {
+export const sendReminderTask = onTaskDispatched({ region: 'asia-southeast2' }, async (request) => {
+    const data = request.data;
     const { uid, type, docId } = data;
     
     // Lakukan 1 READ untuk mengecek status terbaru

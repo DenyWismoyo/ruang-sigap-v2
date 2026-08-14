@@ -14,6 +14,7 @@ const firestoreAdminClient = new v1.FirestoreAdminClient();
 export const scheduledFirestoreExport = onSchedule({
     schedule: "0 2 * * *", // Format Cron: Menit(0) Jam(2) Hari(*) Bulan(*) HariDalamMinggu(*)
     timeZone: "Asia/Jakarta", // Menggunakan Waktu Indonesia Barat (WIB)
+    region: "asia-southeast2",
     memory: "256MiB",
     timeoutSeconds: 300, // Memberikan waktu maksimal 5 menit untuk fungsi mengeksekusi perintah
 }, async (event) => {

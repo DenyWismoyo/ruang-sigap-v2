@@ -4,7 +4,7 @@
 // [UPDATE MUTASI LINTAS OPD]: Mendukung agregasi ganda jika ada user/jabatan yang berpindah OPD.
 // [MIGRASI DATABASE]: Tetap menggunakan getFirestore dan trigger .database('database-siyap')
 
-import * as functions from "firebase-functions/v1";
+import { onDocumentWritten } from "firebase-functions/v2/firestore";
 import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore"; 
 
@@ -56,10 +56,15 @@ async function rebuildOpdMasterData(opdId: string) {
  * TRIGGER 1: Mendengarkan perubahan pada koleksi USERS
  * Berjalan saat ada penambahan, perubahan (termasuk mutasi OPD), atau penghapusan User.
  */
-export const syncOpdMasterDataFromUsers = functions.region('asia-southeast2').firestore
-    .database('database-siyap') 
-    .document('users/{userId}')
-    .onWrite(async (change, context) => {
+export const syncOpdMasterDataFromUsers = onDocumentWritten({
+    document: 'users/{userId}',
+    database: 'database-siyap',
+    region: 'asia-southeast2'
+}, async (event: any) => {
+    const change = event.data;
+    const context = { params: event.params };
+    // @ts-ignore
+    const _c = context;
         const dataBefore = change.before.exists ? change.before.data() : null;
         const dataAfter = change.after.exists ? change.after.data() : null;
 
@@ -81,10 +86,15 @@ export const syncOpdMasterDataFromUsers = functions.region('asia-southeast2').fi
  * TRIGGER 2: Mendengarkan perubahan pada koleksi JABATAN
  * Berjalan saat ada penambahan, perubahan struktur atasan/Plt, atau pengarsipan Jabatan.
  */
-export const syncOpdMasterDataFromJabatan = functions.region('asia-southeast2').firestore
-    .database('database-siyap') 
-    .document('jabatan/{jabatanId}')
-    .onWrite(async (change, context) => {
+export const syncOpdMasterDataFromJabatan = onDocumentWritten({
+    document: 'jabatan/{jabatanId}',
+    database: 'database-siyap',
+    region: 'asia-southeast2'
+}, async (event: any) => {
+    const change = event.data;
+    const context = { params: event.params };
+    // @ts-ignore
+    const _c = context;
         const dataBefore = change.before.exists ? change.before.data() : null;
         const dataAfter = change.after.exists ? change.after.data() : null;
 

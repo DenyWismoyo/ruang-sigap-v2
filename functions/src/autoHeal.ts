@@ -1,12 +1,16 @@
 // Lokasi: functions/src/autoHeal.ts
-import * as functions from "firebase-functions/v1";
+import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import { getFirestore, Timestamp } from "firebase-admin/firestore";
 
 const db = getFirestore("database-siyap");
 
-export const runAutoHeal = functions.region('asia-southeast2').https.onCall(async (data, context) => {
+export const runAutoHeal = onCall({ region: 'asia-southeast2' }, async (request: CallableRequest) => {
+    const data = request.data as any;
+    const context = { auth: request.auth } as any;
+    // @ts-ignore
+    const _d = data; const _c = context;
     if (!context.auth || context.auth.token.role !== 'super_admin') {
-        throw new functions.https.HttpsError('permission-denied', 'Akses ditolak.');
+        throw new HttpsError('permission-denied', 'Akses ditolak.');
     }
 
     try {
@@ -90,6 +94,6 @@ export const runAutoHeal = functions.region('asia-southeast2').https.onCall(asyn
 
     } catch (error: any) {
         console.error("Auto Heal Error:", error);
-        throw new functions.https.HttpsError('internal', error.message);
+        throw new HttpsError('internal', error.message);
     }
 });
