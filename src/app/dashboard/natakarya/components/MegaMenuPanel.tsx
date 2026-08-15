@@ -45,9 +45,10 @@ export default function MegaMenuPanel({
   };
 
   return (
-    <div className="w-64 bg-popover shadow-2xl border-r border-border flex flex-col h-screen z-50">
-      <div className="p-4 h-16 flex items-center justify-between border-b border-border bg-muted/30">
-        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+    <div className="w-64 natakarya-mega-menu flex flex-col h-screen z-50">
+      <div className="p-4 h-16 flex items-center justify-between border-b border-border/30 bg-muted/10 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
+        <h3 className="text-lg font-bold text-foreground flex items-center gap-2 font-heading">
             <motion.div initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", bounce: 0.5 }}>
                 <section.icon className="w-5 h-5 text-primary"/>
             </motion.div>

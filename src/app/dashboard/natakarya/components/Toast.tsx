@@ -13,19 +13,19 @@ interface ToastProps {
 
 const toastConfig = {
   success: {
-    icon: <CheckCircle className="text-green-500" />,
-    style: "bg-green-50 dark:bg-green-900/50 border-green-200 dark:border-green-700",
-    text: "text-green-800 dark:text-green-200"
+    icon: <CheckCircle className="text-emerald-500" />,
+    style: "bg-emerald-50/80 dark:bg-emerald-950/40 border-emerald-200/50 dark:border-emerald-800/50",
+    text: "text-emerald-800 dark:text-emerald-200"
   },
   error: {
-    icon: <AlertTriangle className="text-red-500" />,
-    style: "bg-red-50 dark:bg-red-900/50 border-red-200 dark:border-red-700",
-    text: "text-red-800 dark:text-red-200"
+    icon: <AlertTriangle className="text-rose-500" />,
+    style: "bg-rose-50/80 dark:bg-rose-950/40 border-rose-200/50 dark:border-rose-800/50",
+    text: "text-rose-800 dark:text-rose-200"
   },
   info: {
-    icon: <Info className="text-blue-500" />,
-    style: "bg-blue-50 dark:bg-blue-900/50 border-blue-200 dark:border-blue-700",
-    text: "text-blue-800 dark:text-blue-200"
+    icon: <Info className="text-[var(--nk-gradient-start)]" />,
+    style: "bg-[var(--nk-gradient-start)]/5 dark:bg-[var(--nk-gradient-start)]/10 border-[var(--nk-gradient-start)]/20 dark:border-[var(--nk-gradient-start)]/30",
+    text: "text-[var(--foreground)]"
   }
 };
 
@@ -50,7 +50,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
 
   return (
     <div
-      className={`relative w-full max-w-sm p-4 pr-10 rounded-lg shadow-lg border ${config.style} transition-all duration-300 ease-in-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}
+      className={`relative w-full max-w-sm p-4 pr-10 rounded-2xl shadow-xl backdrop-blur-xl border ${config.style} transition-all duration-400 cubic-bezier(0.22, 1, 0.36, 1) ${isVisible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-95'}`}
       role="alert"
     >
       <div className="flex items-start">
@@ -58,7 +58,7 @@ const Toast: React.FC<ToastProps> = ({ message, type, onClose }) => {
           {config.icon}
         </div>
         <div className="ml-3">
-          <p className={`text-sm font-semibold ${config.text}`}>
+          <p className={`text-sm font-semibold font-heading ${config.text}`}>
             {message}
           </p>
         </div>

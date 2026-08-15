@@ -564,7 +564,7 @@ const Sidebar = memo(
         initial={{ x: -20, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         transition={{ duration: 0.3, ease: "easeOut" }}
-        className="relative w-20 bg-card text-foreground flex flex-col border-r border-border h-full z-50"
+        className="relative w-20 natakarya-sidebar text-foreground flex flex-col h-full z-50"
       >
         <div className="p-4 h-16 flex items-center justify-center border-b border-border">
           <Logo className="h-8 w-10" />
@@ -644,7 +644,7 @@ const Sidebar = memo(
             whileHover={{ scale: 1.1 }}
             whileTap={{ rotate: 360, scale: 0.9 }}
             transition={{ type: "spring" }}
-            className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xs text-primary cursor-default"
+            className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center font-bold text-xs text-white cursor-default shadow-[0_2px_8px_rgba(17,94,89,0.3)]"
             title={userProfile.namaLengkap}
           >
             {userProfile.namaLengkap.charAt(0)}

@@ -129,50 +129,6 @@
  * atau integrasikan isinya ke dalam file CSS global proyek Anda.
  */
 
-:root {
-  /* Latar Belakang Off-White (slate-50) yang lembut di mata */
-  --background: 210 40% 98%;
-  /* Warna teks utama (slate-950) */
-  --foreground: 222.2 84% 4.9%;
-
-  /* Komponen Card dengan warna putih bersih agar kontras dengan background */
-  --card: 0 0% 100%;
-  --card-foreground: 222.2 84% 4.9%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 222.2 84% 4.9%;
-
-  /* AKSEN UTAMA: Deep Blue / Indigo (Warna yang sangat elegan) */
-  --primary: 243 75% 59%;
-  --primary-foreground: 210 40% 98%;
-
-  /* Warna sekunder yang redup */
-  --secondary: 210 40% 96.1%;
-  --secondary-foreground: 222.2 47.4% 11.2%;
-
-  --muted: 210 40% 96.1%;
-  --muted-foreground: 215.4 16.3% 46.9%;
-
-  --accent: 210 40% 96.1%;
-  --accent-foreground: 222.2 47.4% 11.2%;
-
-  /* Warna Error/Destructive merah lembut */
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 210 40% 98%;
-
-  --border: 214.3 31.8% 91.4%;
-  --input: 214.3 31.8% 91.4%;
-  
-  /* Fokus Ring menggunakan warna primary */
-  --ring: 243 75% 59%;
-
-  /* BORDER RADIUS DITURUNKAN (0.5rem = lg) untuk kesan enterprise yang lebih tegas dan formal */
-  --radius: 0.5rem;
-
-  /* Page background — setara #FAFAFA, gunakan via bg-background */
-  --page-background: 0 0% 98%;
-}
-
 .dark {
   /* Latar Belakang OLED Pitch Black (Hitam Pekat Elegan) */
   --background: 0 0% 4%; 

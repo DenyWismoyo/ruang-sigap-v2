@@ -1,66 +1,160 @@
 [data-tenant="natakarya"] {
-  /* --- NATAKARYA PREMIUM LIGHT MODE --- */
-  --background: 240 100% 99%; /* Very subtle blue tint */
-  --foreground: 240 10% 10%;
+  /* --- NATAKARYA WARM SOVEREIGN LIGHT MODE --- */
+  --background: 60 18% 97%; /* #FAFAF7 - Warm off-white */
+  --foreground: 198 80% 10%; /* Very dark teal */
   
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 10%;
+  --card: 0 0% 100%; /* Pure white for contrast */
+  --card-foreground: 198 80% 10%;
   
   --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 10%;
+  --popover-foreground: 198 80% 10%;
   
-  /* Vibrant Indigo Primary */
-  --primary: 250 84% 54%;
+  /* Teal Primary */
+  --primary: 174 72% 38%; /* #115E59 - Teal 800 */
   --primary-foreground: 0 0% 100%;
   
-  /* Soft Purple Secondary */
-  --secondary: 260 84% 95%; 
-  --secondary-foreground: 260 84% 40%;
+  /* Soft Amber Secondary */
+  --secondary: 48 96% 89%; /* Amber 100 */
+  --secondary-foreground: 38 92% 50%; /* Amber 500 */
   
-  --muted: 240 20% 96%;
-  --muted-foreground: 240 10% 45%;
+  --muted: 60 10% 92%;
+  --muted-foreground: 198 20% 45%;
   
-  --accent: 250 84% 95%;
-  --accent-foreground: 250 84% 54%;
+  /* Accent Amber Gold */
+  --accent: 38 92% 95%;
+  --accent-foreground: 38 92% 50%;
   
   --destructive: 348 83% 47%;
   --destructive-foreground: 0 0% 100%;
   
-  --border: 240 20% 90%;
-  --input: 240 20% 90%;
-  --ring: 250 84% 54%;
+  --border: 60 15% 85%;
+  --input: 60 15% 85%;
+  --ring: 174 72% 38%;
   
-  --radius: 1.25rem; /* Highly rounded corners for a modern feel */
+  --radius: 1rem; /* Softer, rounder corners */
+
+  /* Natakarya Signatures */
+  --nk-gradient-start: hsl(174 72% 38%);
+  --nk-gradient-end: hsl(200 80% 40%);
+  --nk-glass-bg: rgba(255, 255, 255, 0.7);
+  --nk-shadow-warm: 0 4px 20px -2px rgba(17, 94, 89, 0.1);
 }
 
 .dark [data-tenant="natakarya"] {
-  /* --- NATAKARYA PREMIUM DARK MODE --- */
-  --background: 240 10% 4%;
-  --foreground: 240 10% 96%;
+  /* --- NATAKARYA WARM SOVEREIGN DARK MODE --- */
+  --background: 198 60% 6%; /* Deep teal-dark */
+  --foreground: 60 10% 96%;
   
-  --card: 240 10% 6%;
-  --card-foreground: 240 10% 96%;
+  --card: 198 50% 10%;
+  --card-foreground: 60 10% 96%;
   
-  --popover: 240 10% 8%;
-  --popover-foreground: 240 10% 96%;
+  --popover: 198 50% 12%;
+  --popover-foreground: 60 10% 96%;
   
-  /* Brighter Indigo for Dark Mode */
-  --primary: 250 84% 65%;
-  --primary-foreground: 240 10% 4%;
+  /* Lighter Teal for Dark Mode */
+  --primary: 174 72% 50%; 
+  --primary-foreground: 198 80% 10%;
   
-  --secondary: 260 40% 15%;
-  --secondary-foreground: 260 84% 75%;
+  --secondary: 198 40% 15%;
+  --secondary-foreground: 48 96% 70%;
   
-  --muted: 240 10% 15%;
-  --muted-foreground: 240 10% 65%;
+  --muted: 198 30% 15%;
+  --muted-foreground: 198 20% 70%;
   
-  --accent: 250 40% 15%;
-  --accent-foreground: 250 84% 65%;
+  --accent: 38 92% 15%;
+  --accent-foreground: 38 92% 50%;
   
   --destructive: 348 83% 55%;
-  --destructive-foreground: 240 10% 4%;
+  --destructive-foreground: 198 80% 10%;
   
-  --border: 240 10% 20%;
-  --input: 240 10% 20%;
-  --ring: 250 84% 65%;
+  --border: 198 30% 20%;
+  --input: 198 30% 20%;
+  --ring: 174 72% 50%;
+
+  /* Natakarya Signatures */
+  --nk-gradient-start: hsl(174 72% 45%);
+  --nk-gradient-end: hsl(200 80% 45%);
+  --nk-glass-bg: rgba(10, 25, 30, 0.7);
+  --nk-shadow-warm: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+}
+
+/* Base custom classes for Natakarya */
+[data-tenant="natakarya"] h1,
+[data-tenant="natakarya"] h2,
+[data-tenant="natakarya"] h3,
+[data-tenant="natakarya"] h4,
+[data-tenant="natakarya"] h5,
+[data-tenant="natakarya"] h6,
+[data-tenant="natakarya"] .font-heading {
+  font-family: var(--font-plus-jakarta), sans-serif;
+}
+
+[data-tenant="natakarya"] .natakarya-header {
+  background: var(--nk-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(17, 94, 89, 0.1);
+}
+.dark [data-tenant="natakarya"] .natakarya-header {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-tenant="natakarya"] .natakarya-sidebar {
+  background: linear-gradient(180deg, var(--card) 0%, rgba(17, 94, 89, 0.03) 100%);
+  border-right: 1px solid rgba(17, 94, 89, 0.08);
+}
+.dark [data-tenant="natakarya"] .natakarya-sidebar {
+  background: linear-gradient(180deg, var(--card) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-tenant="natakarya"] .natakarya-mega-menu {
+  background: var(--nk-glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-right: 1px solid rgba(17, 94, 89, 0.1);
+  box-shadow: 20px 0 40px -10px rgba(0,0,0,0.05);
+}
+.dark [data-tenant="natakarya"] .natakarya-mega-menu {
+  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 20px 0 40px -10px rgba(0,0,0,0.3);
+}
+
+[data-tenant="natakarya"] .natakarya-bottom-nav {
+  background: var(--nk-glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(17, 94, 89, 0.1);
+}
+.dark [data-tenant="natakarya"] .natakarya-bottom-nav {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+[data-tenant="natakarya"] .natakarya-quick-card {
+  background: var(--nk-glass-bg);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--nk-shadow-warm);
+  border: 1px solid rgba(17, 94, 89, 0.08);
+}
+.dark [data-tenant="natakarya"] .natakarya-quick-card {
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* --- Phase 6.1 Custom Scrollbar --- */
+[data-tenant="natakarya"] ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+[data-tenant="natakarya"] ::-webkit-scrollbar-track {
+  background: transparent;
+}
+[data-tenant="natakarya"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(17, 94, 89, 0.2);
+  border-radius: 10px;
+}
+.dark [data-tenant="natakarya"] ::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+[data-tenant="natakarya"] ::-webkit-scrollbar-thumb:hover {
+  background-color: var(--nk-gradient-start);
 }

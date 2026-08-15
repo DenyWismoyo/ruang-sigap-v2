@@ -140,11 +140,11 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 
   return (
     <>
-      <div data-tenant="natakarya" className="natakarya-tenant-wrapper">
+      <div data-tenant="natakarya" className="natakarya-tenant-wrapper bg-background min-h-screen">
         <NetworkStatus />
         <RouteProgress />
 
-        <div className="flex h-screen bg-background text-foreground overflow-hidden">
+        <div className="flex h-screen text-foreground overflow-hidden">
           
           {/* Sidebar Desktop */}
           <div className="relative hidden md:flex h-screen z-40" onMouseLeave={handleMenuLeave}>
@@ -196,7 +196,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-card/80 backdrop-blur-md border-b border-border h-16 transition-all duration-200">
+              <header className="sticky top-0 z-30 flex items-center justify-between p-4 natakarya-header h-16 transition-all duration-300">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
@@ -207,7 +207,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-accent-foreground hover:bg-accent/50">
                         <Bell size={20} />
-                        {totalNotifCount > 0 && <span className="absolute top-1.5 right-1.5 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border border-background"></span></span>}
+                        {totalNotifCount > 0 && <span className="absolute top-1.5 right-1.5 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-background shadow-sm"></span></span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-80 p-0 shadow-xl border-border">
@@ -236,7 +236,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   <ThemeToggleButton />
                   <div className="relative">
                       <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group p-1 rounded-full hover:bg-accent transition-all">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center font-bold text-primary-foreground text-sm shadow-sm group-hover:shadow-md transition-all">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center font-bold text-white text-sm shadow-[0_2px_10px_rgba(17,94,89,0.3)] group-hover:shadow-[0_4px_12px_rgba(17,94,89,0.4)] transition-all">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
                           <span className="hidden md:inline text-sm font-medium text-foreground pr-2">{userProfile.namaLengkap.split(' ')[0]}</span>
                           <ChevronDown size={14} className="hidden md:inline text-muted-foreground transition-transform group-hover:translate-y-0.5"/>
                       </button>
@@ -262,14 +262,17 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </header>
               
               {/* [FIX UI] Main Content Area */}
-              {/* 'pb-20' (80px) sudah cukup untuk BottomNavBar (64px) + Margin (16px) */}
-              <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 bg-muted/10 relative scroll-smooth">
+              <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 relative scroll-smooth">
+                {/* Ambient Background Glow */}
+                <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[var(--nk-gradient-start)]/5 to-transparent pointer-events-none -z-10"></div>
                 <ScrollToTop />
                 <div className="w-full min-h-full flex flex-col">
                     <Breadcrumbs />
                     <PageTransition>{children}</PageTransition>
-                    <footer className="mt-auto py-6 text-center text-xs text-muted-foreground hidden md:block">
-                        <p>&copy; {new Date().getFullYear()} NATAKARYA. Sistem Integrasi & Administrasi Persuratan.</p>
+                    <footer className="mt-auto pt-10 pb-6 flex flex-col items-center justify-center text-xs text-muted-foreground hidden md:flex border-t border-border/30">
+                        <div className="w-12 h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] rounded-full mb-4 opacity-50"></div>
+                        <p className="font-heading font-semibold tracking-wide text-foreground/80">&copy; {new Date().getFullYear()} NATAKARYA</p>
+                        <p className="opacity-70 mt-1.5">Sistem Integrasi & Administrasi Persuratan</p>
                     </footer>
                 </div>
               </main>

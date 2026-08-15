@@ -93,10 +93,11 @@ export default function JadwalDetailModal({ isOpen, onClose, jadwal, isAdmin, on
     return (
         <Dialog open={isOpen} onOpenChange={handleModalClose}>
             {/* [PERBAIKAN DARK MODE] */}
-            <DialogContent className="sm:max-w-lg bg-card border-border">
+            <DialogContent className="sm:max-w-lg bg-card/90 backdrop-blur-xl border border-[var(--nk-gradient-start)]/20 shadow-[0_8px_40px_-10px_rgba(17,94,89,0.3)] rounded-2xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
                 <DialogHeader>
                     {/* [PERBAIKAN DARK MODE] */}
-                    <DialogTitle className="text-xl font-semibold text-foreground">
+                    <DialogTitle className="text-xl font-bold font-heading text-foreground">
                         Detail Jadwal Internal
                     </DialogTitle>
                     <DialogDescription className="flex justify-between items-start pt-2">

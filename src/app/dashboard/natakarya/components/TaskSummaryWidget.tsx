@@ -138,14 +138,20 @@ export default function TaskSummaryWidget({ tasks, userCache }: TaskSummaryWidge
     if (!userProfile) return null;
     
     return (
-        <Card className="shadow-md border-border">
-            <CardHeader className="border-b border-border">
-                <CardTitle className="text-xl">Tugas Aktif Saya</CardTitle>
-                <CardDescription>
+        <Card className="flex flex-col h-fit rounded-2xl shadow-[0_4px_20px_-4px_rgba(17,94,89,0.1)] border border-[var(--nk-gradient-start)]/10 overflow-hidden relative group">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
+            <CardHeader className="bg-gradient-to-r from-[var(--nk-gradient-start)]/5 to-transparent border-b border-border/50 p-4">
+                <CardTitle className="text-xl font-bold font-heading flex items-center gap-2">
+                    <div className="p-2 bg-[var(--nk-gradient-start)]/10 rounded-xl">
+                        <CheckSquare className="w-5 h-5 text-[var(--nk-gradient-start)]" />
+                    </div>
+                    Tugas Aktif Saya
+                </CardTitle>
+                <CardDescription className="ml-11">
                     Semua tugas dengan status "Baru" dan "Dikerjakan".
                 </CardDescription>
             </CardHeader>
-            <CardContent className="p-4 space-y-3 max-h-[500px] overflow-y-auto">
+            <CardContent className="p-4 space-y-3 max-h-[500px] overflow-y-auto custom-scrollbar">
                 {sortedTasks.length > 0 ? (
                     // --- Logika Render Diganti ---
                     <div className="space-y-3">
@@ -164,9 +170,13 @@ export default function TaskSummaryWidget({ tasks, userCache }: TaskSummaryWidge
                     </div>
                     // --- Akhir Logika Render ---
                 ) : (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <CheckSquare size={40} className="mx-auto text-muted-foreground/50"/>
-                        <p className="mt-4 font-semibold">Tidak ada tugas aktif.</p>
+                    <div className="text-center py-16 flex flex-col items-center justify-center opacity-80 hover:opacity-100 transition-opacity">
+                        <div className="w-24 h-24 mb-4 rounded-full bg-gradient-to-br from-[var(--nk-gradient-start)]/5 to-[var(--nk-gradient-end)]/5 flex items-center justify-center border border-[var(--nk-gradient-start)]/10 shadow-inner relative">
+                            <div className="absolute inset-0 bg-[var(--nk-gradient-start)]/5 blur-xl rounded-full"></div>
+                            <CheckSquare size={48} className="text-[var(--nk-gradient-start)]/40 relative z-10" />
+                        </div>
+                        <p className="font-heading font-semibold text-foreground/70 text-lg">Kosong</p>
+                        <p className="text-sm text-muted-foreground mt-1">Tidak ada tugas aktif.</p>
                     </div>
                 )}
             </CardContent>

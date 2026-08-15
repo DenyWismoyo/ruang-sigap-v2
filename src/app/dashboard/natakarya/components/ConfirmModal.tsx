@@ -43,12 +43,14 @@ export default function ConfirmModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       {/* [PERBAIKAN] Menggunakan kelas semantik bg-card dan border-border */}
-      <DialogContent className="sm:max-w-md bg-card border-border"> 
-        
+      <DialogContent className="sm:max-w-md bg-card/90 backdrop-blur-xl border border-[var(--nk-gradient-start)]/20 shadow-[0_8px_40px_-10px_rgba(17,94,89,0.3)] rounded-2xl overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
         <DialogHeader>
           {/* [PERBAIKAN] Menggunakan kelas semantik text-foreground */}
-          <DialogTitle className="flex items-center text-lg font-semibold text-foreground">
-            <AlertTriangle className="mr-2 h-5 w-5 text-yellow-500" />
+          <DialogTitle className="flex items-center text-lg font-bold font-heading text-foreground">
+            <div className="p-2 bg-amber-500/10 rounded-xl mr-3">
+                <AlertTriangle className="h-5 w-5 text-amber-500" />
+            </div>
             {title}
           </DialogTitle>
           {/* [PERBAIKAN] Menggunakan kelas semantik text-muted-foreground */}
