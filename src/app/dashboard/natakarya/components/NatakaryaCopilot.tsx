@@ -32,6 +32,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessage {
   id: string;
@@ -247,104 +249,46 @@ export default function NatakaryaCopilot() {
     }
   };
 
-  // Helper untuk merender formatting Markdown sederhana (Bold, List, Linebreaks, Blockquote, dan Action Links)
-  const renderFormattedContent = (content: string) => {
-    const lines = content.split('\n');
+  // Helper untuk merender formatting Markdown dengan dukungan tabel
+  const renderFormattedContent = (rawText: string) => {
     return (
-      <div className="space-y-1.5 text-sm leading-relaxed">
-        {lines.map((line, idx) => {
-          const trimmed = line.trim();
-
-          // Header (### / ## / #)
-          if (trimmed.startsWith('### ')) {
-            return <h4 key={idx} className="font-bold text-foreground text-sm mt-2 mb-1">{renderInlineFormatting(trimmed.replace('### ', ''))}</h4>;
-          }
-          if (trimmed.startsWith('## ') || trimmed.startsWith('# ')) {
-            return <h3 key={idx} className="font-bold text-foreground text-base mt-2 mb-1 text-primary">{renderInlineFormatting(trimmed.replace(/^#+\s/, ''))}</h3>;
-          }
-
-          // Bullet points
-          if (trimmed.startsWith('* ') || trimmed.startsWith('- ')) {
-            const rawText = trimmed.replace(/^[\*\-]\s/, '');
-            return (
-              <div key={idx} className="flex items-start gap-2 ml-1">
-                <span className="text-primary mt-1.5 w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
-                <span className="flex-1">{renderInlineFormatting(rawText)}</span>
+      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            a: ({node, ...props}) => {
+              const url = props.href || '';
+              const isInternal = url.startsWith('/dashboard/natakarya');
+              return (
+                <button
+                  onClick={(e) => { e.preventDefault(); handleActionNavigate(url); }}
+                  className="inline-flex items-center gap-1 my-0.5 mx-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary border border-primary/30 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 group/btn"
+                >
+                  {isInternal ? <FileText size={12} className="group-hover/btn:scale-110 transition-transform" /> : <ExternalLink size={12} />}
+                  <span>{props.children}</span>
+                  <ArrowUpRight size={11} className="opacity-70 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
+                </button>
+              );
+            },
+            table: ({node, ...props}) => (
+              <div className="overflow-x-auto my-2 rounded-lg border border-border">
+                <table className="w-full text-left border-collapse text-xs" {...props} />
               </div>
-            );
-          }
-
-          // Numbered list
-          const numMatch = trimmed.match(/^(\d+)\.\s(.*)/);
-          if (numMatch) {
-            return (
-              <div key={idx} className="flex items-start gap-2 ml-1">
-                <span className="font-semibold text-primary text-xs mt-0.5 min-w-[16px]">{numMatch[1]}.</span>
-                <span className="flex-1">{renderInlineFormatting(numMatch[2])}</span>
-              </div>
-            );
-          }
-
-          // Blockquote
-          if (trimmed.startsWith('> ')) {
-            return (
-              <blockquote key={idx} className="border-l-4 border-primary/50 pl-3 py-1 my-1.5 italic bg-muted/30 rounded-r text-xs text-muted-foreground">
-                {renderInlineFormatting(trimmed.replace('> ', ''))}
-              </blockquote>
-            );
-          }
-
-          // Blank line
-          if (!trimmed) {
-            return <div key={idx} className="h-1.5" />;
-          }
-
-          // Normal text
-          return <p key={idx}>{renderInlineFormatting(line)}</p>;
-        })}
+            ),
+            th: ({node, ...props}) => <th className="border-b border-border bg-muted/50 px-3 py-2 font-semibold" {...props} />,
+            td: ({node, ...props}) => <td className="border-b border-border/50 px-3 py-2" {...props} />,
+            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
+            ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
+            li: ({node, ...props}) => <li className="pl-1" {...props} />,
+            strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
+            code: ({node, ...props}) => <code className="px-1.5 py-0.5 rounded-md bg-muted font-mono text-[11px] text-primary" {...props} />
+          }}
+        >
+          {rawText}
+        </ReactMarkdown>
       </div>
     );
-  };
-
-  // Helper untuk formatting inline: [Link Text](url), **bold**, *italic*, `code`
-  const renderInlineFormatting = (text: string) => {
-    // Regex untuk link markdown [Label](url), bold **text**, dan `code`
-    const tokenRegex = /(\[[^\]]+\]\([^)]+\)|\*\*.*?\*\*|`.*?`)/g;
-    const parts = text.split(tokenRegex);
-
-    return parts.map((part, i) => {
-      // 1. Interactive Link Button [Label](url)
-      const linkMatch = part.match(/^\[([^\]]+)\]\(([^)]+)\)$/);
-      if (linkMatch) {
-        const label = linkMatch[1];
-        const url = linkMatch[2];
-        const isInternal = url.startsWith('/dashboard/natakarya');
-
-        return (
-          <button
-            key={i}
-            onClick={() => handleActionNavigate(url)}
-            className="inline-flex items-center gap-1 my-0.5 mx-1 px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 hover:bg-primary hover:text-primary-foreground text-primary border border-primary/30 transition-all duration-200 shadow-2xs hover:shadow-xs active:scale-95 group/btn"
-          >
-            {isInternal ? <FileText size={12} className="group-hover/btn:scale-110 transition-transform" /> : <ExternalLink size={12} />}
-            <span>{label}</span>
-            <ArrowUpRight size={11} className="opacity-70 group-hover/btn:translate-x-0.5 group-hover/btn:-translate-y-0.5 transition-transform" />
-          </button>
-        );
-      }
-
-      // 2. Bold text **text**
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
-      }
-
-      // 3. Code `code`
-      if (part.startsWith('`') && part.endsWith('`')) {
-        return <code key={i} className="px-1 py-0.5 rounded bg-muted font-mono text-xs text-primary">{part.slice(1, -1)}</code>;
-      }
-
-      return part;
-    });
   };
 
   return (
@@ -357,17 +301,17 @@ export default function NatakaryaCopilot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className="fixed bottom-32 md:bottom-6 right-0 md:right-4 z-50 flex items-center gap-2"
+            className="fixed bottom-20 md:bottom-6 right-0 md:right-6 z-50 flex items-center gap-2"
           >
             <button
               onClick={() => setIsOpen(true)}
-              className="relative group flex items-center gap-2.5 pl-2 pr-1.5 py-1.5 md:px-4 md:py-2.5 rounded-l-full md:rounded-full bg-card/90 backdrop-blur-xl border border-primary/30 border-r-0 md:border-r shadow-[-4px_0_15px_rgba(0,0,0,0.1)] hover:shadow-primary/40 transition-all duration-300 active:scale-95 focus:outline-none"
+              className="relative group flex items-center justify-center p-1.5 pr-0.5 md:p-2 rounded-l-full rounded-r-none md:rounded-full bg-card/90 backdrop-blur-xl border border-primary/30 border-r-0 md:border-r shadow-[-4px_0_15px_rgba(0,0,0,0.15)] md:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 focus:outline-none"
             >
               {/* Omnifit Outer Glow Halo */}
               <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-md group-hover:opacity-100 transition duration-500 animate-pulse pointer-events-none" />
 
               {/* Omnifit Animated Conic Border Ring for Avatar */}
-              <div className="relative w-11 h-11 md:w-9 md:h-9 rounded-full flex items-center justify-center p-[2px] overflow-hidden flex-shrink-0">
+              <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center p-[2px] overflow-hidden flex-shrink-0">
                 <div 
                   className="absolute inset-0 rounded-full animate-spin-slow"
                   style={{
@@ -375,24 +319,13 @@ export default function NatakaryaCopilot() {
                   }}
                 />
                 <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center text-white shadow-inner">
-                  <Bot size={20} className="md:w-4.5 md:h-4.5 text-white" />
-                  <Sparkles size={11} className="absolute -top-0.5 -right-0.5 text-yellow-300 animate-bounce" />
+                  <Bot size={24} className="md:w-6 md:h-6 text-white" />
+                  <Sparkles size={14} className="absolute top-1 right-1 text-yellow-300 animate-bounce" />
                 </div>
               </div>
 
-              {/* Text Label on Desktop */}
-              <div className="hidden md:flex items-center gap-2 relative z-10 pr-1.5">
-                <div className="text-left">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-extrabold text-sm text-foreground tracking-tight">Natakarya AI</span>
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  </div>
-                  <span className="text-[10px] text-muted-foreground font-semibold">Flash Lite 3.5</span>
-                </div>
-              </div>
-
-              {/* Live Status Dot on Mobile */}
-              <span className="absolute top-1 right-1 md:hidden w-3 h-3 rounded-full bg-emerald-500 border-2 border-card z-20 animate-pulse" />
+              {/* Live Status Dot */}
+              <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card z-20 animate-pulse" />
             </button>
           </motion.div>
         )}

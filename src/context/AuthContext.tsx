@@ -7,7 +7,7 @@
 "use client";
 
 import { useContext, createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
 import { db, auth, functions } from '@/lib/firebase';
 import { 
   collection, query, where, getDocs, doc, getDoc, Timestamp
@@ -151,13 +151,25 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     }
     if (!email) throw new Error("Data email tidak ditemukan untuk NIP tersebut.");
 
-    // Hapus user Google sementara agar kredensialnya bisa dipakai oleh akun NIP
-    if (pendingUser) {
+    const isSameEmail = pendingUser?.email?.toLowerCase() === email.toLowerCase();
+
+    // [PERBAIKAN PENTING] Hapus user Google sementara HANYA JIKA emailnya berbeda.
+    // Jika sama, Firebase biasanya sudah menggabungkan kredensialnya ke akun asli.
+    // Menghapus pendingUser jika emailnya sama akan MENGHAPUS akun NIP/Admin aslinya!
+    if (pendingUser && !isSameEmail) {
       await pendingUser.delete();
     }
 
-    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    await linkWithCredential(userCredential.user, credential);
+    let userCredential;
+    try {
+      userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    } catch (err: any) {
+      throw new Error("Password invalid. Jika Anda belum memiliki password, silakan hubungi admin atau gunakan fitur lupa password.");
+    }
+
+    if (!isSameEmail) {
+      await linkWithCredential(userCredential.user, credential);
+    }
     
     const setNipClaim = callCloudFunction("setNipClaim");
     await setNipClaim({ nip });
@@ -204,12 +216,12 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   }, [jabatanProfile, pltJabatanList, queryClient]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
       setUser(currentUser);
       if (currentUser) {
         const idTokenResult = await currentUser.getIdTokenResult();
         const idToken = await currentUser.getIdToken();
-        document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=3600; SameSite=Strict`;
+        document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=604800; SameSite=Strict`;
         
         if (idTokenResult.claims.impersonated && idTokenResult.claims.originalUid) {
           setIsImpersonating(true);

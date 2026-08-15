@@ -28,6 +28,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Command, CommandEmpty, CommandInput, CommandItem, CommandList } from '@/components/ui/command';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Modal Surat (Sub-komponen)
 const SuratViewerModal = ({ isOpen, onClose, suratData }: { isOpen: boolean, onClose: () => void, suratData: Surat | null }) => {
@@ -189,14 +190,21 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
              </div>
           </DialogHeader>
           
-          <ScrollArea className="flex-1 px-2 sm:px-4">
-            <div className="p-4 sm:p-6 space-y-6">
-               {/* Info Dasar */}
-               <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><Label className="text-muted-foreground">Dari</Label><p className="font-medium">{assigner?.namaLengkap || '...'}</p></div>
-                  <div><Label className="text-muted-foreground">Kepada</Label><p className="font-medium">{assignee?.namaLengkap || '...'}</p></div>
-                  <div className="col-span-2"><Label className="text-muted-foreground">Deskripsi</Label><p className="whitespace-pre-wrap">{tugas.deskripsi}</p></div>
-               </div>
+          <Tabs defaultValue="detail" className="flex-1 flex flex-col overflow-hidden">
+            <TabsList className="mx-4 sm:mx-6 mt-4 grid w-full max-w-sm grid-cols-2">
+              <TabsTrigger value="detail">Detail Tugas</TabsTrigger>
+              <TabsTrigger value="diskusi">Diskusi ({daftarKomentar.length})</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="detail" className="flex-1 overflow-hidden m-0">
+              <ScrollArea className="h-full px-2 sm:px-4">
+                <div className="p-4 sm:p-6 space-y-6">
+                   {/* Info Dasar */}
+                   <div className="grid grid-cols-2 gap-4 text-sm">
+                      <div><Label className="text-muted-foreground">Dari</Label><p className="font-medium">{assigner?.namaLengkap || '...'}</p></div>
+                      <div><Label className="text-muted-foreground">Kepada</Label><p className="font-medium">{assignee?.namaLengkap || '...'}</p></div>
+                      <div className="col-span-2"><Label className="text-muted-foreground">Deskripsi</Label><p className="whitespace-pre-wrap">{tugas.deskripsi}</p></div>
+                   </div>
 
                {/* Kolaborator */}
                {canManageTeam && (
@@ -279,25 +287,38 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
                        </div>
                    )}
                </div>
-
-               {/* Komentar */}
-               <div>
-                   <Label className="mb-2 block">Komentar</Label>
-                   <div className="bg-muted rounded-lg p-3 h-48 overflow-y-auto space-y-3 mb-3">
-                       {daftarKomentar.map(k => (
-                           <div key={k.id} className="text-sm">
-                               <p className="font-bold text-xs">{k.userName} <span className="text-muted-foreground font-normal">{formatDateRelative(k.timestamp)}</span></p>
-                               <p>{k.komentar}</p>
-                           </div>
-                       ))}
-                   </div>
-                   <form onSubmit={handleKomentarSubmit} className="flex gap-2">
-                       <Input value={komentar} onChange={e => setKomentar(e.target.value)} placeholder="Tulis komentar..." className="flex-1"/>
-                       <Button type="submit" size="icon"><Send size={16}/></Button>
-                   </form>
-               </div>
             </div>
           </ScrollArea>
+        </TabsContent>
+        
+        <TabsContent value="diskusi" className="flex-1 overflow-hidden m-0 flex flex-col p-4 sm:p-6">
+           <ScrollArea className="flex-1 bg-muted/50 rounded-lg p-3 mb-4 border border-border shadow-inner">
+               <div className="space-y-4">
+                 {daftarKomentar.length === 0 ? (
+                    <div className="h-32 flex items-center justify-center text-muted-foreground italic text-sm">Belum ada diskusi.</div>
+                 ) : (
+                   daftarKomentar.map(k => {
+                     const isMine = k.userId === userProfile?.uid;
+                     return (
+                       <div key={k.id} className={`flex flex-col text-sm ${isMine ? 'items-end' : 'items-start'}`}>
+                           <p className="font-semibold text-xs mb-1">
+                               {isMine ? 'Anda' : k.userName} <span className="text-muted-foreground font-normal ml-1">{formatDateRelative(k.timestamp)}</span>
+                           </p>
+                           <div className={`p-3 rounded-lg max-w-[80%] ${isMine ? 'bg-primary text-primary-foreground rounded-tr-none' : 'bg-background border shadow-sm rounded-tl-none'}`}>
+                               <p className="whitespace-pre-wrap">{k.komentar}</p>
+                           </div>
+                       </div>
+                     );
+                   })
+                 )}
+               </div>
+           </ScrollArea>
+           <form onSubmit={handleKomentarSubmit} className="flex gap-2 shrink-0">
+               <Input value={komentar} onChange={e => setKomentar(e.target.value)} placeholder="Tulis balasan diskusi..." className="flex-1"/>
+               <Button type="submit" size="icon"><Send size={16}/></Button>
+           </form>
+        </TabsContent>
+      </Tabs>
         </DialogContent>
       </Dialog>
       <SuratViewerModal isOpen={isSuratViewerOpen} onClose={() => setIsSuratViewerOpen(false)} suratData={suratTerkait} />

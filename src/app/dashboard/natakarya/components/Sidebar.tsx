@@ -55,6 +55,8 @@ import {
   Youtube,
   ToyBrick,
   Palette,
+  Activity,
+  Database,
 } from "lucide-react";
 import {
   Jabatan,
@@ -369,6 +371,14 @@ export const navItems: NavItem[] = [
 
   // --- ANALITIKA LANJUTAN ---
   {
+    href: "/dashboard/monitoring",
+    label: "Monitoring OPD",
+    icon: Activity,
+    allowedRoles: ["admin_opd", "super_admin"],
+    section: "analitika",
+    colorClass: "text-pink-600",
+  },
+  {
     href: "/dashboard/evaluasi",
     label: "Evaluasi Kinerja",
     icon: AreaChart,
@@ -411,6 +421,14 @@ export const navItems: NavItem[] = [
   },
 
   // --- ADMINISTRASI ---
+  {
+    href: "/dashboard/siasn",
+    label: "Integrasi BKN",
+    icon: Database,
+    allowedRoles: ["super_admin"],
+    section: "administrasi",
+    colorClass: "text-red-600",
+  },
   // [UPDATE] Menambahkan 'staf_tu' pada allowedRoles
   {
     href: "/dashboard/users",

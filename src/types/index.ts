@@ -121,7 +121,7 @@ export interface ServiceTemplate {
   isActive: boolean;
 }
 
-export interface Jabatan extends BaseEntity { id?: string; namaJabatan: string; level: number; opdId: string; idAtasan: string | null; pltUserId?: string | null; pltMulaiTanggal?: Timestamp | null; pltSelesaiTanggal?: Timestamp | null; status?: 'aktif' | 'nonaktif'; delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; }
+export interface Jabatan { id?: string; namaJabatan: string; level: number; opdId: string; idAtasan: string | null; pltUserId?: string | null; pltMulaiTanggal?: Timestamp | null; pltSelesaiTanggal?: Timestamp | null; status?: 'aktif' | 'nonaktif'; delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; }
 export interface OpdConfig { id?: string; packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; langgananAktifHingga: Timestamp; paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; kuotaPengguna: number; penggunaAktifSaatIni: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; default_theme?: AppTheme; }
 export interface WelcomeSummary { disposisiBaru: number; tindakLanjutMenunggu: number; tugasAktif: number; tugasLewatBatasWaktu: number; suratMenungguDisposisi: number; suratBaruCount?: number; tugasBaruCount?: number; }
 
@@ -177,7 +177,7 @@ export type DocumentIconType = "sheet" | "doc" | "pdf" | "video" | "image" | "zi
 export interface RepositoryItem { id: string; nama: string; tipe: RepositoryItemType; parentId: string | null; folderId?: string | null; opdId: string; ownerId: string; path: { id: string | null; nama: string }[]; url?: string; tipeDokumen?: DocumentIconType; createdAt: any; updatedAt: any; }
 export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
-export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; googleDriveLink: string; fileName: string; fileType: string; createdAt: Timestamp; }
+export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; createdAt: Timestamp; }
 export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string; tanggalRapat: Timestamp; pemimpinRapat: string; notulis: string; peserta: string; createdBy: string; createdAt: Timestamp; isiNotulensi: string; }
 export interface KnowledgeArticle { id?: string; opdId: string; judul: string; kategori: string; konten: string; attachmentUrl?: string; createdBy: string; createdAt: Timestamp; lastUpdatedAt: Timestamp; sharedWithOpdIds?: string[]; }
 export interface PengumumanAttachment { url: string; fileName: string; type: string; }

@@ -21,6 +21,8 @@ import { Card } from '@/components/ui/card';
 import SmartGreeting from '@/app/dashboard/natakarya/components/home/SmartGreeting';
 import QuickAccessCard from '@/app/dashboard/natakarya/components/home/QuickAccessCard';
 import MobileAgendaCarousel from '@/app/dashboard/natakarya/components/home/MobileAgendaCarousel';
+import MiniCalendarWidget from '@/app/dashboard/natakarya/components/home/MiniCalendarWidget';
+import PersonalPerformanceWidget from '@/app/dashboard/natakarya/components/home/PersonalPerformanceWidget';
 
 // --- IMPORT HOOKS SSOT ---
 import { useMasterData } from '@/app/dashboard/natakarya/hooks/useMasterData';
@@ -291,6 +293,30 @@ export default function DashboardPage() {
       return agendas.sort((a, b) => a.time.localeCompare(b.time));
   }, [todayAgendas, jadwalInternalList, currentDay]);
 
+  const combinedAllAgendas = useMemo(() => {
+      const agendas: CombinedAgendaItem[] = [];
+
+      jadwalInternalList.forEach(jadwal => {
+          agendas.push({
+              id: jadwal.id!, type: 'internal', item: jadwal,
+              time: jadwal.jamMulai, title: jadwal.kegiatan,
+              location: jadwal.jenis === 'Virtual' ? (jadwal.tautanRapat || 'Rapat Virtual') : jadwal.namaTempat
+          });
+      });
+
+      [...todayAgendas, ...upcomingAgendas].forEach(surat => {
+           agendas.push({
+              id: surat.id!, type: 'surat', item: surat,
+              time: surat.detailAgenda!.jam, title: surat.perihal,
+              location: surat.detailAgenda!.lokasi,
+              penerimaDisposisi: surat.penerimaDisposisi,
+              disposisiStatus: surat.disposisiStatus
+          });
+      });
+
+      return agendas;
+  }, [jadwalInternalList, todayAgendas, upcomingAgendas]);
+
   // --- State UI Lokal ---
   const [agendaFilter, setAgendaFilter] = useState<'hariIni' | 'akanDatang'>('hariIni');
   const [agendaInternalView, setAgendaInternalView] = useState<'table' | 'card'>('card');
@@ -459,6 +485,26 @@ export default function DashboardPage() {
                         </motion.div>
                     ))}
                 </motion.div>
+
+                {/* [PERSONAL PERFORMANCE] */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.1 }}
+                >
+                    <PersonalPerformanceWidget />
+                </motion.div>
+
+                {/* [MINI KALENDER] */}
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    whileInView={{ opacity: 1, scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ delay: 0.2 }}
+                >
+                    <MiniCalendarWidget agendas={combinedAllAgendas} />
+                </motion.div>
             </div>
         </div>
 
@@ -473,6 +519,16 @@ export default function DashboardPage() {
       {/* Mobile Quick Links */}
       <div className="md:hidden px-4 grid grid-cols-3 gap-3 mt-6">
          {quickAccessLinks.map((link) => <QuickAccessCard key={link.href} {...link} />)}
+      </div>
+
+      {/* Mobile Personal Performance */}
+      <div className="md:hidden px-4 mt-6">
+         <PersonalPerformanceWidget />
+      </div>
+
+      {/* Mobile Mini Kalender */}
+      <div className="md:hidden px-4 mt-6 mb-4">
+         <MiniCalendarWidget agendas={combinedAllAgendas} />
       </div>
 
        {/* Modal Global */}

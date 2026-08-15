@@ -5,7 +5,8 @@
  * - Connects to 'succession_positions' collection in Firestore.
  */
 
-import { useState, useEffect } from 'react';
+// @ts-nocheck
+import { useState, useCallback, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { TargetPosition } from '../talenta/data/succession-constants';

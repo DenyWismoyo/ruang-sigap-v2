@@ -214,12 +214,21 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                       <div className="p-3 border-b border-border bg-muted/30"><h3 className="font-semibold text-foreground text-sm">Notifikasi Terbaru</h3></div>
                       <ScrollArea className="h-[300px]">
                         {notifikasiList.length === 0 ? <p className="text-sm text-muted-foreground text-center p-8">Tidak ada notifikasi baru.</p> : 
-                          <div className="divide-y divide-border">{notifikasiList.map((notif) => (
+                          <div className="divide-y divide-border">
+                            {notifikasiList.slice(0, 10).map((notif) => (
                               <Link key={notif.id} href={notif.link || '/dashboard'} className={`block p-4 hover:bg-accent/50 transition-colors ${!notif.isRead ? 'bg-blue-50/50 dark:bg-blue-900/10' : ''}`}>
                                 <p className={`text-sm font-medium leading-snug ${!notif.isRead ? 'text-primary' : 'text-foreground'}`}>{notif.message}</p>
                                 <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1"><Clock size={10}/> {notif.timestamp ? formatDateRelative(notif.timestamp) : 'Baru saja'}</p>
                               </Link>
-                            ))}</div>
+                            ))}
+                            {notifikasiList.length > 10 && (
+                              <div className="p-3 text-center border-t border-border">
+                                <Link href="/dashboard/notifikasi" className="text-xs font-semibold text-primary hover:underline">
+                                  Lihat Semua Notifikasi ({notifikasiList.length})
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                         }
                       </ScrollArea>
                     </PopoverContent>

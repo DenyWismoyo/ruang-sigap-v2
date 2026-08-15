@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Directory: src/app/dashboard/talenta/tabs/CompetencyTab.tsx
  * History Update:

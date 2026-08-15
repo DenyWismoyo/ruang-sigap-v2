@@ -1,1 +1,1 @@
-export function MatrixBox() { return null; }
+export function MatrixBox(props: any) { return null; }

@@ -14,8 +14,8 @@ import { useUserAuth } from '@/context/AuthContext';
 import { CheckSquare } from 'lucide-react';
 
 // --- Impor Baru ---
-import TaskListItem from '../tugas/components/TaskListItem';
-import TaskDetailModal from '../tugas/components/TaskDetailModal';
+import TaskListItem from '@/app/dashboard/natakarya/(main)/tugas/components/TaskListItem';
+import TaskDetailModal from '@/app/dashboard/natakarya/(main)/tugas/components/TaskDetailModal';
 import ConfirmModal from './ConfirmModal';
 import { useToast } from '@/context/ToastContext';
 import { db } from '@/lib/firebase';
@@ -154,7 +154,7 @@ export default function TaskSummaryWidget({ tasks, userCache }: TaskSummaryWidge
                                 key={task.id}
                                 tugas={task}
                                 isExpanded={expandedTaskId === task.id}
-                                onToggleExpand={(id) => setExpandedTaskId(prev => (prev === id ? null : id))}
+                                onToggleExpand={(id: string) => setExpandedTaskId(prev => (prev === id ? null : id))}
                                 onOpenDetail={setSelectedTask}
                                 onStatusChange={handleStatusChange}
                                 onDeleteTask={handleDeleteTask}

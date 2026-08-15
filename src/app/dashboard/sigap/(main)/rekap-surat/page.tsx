@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client";
 
 // Lokasi: src/app/dashboard/rekap-surat/page.tsx

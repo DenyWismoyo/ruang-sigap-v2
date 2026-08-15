@@ -11,7 +11,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { Jabatan, Disposisi, UserProfile, Surat } from '@/types';
-import { UserCheck, Search, Send, X, Bell, Loader2, Sparkles, Save, Info } from 'lucide-react';
+import { UserCheck, Search, Send, X, Bell, Loader2, Sparkles, Save, Info, CalendarPlus } from 'lucide-react';
 import ConfirmModal from '@/app/dashboard/natakarya/components/ConfirmModal';
 import { useToast } from '@/context/ToastContext';
 import { useBawahanList } from '@/app/dashboard/natakarya/hooks/useBawahanList';
@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Popover, PopoverContent, PopoverTrigger,
 } from "@/components/ui/popover";
@@ -66,6 +67,7 @@ export default function FormDisposisi({
 
   const [selectedPenerima, setSelectedPenerima] = useState<UserProfile[]>([]);
   const [batasWaktu, setBatasWaktu] = useState<Date | undefined>(undefined);
+  const [addToCalendar, setAddToCalendar] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -80,6 +82,11 @@ export default function FormDisposisi({
 
   const isPemberitahuanMode = surat.jenisSurat === 'Pemberitahuan';
   const isTuOrAdmin = userProfile?.role === 'staf_tu' || userProfile?.role === 'admin_opd';
+  
+  const showCalendarOption = isPemberitahuanMode || 
+        surat.perihal.toLowerCase().includes('undangan') || 
+        surat.perihal.toLowerCase().includes('rapat') ||
+        surat.perihal.toLowerCase().includes('agenda');
 
   // --- FILTER BAWAHAN ---
   const filteredBawahan = useMemo(() => {
@@ -159,9 +166,32 @@ export default function FormDisposisi({
       );
       
       if (success) {
+          if (addToCalendar && userProfile) {
+              try {
+                  const { addDoc, collection, Timestamp } = require('firebase/firestore');
+                  const { db } = require('@/lib/firebase');
+                  await addDoc(collection(db, 'jadwalTempat'), {
+                      opdId: userProfile.opdId,
+                      namaTempat: 'Sesuai Surat/Internal',
+                      kegiatan: `[Disposisi] ${surat.perihal}`,
+                      penanggungJawab: targets.map(t => t.namaLengkap).join(', '),
+                      tanggalMulai: batasWaktu ? Timestamp.fromDate(batasWaktu) : (surat.detailAgenda?.tanggal || Timestamp.now()),
+                      jamMulai: surat.detailAgenda?.jam || '08:00',
+                      jamSelesai: surat.detailAgenda?.jamSelesai || '16:00',
+                      createdBy: userProfile.uid,
+                      createdAt: Timestamp.now(),
+                      status: 'Disetujui',
+                      jenis: 'Fisik'
+                  });
+              } catch (e) {
+                  console.error("Gagal menambahkan ke kalender:", e);
+              }
+          }
+
           removeInstruksi(); 
           setSelectedPenerima([]);
           setBatasWaktu(undefined);
+          setAddToCalendar(false);
           onDisposisiSuccess();
       }
       setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -311,7 +341,31 @@ export default function FormDisposisi({
                 </div>
                 
                 {!isPemberitahuanMode && (
-                  <div><Label htmlFor="batasWaktu" className="text-xs md:text-sm">Batas Waktu (Opsional)</Label><DatePicker date={batasWaktu} setDate={setBatasWaktu} /></div>
+                    <div className="space-y-4">
+                     <div className="flex flex-col gap-2">
+                        <Label className="text-xs md:text-sm">Batas Waktu (Opsional)</Label>
+                        <DatePicker date={batasWaktu} setDate={setBatasWaktu} />
+                    </div>
+
+                    {showCalendarOption && (
+                        <div className="flex items-center space-x-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/50 mt-4">
+                            <Checkbox 
+                                id="calendar" 
+                                checked={addToCalendar}
+                                onCheckedChange={(checked) => setAddToCalendar(checked as boolean)}
+                            />
+                            <div className="grid gap-1.5 leading-none">
+                                <Label htmlFor="calendar" className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center">
+                                    <CalendarPlus size={14} className="mr-1" />
+                                    Jadikan Agenda Kalender
+                                </Label>
+                                <p className="text-[10px] md:text-xs text-muted-foreground">
+                                    Otomatis tambahkan acara ini ke kalender OPD untuk penerima.
+                                </p>
+                            </div>
+                        </div>
+                    )}
+                </div>
                 )}
 
                 <div>
@@ -338,19 +392,19 @@ export default function FormDisposisi({
                 <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-4 border-t border-border">
                     {isPemberitahuanMode ? (
                         <>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm">
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
                                 <Send size={14} className="md:w-4 md:h-4 mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
                            </Button>
-                           <Button type="button" variant="secondary" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm">
+                           <Button type="button" variant="secondary" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
                                 <Bell size={14} className="md:w-4 md:h-4 mr-2" /> Sebarkan ke OPD
                            </Button>
                         </>
                     ) : (
                         <>
-                           <Button type="button" variant="secondary" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm">
+                           <Button type="button" variant="secondary" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
                                 <UserCheck size={14} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
                            </Button>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm">
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
                                 {isProcessing ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 animate-spin" /> : <Send size={14} className="md:w-4 md:h-4 mr-2" />}
                                 {isProcessing ? 'Memproses...' : (isRevising ? 'Kirim Revisi Ulang' : 'Kirim Disposisi')}
                            </Button>

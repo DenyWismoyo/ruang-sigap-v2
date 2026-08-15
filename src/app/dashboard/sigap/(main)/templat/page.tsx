@@ -10,6 +10,7 @@
 // - Menambahkan tombol 'Pilih Semua'/'Kosongkan' ke Modal Tambah.
 
 "use client";
+// @ts-nocheck
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase'; // path @

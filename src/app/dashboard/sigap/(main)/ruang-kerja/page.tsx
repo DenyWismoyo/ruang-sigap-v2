@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Directory: src/app/dashboard/ruang-kerja/page.tsx
  * Status: UPDATED

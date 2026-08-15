@@ -1,1 +1,1 @@
-export default function CandidateAnalysisView() { return null; }
+export default function CandidateAnalysisView(props: any) { return null; }

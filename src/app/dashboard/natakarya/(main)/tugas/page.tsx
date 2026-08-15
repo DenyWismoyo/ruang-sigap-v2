@@ -7,7 +7,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useUserAuth } from '@/context/AuthContext'; 
 import { useToast } from '@/context/ToastContext'; 
 import { Tugas } from '@/types'; 
@@ -15,6 +15,8 @@ import FormTugas from './components/FormTugas';
 import TaskDetailModal from './components/TaskDetailModal';
 import { Plus, Filter, HelpCircle, ClipboardCheck, BookOpen, ListChecks } from 'lucide-react';
 import TaskList from './components/TaskList';
+import KanbanBoard from './components/KanbanBoard';
+import { LaporanTindakLanjutModal } from './components/LaporanTindakLanjutModal';
 import ConfirmModal from '@/app/dashboard/natakarya/components/ConfirmModal'; 
 import { SkeletonCard } from '@/app/dashboard/natakarya/components/skeletons/SkeletonCard'; 
 import Link from 'next/link';
@@ -81,8 +83,9 @@ export default function TugasSayaPage() {
   const { userProfile, loading: authLoading } = useUserAuth();
   const { addToast } = useToast();
 
-  // 1. State Filter
+  // 1. State Filter & View
   const [activeStatusTab, setActiveStatusTab] = useState<TaskStatusFilter>('Baru');
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   const [assignmentFilter, setAssignmentFilter] = useState<TaskAssignmentFilter>('all');
   const [typeFilter, setTypeFilter] = useState<TaskTypeFilter>('all');
 
@@ -91,7 +94,18 @@ export default function TugasSayaPage() {
   const [isFilterModalOpen, setIsFilterModalOpen] = useState(false);
   const [isBantuanOpen, setIsBantuanOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Tugas | null>(null);
+  const [laporanModal, setLaporanModal] = useState<{isOpen: boolean; tugas: Tugas | null}>({ isOpen: false, tugas: null });
   const [confirmModal, setConfirmModal] = useState<{ isOpen: boolean; title: string; message: string; onConfirm: () => void; isProcessing?: boolean; }>({ isOpen: false, title: '', message: '', onConfirm: () => {}, isProcessing: false });
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('action') === 'create') {
+        setIsFormModalOpen(true);
+        window.history.replaceState({}, '', '/dashboard/natakarya/tugas');
+      }
+    }
+  }, []);
 
   // 3. Hooks SSOT
   // Fetch Data Tugas
@@ -115,7 +129,12 @@ export default function TugasSayaPage() {
 
     const executeChange = async () => {
         const success = await updateTaskStatus(task, newStatus);
-        if (success) setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        if (success) {
+            setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            if (newStatus === 'Selesai') {
+                setLaporanModal({ isOpen: true, tugas: task });
+            }
+        }
     };
 
     if (newStatus === 'Selesai') {
@@ -197,6 +216,25 @@ export default function TugasSayaPage() {
             <SelectItem value="internal">Internal</SelectItem>
           </SelectContent>
         </Select>
+        
+        <div className="ml-auto flex bg-muted rounded-lg p-1 border">
+          <Button 
+            variant={viewMode === 'list' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('list')}
+            className="rounded-md"
+          >
+            List
+          </Button>
+          <Button 
+            variant={viewMode === 'board' ? 'default' : 'ghost'} 
+            size="sm" 
+            onClick={() => setViewMode('board')}
+            className="rounded-md"
+          >
+            Board
+          </Button>
+        </div>
       </div>
 
       {/* Tabs Status */}
@@ -216,19 +254,29 @@ export default function TugasSayaPage() {
                     </motion.div>
                 ) : (
                   <motion.div 
-                      key={activeStatusTab}
+                      key={activeStatusTab + viewMode}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -10 }}
                       transition={{ duration: 0.2 }}
                   >
-                      <TaskList 
-                          tugasList={filteredTasks} 
-                          onOpenDetail={setSelectedTask} 
-                          onStatusChange={handleStatusChange} 
-                          onDeleteTask={handleDeleteTask}
-                          userCache={userMap} 
-                      />
+                      {viewMode === 'list' ? (
+                        <TaskList 
+                            tugasList={filteredTasks} 
+                            onOpenDetail={setSelectedTask} 
+                            onStatusChange={handleStatusChange} 
+                            onDeleteTask={handleDeleteTask}
+                            userCache={userMap} 
+                        />
+                      ) : (
+                        <KanbanBoard
+                            tugasList={filteredTasks} 
+                            onOpenDetail={setSelectedTask} 
+                            onStatusChange={handleStatusChange} 
+                            onDeleteTask={handleDeleteTask}
+                            userCache={userMap} 
+                        />
+                      )}
                   </motion.div>
                 )}
             </AnimatePresence>
@@ -252,6 +300,21 @@ export default function TugasSayaPage() {
         tugas={selectedTask} 
         userCache={userMap} 
       />
+
+      {laporanModal.tugas && (
+          <LaporanTindakLanjutModal 
+              isOpen={laporanModal.isOpen}
+              onClose={() => setLaporanModal({ isOpen: false, tugas: null })}
+              tugasId={laporanModal.tugas.id!}
+              suratId={laporanModal.tugas.suratId || ''}
+              disposisiId={''} 
+              instruksiAwal={laporanModal.tugas.deskripsi || ''}
+              namaTugas={laporanModal.tugas.judulTugas}
+              onSuccess={() => {
+                  setLaporanModal({ isOpen: false, tugas: null });
+              }}
+          />
+      )}
 
       <ConfirmModal 
         isOpen={confirmModal.isOpen} 

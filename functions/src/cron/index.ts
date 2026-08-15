@@ -7,6 +7,13 @@ import {
   UserProfile, Jabatan, Surat, Disposisi, Tugas, OPD, KinerjaPerPenggunaHarian, Tagihan, PricingPackage, OpdConfig 
 } from "../types";
 
+export const dev_generateDailyPerformanceStats = onSchedule(
+    { schedule: "0 0 * * *", region: REGION, timeZone: "Asia/Jakarta" },
+    async (event) => {
+        logger.log("Dummy function to fix cleanup");
+    }
+);
+
 export const sendAgendaReminders = onSchedule(
     { schedule: "every 15 minutes", region: REGION, timeZone: "Asia/Jakarta" },
     async (event) => {

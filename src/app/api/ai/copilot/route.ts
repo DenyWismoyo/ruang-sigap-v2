@@ -247,6 +247,14 @@ ${
 3. **GAYA BAHASA & TATA NASKAH**:
    - Gunakan Bahasa Indonesia kedinasan yang profesional, santun, lugas, dan terstruktur rapi (gunakan bullet points, bold, dan numbering).
    - Jika diminta menyusun draf naskah dinas atau nota dinas, berikan format resmi yang lengkap dan siap salin.
+
+=== INSTRUKSI AKSI OTOMATIS (AGENTIC) ===
+Jika pengguna meminta secara eksplisit untuk mengeksekusi suatu aksi, sertakan Tanda Aksi berikut di AKHIR pesan Anda:
+1. Menandai disposisi selesai: \`[ACTION:SELESAI_DISPOSISI:id_disposisi]\` (ganti id_disposisi dengan DispoID yang relevan).
+2. Membuat tugas baru untuk dirinya sendiri: \`[ACTION:BUAT_TUGAS:Judul Tugas]\` (ganti Judul Tugas dengan judul singkat).
+
+Contoh Balasan:
+"Baik, saya telah membuat tugas 'Menyiapkan Laporan' untuk Anda. [ACTION:BUAT_TUGAS:Menyiapkan Laporan]"
 `;
 
     // =========================================================================
@@ -304,6 +312,50 @@ ${
         usedModel = modelName;
 
         if (replyText) {
+          // --- LOGIKA AGENTIC: PARSING ACTION TAGS ---
+          const dispoMatch = replyText.match(/\[ACTION:SELESAI_DISPOSISI:(.+?)\]/);
+          if (dispoMatch && db) {
+              const dispoId = dispoMatch[1].trim();
+              try {
+                  const dispoRef = db.collection("disposisi").doc(dispoId);
+                  const docSnap = await dispoRef.get();
+                  if (docSnap.exists) {
+                      const data = docSnap.data();
+                      const penerimaSelesai = data?.penerimaSelesai || [];
+                      if (jabatanId && !penerimaSelesai.includes(jabatanId)) {
+                          penerimaSelesai.push(jabatanId);
+                          await dispoRef.update({ 
+                              penerimaSelesai, 
+                              updatedAt: new Date() 
+                          });
+                      }
+                  }
+              } catch (e) {
+                  console.error("Gagal eksekusi ACTION:SELESAI_DISPOSISI", e);
+              }
+              replyText = replyText.replace(dispoMatch[0], "").trim();
+          }
+
+          const tugasMatch = replyText.match(/\[ACTION:BUAT_TUGAS:(.+?)\]/);
+          if (tugasMatch && db) {
+              const judulTugas = tugasMatch[1].trim();
+              try {
+                  await db.collection("tugas").add({
+                      judulTugas,
+                      opdId: opdId || "",
+                      status: "Baru",
+                      prioritas: "Sedang",
+                      pembuatId: userId || "",
+                      penerimaIds: [userId || ""],
+                      createdAt: new Date(),
+                      updatedAt: new Date()
+                  });
+              } catch (e) {
+                  console.error("Gagal eksekusi ACTION:BUAT_TUGAS", e);
+              }
+              replyText = replyText.replace(tugasMatch[0], "").trim();
+          }
+
           break;
         }
       } catch (err: any) {

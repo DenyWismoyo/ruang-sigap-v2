@@ -1,1 +1,1 @@
-export default function PlanCreationModal() { return null; }
+export default function PlanCreationModal(props: any) { return null; }

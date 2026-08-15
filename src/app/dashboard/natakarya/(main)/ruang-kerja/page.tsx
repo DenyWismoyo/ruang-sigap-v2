@@ -24,6 +24,7 @@ import QuickAddTask from '@/app/dashboard/natakarya/(main)/ruang-kerja/component
 import StickyNoteWidget from '@/app/dashboard/natakarya/(main)/ruang-kerja/components/StickyNoteWidget';
 import QuickLinksWidget from '@/app/dashboard/natakarya/(main)/ruang-kerja/components/QuickLinksWidget'; 
 import EmptyStateWidget from '@/app/dashboard/natakarya/(main)/ruang-kerja/components/EmptyStateWidget'; 
+import KPIWidget from '@/app/dashboard/natakarya/(main)/ruang-kerja/components/KPIWidget';
 
 const QuickPreviewModal = dynamic(() => import('@/app/dashboard/natakarya/(main)/ruang-kerja/components/QuickPreviewModal'), { ssr: false });
 const QuickDisposisiModal = dynamic(() => import('@/app/dashboard/natakarya/(main)/ruang-kerja/components/QuickDisposisiModal'), { ssr: false });
@@ -253,7 +254,7 @@ export default function RuangKerjaPage() {
           const agendaList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Surat));
           
           const agendaSuratIds = agendaList.map(s => s.id).filter(Boolean);
-          let allDisposisiDocs = [];
+          let allDisposisiDocs: any[] = [];
           if (agendaSuratIds.length > 0) {
               const disposisiPromises = [];
               for (let i = 0; i < agendaSuratIds.length; i += 30) {
@@ -279,7 +280,7 @@ export default function RuangKerjaPage() {
           
           const jadwalQuery = query(collection(db, "jadwalTempat"), and(where("opdId", "==", userProfile.opdId), where('tanggalMulai', '>=', Timestamp.fromDate(today)), where('tanggalMulai', '<=', Timestamp.fromDate(thirtyDaysLater)), or(where('penanggungJawab', '==', userProfile.namaLengkap), where('createdBy', '==', userProfile.uid))));
           const snapshot = await getDocs(jadwalQuery);
-          const jadwalData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          const jadwalData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JadwalTempat));
           jadwalData.sort((a, b) => a.tanggalMulai.toMillis() - b.tanggalMulai.toMillis());
           return jadwalData;
       },
@@ -443,7 +444,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
     // [PERBAIKAN] Langsung gunakan mapping nama untuk semua kondisi, 
     // hapus logika "if (isSelfDispo) penerima = 'Ditindaklanjuti Sendiri'"
     if (latestDisposisi) {
-        penerima = latestDisposisi.kepadaJabatanId.map((id) => userMap.get(id)?.namaLengkap || '...').join(', ');
+        penerima = latestDisposisi.kepadaJabatanId.map((id: string) => userMap.get(id)?.namaLengkap || '...').join(', ');
     }
 
     return { ...surat, penerimaDisposisi: penerima, disposisiStatus, isSelfDispo, isForMe };
@@ -498,6 +499,8 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   return (
     <div className="flex flex-col h-full p-4 md:p-6 bg-secondary/40">
       <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+      
+      <KPIWidget />
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         
