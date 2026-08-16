@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { SpotlightCard } from '@/components/SpotlightCard';
 
 interface QuickAccessCardProps {
   href: string;
@@ -12,25 +11,20 @@ interface QuickAccessCardProps {
   colorClass: string;
 }
 
-export default function QuickAccessCard({ href, label, icon: Icon, colorClass }: QuickAccessCardProps) {
-    let spotColor: 'indigo' | 'emerald' | 'amber' | 'rose' | 'slate' = 'emerald';
-    if (colorClass.includes('green')) spotColor = 'emerald';
-    else if (colorClass.includes('yellow') || colorClass.includes('orange')) spotColor = 'amber';
-    else if (colorClass.includes('red') || colorClass.includes('pink')) spotColor = 'rose';
-    else if (colorClass.includes('gray')) spotColor = 'slate';
-
+export default function QuickAccessCard({ href, label, icon: Icon }: QuickAccessCardProps) {
     return (
         <Link href={href} className="block group">
             <motion.div whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
-                <SpotlightCard color={spotColor} className="p-3 flex flex-col items-center justify-center text-center h-28 cursor-pointer nk-card group-hover:shadow-[var(--nk-shadow-md)] transition-shadow">
-                    <div className={`p-2.5 ${colorClass.replace('text-', 'bg-').replace('600', '100')} dark:bg-opacity-20 rounded-full mb-2 group-hover:scale-110 transition-transform border border-current/10 relative`}>
-                        <div className="absolute inset-0 bg-current opacity-10 blur-md rounded-full"></div>
-                        <motion.div whileHover={{ rotate: 15 }} transition={{ type: "spring", stiffness: 200, damping: 10 }} className="relative z-10">
-                            <Icon className={`w-5 h-5 ${colorClass}`} />
+                <div className="relative p-3 flex flex-col items-center justify-center text-center h-28 cursor-pointer nk-card nk-glass-panel group-hover:shadow-[var(--nk-shadow-md)] transition-shadow">
+                    <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                    <div className="w-12 h-12 flex items-center justify-center bg-[var(--nk-surface-3)] border border-[var(--nk-glass-border)] rounded-xl mb-2 group-hover:scale-110 transition-transform relative">
+                        <div className="absolute inset-0 bg-[var(--nk-teal-light)] opacity-0 group-hover:opacity-20 blur-md rounded-xl transition-opacity"></div>
+                        <motion.div whileHover={{ rotate: 10 }} transition={{ type: "spring", stiffness: 200, damping: 10 }} className="relative z-10">
+                            <Icon className="w-6 h-6 text-[var(--nk-teal-mid)]" />
                         </motion.div>
                     </div>
-                    <p className="text-xs font-medium text-foreground mt-1 line-clamp-2 leading-tight relative z-10">{label}</p>
-                </SpotlightCard>
+                    <p className="text-xs font-semibold text-foreground mt-1 line-clamp-2 leading-tight relative z-10 group-hover:text-[var(--nk-teal-mid)] transition-colors">{label}</p>
+                </div>
             </motion.div>
         </Link>
     );

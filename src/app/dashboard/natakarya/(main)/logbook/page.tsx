@@ -18,6 +18,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
 import { SmartAddKegiatanModal } from './components/SmartAddKegiatanModal';
+import { NkPageHeader, NkCard } from '@/app/dashboard/natakarya/components/NkCard';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -610,35 +611,41 @@ export default function LogbookPage() {
 
     return (
         <div className="pb-20 animate-fadeInUp">
-            <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-foreground">Laporan Kegiatan Harian</h1>
-                 <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                    <HelpCircle size={20} />
-                </Button>
+            <NkPageHeader 
+                title="Laporan Kegiatan Harian"
+                subtitle="Buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari"
+                icon={BookOpen}
+                actions={
+                    <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-[var(--nk-teal-mid)] bg-[var(--nk-surface-3)] border-[var(--nk-glass-border)]">
+                        <HelpCircle size={20} />
+                    </Button>
+                }
+            />
+            <div className="mb-6 -mt-2 ml-14">
+                <ShortcutNav />
             </div>
-            <ShortcutNav />
 
-            <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">
+            <NkCard className="p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)]">
                 <div className="flex items-center space-x-2">
-                    <Button onClick={() => changeDate(-1)} variant="outline" size="icon"><ChevronLeft/></Button>
+                    <Button onClick={() => changeDate(-1)} variant="outline" size="icon" className="bg-transparent border-[var(--nk-glass-border)]"><ChevronLeft/></Button>
                     <span className="md:hidden font-semibold">{selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                    <Input type="date" value={toYYYYMMDD(selectedDate)} onChange={e => setSelectedDate(new Date(e.target.value + 'T00:00:00'))} className="hidden md:block"/>
-                    <Button onClick={() => changeDate(1)} variant="outline" size="icon"><ChevronRight/></Button>
-                    <Button onClick={() => setSelectedDate(new Date())} variant={isToday ? "default" : "secondary"}>Hari Ini</Button>
+                    <Input type="date" value={toYYYYMMDD(selectedDate)} onChange={e => setSelectedDate(new Date(e.target.value + 'T00:00:00'))} className="hidden md:block bg-[var(--nk-surface-3)] border-[var(--nk-glass-border)]"/>
+                    <Button onClick={() => changeDate(1)} variant="outline" size="icon" className="bg-transparent border-[var(--nk-glass-border)]"><ChevronRight/></Button>
+                    <Button onClick={() => setSelectedDate(new Date())} variant={isToday ? "default" : "secondary"} className={isToday ? 'bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] text-white' : 'bg-transparent border border-[var(--nk-glass-border)]'}>Hari Ini</Button>
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto">
+                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] text-white">
                         <Plus size={16} className="mr-2"/> Tambah Kegiatan
                     </Button>
                      <Button
                         onClick={() => setIsRekapOpen(true)}
-                        className="w-full md:w-auto bg-green-600 hover:bg-green-700"
+                        className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white border border-green-700/50"
                     >
                         <Calendar size={16} className="mr-2"/> Rekap Bulanan
                     </Button>
                 </div>
-            </div>
+            </NkCard>
 
             <div className="mt-8">
                  {loading ? <p className="text-center p-8 text-muted-foreground">Memuat data logbook...</p> : (

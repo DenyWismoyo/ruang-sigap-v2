@@ -1,307 +1,203 @@
-[data-tenant="natakarya"] {
-  /* --- NATAKARYA "SOVEREIGN TEAL" LIGHT MODE --- */
-  --background: 150 12% 97%;     /* Warm white, sedikit kehijauan */
-  --foreground: 195 60% 8%;      /* Deep ocean text */
-  
-  --card: 0 0% 100%;
-  --card-foreground: 195 60% 8%;
-  
-  --popover: 0 0% 100%;
-  --popover-foreground: 195 60% 8%;
-  
-  /* Sovereign Teal Primary */
-  --primary: 172 80% 26%;        /* Deep Teal #0D6B62 — lebih gelap & prestige */
-  --primary-foreground: 0 0% 100%;
-  
-  /* Muted Teal Secondary */
-  --secondary: 170 30% 92%;      /* Teal mist */
-  --secondary-foreground: 172 80% 26%;
-  
-  --muted: 160 12% 93%;
-  --muted-foreground: 195 30% 40%;
-  
-  /* Accent Warm Gold */
-  --accent: 38 85% 90%;          /* Warm gold accent (amber tint) */
-  --accent-foreground: 30 70% 35%;
-  
-  --destructive: 348 83% 47%;
-  --destructive-foreground: 0 0% 100%;
-  
-  --border: 160 18% 88%;
-  --input: 160 18% 88%;
-  --ring: 172 80% 26%;
-  
-  --radius: 0.75rem; /* Lebih sleek dari 1rem, tidak setajam 0.5rem */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-  /* Natakarya Signatures Tokens */
-  --nk-gradient-start: hsl(172 80% 26%);
-  --nk-gradient-end: hsl(190 70% 30%);
-  --nk-deep: hsl(172 80% 18%);          /* Header, sidebar active indicator */
-  --nk-teal-mid: hsl(172 72% 38%);      /* Primary button, active state */
-  --nk-teal-light: hsl(172 60% 55%);    /* Icon accent, hover glow */
-  --nk-gold: hsl(38 85% 52%);           /* Gold accent untuk badge/highlight */
-  
-  /* Surface hierarchy */
-  --nk-surface-1: hsl(160 15% 96%);     /* Page background */
-  --nk-surface-2: hsl(0 0% 100%);       /* Card background */
-  --nk-surface-3: hsl(160 12% 93%);     /* Muted / table row hover */
-  
-  /* Glass & Shadow */
-  --nk-glass-bg: rgba(255, 255, 255, 0.75);
-  --nk-glass-border: rgba(13, 107, 98, 0.12);
-  --nk-shadow-sm: 0 2px 8px -2px rgba(13, 107, 98, 0.08);
-  --nk-shadow-md: 0 8px 32px -8px rgba(13, 107, 98, 0.14);
-  --nk-shadow-lg: 0 20px 60px -15px rgba(13, 107, 98, 0.2);
-  --nk-editorial-line: 3px;             /* Lebar "teal line" identitas */
-}
+/* 
+ * 🎨 NATAKARYA PREMIUM DESIGN SYSTEM (SOVEREIGN TEAL)
+ * Filosofi: Elegan, Institutional, Trustworthy.
+ * Mengutamakan efek visual 'Glassmorphism' dan depth shadow yang halus.
+ */
 
-.dark [data-tenant="natakarya"] {
-  /* --- NATAKARYA "SOVEREIGN TEAL" DARK MODE --- */
-  --background: 192 60% 4%;      /* Deep ocean — lebih premium dari sebelumnya */
-  --foreground: 160 20% 96%;
-  
-  --card: 192 50% 7%;
-  --card-foreground: 160 20% 96%;
-  
-  --popover: 192 50% 9%;
-  --popover-foreground: 160 20% 96%;
-  
-  /* Brighter Teal for Dark Mode */
-  --primary: 172 60% 50%; 
-  --primary-foreground: 192 60% 4%;
-  
-  --secondary: 192 40% 15%;
-  --secondary-foreground: 172 60% 70%;
-  
-  --muted: 192 30% 15%;
-  --muted-foreground: 192 20% 70%;
-  
-  --accent: 38 85% 15%;
-  --accent-foreground: 38 85% 65%;
-  
-  --destructive: 348 83% 55%;
-  --destructive-foreground: 192 60% 4%;
-  
-  --border: 192 40% 20%;
-  --input: 192 40% 20%;
-  --ring: 172 60% 50%;
+@layer base {
+  [data-tenant="natakarya"] {
+    /* --- LIGHT MODE --- */
+    --background: 150 12% 97%;     /* Warm white, sedikit kehijauan */
+    --foreground: 195 60% 8%;      /* Deep ocean text */
+    
+    --card: 0 0% 100%;
+    --card-foreground: 195 60% 8%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 195 60% 8%;
+    
+    /* Sovereign Teal Primary */
+    --primary: 172 80% 26%;        /* Deep Teal #0D6B62 — lebih gelap & prestige */
+    --primary-foreground: 0 0% 100%;
+    
+    /* Muted Teal Secondary */
+    --secondary: 170 30% 92%;      /* Teal mist */
+    --secondary-foreground: 172 80% 26%;
+    
+    --muted: 160 12% 93%;
+    --muted-foreground: 195 30% 40%;
+    
+    /* Accent Warm Gold */
+    --accent: 38 85% 90%;          /* Warm gold accent (amber tint) */
+    --accent-foreground: 30 70% 35%;
+    
+    --destructive: 348 83% 47%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 160 18% 88%;
+    --input: 160 18% 88%;
+    --ring: 172 80% 26%;
+    
+    --radius: 0.75rem; /* Lebih sleek dari 1rem, tidak setajam 0.5rem */
 
-  /* Natakarya Signatures */
-  --nk-gradient-start: hsl(172 60% 45%);
-  --nk-gradient-end: hsl(190 60% 45%);
-  --nk-deep: hsl(172 70% 25%);
-  --nk-teal-mid: hsl(172 60% 45%);
-  --nk-teal-light: hsl(172 70% 65%);
-  --nk-gold: hsl(38 85% 60%);
-  
-  --nk-surface-1: hsl(192 60% 4%);
-  --nk-surface-2: hsl(192 50% 7%);
-  --nk-surface-3: hsl(192 40% 12%);
-  
-  --nk-glass-bg: rgba(5, 20, 22, 0.8);
-  --nk-glass-border: rgba(255, 255, 255, 0.08);
-  --nk-shadow-sm: 0 4px 12px -2px rgba(0, 0, 0, 0.5);
-  --nk-shadow-md: 0 10px 40px -10px rgba(0, 0, 0, 0.6);
-  --nk-shadow-lg: 0 25px 70px -15px rgba(0, 0, 0, 0.7);
-}
+    /* --- NATAKARYA SIGNATURE TOKENS --- */
+    --nk-gradient-start: hsl(172 80% 26%);
+    --nk-gradient-end: hsl(190 70% 30%);
+    --nk-deep: hsl(172 80% 18%);          /* Header, sidebar active indicator */
+    --nk-teal-mid: hsl(172 72% 38%);      /* Primary button, active state */
+    --nk-teal-light: hsl(172 60% 55%);    /* Icon accent, hover glow */
+    --nk-gold: hsl(38 85% 52%);           /* Gold accent untuk badge/highlight */
+    
+    /* Surface hierarchy */
+    --nk-surface-1: hsl(160 15% 96%);     /* Page background */
+    --nk-surface-2: hsl(0 0% 100%);       /* Card background */
+    --nk-surface-3: hsl(160 12% 93%);     /* Muted / table row hover */
+    --nk-glass: rgba(255, 255, 255, 0.75);
+    --nk-glass-border: rgba(13, 107, 98, 0.12);
+    --nk-shadow-sm: 0 2px 8px -2px rgba(13, 107, 98, 0.08);
+    --nk-shadow-md: 0 8px 32px -8px rgba(13, 107, 98, 0.14);
+    --nk-shadow-lg: 0 20px 60px -15px rgba(13, 107, 98, 0.2);
+    --nk-editorial-line: 3px;             /* Lebar "teal line" identitas */
+  }
 
-/* Base typography override */
-[data-tenant="natakarya"] h1,
-[data-tenant="natakarya"] h2,
-[data-tenant="natakarya"] h3,
-[data-tenant="natakarya"] h4,
-[data-tenant="natakarya"] h5,
-[data-tenant="natakarya"] h6,
-[data-tenant="natakarya"] .font-heading {
-  font-family: var(--font-plus-jakarta), sans-serif;
-}
+  .dark [data-tenant="natakarya"] {
+    /* --- DARK MODE --- */
+    --background: 192 60% 4%;      /* Deep ocean — premium dark mode */
+    --foreground: 195 20% 90%;
+    
+    --card: 192 50% 7%;
+    --card-foreground: 195 20% 90%;
+    
+    --popover: 192 50% 7%;
+    --popover-foreground: 195 20% 90%;
+    
+    --primary: 172 60% 50%;        /* Lebih terang di dark mode */
+    --primary-foreground: 192 60% 4%;
+    
+    --secondary: 170 30% 15%;
+    --secondary-foreground: 172 60% 80%;
+    
+    --muted: 192 40% 12%;
+    --muted-foreground: 195 20% 60%;
+    
+    --accent: 38 70% 25%;
+    --accent-foreground: 38 85% 90%;
+    
+    --destructive: 348 83% 47%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 192 30% 15%;
+    --input: 192 30% 15%;
+    --ring: 172 60% 50%;
 
-[data-tenant="natakarya"] ::selection {
-  background-color: var(--nk-teal-mid);
-  color: white;
-}
+    /* --- NATAKARYA SIGNATURE TOKENS (DARK) --- */
+    --nk-gradient-start: hsl(172 60% 50%);
+    --nk-gradient-end: hsl(190 50% 60%);
+    --nk-deep: hsl(172 60% 60%);          
+    --nk-teal-mid: hsl(172 60% 45%);      
+    --nk-teal-light: hsl(172 60% 30%);    
+    --nk-gold: hsl(38 85% 60%);           
+    
+    --nk-surface-1: hsl(192 60% 4%);      
+    --nk-surface-2: hsl(192 50% 7%);      
+    --nk-surface-3: hsl(192 40% 12%);     
+    --nk-glass: rgba(5, 20, 22, 0.8);
+    --nk-glass-border: rgba(255, 255, 255, 0.06);
+    --nk-shadow-sm: 0 2px 8px -2px rgba(0, 0, 0, 0.5);
+    --nk-shadow-md: 0 8px 32px -8px rgba(0, 0, 0, 0.6);
+    --nk-shadow-lg: 0 20px 60px -15px rgba(0, 0, 0, 0.7);
+  }
 
-/* ============================================================
-   NATAKARYA UTILITY CLASSES (PREMIUM COMPONENTS)
-   ============================================================ */
-
-/* 1. Header & Navigation Shell */
-[data-tenant="natakarya"] .natakarya-header {
-  background: var(--nk-glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--nk-glass-border);
+  [data-tenant="natakarya"] * {
+    @apply border-border;
+  }
+  [data-tenant="natakarya"] body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: var(--font-sans), sans-serif;
+  }
+  [data-tenant="natakarya"] ::selection {
+    background-color: var(--nk-teal-mid);
+    color: white;
+  }
 }
 
-[data-tenant="natakarya"] .natakarya-sidebar {
-  background: var(--nk-surface-2);
-  border-right: 1px solid var(--border);
-  box-shadow: 4px 0 24px -10px rgba(13, 107, 98, 0.05);
-}
-.dark [data-tenant="natakarya"] .natakarya-sidebar {
-  box-shadow: 4px 0 24px -10px rgba(0, 0, 0, 0.5);
+@layer utilities {
+  [data-tenant="natakarya"] {
+    .nk-glass-panel {
+      background-color: var(--nk-glass);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--nk-glass-border);
+    }
+    
+    .nk-card {
+      @apply relative bg-card rounded-[var(--radius)] overflow-hidden transition-all duration-300;
+      box-shadow: var(--nk-shadow-sm);
+      border: 1px solid var(--border);
+    }
+    
+    .nk-card:hover {
+      box-shadow: var(--nk-shadow-md);
+      transform: translateY(-2px);
+    }
+    
+    /* Editorial Line di kiri card */
+    .nk-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: var(--nk-editorial-line);
+      background: linear-gradient(to bottom, var(--nk-gradient-start), var(--nk-gradient-end));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .nk-card:hover::before {
+      opacity: 1;
+    }
+    
+    .nk-section-title {
+      @apply relative pl-4 font-semibold text-foreground text-2xl tracking-tight;
+    }
+    
+    .nk-section-title::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10%;
+      bottom: 10%;
+      width: var(--nk-editorial-line);
+      background-color: var(--nk-gold);
+      border-radius: 4px;
+    }
+
+    .nk-badge-gold {
+      @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold;
+      background-color: var(--accent);
+      color: var(--accent-foreground);
+    }
+    
+    .nk-text-gradient {
+      background: linear-gradient(to right, var(--nk-gradient-start), var(--nk-gradient-end));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    
+    .nk-glass-button {
+      @apply nk-glass-panel hover:bg-black/5 dark:hover:bg-white/10 transition-colors shadow-sm;
+    }
+  }
 }
 
-[data-tenant="natakarya"] .natakarya-mega-menu {
-  background: var(--nk-glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border-right: 1px solid var(--nk-glass-border);
-  box-shadow: 20px 0 40px -10px rgba(0,0,0,0.1);
-}
-.dark [data-tenant="natakarya"] .natakarya-mega-menu {
-  box-shadow: 20px 0 40px -10px rgba(0,0,0,0.4);
-}
-
-[data-tenant="natakarya"] .natakarya-bottom-nav {
-  background: var(--nk-glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-top: 1px solid var(--nk-glass-border);
-}
-
-/* 2. Premium Card Styles (Signature Editorial Line) */
-[data-tenant="natakarya"] .nk-card {
-  background: var(--nk-surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--nk-shadow-sm);
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
-}
-
-/* Adding the signature left editorial line */
-[data-tenant="natakarya"] .nk-card::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: var(--nk-editorial-line);
-  background: linear-gradient(to bottom, var(--nk-gradient-start), transparent);
-  opacity: 0.5;
-  transition: opacity 0.3s ease;
-}
-
-[data-tenant="natakarya"] .nk-card:hover {
-  box-shadow: var(--nk-shadow-md);
-}
-
-[data-tenant="natakarya"] .nk-card:hover::before {
-  opacity: 1;
-}
-
-/* Glass Card Variation */
-[data-tenant="natakarya"] .nk-glass-card {
-  background: var(--nk-glass-bg);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--nk-glass-border);
-  box-shadow: var(--nk-shadow-sm);
-  border-radius: var(--radius);
-}
-
-/* 3. Typography & Titles */
-[data-tenant="natakarya"] .nk-section-title {
-  font-family: var(--font-plus-jakarta), sans-serif;
-  font-weight: 700;
-  font-size: 1.5rem;
-  color: var(--foreground);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-}
-[data-tenant="natakarya"] .nk-section-title::before {
-  content: "";
-  display: block;
-  width: 4px;
-  height: 1.2em;
-  background: var(--nk-teal-mid);
-  border-radius: 4px;
-}
-
-/* 4. Custom Badges */
-[data-tenant="natakarya"] .nk-badge-gold {
-  background-color: hsla(38, 85%, 52%, 0.15);
-  color: var(--nk-gold);
-  border: 1px solid hsla(38, 85%, 52%, 0.3);
-  font-weight: 600;
-}
-.dark [data-tenant="natakarya"] .nk-badge-gold {
-  background-color: hsla(38, 85%, 60%, 0.1);
-}
-
-[data-tenant="natakarya"] .nk-badge-teal {
-  background-color: hsla(172, 80%, 26%, 0.1);
-  color: var(--nk-deep);
-  border: 1px solid hsla(172, 80%, 26%, 0.2);
-  font-weight: 600;
-}
-.dark [data-tenant="natakarya"] .nk-badge-teal {
-  background-color: hsla(172, 60%, 50%, 0.1);
-  color: var(--nk-teal-light);
-  border: 1px solid hsla(172, 60%, 50%, 0.2);
-}
-
-/* 5. Seamless Flat Tables */
-[data-tenant="natakarya"] .nk-table-wrapper {
-  background: var(--nk-surface-2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  box-shadow: var(--nk-shadow-sm);
-  overflow: hidden;
-  position: relative;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper table,
-[data-tenant="natakarya"] table.nk-table {
-  width: 100%;
-  text-align: left;
-  border-collapse: collapse; /* Hapus border-separate dan spacing */
-  font-size: 0.875rem;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper thead,
-[data-tenant="natakarya"] table.nk-table thead {
-  background-color: var(--nk-surface-3);
-  opacity: 0.8;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper th,
-[data-tenant="natakarya"] table.nk-table th {
-  padding: 0.75rem 1rem;
-  font-weight: 600;
-  color: var(--muted-foreground);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: 0.75rem;
-  border-bottom: 1px solid var(--border);
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper td,
-[data-tenant="natakarya"] table.nk-table td {
-  padding: 1rem;
-  border-bottom: 1px solid var(--border);
-  vertical-align: top;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper tr:last-child td,
-[data-tenant="natakarya"] table.nk-table tr:last-child td {
-  border-bottom: none;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper tbody tr,
-[data-tenant="natakarya"] table.nk-table tbody tr {
-  transition: background-color 0.2s ease;
-}
-
-[data-tenant="natakarya"] .nk-table-wrapper tbody tr:hover,
-[data-tenant="natakarya"] table.nk-table tbody tr:hover {
-  background-color: hsla(172, 60%, 50%, 0.04);
-}
-
-/* 6. Scrollbar Refinement */
+/* Custom Scrollbar for Natakarya */
 [data-tenant="natakarya"] ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -310,39 +206,38 @@
   background: transparent;
 }
 [data-tenant="natakarya"] ::-webkit-scrollbar-thumb {
-  background-color: rgba(13, 107, 98, 0.2);
+  background: hsl(160 18% 88%);
   border-radius: 10px;
 }
-.dark [data-tenant="natakarya"] ::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1);
+[data-tenant="natakarya"].dark ::-webkit-scrollbar-thumb {
+  background: hsl(192 30% 15%);
 }
 [data-tenant="natakarya"] ::-webkit-scrollbar-thumb:hover {
-  background-color: var(--nk-teal-mid);
+  background: var(--nk-teal-light);
 }
 
-/* ============================================================
-   KEYFRAMES & ANIMATIONS
-   ============================================================ */
+/* Animations */
+@keyframes nk-shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+.animate-nk-shimmer {
+  animation: nk-shimmer 8s ease-in-out infinite;
+  background-size: 200% auto;
+}
+
 @keyframes nk-glow-pulse {
-  0% { box-shadow: 0 0 0 0 rgba(13, 107, 98, 0.4); }
-  70% { box-shadow: 0 0 0 8px rgba(13, 107, 98, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(13, 107, 98, 0); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(13, 107, 98, 0); }
+  50% { box-shadow: 0 0 10px 2px rgba(13, 107, 98, 0.4); }
+}
+.animate-nk-glow-pulse {
+  animation: nk-glow-pulse 2s infinite ease-in-out;
 }
 
 @keyframes nk-float {
-  0% { transform: translateY(0); }
+  0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-4px); }
-  100% { transform: translateY(0); }
 }
-
-@keyframes nk-shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
-}
-
-.nk-animate-float {
+.animate-nk-float {
   animation: nk-float 4s ease-in-out infinite;
-}
-.nk-animate-pulse {
-  animation: nk-glow-pulse 2s infinite;
 }

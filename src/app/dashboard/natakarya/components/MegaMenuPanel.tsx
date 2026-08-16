@@ -45,7 +45,7 @@ export default function MegaMenuPanel({
   };
 
   return (
-    <div className="w-64 natakarya-mega-menu flex flex-col h-screen z-50">
+    <div className="w-64 nk-glass-panel flex flex-col h-screen z-50 shadow-xl border-r border-[var(--nk-glass-border)]">
       <div className="p-4 h-[60px] flex items-center justify-between border-b border-[var(--nk-glass-border)] bg-[var(--nk-surface-3)]/30 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 font-heading">

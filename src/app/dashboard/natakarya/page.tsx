@@ -23,6 +23,7 @@ import QuickAccessCard from '@/app/dashboard/natakarya/components/home/QuickAcce
 import MobileAgendaCarousel from '@/app/dashboard/natakarya/components/home/MobileAgendaCarousel';
 import MiniCalendarWidget from '@/app/dashboard/natakarya/components/home/MiniCalendarWidget';
 import PersonalPerformanceWidget from '@/app/dashboard/natakarya/components/home/PersonalPerformanceWidget';
+import { NkCard } from '@/app/dashboard/natakarya/components/NkCard';
 
 // --- IMPORT HOOKS SSOT ---
 import { useMasterData } from '@/app/dashboard/natakarya/hooks/useMasterData';
@@ -380,7 +381,7 @@ export default function DashboardPage() {
              >
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <div className="nk-card flex flex-col h-fit">
+                <NkCard className="flex flex-col h-fit">
                     <div className="p-4 border-b border-border/50 flex justify-between items-center bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
@@ -449,7 +450,7 @@ export default function DashboardPage() {
                         )}
                     </motion.div>
                     </AnimatePresence>
-                </div>
+                </NkCard>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
                 <div className="nk-card flex flex-col h-fit mt-6">

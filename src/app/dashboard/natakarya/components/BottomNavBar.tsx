@@ -26,7 +26,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
             initial={{ y: 80 }}
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 natakarya-bottom-nav shadow-[0_-4px_20px_rgba(17,94,89,0.05)] md:hidden safe-area-bottom"
+            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 nk-glass-panel shadow-[0_-4px_20px_rgba(17,94,89,0.05)] md:hidden safe-area-bottom border-t-2 border-[var(--nk-deep)]"
         >
             {navLinks.map(link => {
                 let notifCount = 0;

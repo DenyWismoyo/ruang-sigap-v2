@@ -20,6 +20,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { formatDateRelative } from '@/lib/utils';
 import dynamic from 'next/dynamic';
 import { motion, AnimatePresence } from 'framer-motion';
+import { NkPageHeader } from '@/app/dashboard/natakarya/components/NkCard';
 
 // Icons
 import { 
@@ -667,18 +668,20 @@ export default function KotakMasukPage() {
             )}
 
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                <h1 className="text-3xl font-bold text-foreground flex items-center">
-                    <Inbox size={28} className="mr-3 text-blue-600"/> Kotak Masuk
-                </h1>
-                {canCreate && (
-                  <Link href="/dashboard/surat/upload" onClick={() => setIsNavigating(true)}>
-                    <Button className="w-full md:w-auto bg-green-600 hover:bg-green-700 shadow-sm text-white">
-                        <Plus size={16} className="mr-2" /> Tambah Surat Baru
-                    </Button>
-                  </Link>
-                )}
-            </div>
+            <NkPageHeader 
+                title="Kotak Masuk"
+                subtitle="Kelola dan pantau seluruh surat masuk dan disposisi"
+                icon={Inbox}
+                actions={
+                    canCreate ? (
+                        <Link href="/dashboard/surat/upload" onClick={() => setIsNavigating(true)}>
+                            <Button className="w-full md:w-auto bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] shadow-sm text-white">
+                                <Plus size={16} className="mr-2" /> Tambah Surat Baru
+                            </Button>
+                        </Link>
+                    ) : undefined
+                }
+            />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 
