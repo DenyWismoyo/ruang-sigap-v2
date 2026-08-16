@@ -84,16 +84,16 @@ const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
                     <tr key={surat.id} className="group">
                         <td className="w-32">
                             <div className="flex flex-col">
-                                <span className="font-bold text-base">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                <span className="text-xs font-bold text-[var(--nk-teal-mid)]">{surat.detailAgenda?.jam}</span>
+                                <span className="font-semibold text-sm">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
+                                <span className="text-xs font-bold text-[var(--nk-teal-mid)] mt-0.5">{surat.detailAgenda?.jam}</span>
                             </div>
                         </td>
                         <td>
-                            <Link href={`/dashboard/surat/${surat.id}`} className="text-foreground hover:text-[var(--nk-teal-mid)] font-semibold line-clamp-2 block mb-1">
+                            <Link href={`/dashboard/surat/${surat.id}`} className="text-foreground hover:text-[var(--nk-teal-mid)] font-medium text-sm line-clamp-2 block mb-1">
                                 {surat.perihal}
                             </Link>
-                            <p className="text-xs text-muted-foreground">No: {surat.nomorSurat}</p>
-                            <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5 font-medium">
+                            <p className="text-[11px] text-muted-foreground">No: {surat.nomorSurat}</p>
+                            <p className="text-[11px] text-muted-foreground mt-1 flex items-center gap-1 font-medium">
                                 <span className="p-1 rounded-full bg-primary/10 text-[var(--nk-teal-mid)]"><User size={10} /></span>
                                 {surat.pengirim}
                             </p>
@@ -103,8 +103,8 @@ const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
                             {surat.disposisiStatus === 'Sudah Didisposisi' ? (
                                 <span className="text-foreground font-medium line-clamp-2">{surat.penerimaDisposisi}</span>
                             ) : (
-                                <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5">
-                                    <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--nk-gold)]"></span></span> Belum Didisposikan
+                                <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5 text-xs">
+                                    <span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--nk-gold)]"></span></span> Belum Didisposikan
                                 </span>
                             )}
                         </td>
@@ -131,14 +131,14 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
           <tbody>
         {agendas.map(jadwal => (
           <tr key={jadwal.id} onClick={() => onRowClick(jadwal)} className="cursor-pointer group">
-            <td className="font-medium text-foreground w-40">
+            <td className="w-40">
                 <div className="flex flex-col">
-                    <span>{jadwal.tanggalMulai?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
-                    <span className="font-bold text-xs text-[var(--nk-teal-mid)]">{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
+                    <span className="font-semibold text-sm">{jadwal.tanggalMulai?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
+                    <span className="font-bold text-xs text-[var(--nk-teal-mid)] mt-0.5">{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
                 </div>
             </td>
-            <td className="font-semibold text-foreground">{jadwal.kegiatan}</td>
-            <td>
+            <td className="font-medium text-sm text-foreground">{jadwal.kegiatan}</td>
+            <td className="text-sm">
                 {jadwal.jenis === 'Virtual' && jadwal.tautanRapat ? (
                     <a href={jadwal.tautanRapat} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center text-[var(--nk-teal-mid)] hover:underline font-medium">
                         <ExternalLink size={14} className="mr-1.5"/> Link Rapat

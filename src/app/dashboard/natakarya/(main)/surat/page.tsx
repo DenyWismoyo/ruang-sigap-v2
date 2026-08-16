@@ -239,12 +239,12 @@ const SuratRow = React.memo(({
             className="group cursor-pointer"
             onClick={() => { onNavigate(); onClick(); }}
         >
-            <td className="px-4 py-4 align-top w-1/4 font-semibold">
+            <td className="px-4 py-4 align-top w-1/4 font-medium text-sm">
                 <div className="text-foreground hover:text-[var(--nk-teal-mid)] line-clamp-2 transition-colors">{surat.perihal}</div>
-                <p className="text-xs text-muted-foreground font-normal truncate mt-1">No: {surat.nomorSurat}</p>
+                <p className="text-[11px] text-muted-foreground font-normal truncate mt-1">No: {surat.nomorSurat}</p>
             </td>
             <td className="px-4 py-4 align-top">
-                <div className="flex items-center gap-1.5 font-medium">
+                <div className="flex items-center gap-1.5 font-medium text-sm">
                     <span className="p-1 rounded-full bg-[var(--nk-surface-3)] text-[var(--nk-teal-mid)]"><User size={10} /></span>
                     <span className="line-clamp-2">{surat.pengirim}</span>
                 </div>
@@ -260,7 +260,7 @@ const SuratRow = React.memo(({
                 </span>
             </td>
             <td className="px-4 py-4 align-top text-sm max-w-[200px]">
-                {safeRecipientNames ? <span className="line-clamp-2">Kpda: {safeRecipientNames}</span> : <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--nk-gold)]"></span></span> Belum didisposisi</span>}
+                {safeRecipientNames ? <span className="line-clamp-2">Kpda: {safeRecipientNames}</span> : <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5 text-xs"><span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--nk-gold)]"></span></span> Belum didisposisi</span>}
             </td>
             
             <td className="px-4 py-4 align-top text-right">
