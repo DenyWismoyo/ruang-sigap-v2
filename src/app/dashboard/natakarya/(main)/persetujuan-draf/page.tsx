@@ -17,7 +17,7 @@ import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query'; // path @
 import { 
     collection, query, where, addDoc, doc, Timestamp, orderBy, getDocs, limit,
-    QueryDocumentSnapshot, DocumentData, QuerySnapshot 
+    QueryDocumentSnapshot, DocumentData, QuerySnapshot, onSnapshot
 } from 'firebase/firestore'; 
 import { useUserAuth } from '@/context/AuthContext'; // path @
 import { DrafPersetujuan, ApprovalStep, RiwayatPersetujuan, Jabatan, BankTemplate, UserProfile } from '@/types'; // path @
@@ -122,6 +122,7 @@ const BankTemplateModal = ({ isOpen, onClose, onSelect }: { isOpen: boolean, onC
     
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [templates, setTemplates] = useState<BankTemplate[]>([]);
 
     useEffect(() => {
         if (!isOpen || !userProfile) return;
@@ -476,6 +477,8 @@ export default function PersetujuanDrafPage() {
     
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [drafSayaList, setDrafSayaList] = useState<DrafPersetujuan[]>([]);
+    const [perluPersetujuanList, setPerluPersetujuanList] = useState<DrafPersetujuan[]>([]);
     
     const [isBantuanOpen, setIsBantuanOpen] = useState(false);
 

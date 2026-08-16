@@ -13,7 +13,7 @@ interface QuickAccessCardProps {
 }
 
 export default function QuickAccessCard({ href, label, icon: Icon, colorClass }: QuickAccessCardProps) {
-    let spotColor: 'indigo' | 'emerald' | 'amber' | 'rose' | 'slate' = 'indigo';
+    let spotColor: 'indigo' | 'emerald' | 'amber' | 'rose' | 'slate' = 'emerald';
     if (colorClass.includes('green')) spotColor = 'emerald';
     else if (colorClass.includes('yellow') || colorClass.includes('orange')) spotColor = 'amber';
     else if (colorClass.includes('red') || colorClass.includes('pink')) spotColor = 'rose';
@@ -22,7 +22,7 @@ export default function QuickAccessCard({ href, label, icon: Icon, colorClass }:
     return (
         <Link href={href} className="block group">
             <motion.div whileHover={{ y: -4, scale: 1.02 }} whileTap={{ scale: 0.95 }} transition={{ type: "spring", stiffness: 300, damping: 20 }}>
-                <SpotlightCard color={spotColor} className="p-3 flex flex-col items-center justify-center text-center h-28 cursor-pointer !rounded-2xl natakarya-quick-card group-hover:shadow-[0_8px_30px_rgba(17,94,89,0.12)] transition-shadow">
+                <SpotlightCard color={spotColor} className="p-3 flex flex-col items-center justify-center text-center h-28 cursor-pointer nk-card group-hover:shadow-[var(--nk-shadow-md)] transition-shadow">
                     <div className={`p-2.5 ${colorClass.replace('text-', 'bg-').replace('600', '100')} dark:bg-opacity-20 rounded-full mb-2 group-hover:scale-110 transition-transform border border-current/10 relative`}>
                         <div className="absolute inset-0 bg-current opacity-10 blur-md rounded-full"></div>
                         <motion.div whileHover={{ rotate: 15 }} transition={{ type: "spring", stiffness: 200, damping: 10 }} className="relative z-10">

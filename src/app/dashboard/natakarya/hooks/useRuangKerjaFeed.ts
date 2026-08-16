@@ -253,12 +253,10 @@ export const useRuangKerjaFeed = () => {
     refetchSurat(); 
     
     // [FIX GHOSTING BUG]
-    // Beri waktu 2.5 detik agar Cloud Function (agregasiSummaries)
-    // selesai mengupdate dokumen userSummaries di backend.
-    setTimeout(() => {
-        queryClient.invalidateQueries({ queryKey: ['feed'] }); 
-    }, 2500);
-    
+    // Menghapus setTimeout agar feed langsung update (optimistic UI dari action 
+    // seharusnya sudah mengubah cache. Invalidate akan memicu background fetch 
+    // untuk sinkronisasi tanpa menyebabkan ghosting delay).
+    queryClient.invalidateQueries({ queryKey: ['feed'] }); 
   }, [queryClient, refetchSurat]);
 
   return { feedItems, isLoading, refreshFeed, loadMore, hasMore };

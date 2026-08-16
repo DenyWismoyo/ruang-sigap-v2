@@ -10,7 +10,7 @@ import { Plus, Search, FileText, Download, ExternalLink, Trash2, Edit } from 'lu
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToast } from '@/context/ToastContext';
-import KebijakanModal from '@/app/dashboard/sigap/components/KebijakanModal'; // Nanti kita buat
+import KebijakanModal from '@/app/dashboard/sigap/(fungsional)/tapem/components/KebijakanModal'; // Nanti kita buat
 
 // Interface Lokal (bisa dipindah ke types/tapem.ts)
 export interface ProdukKebijakan {

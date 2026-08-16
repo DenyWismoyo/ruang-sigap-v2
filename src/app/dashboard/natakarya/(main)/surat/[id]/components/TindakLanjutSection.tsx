@@ -403,11 +403,14 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
   const isBusy = isProcessing || uploadStatus === 'uploading';
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border">
+    <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/20 relative overflow-hidden group/tindak-lanjut">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-90"></div>
         {/* Header */}
-        <div className="p-3 md:p-6 border-b border-border flex items-center justify-between">
-            <h2 className="text-base md:text-xl font-semibold text-foreground flex items-center">
-                <ClipboardCheck size={18} className="mr-2 md:mr-3 md:w-5 md:h-5 text-green-600" />
+        <div className="p-3 md:p-6 border-b border-[var(--nk-gradient-start)]/10 bg-muted/10 flex items-center justify-between">
+            <h2 className="text-base md:text-xl font-bold font-heading text-foreground flex items-center tracking-tight">
+                <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-xl mr-3 shadow-sm border border-emerald-500/20">
+                    <ClipboardCheck size={18} className="md:w-5 md:h-5 text-emerald-600" />
+                </div>
                 Tindak Lanjut
             </h2>
         </div>
@@ -415,8 +418,8 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
         {/* Konten */}
         <div className="p-3 md:p-6">
             {canTakeAction && (
-                <div className="space-y-4 pb-6 mb-6 border-b border-border">
-                    <h3 className="font-semibold text-sm md:text-base text-foreground mb-3">Buat Laporan / Catatan Progres</h3>
+                <div className="space-y-4 pb-6 mb-6 border-b border-[var(--nk-gradient-start)]/10">
+                    <h3 className="font-bold text-sm md:text-base font-heading text-foreground mb-3 text-[var(--nk-gradient-start)]">Buat Laporan / Catatan Progres</h3>
                     
                     {error && (
                       <Alert variant="destructive" className="py-2 px-3 text-xs md:text-sm">

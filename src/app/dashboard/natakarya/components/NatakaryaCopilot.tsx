@@ -1,11 +1,11 @@
 // Lokasi: src/app/dashboard/natakarya/components/NatakaryaCopilot.tsx
 // [UPDATE ENTERPRISE] Natakarya AI Chat Copilot
-// Asisten Cerdas ASN berbasis Google Gemini 3.5 Flash Lite dengan Real Database Query & Interactive Action Buttons.
+// Asisten Cerdas ASN berbasis Google Gemini Tool Calling dengan Firestore Chat History & Dynamic Suggestions
 
 "use client";
 
 import React, { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useUserAuth } from '@/context/AuthContext';
 import { useNotification } from '@/context/NotificationContext';
 import { useToastContext } from '@/context/ToastContext';
@@ -14,38 +14,171 @@ import {
   Send, 
   X, 
   Bot, 
-  User, 
   RotateCcw, 
-  Copy, 
-  Check, 
-  Zap, 
-  FileText, 
-  Mail, 
-  Calendar, 
+  Clock, 
+  MessageSquare,
   Minimize2,
   Maximize2,
-  Loader2,
   ExternalLink,
   ArrowUpRight,
-  Inbox,
-  CheckSquare
+  FileText,
+  Plus,
+  CheckCircle2,
+  Save,
+  Loader2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { collection, query, where, orderBy, getDocs, addDoc, updateDoc, doc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import ConfirmModal from './ConfirmModal';
+
+interface BatchTindakLanjutItem {
+  id_disposisi: string;
+  surat_id: string;
+  instruksi: string;
+  perihal?: string; // fallback for older prompts
+  perihal_surat?: string;
+  pengirim_disposisi?: string;
+  ringkasan?: string;
+  hasil?: string;
+}
+
+const BatchTindakLanjutForm = ({ items, onSubmit, isSubmitting }: { items: BatchTindakLanjutItem[], onSubmit: (data: BatchTindakLanjutItem[]) => Promise<void>, isSubmitting: boolean }) => {
+  const [formData, setFormData] = useState<BatchTindakLanjutItem[]>(items.map(item => ({ ...item, ringkasan: '', hasil: '' })));
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  const [submittingId, setSubmittingId] = useState<string | null>(null);
+
+  const handleChange = (index: number, field: 'ringkasan' | 'hasil', value: string) => {
+    const newData = [...formData];
+    newData[index][field] = value;
+    setFormData(newData);
+  };
+
+  const handlePartialSubmit = async (idx: number) => {
+     const item = formData[idx];
+     if (!item.ringkasan || !item.hasil) return;
+     setSubmittingId(item.id_disposisi);
+     await onSubmit([item]); 
+     setSavedIds(prev => [...prev, item.id_disposisi]);
+     setSubmittingId(null);
+  };
+
+  const handleBatchSubmitLocal = async () => {
+     const pending = formData.filter(item => !savedIds.includes(item.id_disposisi) && item.ringkasan && item.hasil);
+     if (pending.length > 0) {
+         await onSubmit(pending);
+         setSavedIds(prev => [...prev, ...pending.map(p => p.id_disposisi)]);
+     }
+  };
+
+  if (!items || items.length === 0) return null;
+
+  const allCompleted = formData.every(item => savedIds.includes(item.id_disposisi));
+  const pendingCount = formData.filter(item => !savedIds.includes(item.id_disposisi) && item.ringkasan && item.hasil).length;
+
+  return (
+    <div className="mt-4 space-y-4 bg-card p-3 rounded-xl border border-border/60 shadow-sm relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80" />
+      <h4 className="font-semibold text-sm mb-2 flex items-center gap-2 pt-1">
+         <CheckCircle2 size={16} className="text-[var(--nk-gradient-start)]" />
+         Pengisian Laporan Massal
+      </h4>
+      {formData.map((item, idx) => {
+         const isSaved = savedIds.includes(item.id_disposisi);
+         return (
+         <div key={idx} className={`p-3 rounded-lg border space-y-3 shadow-inner transition-colors ${isSaved ? 'bg-emerald-50/50 border-emerald-100/50 dark:bg-emerald-950/20 dark:border-emerald-900/30' : 'bg-muted/30 border-border/40'}`}>
+             <div>
+                <div className="flex justify-between items-start mb-0.5">
+                   <p className="text-xs font-semibold text-foreground/90 leading-snug line-clamp-2 pr-2">Perihal: {item.perihal_surat || item.perihal || `Disposisi ${idx + 1}`}</p>
+                   {isSaved && <CheckCircle2 size={16} className="text-emerald-500 shrink-0" />}
+                </div>
+                {item.pengirim_disposisi && (
+                   <p className="text-[11px] text-muted-foreground mb-1">Dari: {item.pengirim_disposisi}</p>
+                )}
+                <p className="text-[11px] font-medium text-primary mt-1 border-l-2 border-primary/40 pl-2 bg-primary/5 py-1 pr-2 rounded-r-md">Instruksi: {item.instruksi}</p>
+             </div>
+             <div className="space-y-2">
+                 <Input 
+                   placeholder="Ringkasan Tindakan (mis. Menghadiri rapat...)" 
+                   value={item.ringkasan || ''} 
+                   onChange={(e) => handleChange(idx, 'ringkasan', e.target.value)} 
+                   className="h-8 text-xs bg-background"
+                   disabled={isSaved}
+                 />
+                 <Input 
+                   placeholder="Hasil / Catatan Tindakan" 
+                   value={item.hasil || ''} 
+                   onChange={(e) => handleChange(idx, 'hasil', e.target.value)} 
+                   className="h-8 text-xs bg-background"
+                   disabled={isSaved}
+                 />
+             </div>
+             
+             {!isSaved ? (
+               <div className="flex justify-end pt-1">
+                  <Button 
+                     variant="outline" 
+                     size="sm" 
+                     className="h-7 text-[11px] px-3 shadow-2xs bg-background hover:bg-muted"
+                     disabled={submittingId === item.id_disposisi || !item.ringkasan || !item.hasil}
+                     onClick={() => handlePartialSubmit(idx)}
+                  >
+                     {submittingId === item.id_disposisi ? <Loader2 size={12} className="animate-spin mr-1.5" /> : <Save size={12} className="mr-1.5" />}
+                     Simpan Parsial
+                  </Button>
+               </div>
+             ) : (
+               <div className="pt-1 text-[11px] text-emerald-600 font-medium flex items-center justify-end">
+                 <CheckCircle2 size={12} className="mr-1" /> Tersimpan
+               </div>
+             )}
+         </div>
+      )})}
+      
+      {!allCompleted && (
+          <Button 
+             onClick={handleBatchSubmitLocal} 
+             disabled={isSubmitting || pendingCount === 0}
+             className="w-full text-xs h-9 font-medium bg-gradient-to-r from-[var(--nk-teal-mid)] to-[var(--nk-gradient-end)] hover:opacity-90 transition-opacity"
+          >
+             {isSubmitting ? <Loader2 size={14} className="animate-spin mr-2" /> : <Save size={14} className="mr-2" />}
+             {isSubmitting ? 'Memproses Laporan...' : `Selesaikan & Kirim Batch (${pendingCount})`}
+          </Button>
+      )}
+    </div>
+  );
+};
+
+interface ChatAction {
+  type: string;
+  label: string;
+  url?: string;
+  payload?: any;
+}
+
+interface ChatDataTable {
+  title?: string;
+  columns: string[];
+  rows: string[][];
+}
 
 interface ChatMessage {
   id: string;
   role: 'user' | 'model';
   content: string;
+  actions?: ChatAction[];
+  data_tables?: ChatDataTable[];
   timestamp: Date;
 }
 
-
-
 export default function NatakaryaCopilot() {
   const router = useRouter();
+  const pathname = usePathname();
   const { userProfile, actingJabatanProfile, jabatanProfile, opdConfig } = useUserAuth();
   const { welcomeSummary } = useNotification();
   const { addToast } = useToastContext();
@@ -55,7 +188,29 @@ export default function NatakaryaCopilot() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [isSubmittingBatch, setIsSubmittingBatch] = useState(false);
+
+  // History & Suggestions State
+  const [view, setView] = useState<'chat' | 'history'>('chat');
+  const [chatId, setChatId] = useState<string | null>(null);
+  const [historySessions, setHistorySessions] = useState<any[]>([]);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+
+  // Confirmation Modal State
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    action: ChatAction | null;
+    isProcessing: boolean;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    action: null,
+    isProcessing: false
+  });
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -65,101 +220,166 @@ export default function NatakaryaCopilot() {
   const activeJabatanId = actingJabatanProfile?.id || userProfile?.jabatanId || '';
   const opdName = (opdConfig as any)?.namaOpd || (opdConfig as any)?.name || userProfile?.opdId || 'Instansi Pemerintah';
 
-  // Pintasan Aksi Dinamis berdasarkan data riil dari welcomeSummary
-  const dynamicPrompts = React.useMemo(() => {
-    const prompts = [];
-    const pendingDisposisi = (welcomeSummary?.tindakLanjutMenunggu || 0) + (welcomeSummary?.disposisiBaru || 0);
-    const pendingSurat = welcomeSummary?.suratMenungguDisposisi || 0;
-    const tugasAktif = welcomeSummary?.tugasAktif || 0;
-
-    if (pendingDisposisi > 0) {
-      prompts.push({
-        icon: <Mail size={14} className="text-blue-500" />,
-        label: `${pendingDisposisi} Disposisi Perlu Diproses`,
-        prompt: "Tolong sebutkan rincian disposisi surat terbaru yang harus saya selesaikan beserta tautannya."
-      });
-    }
-    if (pendingSurat > 0) {
-      prompts.push({
-        icon: <Inbox size={14} className="text-amber-500" />,
-        label: pendingSurat > 20 ? `20+ Surat Belum Didisposisi (7 Hari Terakhir)` : `${pendingSurat} Surat Belum Didisposisi`,
-        prompt: "Tampilkan daftar surat masuk terbaru (7 hari kebelakang) yang berstatus Belum Didisposikan beserta tautan aksinya."
-      });
-    }
-    if (tugasAktif > 0) {
-      prompts.push({
-        icon: <CheckSquare size={14} className="text-emerald-500" />,
-        label: `${tugasAktif} Tugas Aktif & Deadline`,
-        prompt: "Periksa daftar tugas dinas aktif saya dan tampilkan tenggat waktu serta prioritasnya."
-      });
-    }
-
-    // Default fallbacks jika tidak ada notifikasi mendesak
-    if (prompts.length === 0) {
-      prompts.push({
-        icon: <Mail size={14} className="text-blue-500" />,
-        label: "Cek Surat Masuk Terbaru",
-        prompt: "Tampilkan 3 surat masuk terbaru di OPD saya."
-      });
-      prompts.push({
-        icon: <CheckSquare size={14} className="text-emerald-500" />,
-        label: "Ringkasan Tugas Saya",
-        prompt: "Apa saja tugas dinas aktif saya saat ini?"
-      });
-    }
-
-    prompts.push({
-      icon: <FileText size={14} className="text-purple-500" />,
-      label: "Buat Draf Naskah",
-      prompt: "Bantu saya menyusun draf Nota Dinas resmi untuk permohonan koordinasi teknis antar bidang."
-    });
-
-    return prompts.slice(0, 4);
-  }, [welcomeSummary]);
-
-  // Auto-scroll ke pesan terbawah saat ada pesan baru
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   useEffect(() => {
-    if (isOpen && !isMinimized) {
+    if (isOpen && !isMinimized && view === 'chat') {
       scrollToBottom();
       inputRef.current?.focus();
     }
-  }, [messages, isOpen, isMinimized]);
+  }, [messages, isOpen, isMinimized, view]);
 
-  // Pesan Sambutan Awal Otomatis jika chat masih kosong (Diperpendek & Visioner)
+  // Proactive Mode: Auto-open if there are pressing matters
+  const [hasShownProactive, setHasShownProactive] = useState(false);
   useEffect(() => {
-    if (isOpen && messages.length === 0 && userProfile) {
-      const initialGreeting: ChatMessage = {
-        id: 'welcome-msg',
-        role: 'model',
-        content: `Halo **${userProfile.namaLengkap}**! 👋\n\nSaya **Natakarya AI**, asisten cerdas yang terhubung ke data real-time Anda. Ada yang bisa saya bantu hari ini?`,
-        timestamp: new Date(),
-      };
-      setMessages([initialGreeting]);
+    if (!isOpen && !hasShownProactive && welcomeSummary) {
+      const hasUrgent = (welcomeSummary.tindakLanjutMenunggu > 0 || welcomeSummary.disposisiBaru > 0);
+      if (hasUrgent) {
+        setHasShownProactive(true);
+        const timer = setTimeout(() => {
+           setIsOpen(true);
+           if (suggestions.length === 0) fetchSuggestions();
+        }, 3000);
+        return () => clearTimeout(timer);
+      }
     }
-  }, [isOpen, userProfile, messages.length]);
+  }, [isOpen, hasShownProactive, welcomeSummary, suggestions.length]);
+
+  // Fetch Suggestions
+  const fetchSuggestions = async () => {
+    setLoadingSuggestions(true);
+    try {
+      const response = await fetch('/api/ai/copilot/suggestions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userContext: { 
+            opdId: userProfile?.opdId,
+            jabatanId: activeJabatanId,
+            role: userProfile?.role,
+            namaLengkap: userProfile?.namaLengkap
+          },
+          pageContext: { pathname },
+          welcomeSummary
+        }),
+      });
+      const data = await response.json();
+      if (data.success && data.suggestions) {
+        setSuggestions(data.suggestions);
+      }
+    } catch (e) {
+      console.error("Failed to fetch suggestions", e);
+    } finally {
+      setLoadingSuggestions(false);
+    }
+  };
+
+  // Load suggestions when chat is opened
+  useEffect(() => {
+    if (isOpen && view === 'chat' && !chatId && suggestions.length === 0 && !loadingSuggestions && messages.length === 0) {
+       fetchSuggestions();
+    }
+  }, [isOpen, view, chatId, messages.length]);
+
+  // Load history when history view is opened
+  useEffect(() => {
+    if (isOpen && view === 'history' && userProfile?.uid) {
+       fetchHistory();
+    }
+  }, [isOpen, view, userProfile]);
+
+  const fetchHistory = async () => {
+    if (!userProfile?.uid) return;
+    try {
+      const q = query(collection(db, "natakaryaCopilotChats"), where("userId", "==", userProfile.uid), orderBy("updatedAt", "desc"));
+      const snap = await getDocs(q);
+      const sessions: any[] = [];
+      snap.forEach(d => sessions.push({ id: d.id, ...d.data() }));
+      setHistorySessions(sessions);
+    } catch (e) {
+      console.error("Failed to fetch history", e);
+    }
+  };
+
+  const loadChat = async (id: string) => {
+    try {
+      const docSnap = await getDoc(doc(db, "natakaryaCopilotChats", id));
+      if (docSnap.exists()) {
+         const data = docSnap.data();
+         setMessages(data.messages.map((msg: any) => ({
+             ...msg,
+             timestamp: msg.timestamp?.toDate ? msg.timestamp.toDate() : new Date(msg.timestamp)
+         })));
+         setChatId(id);
+         setView('chat');
+      }
+    } catch (e) {
+      console.error("Failed to load chat", e);
+    }
+  };
+
+  const startNewChat = () => {
+    setChatId(null);
+    setMessages([]);
+    setView('chat');
+    if (suggestions.length === 0) fetchSuggestions();
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
-    const query = (textToSend || inputValue).trim();
-    if (!query || isLoading) return;
+    const queryStr = (textToSend || inputValue).trim();
+    if (!queryStr || isLoading) return;
 
     const userMsg: ChatMessage = {
       id: `user-${Date.now()}`,
       role: 'user',
-      content: query,
+      content: queryStr,
       timestamp: new Date(),
     };
 
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
     setInputValue('');
+    setSuggestions([]); // Clear suggestions once started
     setIsLoading(true);
 
+    let currentChatId = chatId;
+
     try {
-      // Susun konteks pengguna lengkap untuk query database real
+      const sanitizeMessagesForFirestore = (msgs: ChatMessage[]) => msgs.map(m => {
+          const sanitized: any = { ...m };
+          if (sanitized.data_tables) {
+              sanitized.data_tables = sanitized.data_tables.map((t: any) => ({
+                  ...t,
+                  rows: t.rows?.map((r: any) => Array.isArray(r) ? { cells: r } : r)
+              }));
+          } else {
+              delete sanitized.data_tables;
+          }
+          if (sanitized.actions === undefined) delete sanitized.actions;
+          return sanitized;
+      });
+
+      // Save user msg to Firestore first
+      if (!currentChatId && userProfile) {
+         const docRef = await addDoc(collection(db, "natakaryaCopilotChats"), {
+            userId: userProfile.uid,
+            opdId: userProfile.opdId,
+            title: queryStr.length > 30 ? queryStr.substring(0, 30) + '...' : queryStr,
+            messages: sanitizeMessagesForFirestore(newMessages),
+            createdAt: serverTimestamp(),
+            updatedAt: serverTimestamp()
+         });
+         currentChatId = docRef.id;
+         setChatId(currentChatId);
+      } else if (currentChatId) {
+         await updateDoc(doc(db, "natakaryaCopilotChats", currentChatId), {
+            messages: sanitizeMessagesForFirestore(newMessages),
+            updatedAt: serverTimestamp()
+         });
+      }
+
       const userContext = {
         namaLengkap: userProfile?.namaLengkap || 'Pengguna',
         namaJabatan: activeJabatan,
@@ -168,8 +388,6 @@ export default function NatakaryaCopilot() {
         opdId: userProfile?.opdId || '',
         opdName: opdName,
         uid: userProfile?.uid || '',
-        pendingDisposisiCount: welcomeSummary?.suratBaruCount || 0,
-        pendingTugasCount: welcomeSummary?.tugasBaruCount || 0,
       };
 
       const response = await fetch('/api/ai/copilot', {
@@ -178,31 +396,39 @@ export default function NatakaryaCopilot() {
         body: JSON.stringify({
           messages: newMessages.map(m => ({ role: m.role, content: m.content })),
           userContext,
+          pageContext: { pathname }
         }),
       });
 
       const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Gagal memproses jawaban dari AI.');
-      }
+      if (!response.ok) throw new Error(data.error || 'Gagal memproses jawaban dari AI.');
 
       const aiMsg: ChatMessage = {
         id: `ai-${Date.now()}`,
         role: 'model',
         content: data.reply || 'Maaf, saya tidak dapat merumuskan jawaban saat ini.',
+        actions: data.actions || [],
+        data_tables: data.data_tables || [],
         timestamp: new Date(),
       };
 
-      setMessages(prev => [...prev, aiMsg]);
+      const updatedMessages = [...newMessages, aiMsg];
+      setMessages(updatedMessages);
+
+      if (currentChatId) {
+         await updateDoc(doc(db, "natakaryaCopilotChats", currentChatId), {
+            messages: sanitizeMessagesForFirestore(updatedMessages),
+            updatedAt: serverTimestamp()
+         });
+      }
+
     } catch (err: any) {
       console.error('Copilot Error:', err);
       addToast(err.message || 'Terjadi gangguan pada AI Copilot.', 'error');
-      
       const errorMsg: ChatMessage = {
         id: `err-${Date.now()}`,
         role: 'model',
-        content: `⚠️ **Maaf, terjadi kendala teknis**: ${err.message || 'Koneksi ke layanan AI terputus. Silakan coba kembali.'}`,
+        content: `⚠️ **Maaf, terjadi kendala teknis**: ${err.message || 'Koneksi ke layanan AI terputus.'}`,
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMsg]);
@@ -211,48 +437,201 @@ export default function NatakaryaCopilot() {
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleBatchSubmit = async (data: BatchTindakLanjutItem[]) => {
+      if (!userProfile) return;
+      setIsSubmittingBatch(true);
+      try {
+          const { createLaporanTindakLanjut } = await import('@/lib/tindakLanjutUtils');
+          
+          let successCount = 0;
+          for (const item of data) {
+              if (!item.ringkasan || !item.hasil) continue;
+              
+              await createLaporanTindakLanjut({
+                  userId: userProfile.uid,
+                  jabatanId: userProfile.jabatanId || '',
+                  opdId: userProfile.opdId,
+                  disposisiId: item.id_disposisi,
+                  suratId: item.surat_id || '',
+                  ringkasanTindakan: item.ringkasan,
+                  hasilTindakan: item.hasil,
+                  instruksiAwal: item.instruksi
+              });
+              
+              successCount++;
+          }
+          if (successCount > 0) {
+              addToast(`Berhasil menyimpan ${successCount} laporan tindak lanjut.`, 'success');
+              setMessages(prev => [...prev, {
+                  id: `sys-${Date.now()}`,
+                  role: 'model',
+                  content: `✅ **Laporan Massal Berhasil!** Saya telah mencatat ${successCount} tindak lanjut beserta bukti kinerja dan logbook Anda.`,
+                  timestamp: new Date()
+              }]);
+          }
+      } catch(err) {
+          console.error("Gagal batch submit:", err);
+          addToast("Terjadi kesalahan saat menyimpan laporan massal.", "error");
+      } finally {
+          setIsSubmittingBatch(false);
+      }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const handleCopyText = (id: string, text: string) => {
-    // Bersihkan format link markdown saat disalin agar jadi teks bersih jika diperlukan
-    const cleaned = text.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '$1 ($2)');
-    navigator.clipboard.writeText(cleaned);
-    setCopiedId(id);
-    addToast('Teks berhasil disalin ke clipboard!', 'success');
-    setTimeout(() => setCopiedId(null), 2000);
-  };
-
   const handleClearChat = () => {
-    setMessages([]);
-    if (userProfile) {
-      const resetMsg: ChatMessage = {
-        id: `reset-${Date.now()}`,
-        role: 'model',
-        content: `Percakapan telah dibersihkan. Silakan ajukan pertanyaan atau instruksi baru kepada saya, **${userProfile.namaLengkap}**! ✨`,
-        timestamp: new Date(),
-      };
-      setMessages([resetMsg]);
-    }
+    startNewChat();
   };
 
   const handleActionNavigate = (url: string) => {
     if (url.startsWith('/')) {
       router.push(url);
-      addToast('Membuka halaman dokumen...', 'info');
+      addToast('Membuka halaman...', 'info');
     } else {
       window.open(url, '_blank');
     }
   };
 
-  // Helper untuk merender formatting Markdown dengan dukungan tabel
+  const handleActionClick = async (action: ChatAction) => {
+    if (action.type === 'NAVIGATE' && action.url) {
+      handleActionNavigate(action.url);
+    } else if (action.type === 'SELESAI_DISPOSISI') {
+      setConfirmModal({
+          isOpen: true,
+          title: "Konfirmasi Selesai Disposisi",
+          message: "Apakah Anda yakin ingin menandai disposisi ini sebagai selesai?",
+          action,
+          isProcessing: false
+      });
+    } else if (action.type === 'BUAT_TUGAS') {
+      setConfirmModal({
+          isOpen: true,
+          title: "Konfirmasi Buat Tugas",
+          message: `Apakah Anda yakin ingin membuat tugas baru: "${action.payload?.judul_tugas}"?`,
+          action,
+          isProcessing: false
+      });
+    } else if (action.type === 'TANDAI_SELESAI_TUGAS') {
+        setConfirmModal({
+          isOpen: true,
+          title: "Konfirmasi Selesai Tugas",
+          message: "Apakah Anda yakin ingin menandai tugas ini sebagai selesai?",
+          action,
+          isProcessing: false
+      });
+    } else if (action.type === 'WRITE_LOGBOOK' || action.type === 'WRITE_LOGBOOK_RICH') {
+      if (userProfile && action.payload?.deskripsi_logbook) {
+        try {
+          const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+          await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+            deskripsi: action.payload.deskripsi_logbook,
+            selesai: true,
+            kategori: action.payload.kategori_logbook || 'Umum',
+            sumber: 'copilot',
+            suratTerkaitId: action.payload.surat_id,
+            disposisiTerkaitId: action.payload.id_disposisi,
+            tugasTerkaitId: action.payload.tugas_id,
+          });
+          addToast(`Kegiatan "${action.payload.deskripsi_logbook}" berhasil dicatat ke logbook!`, 'success');
+        } catch (error) {
+          console.error("Gagal mencatat logbook:", error);
+          addToast("Gagal mencatat ke logbook. Silakan coba lagi.", "error");
+        }
+      }
+    } else if (action.type === 'BUAT_LAPORAN_TINDAK_LANJUT') {
+       if (userProfile && action.payload?.id_disposisi && action.payload?.ringkasan_tindakan && action.payload?.hasil_tindakan) {
+           setConfirmModal({
+               isOpen: true,
+               title: "Konfirmasi Buat Laporan Tindak Lanjut",
+               message: `Apakah Anda yakin ingin membuat laporan tindak lanjut dengan ringkasan "${action.payload.ringkasan_tindakan}"?`,
+               action,
+               isProcessing: false
+           });
+       } else {
+           handleSendMessage("Tolong tampilkan form pengisian tindak lanjut untuk surat/disposisi ini menggunakan form interaktif.");
+       }
+    }
+  };
+
+  const handleConfirmExecute = async () => {
+    const { action } = confirmModal;
+    if (!action || !userProfile) return;
+
+    setConfirmModal(prev => ({ ...prev, isProcessing: true }));
+
+    try {
+        const { doc, updateDoc, addDoc, collection, Timestamp, getDoc } = await import('firebase/firestore');
+        
+        if (action.type === 'SELESAI_DISPOSISI' && action.payload?.id_disposisi) {
+            const dispoRef = doc(db, "disposisi", action.payload.id_disposisi);
+            const docSnap = await getDoc(dispoRef);
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                const penerimaSelesai = data?.penerimaSelesai || [];
+                const jabatanId = userProfile.jabatanId;
+                if (jabatanId && !penerimaSelesai.includes(jabatanId)) {
+                    penerimaSelesai.push(jabatanId);
+                    await updateDoc(dispoRef, { penerimaSelesai, updatedAt: Timestamp.now() });
+                }
+                
+                // Update Surat statusPenyelesaian to 'Selesai'
+                if (data.suratId) {
+                    const suratRef = doc(db, 'surat', data.suratId);
+                    await updateDoc(suratRef, { statusPenyelesaian: 'Selesai' });
+                }
+            }
+            addToast('Disposisi berhasil ditandai selesai.', 'success');
+        } else if (action.type === 'BUAT_TUGAS' && action.payload?.judul_tugas) {
+            await addDoc(collection(db, "tugas"), {
+                judulTugas: action.payload.judul_tugas,
+                deskripsi: action.payload.judul_tugas,
+                opdId: userProfile.opdId || "",
+                status: "Baru",
+                prioritas: "Sedang",
+                dariJabatanId: userProfile.jabatanId || "",
+                kepadaJabatanId: userProfile.jabatanId || "",
+                pelaksanaJabatanId: userProfile.jabatanId || "",
+                tanggalDibuat: Timestamp.now(),
+                createdAt: Timestamp.now(),
+                updatedAt: Timestamp.now()
+            });
+            addToast(`Tugas "${action.payload.judul_tugas}" berhasil dibuat.`, 'success');
+        } else if (action.type === 'TANDAI_SELESAI_TUGAS' && action.payload?.tugas_id) {
+            await updateDoc(doc(db, 'tugas', action.payload.tugas_id), {
+                status: 'Selesai',
+                tanggalSelesai: Timestamp.now(),
+                updatedAt: Timestamp.now()
+            });
+            addToast('Tugas berhasil ditandai selesai.', 'success');
+        } else if (action.type === 'BUAT_LAPORAN_TINDAK_LANJUT' && action.payload?.id_disposisi) {
+            const { createLaporanTindakLanjut } = await import('@/lib/tindakLanjutUtils');
+            await createLaporanTindakLanjut({
+               userId: userProfile.uid,
+               jabatanId: userProfile.jabatanId || '',
+               opdId: userProfile.opdId,
+               disposisiId: action.payload.id_disposisi,
+               suratId: action.payload.surat_id || '',
+               ringkasanTindakan: action.payload.ringkasan_tindakan,
+               hasilTindakan: action.payload.hasil_tindakan
+            });
+            addToast(`Laporan tindak lanjut berhasil dibuat.`, 'success');
+        }
+    } catch (err) {
+        console.error("Action execution failed", err);
+        addToast("Gagal memproses aksi. Silakan coba lagi.", "error");
+    } finally {
+        setConfirmModal({ isOpen: false, title: '', message: '', action: null, isProcessing: false });
+    }
+  };
+
   const renderFormattedContent = (rawText: string) => {
     return (
-      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+      <div className="text-sm leading-relaxed space-y-2">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
           components={{
@@ -277,10 +656,10 @@ export default function NatakaryaCopilot() {
             ),
             th: ({node, ...props}) => <th className="border-b border-border bg-muted/50 px-3 py-2 font-semibold" {...props} />,
             td: ({node, ...props}) => <td className="border-b border-border/50 px-3 py-2" {...props} />,
-            p: ({node, ...props}) => <p className="mb-2 last:mb-0" {...props} />,
-            ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-2 space-y-1" {...props} />,
-            ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-2 space-y-1" {...props} />,
-            li: ({node, ...props}) => <li className="pl-1" {...props} />,
+            p: ({node, ...props}) => <p className="mb-1.5 last:mb-0" {...props} />,
+            ul: ({node, ...props}) => <ul className="list-disc pl-4 mb-1.5 space-y-0.5" {...props} />,
+            ol: ({node, ...props}) => <ol className="list-decimal pl-4 mb-1.5 space-y-0.5" {...props} />,
+            li: ({node, ...props}) => <li className="pl-0.5 my-0.5 leading-snug" {...props} />,
             strong: ({node, ...props}) => <strong className="font-semibold text-foreground" {...props} />,
             code: ({node, ...props}) => <code className="px-1.5 py-0.5 rounded-md bg-muted font-mono text-[11px] text-primary" {...props} />
           }}
@@ -293,7 +672,6 @@ export default function NatakaryaCopilot() {
 
   return (
     <>
-      {/* 1. FLOATING COPILOT TRIGGER BUTTON (OMNIFIT UI STYLE) */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -307,31 +685,23 @@ export default function NatakaryaCopilot() {
               onClick={() => setIsOpen(true)}
               className="relative group flex items-center justify-center p-1.5 pr-0.5 md:p-2 rounded-l-full rounded-r-none md:rounded-full bg-card/90 backdrop-blur-xl border border-primary/30 border-r-0 md:border-r shadow-[-4px_0_15px_rgba(0,0,0,0.15)] md:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 focus:outline-none"
             >
-              {/* Omnifit Outer Glow Halo */}
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 opacity-60 blur-md group-hover:opacity-100 transition duration-500 animate-pulse pointer-events-none" />
-
-              {/* Omnifit Animated Conic Border Ring for Avatar */}
+              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-[var(--nk-teal-mid)] via-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-40 blur-md group-hover:opacity-80 transition duration-500 animate-pulse pointer-events-none" />
               <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center p-[2px] overflow-hidden flex-shrink-0">
                 <div 
                   className="absolute inset-0 rounded-full animate-spin-slow"
-                  style={{
-                    background: 'conic-gradient(from 0deg, #6366f1, #a855f7, #ec4899, #f59e0b, #10b981, #6366f1)'
-                  }}
+                  style={{ background: 'conic-gradient(from 0deg, var(--nk-teal-mid), var(--nk-gold), var(--nk-teal-light), var(--nk-gold), var(--nk-teal-mid))' }}
                 />
-                <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-600 flex items-center justify-center text-white shadow-inner">
+                <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center text-white shadow-inner border border-white/10">
                   <Bot size={24} className="md:w-6 md:h-6 text-white" />
-                  <Sparkles size={14} className="absolute top-1 right-1 text-yellow-300 animate-bounce" />
+                  <Sparkles size={14} className="absolute top-1 right-1 text-[var(--nk-gold)] animate-pulse" />
                 </div>
               </div>
-
-              {/* Live Status Dot */}
               <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card z-20 animate-pulse" />
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* 2. CHAT DRAWER / FLOATING WINDOW (FIXED MOBILE OVERLAP & OMNIFIT PANEL) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -350,40 +720,36 @@ export default function NatakaryaCopilot() {
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.8 }}
             onDragEnd={(e, info) => {
-              if (info.offset.y > 100 || info.velocity.y > 500) {
-                setIsOpen(false);
+              if (isMinimized && (info.offset.y < -50 || info.velocity.y < -500)) {
+                setIsMinimized(false);
+              } else if (info.offset.y > 100 || info.velocity.y > 500) {
+                if (!isMinimized) {
+                  setIsMinimized(true);
+                } else {
+                  setIsOpen(false);
+                }
               }
             }}
             className="fixed bottom-0 md:bottom-6 inset-x-0 md:inset-x-auto md:right-6 z-[60] w-full md:w-[460px] md:max-h-[640px] bg-card/98 backdrop-blur-3xl border-t md:border border-border shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl rounded-t-[28px] md:rounded-2xl flex flex-col overflow-hidden transition-[height] duration-300"
           >
-            {/* Drag Handle Container */}
             <div 
               className="touch-none md:cursor-default cursor-grab active:cursor-grabbing flex-shrink-0"
               onPointerDown={(e) => {
-                if (typeof window !== 'undefined' && window.innerWidth < 768) {
-                  dragControls.start(e);
-                }
+                if (typeof window !== 'undefined' && window.innerWidth < 768) dragControls.start(e);
               }}
             >
-              {/* Mobile Drag Pill */}
               <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2.5 mb-1 md:hidden" />
-
-              {/* Header */}
-              <div className="flex items-center justify-between px-4 py-2 md:py-3 bg-gradient-to-r from-primary/10 via-purple-500/10 to-card border-b border-border/80 select-none">
+              <div className="flex items-center justify-between px-4 py-2 md:py-3 bg-gradient-to-r from-[var(--nk-teal-mid)]/10 via-[var(--nk-gold)]/5 to-card border-b border-border/80 select-none">
               <div className="flex items-center gap-2.5">
-                {/* Omnifit Avatar Ring in Header */}
                 <div className="relative w-9 h-9 rounded-full p-[1.5px] overflow-hidden flex-shrink-0">
                   <div 
                     className="absolute inset-0 rounded-full animate-spin-slow"
-                    style={{
-                      background: 'conic-gradient(from 0deg, #6366f1, #a855f7, #ec4899, #f59e0b, #6366f1)'
-                    }}
+                    style={{ background: 'conic-gradient(from 0deg, var(--nk-teal-mid), var(--nk-gold), var(--nk-teal-light), var(--nk-gold), var(--nk-teal-mid))' }}
                   />
-                  <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center text-white shadow-md">
+                  <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center text-white shadow-md">
                     <Bot size={17} className="text-white" />
                   </div>
                 </div>
-
                 <div>
                   <div className="flex items-center gap-1.5">
                     <h3 className="font-bold text-sm text-foreground">Natakarya Copilot</h3>
@@ -391,52 +757,88 @@ export default function NatakaryaCopilot() {
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live DB
                     </span>
                   </div>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1">
-                    <span>Gemini 3.5 Flash Lite</span>
-                    <span>•</span>
-                    <span className="truncate max-w-[150px]">{opdName}</span>
-                  </p>
                 </div>
               </div>
-
-              {/* Window Controls */}
               <div className="flex items-center gap-1">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClearChat}
-                  title="Bersihkan Percakapan"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
-                >
-                  <RotateCcw size={14} />
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg" onClick={startNewChat} title="Chat Baru">
+                  <Plus size={14} />
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsMinimized(!isMinimized)}
-                  title={isMinimized ? "Perbesar" : "Kecilkan"}
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
-                >
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg" onClick={() => setView(view === 'chat' ? 'history' : 'chat')} title="Riwayat">
+                  {view === 'chat' ? <Clock size={14} /> : <MessageSquare size={14} />}
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} title={isMinimized ? "Perbesar" : "Kecilkan"} className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg">
                   {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
                 </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsOpen(false)}
-                  title="Tutup Chat"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg"
-                >
+                <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} title="Tutup Chat" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg">
                   <X size={16} />
                 </Button>
               </div>
             </div>
           </div>
 
-            {/* Chat Body (Hanya jika tidak diminimize) */}
-            {!isMinimized && (
+          {!isMinimized && view === 'history' && (
+              <div className="flex-1 overflow-y-auto p-4 bg-muted/20">
+                  {historySessions.length === 0 ? (
+                      <div className="text-center text-muted-foreground mt-20 text-sm">Belum ada riwayat percakapan.</div>
+                  ) : (
+                      <div className="space-y-2">
+                          {historySessions.map(session => (
+                              <div 
+                                key={session.id} 
+                                onClick={() => loadChat(session.id)}
+                                className="p-3 bg-card border border-border rounded-xl hover:border-primary/50 hover:shadow-md cursor-pointer transition-all"
+                              >
+                                  <div className="font-semibold text-sm text-foreground truncate">{session.title}</div>
+                                  <div className="text-xs text-muted-foreground mt-1 flex items-center justify-between">
+                                      <span>{session.messages?.length || 0} Pesan</span>
+                                      <span>{session.updatedAt?.toDate ? session.updatedAt.toDate().toLocaleDateString('id-ID') : ''}</span>
+                                  </div>
+                              </div>
+                          ))}
+                      </div>
+                  )}
+              </div>
+          )}
+
+          {!isMinimized && view === 'chat' && (
               <>
-                {/* Message Feed */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 scroll-smooth">
+                  {messages.length === 0 && (
+                      <div className="flex flex-col items-center justify-center mt-8 mb-4">
+                          <div className="relative w-16 h-16 rounded-2xl bg-gradient-to-tr from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center text-white mb-6 shadow-xl border border-white/10">
+                            <Bot size={32} />
+                            <Sparkles size={14} className="absolute -top-1.5 -right-1.5 text-[var(--nk-gold)] animate-pulse" />
+                          </div>
+                          <h2 className="text-lg md:text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 mb-2 text-center leading-tight">
+                            Halo, {userProfile?.namaLengkap?.split(',')[0] || 'Pengguna'}! 👋
+                          </h2>
+                          <p className="text-sm text-muted-foreground text-center mb-8 max-w-[280px]">
+                            Ada yang bisa saya bantu untuk produktivitas Anda hari ini?
+                          </p>
+                          
+                          {(suggestions.length > 0 || loadingSuggestions) && (
+                              <div className="w-full space-y-2.5">
+                                  {loadingSuggestions ? (
+                                      <div className="flex justify-center p-4">
+                                          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-primary"></div>
+                                      </div>
+                                  ) : (
+                                      suggestions.map((sug, idx) => (
+                                          <button 
+                                              key={idx}
+                                              onClick={() => handleSendMessage(sug)}
+                                              className="w-full group relative text-left p-3.5 text-sm bg-card hover:bg-primary/5 border border-border/60 hover:border-primary/40 rounded-xl transition-all duration-300 text-foreground/90 shadow-sm hover:shadow-md overflow-hidden"
+                                          >
+                                              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-primary/5 to-transparent -translate-x-[100%] group-hover:translate-x-[100%] transition-transform duration-700 ease-out" />
+                                              <span className="relative z-10 font-medium">{sug}</span>
+                                          </button>
+                                      ))
+                                  )}
+                              </div>
+                          )}
+                      </div>
+                  )}
+
                   {messages.map((msg) => (
                     <motion.div
                       key={msg.id}
@@ -445,7 +847,7 @@ export default function NatakaryaCopilot() {
                       className={`flex gap-3 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
                       {msg.role === 'model' && (
-                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-white flex-shrink-0 shadow-sm mt-0.5">
+                        <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center text-white flex-shrink-0 shadow-sm mt-0.5 border border-white/10">
                           <Bot size={15} />
                         </div>
                       )}
@@ -458,112 +860,112 @@ export default function NatakaryaCopilot() {
                         {msg.role === 'user' ? (
                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{msg.content}</p>
                         ) : (
-                          renderFormattedContent(msg.content)
-                        )}
+                          <div className="space-y-3">
+                            {renderFormattedContent(msg.content)}
+                            
+                            {msg.data_tables && msg.data_tables.map((table, idx) => (
+                              <div key={idx} className="nk-table-wrapper border-0 shadow-sm mt-2">
+                                {table.title && (
+                                  <div className="px-3 py-2 bg-muted/50 border-b border-border/50 text-xs font-bold text-foreground">
+                                    {table.title}
+                                  </div>
+                                )}
+                                <div className="overflow-x-auto">
+                                  <table className="w-full text-left text-xs border-collapse">
+                                    <thead className="bg-muted/30">
+                                      <tr>
+                                        {table.columns && table.columns.map((col, i) => (
+                                          <th key={i} className="px-3 py-2 border-b border-border font-semibold text-foreground/80">{col}</th>
+                                        ))}
+                                      </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-border/50">
+                                      {table.rows && table.rows.map((row, i) => {
+                                        const cells = Array.isArray(row) ? row : (row as any).cells || [];
+                                        return (
+                                        <tr key={i} className="hover:bg-muted/20 transition-colors">
+                                          {cells.map((cell: any, j: number) => (
+                                            <td key={j} className="px-3 py-2">{cell}</td>
+                                          ))}
+                                        </tr>
+                                      )})}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ))}
 
-                        {/* Action Buttons for AI Message */}
-                        {msg.role === 'model' && msg.id !== 'welcome-msg' && (
-                          <div className="mt-2 pt-1.5 border-t border-border/40 flex items-center justify-between text-[11px] text-muted-foreground">
-                            <span className="text-[10px] opacity-70">
-                              {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            <button
-                              onClick={() => handleCopyText(msg.id, msg.content)}
-                              className="inline-flex items-center gap-1 hover:text-primary transition-colors py-0.5 px-1.5 rounded hover:bg-background/80"
-                            >
-                              {copiedId === msg.id ? (
-                                <>
-                                  <Check size={12} className="text-emerald-500" />
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">Tersalin</span>
-                                </>
-                              ) : (
-                                <>
-                                  <Copy size={12} />
-                                  <span>Salin Teks</span>
-                                </>
-                              )}
-                            </button>
+                            {msg.actions && msg.actions.length > 0 && (
+                              <div className="flex flex-wrap gap-2 pt-2 border-t border-border/50">
+                                {msg.actions.map((action, idx) => {
+                                  if (action.type === 'SHOW_BATCH_TINDAK_LANJUT_FORM') {
+                                      return (
+                                          <div key={idx} className="w-full">
+                                            <BatchTindakLanjutForm 
+                                              items={action.payload?.items || []} 
+                                              onSubmit={handleBatchSubmit}
+                                              isSubmitting={isSubmittingBatch}
+                                            />
+                                          </div>
+                                      );
+                                  }
+                                  return (
+                                    <Button
+                                      key={idx}
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleActionClick(action)}
+                                      className="h-7 px-3 text-xs bg-card hover:bg-primary hover:text-primary-foreground border-primary/30 transition-all rounded-full shadow-2xs group-hover:shadow-xs active:scale-95"
+                                    >
+                                      {action.label}
+                                    </Button>
+                                  );
+                                })}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>
-
-                      {msg.role === 'user' && (
-                        <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-primary flex-shrink-0 mt-0.5 font-bold text-xs">
-                          {userProfile?.namaLengkap?.charAt(0) || <User size={14} />}
-                        </div>
-                      )}
                     </motion.div>
                   ))}
-
-                  {/* Typing Indicator */}
+                  
                   {isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="flex gap-3 justify-start items-center"
-                    >
-                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-white flex-shrink-0 shadow-sm">
-                        <Bot size={15} />
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-3 justify-start">
+                      <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center text-white flex-shrink-0 shadow-sm border border-white/10">
+                        <Bot size={15} className="animate-pulse" />
                       </div>
-                      <div className="bg-muted/70 rounded-2xl rounded-tl-none px-4 py-2.5 border border-border/60 flex items-center gap-2">
-                        <Loader2 size={14} className="animate-spin text-primary" />
-                        <span className="text-xs text-muted-foreground font-medium animate-pulse">
-                          Natakarya AI sedang membaca database & menyusun dokumen...
-                        </span>
+                      <div className="bg-muted/70 border border-border/60 rounded-2xl rounded-tl-none px-4 py-3">
+                        <div className="flex space-x-1.5 items-center h-4">
+                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                          <div className="w-1.5 h-1.5 bg-primary/60 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        </div>
                       </div>
                     </motion.div>
                   )}
-
                   <div ref={messagesEndRef} />
                 </div>
 
-                {/* Quick Prompt Chips */}
-                {messages.length <= 2 && (
-                  <div className="px-4 py-2 border-t border-border/40 bg-muted/20">
-                    <p className="text-[11px] font-semibold text-muted-foreground mb-1.5 flex items-center gap-1">
-                      <Zap size={12} className="text-amber-500" /> Pintasan Aksi (Real Data):
-                    </p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {dynamicPrompts.map((qp, i) => (
-                        <button
-                          key={i}
-                          onClick={() => handleSendMessage(qp.prompt)}
-                          disabled={isLoading}
-                          className="text-[11px] bg-background hover:bg-primary/10 hover:text-primary hover:border-primary/40 border border-border rounded-full px-2.5 py-1 text-muted-foreground transition-all duration-200 flex items-center gap-1.5 shadow-2xs active:scale-95 disabled:opacity-50"
-                        >
-                          {qp.icon}
-                          <span className="truncate max-w-[210px]">{qp.label}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Input Footer */}
-                <div className="p-3 border-t border-border bg-card">
-                  <div className="relative flex items-end gap-2 bg-muted/40 rounded-xl border border-border p-1.5 focus-within:border-primary/60 focus-within:ring-1 focus-within:ring-primary/40 transition-all">
-                    <textarea
-                      ref={inputRef}
+                <div className="p-3 bg-card border-t border-border/80">
+                  <div className="relative flex items-end bg-muted/40 rounded-3xl border border-border/60 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/50 transition-all shadow-inner px-2 py-2">
+                    <Textarea
+                      ref={inputRef as any}
+                      autoFocus
+                      disabled={isLoading}
                       value={inputValue}
                       onChange={(e) => setInputValue(e.target.value)}
                       onKeyDown={handleKeyDown}
-                      placeholder="Cari surat, cek disposisi, minta draf naskah..."
-                      disabled={isLoading}
-                      rows={1}
-                      className="w-full bg-transparent border-0 resize-none px-2 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none max-h-24 min-h-[36px] scroll-smooth"
+                      placeholder="Ketik pesan... (Shift+Enter u/ baris baru)"
+                      className="flex-1 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 px-3 py-1.5 min-h-[36px] max-h-32 resize-none text-sm shadow-none scrollbar-thin"
                     />
                     <Button
-                      size="icon"
-                      onClick={() => handleSendMessage()}
                       disabled={!inputValue.trim() || isLoading}
-                      className="h-8 w-8 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground flex-shrink-0 transition-transform active:scale-95 disabled:opacity-40"
+                      onClick={() => handleSendMessage()}
+                      size="icon"
+                      className="w-9 h-9 rounded-full bg-gradient-to-r from-[var(--nk-teal-mid)] to-[var(--nk-gradient-end)] text-white shadow-md hover:shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:scale-100 disabled:shadow-none shrink-0 mb-0.5 mr-0.5"
                     >
-                      {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                      <Send size={16} className="ml-0.5" />
                     </Button>
-                  </div>
-                  <div className="mt-1.5 px-1 flex items-center justify-between text-[10px] text-muted-foreground">
-                    <span>Shift + Enter untuk baris baru</span>
-                    <span className="opacity-75">Gemini 3.5 Flash Lite • Live Data</span>
                   </div>
                 </div>
               </>
@@ -571,6 +973,15 @@ export default function NatakaryaCopilot() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={confirmModal.isOpen}
+        onClose={() => !confirmModal.isProcessing && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+        onConfirm={handleConfirmExecute}
+        title={confirmModal.title}
+        message={confirmModal.message}
+        isProcessing={confirmModal.isProcessing}
+      />
     </>
   );
 }

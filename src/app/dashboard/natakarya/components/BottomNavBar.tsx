@@ -44,16 +44,16 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
                     >
                         <motion.div 
                             whileTap={{ scale: 0.85 }} 
-                            className={`relative flex flex-col items-center justify-center w-full h-full py-1 transition-colors duration-200 ${isActive ? 'text-[var(--nk-gradient-start)]' : 'text-muted-foreground hover:text-[var(--nk-gradient-start)]'}`}
+                            className={`relative flex flex-col items-center justify-center w-full h-full py-1 transition-colors duration-200 ${isActive ? 'text-[var(--nk-teal-mid)]' : 'text-muted-foreground hover:text-[var(--nk-teal-mid)]'}`}
                         >
                             {isActive && (
-                                <motion.div layoutId="bottom-nav-glow" className="absolute w-12 h-12 bg-[var(--nk-gradient-start)]/15 rounded-full blur-md -z-10" />
+                                <motion.div layoutId="bottom-nav-glow" className="absolute w-12 h-12 bg-[var(--nk-teal-light)]/15 rounded-full blur-md -z-10" />
                             )}
                             {notifCount > 0 && (
                                 <motion.span 
                                     animate={{ rotate: [0, -10, 10, -10, 0] }}
                                     transition={{ repeat: Infinity, repeatDelay: 3, duration: 0.5 }}
-                                    className="absolute top-2 right-1/2 translate-x-3 w-4 h-4 bg-amber-500 text-amber-950 text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-background shadow-sm"
+                                    className="absolute top-2 right-1/2 translate-x-3 w-4 h-4 bg-[var(--nk-gold)] text-[var(--nk-deep)] text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[var(--nk-surface-2)] shadow-sm"
                                 >
                                     {notifCount > 9 ? '!' : notifCount}
                                 </motion.span>
@@ -67,7 +67,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
                             >
                                 {link.label}
                             </motion.span>
-                            {isActive && <motion.span layoutId="bottom-nav-indicator" className="absolute bottom-0 w-8 h-1 bg-[var(--nk-gradient-start)] rounded-t-full shadow-[0_-2px_8px_rgba(17,94,89,0.4)]" />}
+                            {isActive && <motion.span layoutId="bottom-nav-indicator" className="absolute bottom-0 w-8 h-0.5 bg-[var(--nk-teal-mid)] rounded-t-full shadow-[0_-2px_8px_rgba(13,107,98,0.6)]" />}
                         </motion.div>
                     </Link>
                 );
@@ -76,7 +76,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
                 <button className="flex-1 h-full">
                     <motion.div 
                         whileTap={{ scale: 0.85 }} 
-                        className="flex flex-col items-center justify-center w-full h-full py-1 text-muted-foreground hover:text-[var(--nk-gradient-start)] transition-colors duration-200"
+                        className="flex flex-col items-center justify-center w-full h-full py-1 text-muted-foreground hover:text-[var(--nk-teal-mid)] transition-colors duration-200"
                     >
                         <Menu className="w-5 h-5 mb-1" />
                         <span className="text-[10px] font-medium">Menu</span>

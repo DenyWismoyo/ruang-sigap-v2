@@ -13,7 +13,7 @@ import { useUserAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { collection, query, where, orderBy, onSnapshot, deleteDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';
-import LppdModal, { LppdData } from '@/app/dashboard/sigap/components/LppdModal';
+import LppdModal, { LppdData } from '@/app/dashboard/sigap/(fungsional)/tapem/components/LppdModal';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { Label } from '@/components/ui/label';
 

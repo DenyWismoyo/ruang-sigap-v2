@@ -40,6 +40,7 @@ export default function RekapSuratPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   
+  const [opdList, setOpdList] = useState<OPD[]>([]);
   const [selectedOpdId, setSelectedOpdId] = useState<string>("Semua");
 
   const [startDate, setStartDate] = useState(() => {
@@ -74,15 +75,15 @@ export default function RekapSuratPage() {
 
   const sortedOpdOptions = useMemo(() => {
     if (!opdList.length) return [];
-    const indukOpds = opdList.filter(o => o.tipe === 'Induk' || !o.idOpdInduk);
+    const indukOpds = opdList.filter((o: OPD) => o.tipe === 'Induk' || !o.idOpdInduk);
     const result: (OPD & { label: string })[] = [];
-    indukOpds.forEach(induk => {
+    indukOpds.forEach((induk: OPD) => {
         result.push({ ...induk, label: induk.namaOpd });
-        const subs = opdList.filter(s => s.idOpdInduk === induk.id);
-        subs.forEach(sub => result.push({ ...sub, label: `— ${sub.namaOpd}` }));
+        const subs = opdList.filter((s: OPD) => s.idOpdInduk === induk.id);
+        subs.forEach((sub: OPD) => result.push({ ...sub, label: `— ${sub.namaOpd}` }));
     });
     const processedIds = new Set(result.map(r => r.id));
-    opdList.forEach(opd => { if (!processedIds.has(opd.id)) result.push({ ...opd, label: opd.namaOpd }); });
+    opdList.forEach((opd: OPD) => { if (!processedIds.has(opd.id)) result.push({ ...opd, label: opd.namaOpd }); });
     return result;
   }, [opdList]);
 
@@ -154,7 +155,7 @@ export default function RekapSuratPage() {
       const dataToExport = filteredSurat.map((surat) => {
         let namaOpd = '';
         if (isSuperAdmin) {
-             const opd = opdList.find(o => o.id === surat.opdId);
+             const opd = opdList.find((o: OPD) => o.id === surat.opdId);
              namaOpd = opd ? opd.namaOpd : surat.opdId;
         }
         return {
@@ -258,10 +259,10 @@ export default function RekapSuratPage() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto nk-table-wrapper border-0 rounded-none shadow-none">
             {loading ? <div className="flex h-64 items-center justify-center"><Loader2 className="h-6 w-6 animate-spin" /><span className="ml-2">Memuat...</span></div> : paginatedSurat.length > 0 ? (
               <>
-                <Table className="min-w-[600px]">
+                <Table className="min-w-[600px] nk-table">
                     <TableHeader>
                     <TableRow>
                         <TableHead>Perihal</TableHead>

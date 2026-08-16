@@ -17,12 +17,14 @@ import { Tugas, UserProfile, SubTugas, TugasLampiran } from '@/types';
 import { logActivity } from '@/lib/activityLogger';
 import { sendWhatsAppNotification } from '@/lib/whatsapp';
 import { updateLogbook } from '@/lib/logbookUtils'; // Import helper
+import { useQueryClient } from '@tanstack/react-query';
 
 export const useTugasActions = () => {
   const { userProfile, actingJabatanProfile, jabatanProfile } = useUserAuth();
   const effectiveJabatan = actingJabatanProfile || jabatanProfile;
   const { addToast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const queryClient = useQueryClient();
 
   const getActorName = () => `${userProfile?.namaLengkap} (${effectiveJabatan?.namaJabatan})`;
 
@@ -98,6 +100,15 @@ export const useTugasActions = () => {
           }
           // --- [AKHIR AUTO LOGBOOK] ---
 
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.setQueryData(['tugasBawahan', effectiveJabatan.id], (oldData: any) => {
+                  if (!oldData) return oldData;
+                  return [{ id: tugasRef.id, ...newTugas }, ...oldData];
+              });
+          }
+
           return tugasRef.id;
 
       } catch (error: any) {
@@ -136,7 +147,25 @@ export const useTugasActions = () => {
               await logActivity(task.suratId, getActorName(), logMessage);
           }
           
+          // [AUTO LOGBOOK]
+          try {
+              await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+                  id: `auto_task_status_${task.id}_${Date.now()}`,
+                  deskripsi: logMessage,
+                  selesai: newStatus === 'Selesai',
+                  tugasTerkaitId: task.id,
+                  tugasTerkaitJudul: task.judulTugas
+              });
+          } catch (logErr) { console.error(logErr); }
+
           await batch.commit();
+          
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
           addToast(`Status diubah menjadi ${newStatus}`, 'success');
           return true;
       } catch (error: any) {
@@ -151,9 +180,73 @@ export const useTugasActions = () => {
       if (!userProfile) return false;
       setIsProcessing(true);
       try {
-          const tugasRef = doc(db, 'tugas', taskId);
-          await updateDoc(tugasRef, updates);
-          await updateDoc(doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', taskId), updates);
+          const { getDoc, getDocs, query, collection, where } = await import('firebase/firestore');
+          const taskSnap = await getDoc(doc(db, 'tugas', taskId));
+          if (!taskSnap.exists()) return false;
+          const taskData = taskSnap.data() as Tugas;
+
+          const usersSnap = await getDocs(query(collection(db, 'users'), where('opdId', '==', taskData.opdId)));
+          
+          let currentBatch = writeBatch(db);
+          let count = 0;
+          currentBatch.update(doc(db, 'tugas', taskId), updates);
+          count++;
+
+          // Gunakan for...of untuk memungkinkan await di dalam loop jika diperlukan, 
+          // tapi karena usersSnap tidak terlalu besar, for...of dengan await di blok if sudah cukup
+          for (const userDoc of usersSnap.docs) {
+              const uid = userDoc.data().uid || userDoc.id;
+              currentBatch.set(doc(db, 'tugasPerPengguna', uid, 'tugas', taskId), updates, { merge: true });
+              count++;
+              if (count >= 490) { // Safety limit for firestore batch
+                  await currentBatch.commit(); // BUG-BARU-3 Fixed: ditambahkan await
+                  currentBatch = writeBatch(db);
+                  count = 0;
+              }
+          }
+
+          if (count > 0) {
+              await currentBatch.commit();
+          }
+
+          // [AUTO LOGBOOK]
+          try {
+              await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), {
+                  id: `auto_task_detail_${taskId}_${Date.now()}`,
+                  deskripsi: `Memperbarui detail tugas: "${taskData.judulTugas}"`,
+                  selesai: false,
+                  tugasTerkaitId: taskId,
+                  tugasTerkaitJudul: taskData.judulTugas
+              });
+          } catch (logErr) { console.error(logErr); }
+
+          // [NOTIFIKASI REVISI TUGAS]
+          if (taskData.kepadaJabatanId) {
+              const assignedUsersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', '==', taskData.kepadaJabatanId)));
+              const notifBatch = writeBatch(db);
+              assignedUsersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  if (uid !== userProfile.uid) { // Jangan notif diri sendiri
+                      const notifRef = doc(collection(db, 'notifications'));
+                      notifBatch.set(notifRef, {
+                          userId: uid,
+                          userNip: uDoc.data().nip,
+                          message: `Tugas diperbarui oleh ${getActorName()}: "${taskData.judulTugas}"`,
+                          link: `/dashboard/tugas`,
+                          isRead: false,
+                          timestamp: serverTimestamp() as Timestamp,
+                      });
+                  }
+              });
+              await notifBatch.commit();
+          }
+
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
           addToast('Detail tugas diperbarui.', 'success');
           return true;
       } catch (err: any) {

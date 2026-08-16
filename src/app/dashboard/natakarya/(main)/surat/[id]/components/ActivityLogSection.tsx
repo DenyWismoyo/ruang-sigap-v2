@@ -63,15 +63,14 @@ export default function ActivityLogSection({ suratId, isOpen, onClose }: Activit
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
         {/* [PERBAIKAN DARK MODE] */}
-        <DialogContent className="sm:max-w-2xl bg-card border-border flex flex-col max-h-[70vh]">
-            <DialogHeader>
-                <DialogTitle className="flex items-center">
-                    <History size={20} className="mr-3 text-muted-foreground" />
+        <DialogContent data-tenant="natakarya" className="sm:max-w-2xl bg-card border-border flex flex-col max-h-[70vh] rounded-2xl overflow-hidden shadow-2xl">
+            <DialogHeader className="px-6 py-4 border-b border-border/50 bg-muted/10">
+                <DialogTitle className="flex items-center text-foreground font-heading">
+                    <History size={20} className="mr-3 text-[var(--nk-gradient-start)]" />
                     Log Aktivitas Surat
                 </DialogTitle>
             </DialogHeader>
-            {/* [MODIFIKASI] Gunakan <ScrollArea> */}
-            <ScrollArea className="flex-1 overflow-y-auto -mx-6 px-6">
+            <div className="flex-1 overflow-y-auto px-6">
                 <div className="relative space-y-6 py-4">
                     {/* [PERBAIKAN DARK MODE] */}
                     {loading && <p className="text-muted-foreground">Memuat log...</p>}
@@ -95,7 +94,7 @@ export default function ActivityLogSection({ suratId, isOpen, onClose }: Activit
                     </div>
                     ))}
                 </div>
-            </ScrollArea>
+            </div>
       </DialogContent>
     </Dialog>
   );

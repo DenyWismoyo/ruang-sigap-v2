@@ -2,23 +2,17 @@ import { useState } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
-import { useToast } from '@/context/ToastContext';
+import { useToastContext } from '@/context/ToastContext';
 
-export interface LaporanTindakLanjutData {
-    tugasId: string;
-    suratId: string;
-    disposisiId: string;
-    instruksiAwal: string;
-    ringkasanTindakan: string;
-    hasilTindakan: string;
-    kendala: string;
-    buktiFileUrl?: string;
+import { LaporanTindakLanjut } from '@/types';
+
+export interface LaporanTindakLanjutData extends Omit<LaporanTindakLanjut, 'id' | 'userId' | 'jabatanId' | 'opdId' | 'createdAt'> {
     addToLogbook?: boolean;
 }
 
 export function useLaporanTindakLanjut() {
     const { userProfile } = useUserAuth();
-    const { addToast } = useToast();
+    const { addToast } = useToastContext();
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const submitLaporan = async (data: LaporanTindakLanjutData) => {
@@ -65,17 +59,15 @@ export function useLaporanTindakLanjut() {
 
             // 3. Tambahkan ke Logbook (Opsional, jika dicentang)
             if (data.addToLogbook) {
-                await addDoc(collection(db, 'logbookHarian'), {
-                    userId: userProfile.uid,
-                    jabatanId: userProfile.jabatanId,
-                    opdId: userProfile.opdId,
-                    tanggal: now,
-                    aktivitas: data.ringkasanTindakan,
-                    hasil: data.hasilTindakan,
-                    keterangan: data.kendala ? `Kendala: ${data.kendala}` : 'Selesai',
-                    sumber: 'laporan',
-                    laporanId: laporanRef.id,
-                    createdAt: now,
+                const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+                await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+                    deskripsi: `Menindaklanjuti Surat: ${data.ringkasanTindakan}`,
+                    selesai: true,
+                    kategori: 'Laporan',
+                    sumber: 'laporan_tindak_lanjut',
+                    suratTerkaitId: data.suratId,
+                    disposisiTerkaitId: data.disposisiId,
+                    tugasTerkaitId: data.tugasId,
                 });
             }
 

@@ -113,10 +113,10 @@ export default function PegawaiTab({ combinedData, onAssessClick }: PegawaiTabPr
             </Card>
 
             {/* Table */}
-            <Card className="border-border shadow-sm overflow-hidden">
+            <div className="nk-table-wrapper mt-4 border-0 shadow-none">
                 <div className="overflow-x-auto">
-                    <Table>
-                        <TableHeader className="bg-muted/50">
+                    <Table className="nk-table">
+                        <TableHeader>
                             <TableRow>
                                 <TableHead>Nama Pegawai</TableHead>
                                 <TableHead>Jabatan</TableHead>
@@ -254,7 +254,7 @@ export default function PegawaiTab({ combinedData, onAssessClick }: PegawaiTabPr
                         </Button>
                     </div>
                 </div>
-            </Card>
+            </div>
         </div>
     );
 }

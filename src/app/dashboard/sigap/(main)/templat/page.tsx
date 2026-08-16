@@ -1,21 +1,19 @@
-// Lokasi: src/app/dashboard/templat/page.tsx
+// Lokasi: src/app/dashboard/sigap/templat/page.tsx
 // [MODIFIKASI]
 // - Mengganti semua kelas dark:.. kustom dengan kelas semantik (bg-card, text-foreground, dll)
 // - Menambahkan useMemo 'sortedOpdList' untuk menyortir OPD (Induk -> Sub)
 // - Memperbarui <ScrollArea> di modal untuk menggunakan 'sortedOpdList' dan menampilkan indentasi.
 // - Memperbaiki path impor menggunakan alias '@'.
-// [PERBAIKAN 11/11/2025]
-// - Memperbaiki Modal Tambah (handleAddTemplat) agar menggunakan 'sortedOpdList'
-//   dan 'handleOpdCheckChange(opd)' agar konsisten dengan Modal Edit.
-// - Menambahkan tombol 'Pilih Semua'/'Kosongkan' ke Modal Tambah.
+// [PERBAIKAN]
+// - Memperbaiki import useMasterData dan state yang hilang.
 
 "use client";
-// @ts-nocheck
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase'; // path @
 import { collection, query, where, addDoc, doc, deleteDoc, updateDoc, Timestamp, getDocs } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext'; // path @
+import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData'; // path @
 import { InstruksiTemplat, OPD } from '@/types'; // path @
 import { Trash2, Edit, X, Building, Save, Loader2 } from 'lucide-react';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal'; // path @
@@ -29,7 +27,6 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-// import { Input } from "@/components/ui/input"; // Tidak terpakai
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -40,11 +37,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function ManajemenTemplatPage() {
     const { userProfile } = useUserAuth();
-  const { opdList: allOpds } = useMasterData(userProfile?.role === 'super_admin');
+    const { opdList: allOpds } = useMasterData(userProfile?.role === 'super_admin');
 
-    
-    
-    
     const [opdTemplatList, setOpdTemplatList] = useState<InstruksiTemplat[]>([]);
     const [sharedTemplatList, setSharedTemplatList] = useState<InstruksiTemplat[]>([]);
 
@@ -66,23 +60,12 @@ export default function ManajemenTemplatPage() {
 
     const [selectedOpds, setSelectedOpds] = useState<string[]>([]);
     
-    // [MODIFIKASI] Buat callback untuk fetch data agar bisa dipanggil ulang
     const fetchData = useCallback(async () => {
         if (!userProfile?.opdId) {
             setLoading(false);
             return;
         }
         setLoading(true);
-
-        // Fetch OPD (hanya Super Admin)
-        if (userProfile.role === 'super_admin' && allOpds.length === 0) {
-            try {
-                const opdSnapshot = await getDocs(collection(db, "opd"));
-                setAllOpds(opdSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OPD)));
-            } catch (err) {
-                console.error("Gagal fetch OPD (ManajemenTemplatPage):", err);
-            }
-        }
         
         // Query templat OPD
         const qOpd = query(collection(db, "instruksiTemplat"), where("opdId", "==", userProfile.opdId));
@@ -104,18 +87,12 @@ export default function ManajemenTemplatPage() {
             setError("Gagal memuat data templat global.");
         }
         setLoading(false);
-
-        return () => {
-            unsubscribeOpd();
-            unsubscribeShared();
-        };
-    }, [userProfile, allOpds.length]); // [MODIFIKASI] Tambahkan dependensi
+    }, [userProfile]);
 
     useEffect(() => {
         fetchData();
-    }, [fetchData]); // [MODIFIKASI] Panggil fetchData
+    }, [fetchData]);
 
-    // [MODIFIKASI] Daftar OPD yang disortir (Induk -> Sub)
     const sortedOpdList = useMemo(() => {
         const indukOpds = allOpds
             .filter(opd => opd.tipe === 'Induk')
@@ -127,7 +104,6 @@ export default function ManajemenTemplatPage() {
             const subOpds = allOpds
                 .filter(opd => opd.idOpdInduk === induk.id)
                 .sort((a, b) => a.namaOpd.localeCompare(b.namaOpd));
-            // Tambahkan properti 'indent' untuk UI
             subOpds.forEach(sub => sortedList.push({ ...sub, indent: true }));
         });
         return sortedList;
@@ -152,7 +128,7 @@ export default function ManajemenTemplatPage() {
                 teksInstruksi: newTemplatText,
                 opdId: userProfile.opdId,
                 createdBy: userProfile.uid,
-                createdAt: Timestamp.now(), // [TAMBAHAN] Tambah createdAt
+                createdAt: Timestamp.now(),
             };
             if(userProfile.role === 'super_admin') {
                 payload.sharedWithOpdIds = selectedOpds;
@@ -196,7 +172,6 @@ export default function ManajemenTemplatPage() {
         setIsEditModalOpen(true);
     };
 
-    // [MODIFIKASI] Logika ini disalin dari knowledge/page.tsx
     const handleOpdCheckChange = (opd: OPD) => {
         const opdId = opd.id!;
         const isSelecting = !selectedOpds.includes(opdId);
@@ -208,9 +183,8 @@ export default function ManajemenTemplatPage() {
             newSelectedOpds = selectedOpds.filter(id => id !== opdId);
         }
 
-        // Jika memilih/membatalkan Induk, pengaruhi Sub-OPD
         if (opd.tipe === 'Induk') {
-            const subOpdIds = allOpds // Gunakan allOpds
+            const subOpdIds = allOpds
                 .filter(sub => sub.idOpdInduk === opdId)
                 .map(sub => sub.id!);
             
@@ -223,7 +197,6 @@ export default function ManajemenTemplatPage() {
         setSelectedOpds(Array.from(new Set(newSelectedOpds)));
     };
     
-    // [MODIFIKASI] Tombol untuk pilih semua/kosongkan
     const toggleSelectAll = (select: boolean) => {
         if (select) {
             setSelectedOpds(allOpds.map(opd => opd.id!));
@@ -255,7 +228,6 @@ export default function ManajemenTemplatPage() {
             setIsEditModalOpen(false);
             setCurrentTemplat(null);
             setSelectedOpds([]);
-            // Tidak perlu panggil fetchData()
         } catch (err) {
             console.error(err);
             setError("Gagal memperbarui templat.");
@@ -266,7 +238,6 @@ export default function ManajemenTemplatPage() {
     
     return (
         <div className="animate-fadeInUp">
-            {/* [MODIFIKASI] Ganti dark mode kustom */}
             <h1 className="text-3xl font-bold text-foreground">Manajemen Templat Instruksi</h1>
             <p className="mt-2 text-muted-foreground">Buat dan kelola templat instruksi yang sering Anda gunakan untuk mempercepat proses disposisi.</p>
             
@@ -294,13 +265,11 @@ export default function ManajemenTemplatPage() {
                             <Label className="font-bold text-sm flex items-center gap-2">
                                 <Building size={16} /> Bagikan ke OPD (Opsional)
                             </Label>
-                            {/* [PERBAIKAN 11/11/2025] Tambahkan tombol Pilih Semua/Kosongkan */}
                             <div className="flex justify-between items-center mt-2 mb-1">
                                 <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(true)}>Pilih Semua</Button>
                                 <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(false)}>Kosongkan</Button>
                             </div>
                             <ScrollArea className="mt-2 p-3 bg-muted rounded-lg max-h-48 border border-border space-y-2">
-                                {/* [PERBAIKAN 11/11/2025] Ganti allOpds -> sortedOpdList dan perbaiki handler */}
                                 {sortedOpdList.map(opd => (
                                     <div key={opd.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-accent">
                                         <Checkbox
@@ -376,13 +345,11 @@ export default function ManajemenTemplatPage() {
                                     <Label className="font-bold text-sm flex items-center gap-2">
                                         <Building size={16} /> Bagikan ke OPD (Opsional)
                                     </Label>
-                                    {/* [MODIFIKASI] Tambahkan tombol Pilih Semua/Kosongkan */}
                                     <div className="flex justify-between items-center mt-2 mb-1">
                                         <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(true)}>Pilih Semua</Button>
                                         <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(false)}>Kosongkan</Button>
                                     </div>
                                     <ScrollArea className="mt-2 p-3 bg-muted rounded-lg max-h-48 border border-border space-y-2">
-                                        {/* [MODIFIKASI] Gunakan sortedOpdList dan tambahkan indentasi */}
                                         {sortedOpdList.map(opd => (
                                             <div key={opd.id} className="flex items-center gap-2 p-1.5 rounded hover:bg-accent">
                                                 <Checkbox

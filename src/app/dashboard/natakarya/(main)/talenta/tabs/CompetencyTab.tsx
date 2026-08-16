@@ -260,7 +260,7 @@ export default function CompetencyTab({ employees, combinedData = [] }: Competen
                                                     <span className="font-semibold">{g.aspek}</span>
                                                     <span className="text-red-500 text-xs font-bold">Gap: {g.gap} point</span>
                                                 </div>
-                                                <Progress value={(g.aktual / g.standar) * 100} className="h-2 bg-red-100 dark:bg-red-900/30" indicatorColor="bg-red-500" />
+                                                <Progress value={(g.aktual / g.standar) * 100} className="h-2 bg-red-100 dark:bg-red-900/30 [&>div]:bg-red-500" />
                                                 <p className="text-xs text-muted-foreground">
                                                     Aktual: {g.aktual} vs Standar: {g.standar}. Rekomendasi: Pelatihan intensif.
                                                 </p>

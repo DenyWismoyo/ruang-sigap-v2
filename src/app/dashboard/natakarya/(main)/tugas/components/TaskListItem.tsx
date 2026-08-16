@@ -90,7 +90,7 @@ export default function TaskListItem({ tugas, isExpanded, onToggleExpand, onOpen
     };
 
     return (
-        <Card className={`transition-all duration-200 hover:shadow-md hover:border-primary/50 group ${tugas.status === 'Selesai' ? 'bg-muted/50 opacity-80 hover:opacity-100' : 'bg-card'}`}>
+        <div className={`nk-card border-[var(--border)] transition-all duration-200 hover:shadow-[var(--nk-shadow-md)] hover:border-[var(--nk-teal-light)]/50 group ${tugas.status === 'Selesai' ? 'bg-muted/50 opacity-80 hover:opacity-100' : 'bg-[var(--nk-surface-2)]'} rounded-xl`}>
             <CardHeader 
               className="flex flex-row items-center p-4"
             >
@@ -202,6 +202,6 @@ export default function TaskListItem({ tugas, isExpanded, onToggleExpand, onOpen
                     </div>
                 </CardContent>
             )}
-        </Card>
+        </div>
     );
 }

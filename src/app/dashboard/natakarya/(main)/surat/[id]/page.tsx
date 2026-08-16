@@ -67,9 +67,9 @@ import { Timestamp } from 'firebase/firestore';
 
 // --- KOMPONEN BARU: Skeleton Loading untuk Progressive Rendering ---
 const MasterDataSkeleton = ({ label }: { label: string }) => (
-    <div className="bg-card rounded-xl shadow-sm border border-border p-8 flex flex-col items-center justify-center animate-pulse h-full min-h-[150px]">
-        <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mb-3" />
-        <p className="text-sm text-muted-foreground">{label}</p>
+    <div className="bg-card/80 backdrop-blur-sm rounded-2xl shadow-sm border border-[var(--nk-gradient-start)]/10 p-8 flex flex-col items-center justify-center animate-pulse h-full min-h-[150px]">
+        <Loader2 className="w-6 h-6 animate-spin text-[var(--nk-gradient-start)] mb-3 opacity-60" />
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
     </div>
 );
 
@@ -92,10 +92,11 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border mb-4 md:mb-6 overflow-hidden">
-      <div className="p-3.5 md:p-4 bg-muted/30 border-b border-border flex items-center justify-between">
-        <h3 className="text-sm md:text-base font-bold flex items-center text-foreground">
-          <Info size={16} className="mr-2 text-blue-500" />
+    <div className="bg-card/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/10 mb-4 md:mb-6 overflow-hidden relative group/card">
+      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
+      <div className="p-3.5 md:p-5 bg-muted/20 border-b border-border/50 flex items-center justify-between">
+        <h3 className="text-sm md:text-base font-bold font-heading flex items-center text-foreground">
+          <Info size={16} className="mr-2 text-[var(--nk-gradient-start)]" />
           Detail Surat
         </h3>
       </div>
@@ -615,34 +616,34 @@ export default function DetailSuratPage() {
   );
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in pb-20 md:pb-0"> {/* Ditambah pb-20 untuk mobile tab ruang */}
+    <div className="flex flex-col h-full animate-in fade-in pb-24 md:pb-0"> {/* Ditambah pb-24 untuk mobile tab ruang */}
       <div className="flex-shrink-0">
-        <button onClick={() => router.back()} className="inline-flex items-center text-primary hover:underline text-sm mb-3 md:mb-4">
+        <button onClick={() => router.back()} className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors text-sm mb-3 md:mb-4">
           <ArrowLeft size={16} className="mr-2" /> Kembali 
           <span className="hidden md:inline">&nbsp;ke Halaman Sebelumnya</span>
         </button>
-        <div className="flex items-start justify-between mt-1 md:mt-4 gap-2">
+        <div className="flex items-start justify-between mt-1 md:mt-4 gap-4">
             <div className="flex-1">
                 {/* Penyesuaian Ukuran Judul Mobile */}
-                <h1 className="text-lg md:text-3xl font-bold text-foreground leading-snug">{surat.perihal}</h1>
-                <div className="flex items-center flex-wrap gap-1.5 md:gap-2 mt-2">
+                <h1 className="text-xl md:text-3xl font-bold font-heading text-foreground leading-snug">{surat.perihal}</h1>
+                <div className="flex items-center flex-wrap gap-2 mt-3">
                     {/* Penyesuaian Ukuran Badge Mobile */}
-                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
-                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
+                    <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
+                    <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
                 </div>
             </div>
-            <div className='flex items-center gap-2 flex-shrink-0'>
+            <div className='flex items-center gap-2 flex-shrink-0 bg-card/50 backdrop-blur-sm p-1.5 rounded-full border border-border/50 shadow-sm'>
                 {canEditOrDeleteSurat && !isEditing && (
                     <>
-                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="hidden md:flex" variant="outline" size="sm"><Edit size={16} className="mr-2"/> Edit</Button>
-                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="hidden md:flex" variant="destructive" size="sm"><Trash2 size={16} className="mr-2"/> Hapus</Button>
+                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="hidden md:flex rounded-full" variant="ghost" size="sm"><Edit size={16} className="mr-1.5"/> Edit</Button>
+                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="hidden md:flex rounded-full text-red-500 hover:bg-red-50 hover:text-red-600" variant="ghost" size="sm"><Trash2 size={16} className="mr-1.5"/> Hapus</Button>
                         {/* Mobile Icons */}
-                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="md:hidden h-8 w-8" variant="ghost" size="icon"><Edit size={16}/></Button>
-                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="md:hidden h-8 w-8" variant="ghost" size="icon"><Trash2 size={16} className="text-red-500"/></Button>
+                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="md:hidden rounded-full h-8 w-8" variant="ghost" size="icon"><Edit size={16}/></Button>
+                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="md:hidden rounded-full h-8 w-8 hover:bg-red-50 text-red-500" variant="ghost" size="icon"><Trash2 size={16}/></Button>
                     </>
                 )}
                 {canManuallyArchive && (
-                    <Button onClick={openArchiveConfirmation} className="bg-teal-600 dark:bg-teal-700 hover:bg-teal-700 dark:hover:bg-teal-600 h-8 md:h-9 text-xs md:text-sm px-2.5 md:px-3" size="sm" title="Arsipkan Surat Secara Manual"><Archive size={14} className="mr-1.5 md:mr-2"/> Arsip</Button>
+                    <Button onClick={openArchiveConfirmation} className="rounded-full bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 h-8 md:h-9 text-xs md:text-sm px-3 shadow-md" size="sm" title="Arsipkan Surat Secara Manual"><Archive size={14} className="mr-1.5 md:mr-2"/> Arsip</Button>
                 )}
             </div>
         </div>
@@ -731,9 +732,9 @@ export default function DetailSuratPage() {
               </div>
           </TabsContent>
           
-          <TabsList className="grid w-full grid-cols-2 h-[60px] p-1 rounded-none fixed bottom-[64px] left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-              <TabsTrigger value="dokumen" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><FileText size={18}/><span className="text-[10px]">Dokumen</span></TabsTrigger>
-              <TabsTrigger value="tindakLanjut" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><ListChecks size={18}/><span className="text-[10px]">Tindak Lanjut</span></TabsTrigger>
+          <TabsList className="grid w-11/12 max-w-sm grid-cols-2 h-14 p-1.5 mx-auto rounded-full fixed bottom-20 left-0 right-0 z-40 bg-card/90 backdrop-blur-xl border border-border/50 shadow-[0_10px_40px_-10px_rgba(0,0,0,0.2)]">
+              <TabsTrigger value="dokumen" className="h-full rounded-full data-[state=active]:bg-[var(--nk-gradient-start)] data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground flex flex-row items-center justify-center gap-2 transition-all"><FileText size={16}/><span className="text-xs font-semibold">Dokumen</span></TabsTrigger>
+              <TabsTrigger value="tindakLanjut" className="h-full rounded-full data-[state=active]:bg-[var(--nk-gradient-start)] data-[state=active]:text-white data-[state=active]:shadow-md text-muted-foreground flex flex-row items-center justify-center gap-2 transition-all"><ListChecks size={16}/><span className="text-xs font-semibold">Tindak Lanjut</span></TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, Search, Filter, Download, ExternalLink, Edit, Trash2, FileText } from 'lucide-react';
 import { useTapemData } from '@/app/dashboard/sigap/hooks/useTapemData';
 import { KerjaSama } from '@/types/index';
-import KerjaSamaModal from '@/app/dashboard/sigap/components/KerjaSamaModal';
+import KerjaSamaModal from '@/app/dashboard/sigap/(fungsional)/tapem/components/KerjaSamaModal';
 import { db } from '@/lib/firebase';
 import { deleteDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/context/ToastContext';

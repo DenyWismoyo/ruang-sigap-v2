@@ -88,3 +88,40 @@ export const updateLogbook = async (
     throw new Error("Gagal memperbarui logbook harian.");
   }
 };
+
+/**
+ * Mencatat kegiatan baru ke dalam logbook harian (bisa dari manual, copilot, laporan, dll).
+ */
+export const writeLogbookEntry = async (
+  userId: string,
+  opdId: string,
+  entry: Partial<LogbookKegiatan> & { deskripsi: string }
+) => {
+  const tanggal = new Date(); // Hari ini
+  
+  const kegiatanBaruRaw = {
+    id: entry.id || `kegiatan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+    deskripsi: entry.deskripsi,
+    selesai: entry.selesai ?? true,
+    kategori: entry.kategori || 'Umum',
+    sumber: entry.sumber || 'manual',
+    suratTerkaitId: entry.suratTerkaitId,
+    suratPerihal: entry.suratPerihal,
+    disposisiTerkaitId: entry.disposisiTerkaitId,
+    tugasTerkaitId: entry.tugasTerkaitId,
+    tugasTerkaitJudul: entry.tugasTerkaitJudul,
+    waktuMulai: entry.waktuMulai,
+    waktuSelesai: entry.waktuSelesai,
+    createdAt: new Date().toISOString(),
+  };
+
+  // Firebase Firestore akan throw error jika ada value undefined
+  const kegiatanBaru: any = {};
+  for (const [key, value] of Object.entries(kegiatanBaruRaw)) {
+    if (value !== undefined) {
+      kegiatanBaru[key] = value;
+    }
+  }
+
+  await updateLogbook(userId, opdId, tanggal, kegiatanBaru);
+};

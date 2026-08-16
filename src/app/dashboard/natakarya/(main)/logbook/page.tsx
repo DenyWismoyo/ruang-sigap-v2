@@ -15,8 +15,9 @@ import FormTugas from '@/app/dashboard/natakarya/(main)/tugas/components/FormTug
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/natakarya/hooks/useGoogleDriveUploader';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
-import { PDFDownloadLink } from '@react-pdf/renderer';
+import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
+import { SmartAddKegiatanModal } from './components/SmartAddKegiatanModal';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -108,6 +109,7 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
     const [rawLogbookList, setRawLogbookList] = useState<LogbookHarian[]>([]);
     
     const [isGenerating, setIsGenerating] = useState(false);
+    const [isPdfGenerating, setIsPdfGenerating] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
@@ -136,22 +138,32 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
             const [year, month] = selectedMonth.split('-').map(Number);
             const startDate = Timestamp.fromDate(new Date(year, month - 1, 1));
             const endDate = Timestamp.fromDate(new Date(year, month, 0, 23, 59, 59)); 
+            // Menghindari error composite index di Firestore dengan mem-filter tanggal di sisi klien
             const q = query(
                 collection(db, 'logbookHarian'),
-                where('userId', '==', userProfile.uid),
-                where('tanggal', '>=', startDate),
-                where('tanggal', '<=', endDate),
-                orderBy('tanggal', 'asc')
+                where('userId', '==', userProfile.uid)
             );
             const snapshot = await getDocs(q);
             
-            if (snapshot.empty) {
+            const fetchedLogs = snapshot.docs
+                .map(doc => doc.data() as LogbookHarian)
+                .filter(log => {
+                    if (!log.tanggal || typeof log.tanggal.toDate !== 'function') return false;
+                    const logDate = log.tanggal.toDate().getTime();
+                    return logDate >= startDate.toDate().getTime() && logDate <= endDate.toDate().getTime();
+                })
+                .sort((a, b) => {
+                    if (!a.tanggal || typeof a.tanggal.toDate !== 'function') return 0;
+                    if (!b.tanggal || typeof b.tanggal.toDate !== 'function') return 0;
+                    return a.tanggal.toDate().getTime() - b.tanggal.toDate().getTime();
+                });
+            
+            setRawLogbookList(fetchedLogs);
+            
+            if (fetchedLogs.length === 0) {
                 setRekapData("Tidak ada data kegiatan yang ditemukan untuk bulan ini.");
                 return;
             }
-
-            const fetchedLogs = snapshot.docs.map(doc => doc.data() as LogbookHarian);
-            setRawLogbookList(fetchedLogs);
 
             const monthName = new Date(year, month - 1).toLocaleString('id-ID', { month: 'long' });
             let rekapString = `LAPORAN KEGIATAN HARIAN (LOGBOOK)\n`;
@@ -162,10 +174,11 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
             fetchedLogs.forEach(data => {
                 const tanggalStr = data.tanggal.toDate().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
                 rekapString += `HARI/TANGGAL: ${tanggalStr}\n`;
-                if (data.kegiatan.length === 0) {
+                const kegiatanList = data.kegiatan || [];
+                if (kegiatanList.length === 0) {
                     rekapString += `- (Tidak ada kegiatan tercatat)\n`;
                 } else {
-                    data.kegiatan.forEach(keg => {
+                    kegiatanList.forEach(keg => {
                         rekapString += `- [${keg.selesai ? 'SELESAI' : 'PROSES'}] ${keg.deskripsi}\n`;
                         if (keg.tugasTerkaitJudul) {
                             rekapString += `  (Terkait Tugas: ${keg.tugasTerkaitJudul})\n`;
@@ -229,7 +242,37 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
         }
     };
 
-    const isLoading = isGenerating || isUploading || uploader.uploadStatus === 'uploading';
+    const handleDownloadPdf = async () => {
+        if (!rekapData || rawLogbookList.length === 0 || !userProfile) return;
+        
+        setIsPdfGenerating(true);
+        try {
+            const document = (
+                <LogbookPdfDocument 
+                    userProfile={userProfile} 
+                    jabatanNama={jabatanNama} 
+                    opdNama={opdNama} 
+                    periode={`${new Date(Number(selectedMonth.split('-')[0]), Number(selectedMonth.split('-')[1]) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' })}`} 
+                    data={rawLogbookList} 
+                />
+            );
+            
+            const blob = await pdf(document).toBlob();
+            const url = URL.createObjectURL(blob);
+            const a = window.document.createElement('a');
+            a.href = url;
+            a.download = `Laporan_Kinerja.pdf`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (err: any) {
+            console.error(err);
+            setError(`Gagal membuat PDF: ${err.message}`);
+        } finally {
+            setIsPdfGenerating(false);
+        }
+    };
+
+    const isLoading = isGenerating || isUploading || isPdfGenerating || uploader.uploadStatus === 'uploading';
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
@@ -282,31 +325,15 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
                 
                 <DialogFooter className="p-4 border-t border-border flex-shrink-0 bg-muted/50 flex flex-col sm:flex-row gap-2">
                     {rekapData && rawLogbookList.length > 0 && userProfile && (
-                        <PDFDownloadLink
-                            document={
-                                <LogbookPdfDocument 
-                                    userProfile={userProfile} 
-                                    jabatanNama={jabatanNama} 
-                                    opdNama={opdNama} 
-                                    periode={`${new Date(Number(selectedMonth.split('-')[0]), Number(selectedMonth.split('-')[1]) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' })}`} 
-                                    data={rawLogbookList} 
-                                />
-                            }
-                            fileName={`Laporan_Kinerja.pdf`}
-                            className="w-full sm:w-auto"
+                        <Button 
+                            onClick={handleDownloadPdf}
+                            disabled={isPdfGenerating}
+                            variant="outline" 
+                            className="w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
                         >
-                            {/* @ts-ignore */}
-                            {({ blob, url, loading, error }) => (
-                                <Button 
-                                    disabled={loading}
-                                    variant="outline" 
-                                    className="w-full border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                                >
-                                    {loading ? <Loader2 size={16} className="animate-spin mr-2"/> : <FileText size={16} className="mr-2"/>}
-                                    {loading ? 'Menyiapkan...' : 'Download PDF'}
-                                </Button>
-                            )}
-                        </PDFDownloadLink>
+                            {isPdfGenerating ? <Loader2 size={16} className="animate-spin mr-2"/> : <FileText size={16} className="mr-2"/>}
+                            {isPdfGenerating ? 'Menyiapkan...' : 'Download PDF'}
+                        </Button>
                     )}
 
                     <Button
@@ -335,21 +362,7 @@ const ShortcutNav = () => (
     </div>
 );
 
-const AddKegiatanModal = ({ isOpen, onClose, onSave }: { isOpen: boolean, onClose: () => void, onSave: (text: string) => void }) => {
-    const [text, setText] = useState('');
-    useEffect(() => { if(isOpen) setText(''); }, [isOpen]);
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-lg bg-card border-border">
-                 <DialogHeader><DialogTitle>Tambah Kegiatan Baru</DialogTitle></DialogHeader>
-                <form onSubmit={(e) => { e.preventDefault(); if (text.trim()) { onSave(text.trim()); } onClose(); }} className="flex gap-2 pt-2">
-                    <Input type="text" value={text} onChange={e => setText(e.target.value)} placeholder="Tulis kegiatan..." autoFocus />
-                    <Button type="submit" disabled={!text.trim()} size="icon"><Send size={18}/></Button>
-                </form>
-            </DialogContent>
-        </Dialog>
-    );
-};
+// SmartAddKegiatanModal diimpor dari file terpisah
 
 const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks }: { isOpen: boolean, onClose: () => void, onSave: (entry: LogbookKegiatan) => void, onFullDelete: (id: string) => void, entry: LogbookKegiatan | null, tasks: Tugas[] }) => {
     const [currentEntry, setCurrentEntry] = useState<LogbookKegiatan | null>(null);
@@ -371,17 +384,64 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
 };
 
 const LogbookItem = ({ k, onToggle, onEdit, onDelete }: { k: LogbookKegiatan, onToggle: (id: string) => void, onEdit: (entry: LogbookKegiatan) => void, onDelete: (id: string) => void }) => {
+    // Fungsi pembantu warna kategori
+    const getKategoriWarna = (kategori?: string) => {
+        switch (kategori) {
+            case 'Surat': return 'bg-blue-100 text-blue-700 border-blue-200';
+            case 'Disposisi': return 'bg-amber-100 text-amber-700 border-amber-200';
+            case 'Tugas': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+            case 'Laporan': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+            case 'Rapat': return 'bg-purple-100 text-purple-700 border-purple-200';
+            default: return 'bg-gray-100 text-gray-700 border-gray-200';
+        }
+    };
+    
     return (
-        <div className="p-3 bg-card rounded-lg border border-border shadow-sm flex items-start gap-3 group">
+        <div className="p-3.5 nk-card border border-[var(--border)] shadow-[var(--nk-shadow-sm)] flex items-start gap-3 group transition-all duration-200 hover:shadow-md">
             <Button variant="ghost" size="icon" onClick={() => onToggle(k.id)} title="Tandai selesai / belum selesai" className="mt-1 shrink-0 h-auto w-auto p-0">
-                {k.selesai ? <CheckSquare size={20} className="text-green-600"/> : <Square size={20} className="text-muted-foreground"/>}
+                {k.selesai ? <CheckSquare size={20} className="text-[var(--nk-teal-mid)]"/> : <Square size={20} className="text-muted-foreground"/>}
             </Button>
             <div className="flex-1 min-w-0">
-                <p className={`font-medium text-foreground ${k.selesai ? 'line-through text-muted-foreground' : ''}`}>{k.deskripsi}</p>
-                {k.tugasTerkaitId && (<Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-green-700 dark:text-green-300"><Link href={`/dashboard/tugas`}><LinkIcon size={12} className="mr-1.5"/> Tugas: {k.tugasTerkaitJudul || 'Lihat Tugas'}</Link></Button>)}
+                <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+                    {k.kategori && (
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${getKategoriWarna(k.kategori)}`}>
+                            {k.kategori}
+                        </span>
+                    )}
+                    {k.sumber === 'copilot' && (
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full border bg-orange-50 text-orange-600 border-orange-200 flex items-center gap-1">
+                            <Sparkles size={10} /> Copilot
+                        </span>
+                    )}
+                    {k.waktuMulai && k.waktuSelesai && (
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                            <Calendar size={10} /> {k.waktuMulai} - {k.waktuSelesai}
+                        </span>
+                    )}
+                </div>
+                
+                <p className={`font-medium text-[14px] leading-snug text-foreground ${k.selesai ? 'line-through text-muted-foreground opacity-80' : ''}`}>{k.deskripsi}</p>
+                
+                {/* Tautan ke referensi terkait */}
+                <div className="flex flex-wrap items-center gap-3 mt-2">
+                    {k.tugasTerkaitId && (
+                        <Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-[var(--nk-teal-mid)]">
+                            <Link href={`/dashboard/natakarya/tugas`}>
+                                <LinkIcon size={12} className="mr-1.5"/> Tugas: {k.tugasTerkaitJudul || 'Lihat Tugas'}
+                            </Link>
+                        </Button>
+                    )}
+                    {k.suratTerkaitId && (
+                        <Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-blue-600">
+                            <Link href={`/dashboard/natakarya/surat/${k.suratTerkaitId}`}>
+                                <LinkIcon size={12} className="mr-1.5"/> Surat: {k.suratPerihal || 'Lihat Surat'}
+                            </Link>
+                        </Button>
+                    )}
+                </div>
             </div>
             <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
+                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
                 <DropdownMenuContent><DropdownMenuItem onClick={() => onEdit(k)}><Edit size={14} className="mr-2"/> Edit</DropdownMenuItem><DropdownMenuItem onClick={() => onDelete(k.id)} className="text-red-600 focus:text-red-600"><Trash2 size={14} className="mr-2"/> Hapus</DropdownMenuItem></DropdownMenuContent>
             </DropdownMenu>
         </div>
@@ -504,6 +564,23 @@ export default function LogbookPage() {
         } catch (error) { console.error("Error updating logbook:", error); alert("Gagal menyimpan perubahan ke logbook."); throw error; }
     };
     const handleAddKegiatan = async (text: string) => { const newKegiatan: LogbookKegiatan = { id: new Date().getTime().toString(), deskripsi: text, selesai: false }; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList([...currentKegiatan, newKegiatan]); };
+    
+    const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
+        const newKegiatan: LogbookKegiatan = {
+            id: new Date().getTime().toString(),
+            deskripsi: kegiatanBaru.deskripsi || '',
+            selesai: kegiatanBaru.selesai ?? true,
+            kategori: kegiatanBaru.kategori || 'Disposisi',
+            sumber: kegiatanBaru.sumber || 'laporan_tindak_lanjut',
+            suratTerkaitId: kegiatanBaru.suratTerkaitId,
+            suratPerihal: kegiatanBaru.suratPerihal,
+            disposisiTerkaitId: kegiatanBaru.disposisiTerkaitId,
+            createdAt: new Date().toISOString()
+        };
+        const currentKegiatan = logbookData?.kegiatan || [];
+        await updateKegiatanList([...currentKegiatan, newKegiatan]);
+    };
+
     const handleEditSave = async (entry: LogbookKegiatan) => { if (!entry.deskripsi.trim()) { alert("Deskripsi kegiatan tidak boleh kosong."); return; } const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.map(k => k.id === entry.id ? entry : k)); setIsEditModalOpen(false); setEntryToEdit(null); };
     const handleToggleSelesai = async (kegiatanId: string) => { const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.map(k => k.id === kegiatanId ? { ...k, selesai: !k.selesai } : k)); };
     const handleDeleteKegiatan = async (kegiatanId: string) => { if (!window.confirm("Hapus kegiatan ini dari logbook?")) return; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.filter(k => k.id !== kegiatanId)); if (entryToEdit?.id === kegiatanId) { setIsEditModalOpen(false); setEntryToEdit(null); } };
@@ -614,8 +691,8 @@ export default function LogbookPage() {
                                 </div>
                            </div>
                         ) : (
-                            <div className="mt-8 p-10 bg-card rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
-                                <BookOpen size={48} className="text-muted-foreground/30 mb-4" />
+                            <div className="mt-8 p-10 nk-glass-card rounded-xl border-2 border-dashed border-[var(--border)] flex flex-col items-center justify-center text-center">
+                                <BookOpen size={48} className="text-[var(--nk-teal-mid)]/30 mb-4" />
                                 <h2 className="text-xl font-semibold text-foreground">Logbook Kosong</h2>
                                 <p className="mt-2 text-muted-foreground max-w-md">Belum ada kegiatan yang dicatat untuk tanggal ini. Tambahkan kegiatan baru menggunakan tombol (+).</p>
                             </div>
@@ -624,7 +701,13 @@ export default function LogbookPage() {
                  )}
             </div>
             
-            <AddKegiatanModal isOpen={isAddModalOpen} onClose={() => setIsAddModalOpen(false)} onSave={handleAddKegiatan} />
+            <SmartAddKegiatanModal
+                isOpen={isAddModalOpen}
+                onClose={() => setIsAddModalOpen(false)}
+                onSaveUmum={handleAddKegiatan}
+                onSaveTindakLanjut={handleAddTindakLanjut}
+                userProfile={effectiveProfile}
+            />
             <EditKegiatanModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleEditSave} onFullDelete={handleDeleteKegiatan} entry={entryToEdit} tasks={tasks} />
             <BantuanHalamanModal isOpen={isBantuanOpen} onClose={() => setIsBantuanOpen(false)} />
             

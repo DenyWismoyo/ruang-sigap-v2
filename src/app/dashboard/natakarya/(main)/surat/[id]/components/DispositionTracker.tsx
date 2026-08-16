@@ -39,26 +39,27 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
   });
 
   return (
-    <div className="mt-4 md:mt-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-all duration-300">
+    <div className="mt-4 md:mt-6 bg-card/90 backdrop-blur-md rounded-2xl border border-[var(--nk-gradient-start)]/10 shadow-[0_4px_20px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-300 relative group/tracker">
+      <div className="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-[var(--nk-gradient-start)]/50 to-[var(--nk-gradient-end)]/50 opacity-80"></div>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           
           {/* HEADER */}
-          <div className="p-3 md:p-4 flex items-center justify-between bg-muted/30 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+          <div className="p-3 md:p-4 flex items-center justify-between bg-muted/20 border-b border-border/50 hover:bg-muted/40 transition-colors cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
               <div className="flex items-center gap-2.5 md:gap-3">
-                  <div className="p-1.5 md:p-2 bg-primary/10 rounded-full border border-primary/20 text-primary">
+                  <div className="p-1.5 md:p-2 bg-gradient-to-br from-[var(--nk-gradient-start)]/20 to-transparent rounded-full border border-[var(--nk-gradient-start)]/20 text-[var(--nk-gradient-start)] shadow-sm">
                      <GitCommit size={16} className="md:w-[18px] md:h-[18px]" />
                   </div>
                   <div>
-                      <h4 className="text-sm font-bold text-foreground">Jejak Alur Disposisi</h4>
-                      <p className="text-[10px] md:text-xs text-muted-foreground">
+                      <h4 className="text-sm font-bold font-heading text-foreground">Jejak Alur Disposisi</h4>
+                      <p className="text-[10px] md:text-xs text-muted-foreground font-medium">
                         {sortedDisposisi.length} Aktivitas terekam
                       </p>
                   </div>
               </div>
               
               <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      {isOpen ? <ChevronUp size={18} className="text-muted-foreground" /> : <ChevronDown size={18} className="text-muted-foreground" />}
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-full hover:bg-[var(--nk-gradient-start)]/10 hover:text-[var(--nk-gradient-start)] transition-all">
+                      {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                       <span className="sr-only">Toggle</span>
                   </Button>
               </CollapsibleTrigger>
@@ -95,11 +96,11 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                           <motion.div 
                             key={disp.id} 
                             variants={{ hidden: { opacity: 0, x: -10 }, show: { opacity: 1, x: 0 } }}
-                            className="relative z-10 pl-5 md:pl-6 pb-6 md:pb-8 group last:pb-2"
+                            className="relative z-10 pl-6 md:pl-8 pb-6 md:pb-8 group last:pb-2"
                           >
                             {/* Garis Vertikal Timeline */}
                             {!isLast && (
-                                <div className="absolute left-[3px] top-4 bottom-[-12px] md:bottom-[-16px] w-[2px] bg-border z-0" />
+                                <div className="absolute left-[7px] top-4 bottom-[-12px] md:bottom-[-16px] w-[2px] bg-gradient-to-b from-[var(--nk-gradient-start)]/40 via-border to-transparent z-0 group-hover:from-[var(--nk-gradient-start)]/60 transition-colors" />
                             )}
                             
                             {/* Dot Node */}
@@ -107,7 +108,7 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                                 initial={{ scale: 0 }}
                                 animate={{ scale: 1 }}
                                 transition={{ type: 'spring', stiffness: 300, damping: 20, delay: 0.2 + (index * 0.15) }}
-                                className="absolute left-[-2px] top-1.5 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-primary z-10 ring-4 ring-background shadow-sm" 
+                                className="absolute left-[2px] top-1.5 w-3 h-3 md:w-3.5 md:h-3.5 rounded-full bg-[var(--nk-gradient-start)] z-10 ring-4 ring-background shadow-[0_0_10px_rgba(17,94,89,0.4)] group-hover:scale-125 transition-transform" 
                             />
                             
                             {/* Konten Disposisi */}
@@ -116,19 +117,19 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                                 {/* 1. Header (Pengirim & Waktu) */}
                                 <div className="flex flex-wrap items-start justify-between gap-1.5 md:gap-2">
                                   <div className="text-xs md:text-sm">
-                                    <span className="font-bold text-foreground">{pengirimName}</span> 
+                                    <span className="font-bold text-foreground group-hover:text-[var(--nk-gradient-start)] transition-colors">{pengirimName}</span> 
                                     <span className="text-muted-foreground text-[10px] md:text-xs ml-1.5 hidden sm:inline-block">mendisposisikan surat:</span>
                                   </div>
-                                  <span className="text-[9px] md:text-[10px] font-medium text-muted-foreground bg-muted px-1.5 py-0.5 rounded-sm md:rounded-full shrink-0 border border-border/50">
+                                  <span className="text-[9px] md:text-[10px] font-semibold text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full shrink-0 border border-border/50 shadow-sm">
                                     {tanggalDisp}
                                   </span>
                                 </div>
 
                                 {/* 2. Instruksi (Sleek Blockquote) */}
                                 {disp.instruksi && (
-                                  <div className="relative pl-2.5 md:pl-3 py-0 md:py-0.5">
-                                    <div className="absolute left-0 top-0 bottom-0 w-[2px] md:w-[3px] bg-primary/40 rounded-full" />
-                                    <p className="text-[13px] md:text-sm text-foreground/80 italic leading-snug">
+                                  <div className="relative pl-3 md:pl-4 py-0 md:py-0.5 mt-1">
+                                    <div className="absolute left-0 top-0 bottom-0 w-[3px] bg-gradient-to-b from-[var(--nk-gradient-start)]/40 to-[var(--nk-gradient-end)]/40 rounded-full" />
+                                    <p className="text-[13px] md:text-sm text-foreground/90 italic leading-relaxed">
                                       "{disp.instruksi}"
                                     </p>
                                   </div>
@@ -177,16 +178,16 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                                         }
 
                                         return (
-                                            <div key={jabatanId} className="flex items-center justify-between p-1.5 md:p-2 rounded-md bg-muted/20 border border-border/60 hover:bg-muted/50 transition-colors shadow-sm">
-                                                <div className="flex items-center gap-2 md:gap-2.5 min-w-0 pr-2">
-                                                    <div className={`w-6 h-6 md:w-7 md:h-7 rounded-full flex items-center justify-center text-[9px] md:text-[10px] font-bold shrink-0 border ${(snapshotUser || cachedUser) ? 'bg-primary/10 text-primary border-primary/20' : 'bg-muted text-muted-foreground border-border'}`}>
+                                            <div key={jabatanId} className="flex items-center justify-between p-2 rounded-xl bg-muted/20 border border-border/50 hover:bg-muted/40 hover:border-[var(--nk-gradient-start)]/20 hover:shadow-sm transition-all">
+                                                <div className="flex items-center gap-2 md:gap-3 min-w-0 pr-2">
+                                                    <div className={`w-7 h-7 md:w-8 md:h-8 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold shrink-0 border shadow-sm ${(snapshotUser || cachedUser) ? 'bg-gradient-to-br from-[var(--nk-gradient-start)]/20 to-[var(--nk-gradient-end)]/10 text-[var(--nk-gradient-start)] border-[var(--nk-gradient-start)]/20' : 'bg-muted text-muted-foreground border-border'}`}>
                                                         {avatarInitial}
                                                     </div>
                                                     <div className="min-w-0 flex flex-col justify-center">
-                                                        <p className="font-semibold text-[11px] md:text-xs text-foreground truncate leading-tight">
+                                                        <p className="font-semibold text-[11px] md:text-xs text-foreground line-clamp-2 leading-tight">
                                                             {displayName}
                                                         </p>
-                                                        <p className="text-[9px] md:text-[10px] text-muted-foreground truncate leading-tight mt-0.5">
+                                                        <p className="text-[9px] md:text-[10px] text-muted-foreground line-clamp-2 leading-tight mt-0.5">
                                                             {jabatanName}
                                                         </p>
                                                     </div>

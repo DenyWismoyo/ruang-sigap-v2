@@ -99,7 +99,7 @@ const SmartGreeting = ({ userName }: { userName: string }) => {
       transition={{ duration: 0.8, ease: "easeOut" }}
       className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
     >
-      <div className="p-3 bg-card rounded-full shadow-sm border border-border w-fit">{greetingData.icon}</div>
+      <div className="p-3 nk-card rounded-full shadow-[var(--nk-shadow-sm)] border border-[var(--border)] w-fit">{greetingData.icon}</div>
       <div>
         <h1 className="text-3xl font-bold text-foreground">
           {greetingData.text}, <span className="text-primary">{userName}</span>!
@@ -497,7 +497,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   if (isPageLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 bg-secondary/40">
+    <div className="flex flex-col h-full p-4 md:p-6 bg-transparent">
       <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
       
       <KPIWidget />
@@ -564,7 +564,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
 
         <div className="space-y-6 flex flex-col">
           <QuickLinksWidget />
-          <Card className="h-[400px] flex flex-col overflow-hidden border-border shadow-sm">
+          <Card className="h-[400px] flex flex-col overflow-hidden border-[var(--border)] shadow-[var(--nk-shadow-sm)] nk-card">
               <CardHeader className="p-4 py-3 bg-muted/30 border-b border-border flex-shrink-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <StickyNote size={16} className="text-yellow-500"/> Sticky Note
@@ -574,7 +574,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                   <StickyNoteWidget />
               </CardContent>
           </Card>
-          <Card className="shadow-sm border-border">
+          <Card className="shadow-[var(--nk-shadow-sm)] border-[var(--border)] nk-card">
               <CardHeader className="p-4 py-3 border-b border-border">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <CalendarDays size={16} className="text-blue-500"/> Agenda 7 Hari Kedepan

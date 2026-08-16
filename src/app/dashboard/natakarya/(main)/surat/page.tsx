@@ -77,13 +77,13 @@ const PALETTE_COLORS = [
 
 const getStatusColor = (status: string) => {
     switch (status) {
-        case 'Baru': return "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200 border-red-200 hover:bg-red-200";
-        case 'Didisposisikan': return "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-200 border-blue-200 hover:bg-blue-200";
-        case 'Proses Tindak Lanjut': return "bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-200 border-orange-200 hover:bg-orange-200";
-        case 'Selesai': return "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200 border-green-200 hover:bg-green-200";
-        case 'Revisi Disposisi': return "bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-200 border-purple-200 hover:bg-purple-200";
-        case 'Diarsipkan': return "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300 border-gray-200 hover:bg-gray-200";
-        default: return "bg-gray-100 text-gray-800 border-gray-200";
+        case 'Baru': return "bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 border-red-200/50";
+        case 'Didisposisikan': return "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300 border-blue-200/50";
+        case 'Proses Tindak Lanjut': return "bg-amber-50 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300 border-amber-200/50";
+        case 'Selesai': return "bg-[var(--nk-surface-3)] text-[var(--nk-deep)] dark:bg-[var(--nk-teal-mid)]/20 dark:text-[var(--nk-teal-light)] border-[var(--nk-teal-light)]/30";
+        case 'Revisi Disposisi': return "bg-purple-50 text-purple-700 dark:bg-purple-950/50 dark:text-purple-300 border-purple-200/50";
+        case 'Diarsipkan': return "bg-slate-50 text-slate-700 dark:bg-slate-900/50 dark:text-slate-300 border-slate-200/50";
+        default: return "bg-slate-50 text-slate-700 border-slate-200/50";
     }
 };
 
@@ -111,7 +111,8 @@ const SuratCard = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s:string) => s.trim()))).join(', ') : null;
 
     return (
-        <Card className={`transition-all duration-300 hover:shadow-lg hover:-translate-y-1 border-l-4 ${borderColorClass} overflow-hidden group`}>
+        <div className={`nk-card flex flex-col h-fit overflow-hidden relative group transition-all duration-300 hover:shadow-[var(--nk-shadow-md)] hover:-translate-y-1 mb-4 ${borderColorClass}`}>
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
             <div className="p-3.5 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
                 <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
@@ -146,16 +147,17 @@ const SuratCard = React.memo(({
                     </DropdownMenu>
                 </div>
 
-                <div className="flex justify-between items-start mb-1.5 gap-2 pr-8">
-                    <div className="flex items-center text-[11px] text-muted-foreground font-medium truncate">
-                        <span className="truncate">Dr: {surat.pengirim}</span>
+                <div className="flex justify-between items-start mb-2 gap-2 pr-8 mt-1">
+                    <div className="flex items-center text-[11px] text-[var(--nk-teal-mid)] font-bold truncate bg-[var(--nk-surface-3)] px-2 py-0.5 rounded-full border border-[var(--nk-teal-light)]/20">
+                        <User size={10} className="mr-1" />
+                        <span className="truncate">{surat.pengirim}</span>
                     </div>
                     <div className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted/50 px-1.5 py-0.5 rounded">
                         {surat.tanggalDiterima?.toDate ? surat.tanggalDiterima.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A'}
                     </div>
                 </div>
 
-                <CardTitle className="text-sm leading-snug font-semibold text-foreground mb-2 line-clamp-2 pr-2">
+                <CardTitle className="text-sm leading-snug font-bold font-heading text-foreground mb-2 line-clamp-2 pr-2">
                     {surat.perihal}
                 </CardTitle>
 
@@ -214,7 +216,7 @@ const SuratCard = React.memo(({
                     </Button>
                 </div>
             )}
-        </Card>
+        </div>
     );
 });
 SuratCard.displayName = 'SuratCard';
@@ -228,27 +230,39 @@ const SuratRow = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s: string) => s.trim()))).join(', ') : null;
 
     return (
-        <TableRow className="hover:bg-muted/60 hover:shadow-sm transition-all duration-200 group bg-card">
-            <TableCell className="font-semibold cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
-                <div className="text-primary hover:underline line-clamp-2">{surat.perihal}</div>
-                <p className="text-xs text-muted-foreground font-normal truncate">{surat.nomorSurat}</p>
-            </TableCell>
-            <TableCell className="cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>{surat.pengirim}</TableCell>
-            <TableCell className="cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
-                <span className={`px-2 py-1 text-xs font-medium rounded border whitespace-nowrap ${getJenisSuratStyle(surat.jenisSurat)}`}>
+        <motion.tr 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            whileHover={{ scale: 1.01, zIndex: 10, position: 'relative' }}
+            transition={{ duration: 0.2 }}
+            className="group cursor-pointer"
+            onClick={() => { onNavigate(); onClick(); }}
+        >
+            <td className="px-4 py-4 align-top w-1/4 font-semibold">
+                <div className="text-foreground hover:text-[var(--nk-teal-mid)] line-clamp-2 transition-colors">{surat.perihal}</div>
+                <p className="text-xs text-muted-foreground font-normal truncate mt-1">No: {surat.nomorSurat}</p>
+            </td>
+            <td className="px-4 py-4 align-top">
+                <div className="flex items-center gap-1.5 font-medium">
+                    <span className="p-1 rounded-full bg-[var(--nk-surface-3)] text-[var(--nk-teal-mid)]"><User size={10} /></span>
+                    <span className="line-clamp-2">{surat.pengirim}</span>
+                </div>
+            </td>
+            <td className="px-4 py-4 align-top">
+                <span className={`px-2 py-1 text-[10px] font-bold rounded-md border whitespace-nowrap uppercase tracking-wider ${getJenisSuratStyle(surat.jenisSurat)}`}>
                     {surat.jenisSurat || 'Lainnya'}
                 </span>
-            </TableCell>
-            <TableCell className="cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
-                <Badge className={`border ${getStatusColor(surat.statusPenyelesaian)}`} variant="outline">
+            </td>
+            <td className="px-4 py-4 align-top">
+                <span className={`px-2 py-1 text-[10px] font-bold rounded-md border inline-block uppercase tracking-wider ${getStatusColor(surat.statusPenyelesaian)}`}>
                     {surat.statusPenyelesaian}
-                </Badge>
-            </TableCell>
-            <TableCell className="text-sm max-w-[200px] truncate cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
-                {safeRecipientNames ? <span className="truncate">Kepada: {safeRecipientNames}</span> : <span className="text-muted-foreground italic">Belum didisposisi</span>}
-            </TableCell>
+                </span>
+            </td>
+            <td className="px-4 py-4 align-top text-sm max-w-[200px]">
+                {safeRecipientNames ? <span className="line-clamp-2">Kpda: {safeRecipientNames}</span> : <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5"><span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--nk-gold)]"></span></span> Belum didisposisi</span>}
+            </td>
             
-            <TableCell className="text-right">
+            <td className="px-4 py-4 align-top text-right">
                 <div className="flex items-center justify-end gap-2">
                     <span className="text-sm text-muted-foreground whitespace-nowrap hidden lg:inline-block">
                         {surat.tanggalDiterima?.toDate ? surat.tanggalDiterima.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' }) : '-'}
@@ -319,8 +333,8 @@ const SuratRow = React.memo(({
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
-            </TableCell>
-        </TableRow>
+            </td>
+        </motion.tr>
     );
 });
 SuratRow.displayName = 'SuratRow';
@@ -727,10 +741,13 @@ export default function KotakMasukPage() {
                             {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
                         </div>
                     ) : suratList.length === 0 ? (
-                        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
-                            <Inbox size={48} className="mx-auto text-muted-foreground/50 mb-4" />
-                            <p className="font-semibold">Kotak masuk kosong.</p>
-                            <p className="text-sm">Tidak ada surat yang sesuai filter.</p>
+                        <div className="text-center py-20 flex flex-col items-center justify-center nk-glass-card opacity-80 hover:opacity-100 transition-opacity mt-4">
+                            <div className="w-24 h-24 mb-4 rounded-full bg-[var(--nk-surface-3)] flex items-center justify-center border border-[var(--nk-teal-light)]/20 shadow-inner relative">
+                                <div className="absolute inset-0 bg-[var(--nk-teal-light)]/10 blur-xl rounded-full"></div>
+                                <Inbox size={48} className="text-[var(--nk-teal-mid)]/60 relative z-10" />
+                            </div>
+                            <p className="font-heading font-semibold text-foreground/70 text-xl">Kotak Masuk Kosong</p>
+                            <p className="text-sm text-muted-foreground mt-2">Tidak ada surat yang sesuai filter saat ini.</p>
                         </div>
                     ) : (
                         <>
@@ -765,19 +782,20 @@ export default function KotakMasukPage() {
                             </div>
 
                             {/* Desktop Table */}
-                            <div className="hidden md:block">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            <TableHead>Perihal / Nomor</TableHead>
-                                            <TableHead>Pengirim</TableHead>
-                                            <TableHead>Jenis</TableHead>
-                                            <TableHead>Status</TableHead>
-                                            <TableHead>Info Disposisi</TableHead>
-                                            <TableHead className="text-right">Aksi / Tgl</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
+                            <div className="hidden md:block mt-4 pb-4 overflow-x-auto">
+                                <div className="nk-table-wrapper">
+                                    <table className="nk-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Perihal / Nomor</th>
+                                                <th>Pengirim</th>
+                                                <th>Jenis</th>
+                                                <th>Status</th>
+                                                <th>Info Disposisi</th>
+                                                <th className="text-right">Aksi / Tgl</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
                                         {suratList.map(surat => {
                                             const actionItem = getActionItem(surat.id);
                                             return (
@@ -798,8 +816,9 @@ export default function KotakMasukPage() {
                                                 />
                                             );
                                         })}
-                                    </TableBody>
-                                </Table>
+                                    </tbody>
+                                    </table>
+                                </div>
                             </div>
                         </>
                     )}
@@ -835,7 +854,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK TRACK --- */}
             <Dialog open={!!quickTrackSurat} onOpenChange={(open) => !open && setQuickTrackSurat(null)}>
-                <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-xl rounded-none bg-card border-border flex flex-col p-0 gap-0 overflow-hidden">
+                <DialogContent className="w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-xl sm:rounded-2xl rounded-none backdrop-blur-xl bg-card/95 border-border/40 shadow-2xl flex flex-col p-0 gap-0 overflow-hidden">
                     <DialogHeader className="p-4 sm:p-6 pb-2 sm:pb-4 border-b border-border bg-card z-10 shrink-0">
                         <DialogTitle className="flex items-start gap-2 text-left">
                             <Activity className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
@@ -869,7 +888,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK PREVIEW PDF --- */}
             <Dialog open={!!quickPreviewSurat} onOpenChange={(open) => !open && setQuickPreviewSurat(null)}>
-                <DialogContent className="w-full h-[100dvh] sm:max-w-4xl sm:w-[95vw] sm:h-[90vh] sm:rounded-xl rounded-none bg-card border-border p-0 gap-0 flex flex-col overflow-hidden">
+                <DialogContent className="w-full h-[100dvh] sm:max-w-4xl sm:w-[95vw] sm:h-[90vh] sm:rounded-2xl rounded-none backdrop-blur-xl bg-card/95 border-border/40 shadow-2xl p-0 gap-0 flex flex-col overflow-hidden">
                     <DialogHeader className="p-4 border-b border-border bg-muted/30 flex-shrink-0">
                         <DialogTitle className="flex items-start gap-2 text-left pr-6">
                             <Eye className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
@@ -904,7 +923,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK ARCHIVE --- */}
             <Dialog open={!!quickArchiveSurat} onOpenChange={(open) => !open && setQuickArchiveSurat(null)}>
-                <DialogContent className="w-full sm:max-w-md sm:rounded-xl rounded-b-xl bg-card border-border">
+                <DialogContent className="w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl backdrop-blur-xl bg-card/95 border-border/40 shadow-2xl">
                     <DialogHeader>
                         <DialogTitle className="flex items-center gap-2 text-red-600">
                             <AlertTriangle className="h-5 w-5" />
@@ -934,7 +953,7 @@ export default function KotakMasukPage() {
 
             {/* --- MODAL QUICK REPORT --- */}
             <Dialog open={!!quickReportSurat} onOpenChange={(open) => !open && resetQuickReportForm()}>
-                <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0' : 'w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-xl rounded-none'} bg-card border-border p-0 overflow-hidden flex flex-col transition-all duration-300`}>
+                <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0 backdrop-blur-none bg-card' : 'w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl rounded-none backdrop-blur-xl bg-card/95 border-border/40 shadow-2xl'} p-0 overflow-hidden flex flex-col transition-all duration-300`}>
                     <DialogHeader className="px-4 py-3 sm:px-5 sm:pt-5 sm:pb-3 bg-muted/30 border-b border-border flex flex-row items-start justify-between shrink-0">
                         <div className="flex-1 pr-4">
                             <DialogTitle className="flex items-center gap-2 text-foreground">

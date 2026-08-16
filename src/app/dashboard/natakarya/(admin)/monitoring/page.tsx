@@ -94,7 +94,7 @@ export default function MonitoringPage() {
 
       {isDataLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-pulse">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-card rounded-xl border border-border"></div>)}
+          {[1,2,3,4].map(i => <div key={i} className="h-32 nk-card rounded-xl border border-[var(--border)]"></div>)}
         </div>
       ) : (
         <>

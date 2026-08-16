@@ -78,7 +78,7 @@ const JabatanSelector = ({ allJabatans, userCache, selectedIds, onToggle, opdId 
                 placeholder="Cari nama atau jabatan..."
                 className="bg-background"
             />
-            <ScrollArea className="h-60 rounded-md border border-border p-2 bg-card">
+            <ScrollArea className="h-60 rounded-md border border-[var(--border)] p-2 nk-card">
                 {filteredJabatans.length > 0 ? filteredJabatans.map(j => {
                     const user = userCache.get(j.id!);
                     return (
@@ -339,7 +339,7 @@ const FormBuilderModal = ({ isOpen, onClose, onSave, formToEdit, userCache, opdJ
 
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-4xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
+            <DialogContent className="sm:max-w-4xl nk-card border-[var(--border)] flex flex-col max-h-[90vh] p-0 gap-0">
                 <DialogHeader className="p-6 pb-2 border-b border-border flex-shrink-0">
                     <div className="flex justify-between items-start">
                         <DialogTitle className="text-xl">{formToEdit ? 'Edit Formulir' : 'Buat Formulir Baru'}</DialogTitle>
@@ -406,11 +406,11 @@ const FormBuilderModal = ({ isOpen, onClose, onSave, formToEdit, userCache, opdJ
                                         </CardHeader>
                                         <CardContent className="space-y-4">
                                             <RadioGroup value={assignmentType} onValueChange={(v) => setAssignmentType(v as any)} className="flex flex-col sm:flex-row gap-4">
-                                                <div className="flex items-center space-x-2 border p-3 rounded-md bg-card w-full sm:w-auto">
+                                                <div className="flex items-center space-x-2 border border-[var(--border)] p-3 rounded-md nk-card w-full sm:w-auto">
                                                     <RadioGroupItem value="all_opd" id="r1" />
                                                     <Label htmlFor="r1" className="cursor-pointer font-medium">Semua Pegawai</Label>
                                                 </div>
-                                                <div className="flex items-center space-x-2 border p-3 rounded-md bg-card w-full sm:w-auto">
+                                                <div className="flex items-center space-x-2 border border-[var(--border)] p-3 rounded-md nk-card w-full sm:w-auto">
                                                     <RadioGroupItem value="specific_jabatan" id="r2" />
                                                     <Label htmlFor="r2" className="cursor-pointer font-medium">Jabatan Tertentu</Label>
                                                 </div>

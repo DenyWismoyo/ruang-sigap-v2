@@ -8,7 +8,7 @@
 import { useState, useEffect } from 'react';
 import { collection, onSnapshot, addDoc, updateDoc, deleteDoc, doc, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
-import { TargetPosition } from '@/app/dashboard/(main)/talenta/data/succession-constants';
+import { TargetPosition } from '@/app/dashboard/natakarya/(main)/talenta/data/succession-constants';
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 

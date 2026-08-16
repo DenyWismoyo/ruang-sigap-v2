@@ -275,7 +275,7 @@ export default function RuangKerjaCard({
 
   return (
     <div className="w-full mb-3">
-      <Card className="shadow-sm border transition-colors hover:border-primary/50 bg-card">
+      <div className="nk-card shadow-[var(--nk-shadow-sm)] border border-[var(--border)] transition-colors hover:border-[var(--nk-teal-light)]/50 rounded-xl overflow-hidden">
         
         {/* BODY UTAMA */}
         <div onClick={handleCardClick} className="cursor-pointer p-4 pb-3">
@@ -360,7 +360,7 @@ export default function RuangKerjaCard({
             </AnimatePresence>
         </div>
 
-      </Card>
+      </div>
 
       <QuickEditTaskModal isOpen={!!quickEditTask} onClose={() => setQuickEditTask(null)} tugas={quickEditTask} onSuccess={() => { setQuickEditTask(null); mutateTugas(); addToast('Tugas berhasil diperbarui.', 'success'); }} userCache={userCache} opdJabatans={opdJabatans} />
     </div>

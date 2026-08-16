@@ -348,7 +348,7 @@ export default function RegisterUserPage() {
         </Link>
       </Button>
       
-      <div className="p-6 mt-4 bg-card rounded-xl shadow-md border border-border">
+      <div className="p-6 mt-4 nk-card rounded-xl shadow-[var(--nk-shadow-md)] border border-[var(--border)]">
         <h1 className="text-2xl font-bold text-foreground">Daftarkan Pengguna Baru</h1>
         <p className="mt-1 text-sm text-muted-foreground">Proses ini akan membuat akun login dan profil pengguna sekaligus.</p>
         

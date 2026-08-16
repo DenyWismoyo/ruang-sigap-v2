@@ -1,6 +1,16 @@
 {
   "indexes": [
     {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION_GROUP",
+      "fields": [
+        {
+          "fieldPath": "tanggalDibuat",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "jabatan",
       "queryScope": "COLLECTION",
       "fields": [
@@ -43,6 +53,24 @@
         {
           "fieldPath": "statusPenyelesaian",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "statusPenyelesaian",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalDiterima",
+          "order": "DESCENDING"
         }
       ]
     },

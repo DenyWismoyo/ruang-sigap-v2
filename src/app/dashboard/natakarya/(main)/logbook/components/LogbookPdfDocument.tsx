@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { UserProfile, LogbookHarian } from '@/types';
 
+
 const styles = StyleSheet.create({
   page: {
     flexDirection: 'column',
@@ -96,10 +97,12 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   // Kolom widths
-  colNo: { width: '8%', textAlign: 'center' },
-  colDate: { width: '22%' },
-  colDesc: { width: '55%' },
-  colStatus: { width: '15%', textAlign: 'center' },
+  colNo: { width: '5%', textAlign: 'center' },
+  colDate: { width: '15%' },
+  colKategori: { width: '15%', textAlign: 'center' },
+  colDesc: { width: '40%' },
+  colRef: { width: '15%' },
+  colStatus: { width: '10%', textAlign: 'center' },
   
   tableCellHeader: {
     fontSize: 10,
@@ -158,13 +161,17 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
         const dateStr = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
         
-        if (daily.kegiatan.length > 0) {
-            daily.kegiatan.forEach((k, idx) => {
+        const kegiatanList = daily.kegiatan || [];
+        if (kegiatanList.length > 0) {
+            kegiatanList.forEach((k, idx) => {
                 allActivities.push({
                     fullDate: idx === 0 ? `${dayName},\n${dateStr}` : '', // Show date only on first item of the day for cleaner look
                     deskripsi: k.deskripsi,
                     status: k.selesai ? 'Selesai' : 'Proses',
-                    tugas: k.tugasTerkaitJudul
+                    tugas: k.tugasTerkaitJudul,
+                    kategori: k.kategori || 'Umum',
+                    referensi: k.suratPerihal || k.tugasTerkaitJudul || '-',
+                    waktu: (k.waktuMulai && k.waktuSelesai) ? `${k.waktuMulai} - ${k.waktuSelesai}` : ''
                 });
             });
         }
@@ -217,8 +224,14 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                         <View style={[styles.tableColHeader, styles.colDate]}>
                             <Text style={styles.tableCellHeader}>Hari / Tanggal</Text>
                         </View>
+                        <View style={[styles.tableColHeader, styles.colKategori]}>
+                            <Text style={styles.tableCellHeader}>Kategori</Text>
+                        </View>
                         <View style={[styles.tableColHeader, styles.colDesc]}>
                             <Text style={styles.tableCellHeader}>Uraian Kegiatan</Text>
+                        </View>
+                        <View style={[styles.tableColHeader, styles.colRef]}>
+                            <Text style={styles.tableCellHeader}>Referensi</Text>
                         </View>
                         <View style={[styles.tableColHeader, styles.colStatus]}>
                             <Text style={styles.tableCellHeader}>Status</Text>
@@ -235,13 +248,19 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                                 <View style={[styles.tableCol, styles.colDate]}>
                                     <Text style={styles.tableCellBold}>{item.fullDate}</Text>
                                 </View>
-                                <View style={[styles.tableCol, styles.colDesc]}>
-                                    <Text style={styles.tableCell}>{item.deskripsi}</Text>
-                                    {item.tugas && (
-                                        <Text style={{ fontSize: 9, color: '#444', fontStyle: 'italic', marginTop: 4 }}>
-                                            [Tugas: {item.tugas}]
+                                <View style={[styles.tableCol, styles.colKategori]}>
+                                    <Text style={styles.tableCell}>{item.kategori}</Text>
+                                    {item.waktu && (
+                                        <Text style={{ fontSize: 9, color: '#444', marginTop: 4 }}>
+                                            {item.waktu}
                                         </Text>
                                     )}
+                                </View>
+                                <View style={[styles.tableCol, styles.colDesc]}>
+                                    <Text style={styles.tableCell}>{item.deskripsi}</Text>
+                                </View>
+                                <View style={[styles.tableCol, styles.colRef]}>
+                                    <Text style={styles.tableCell}>{item.referensi}</Text>
                                 </View>
                                 <View style={[styles.tableCol, styles.colStatus]}>
                                     <Text style={styles.tableCell}>{item.status}</Text>

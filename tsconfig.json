@@ -36,6 +36,7 @@
     ".next/dev/types/**/*.ts"
 , "src/app/api/auth/get-email-by-nip"  ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "scratch"
   ]
 }

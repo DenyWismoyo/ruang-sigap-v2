@@ -196,18 +196,18 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between p-4 natakarya-header h-16 transition-all duration-300">
+              <header className="sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 natakarya-header h-[60px] transition-all duration-300 border-l-[3px] border-l-[var(--nk-deep)]">
                 <div className="flex items-center space-x-4">
-                    <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
+                    <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-[var(--nk-surface-3)] rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
                 <div className="flex items-center space-x-3 md:space-x-6">
                   {/* [PERBAIKAN] Menghapus class 'hidden sm:block' agar Search muncul di HP */}
                   <div><GlobalSearch /></div>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-accent-foreground hover:bg-accent/50">
+                      <Button variant="ghost" size="icon" className={`relative text-muted-foreground hover:text-[var(--nk-teal-mid)] hover:bg-[var(--nk-surface-3)] transition-colors ${totalNotifCount > 0 ? 'nk-animate-pulse' : ''}`}>
                         <Bell size={20} />
-                        {totalNotifCount > 0 && <span className="absolute top-1.5 right-1.5 flex h-3 w-3"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span><span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-background shadow-sm"></span></span>}
+                        {totalNotifCount > 0 && <span className="absolute top-1 right-1 flex h-2.5 w-2.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--nk-gold)] border border-background shadow-sm"></span></span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent align="end" className="w-80 p-0 shadow-xl border-border">
@@ -235,9 +235,12 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </Popover>
                   <ThemeToggleButton />
                   <div className="relative">
-                      <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group p-1 rounded-full hover:bg-accent transition-all">
-                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center font-bold text-white text-sm shadow-[0_2px_10px_rgba(17,94,89,0.3)] group-hover:shadow-[0_4px_12px_rgba(17,94,89,0.4)] transition-all">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
-                          <span className="hidden md:inline text-sm font-medium text-foreground pr-2">{userProfile.namaLengkap.split(' ')[0]}</span>
+                      <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group pl-1 pr-3 py-1 rounded-full hover:bg-[var(--nk-surface-3)] transition-all border border-transparent hover:border-[var(--border)]">
+                          <div className="w-8 h-8 rounded-full bg-[var(--nk-teal-mid)] flex items-center justify-center font-bold text-white text-sm shadow-sm group-hover:scale-105 transition-transform ring-2 ring-transparent group-hover:ring-[var(--nk-teal-light)]/30">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
+                          <div className="hidden md:flex flex-col items-start pr-1">
+                              <span className="text-sm font-semibold text-foreground leading-tight">{userProfile.namaLengkap.split(' ')[0]}</span>
+                              <span className="text-[10px] text-muted-foreground leading-tight font-medium max-w-[100px] truncate">{actingJabatanProfile?.namaJabatan || 'User'}</span>
+                          </div>
                           <ChevronDown size={14} className="hidden md:inline text-muted-foreground transition-transform group-hover:translate-y-0.5"/>
                       </button>
                       <AnimatePresence>
@@ -270,7 +273,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                     <Breadcrumbs />
                     <PageTransition>{children}</PageTransition>
                     <footer className="mt-auto pt-10 pb-6 flex flex-col items-center justify-center text-xs text-muted-foreground hidden md:flex border-t border-border/30">
-                        <div className="w-12 h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] rounded-full mb-4 opacity-50"></div>
+                        <div className="w-16 h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] rounded-full mb-4 opacity-70"></div>
                         <p className="font-heading font-semibold tracking-wide text-foreground/80">&copy; {new Date().getFullYear()} NATAKARYA</p>
                         <p className="opacity-70 mt-1.5">Sistem Integrasi & Administrasi Persuratan</p>
                     </footer>

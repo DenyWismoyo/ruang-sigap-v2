@@ -11,6 +11,7 @@ import Avatar from '@/app/dashboard/natakarya/components/Avatar';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileText, Activity, Paperclip, CheckCircle, ChevronDown, RefreshCw, MessagesSquare, ArrowRight, CornerDownRight } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PemantauanTabProps {
     onNavigate: () => void;
@@ -65,14 +66,21 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
 
     if (groupedFeed.length === 0) {
         return (
-            <div className="text-center py-12 md:py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border flex flex-col items-center">
-                <MessagesSquare size={48} className="mx-auto text-muted-foreground/50 mb-4" />
-                <p className="font-semibold text-foreground">Belum ada aktivitas tindak lanjut.</p>
-                <p className="text-xs md:text-sm mt-1">Laporan rantai disposisi dari staf akan dikelompokkan di sini.</p>
-                <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-4">
+            <motion.div 
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="text-center py-20 flex flex-col items-center justify-center nk-glass-card opacity-80 hover:opacity-100 transition-opacity mt-4"
+            >
+                <div className="w-24 h-24 mb-4 rounded-full bg-[var(--nk-surface-3)] flex items-center justify-center border border-[var(--nk-teal-light)]/20 shadow-inner relative">
+                    <div className="absolute inset-0 bg-[var(--nk-teal-light)]/10 blur-xl rounded-full"></div>
+                    <MessagesSquare size={48} className="text-[var(--nk-teal-mid)]/60 relative z-10 animate-pulse" />
+                </div>
+                <p className="font-heading font-semibold text-foreground/70 text-xl">Belum Ada Pantauan</p>
+                <p className="text-sm text-muted-foreground mt-2">Aktivitas tindak lanjut surat akan dikelompokkan di sini.</p>
+                <Button variant="outline" size="sm" onClick={() => refetch()} className="mt-6 rounded-full px-6">
                     <RefreshCw size={14} className="mr-2" /> Segarkan
                 </Button>
-            </div>
+            </motion.div>
         );
     }
 
@@ -93,42 +101,49 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
 
             {/* List Grouped Feed */}
             <div className="space-y-6">
-                {groupedFeed.map((group) => {
+                <AnimatePresence>
+                {groupedFeed.map((group, groupIdx) => {
                     const surat = group[0].surat;
                     // Anggap surat selesai jika status utamanya selesai
                     const isSuratSelesai = surat?.statusPenyelesaian === 'Selesai';
 
                     return (
-                        <div key={surat?.id || group[0].id} className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
-                            
+                        <motion.div 
+                            key={surat?.id || group[0].id} 
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3, delay: groupIdx * 0.1 }}
+                            className="nk-card flex flex-col relative hover:shadow-[var(--nk-shadow-md)] transition-all duration-300 group/paket"
+                        >
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
                             {/* Header Paket Surat */}
-                            <div className="bg-muted/40 p-3 md:p-4 border-b border-border flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                            <div className="bg-muted/30 p-3 md:p-5 border-b border-border/50 flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center flex-wrap gap-2 mb-1.5">
+                                    <div className="flex items-center flex-wrap gap-2 mb-2">
                                         {isSuratSelesai ? (
-                                            <span className="inline-flex items-center text-[10px] md:text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded">
+                                            <span className="inline-flex items-center text-[10px] md:text-xs font-bold text-emerald-700 bg-emerald-100/50 border border-emerald-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                                                 <CheckCircle size={12} className="mr-1" /> Selesai
                                             </span>
                                         ) : (
-                                            <span className="inline-flex items-center text-[10px] md:text-xs font-bold text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
+                                            <span className="inline-flex items-center text-[10px] md:text-xs font-bold text-amber-700 bg-amber-100/50 border border-amber-200 px-2 py-0.5 rounded-full uppercase tracking-wider">
                                                 <Activity size={12} className="mr-1" /> Dalam Proses
                                             </span>
                                         )}
-                                        <span className="text-[10px] md:text-xs text-muted-foreground flex items-center">
-                                            <FileText size={12} className="mr-1" /> {surat?.nomorSurat || 'Nomor tidak tersedia'}
+                                        <span className="text-[10px] md:text-xs text-muted-foreground flex items-center font-medium bg-background px-2 py-0.5 rounded-full border border-border/50">
+                                            <FileText size={12} className="mr-1.5 opacity-70" /> {surat?.nomorSurat || 'Nomor tidak tersedia'}
                                         </span>
                                     </div>
                                     <Link 
                                         href={`/dashboard/surat/${surat?.id}`} 
                                         onClick={onNavigate}
-                                        className="group-hover:text-primary transition-colors"
+                                        className="group-hover/paket:text-[var(--nk-teal-mid)] transition-colors"
                                     >
-                                        <h3 className="text-sm md:text-base font-semibold text-foreground leading-tight hover:underline line-clamp-2">
+                                        <h3 className="text-sm md:text-base font-bold font-heading text-foreground leading-snug line-clamp-2">
                                             {surat?.perihal || 'Surat Tidak Ditemukan / Dihapus'}
                                         </h3>
                                     </Link>
                                 </div>
-                                <Button asChild variant="secondary" size="sm" className="shrink-0 text-xs h-8">
+                                <Button asChild variant="outline" size="sm" className="shrink-0 text-xs h-8 rounded-full hover:bg-[var(--nk-teal-light)]/20 hover:text-[var(--nk-teal-mid)] hover:border-[var(--nk-teal-light)]/40 transition-all">
                                     <Link href={`/dashboard/surat/${surat?.id}`} onClick={onNavigate}>
                                         Detail Surat <ArrowRight size={14} className="ml-1.5" />
                                     </Link>
@@ -141,7 +156,12 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
                                     
                                     {group.map((item, index) => {
                                         return (
-                                            <div key={item.id} className="relative flex items-start gap-3 md:gap-4 group">
+                                            <motion.div 
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                transition={{ duration: 0.3, delay: 0.2 + (index * 0.1) }}
+                                                key={item.id} className="relative flex items-start gap-3 md:gap-4 group/node"
+                                            >
                                                 
                                                 {/* Node Timeline */}
                                                 <div className="relative z-10 flex items-center justify-center w-9 h-9 md:w-10 md:h-10 bg-background border-2 border-muted-foreground/20 rounded-full flex-shrink-0 group-hover:border-primary/50 transition-colors mt-1 md:mt-0">
@@ -181,14 +201,15 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
                                                         </div>
                                                     )}
                                                 </div>
-                                            </div>
+                                            </motion.div>
                                         );
                                     })}
                                 </div>
                             </div>
-                        </div>
+                        </motion.div>
                     );
                 })}
+                </AnimatePresence>
             </div>
 
             {/* Load More Button */}

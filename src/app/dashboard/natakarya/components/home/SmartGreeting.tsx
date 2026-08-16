@@ -64,13 +64,13 @@ export default function SmartGreeting({ userName }: { userName: string }) {
       animate="visible"
       className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
     >
-      <motion.div variants={iconVariants} className="p-3 bg-gradient-to-br from-[var(--nk-gradient-start)]/10 to-[var(--nk-gradient-end)]/10 rounded-full shadow-inner border border-[var(--nk-gradient-start)]/20 w-fit relative">
-        <div className="absolute inset-0 bg-[var(--nk-gradient-start)]/20 blur-xl rounded-full"></div>
+      <motion.div variants={iconVariants} className="p-3 bg-gradient-to-br from-[var(--nk-teal-mid)]/10 to-transparent rounded-full shadow-inner border border-[var(--nk-teal-light)]/20 w-fit relative">
+        <div className="absolute inset-0 bg-[var(--nk-teal-light)]/20 blur-xl rounded-full"></div>
         <div className="relative z-10">{greetingData.icon}</div>
       </motion.div>
       <div>
         <motion.h1 variants={textVariants} className="text-3xl font-bold text-foreground font-heading">
-          {greetingData.text}, <motion.span variants={userVariants} className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[var(--nk-gradient-start)] to-amber-500 dark:to-amber-400">{userName}</motion.span>!
+          {greetingData.text}, <motion.span variants={userVariants} className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[var(--nk-teal-mid)] to-[var(--nk-gold)]">{userName}</motion.span>!
         </motion.h1>
         <motion.p variants={textVariants} className="text-muted-foreground mt-1">
           {greetingData.subText}

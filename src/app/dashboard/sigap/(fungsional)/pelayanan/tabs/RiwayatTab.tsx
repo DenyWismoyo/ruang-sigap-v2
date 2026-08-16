@@ -15,7 +15,7 @@ import { Download, Search, Loader2, CheckCircle, Printer, ChevronLeft, ChevronRi
 import { Badge } from "@/components/ui/badge";
 import { utils, writeFile } from 'xlsx';
 import { PDFDownloadLink } from '@react-pdf/renderer';
-import { TandaTerimaLayananPdf } from '@/app/dashboard/sigap/components/TandaTerimaLayananPdf'; 
+import { TandaTerimaLayananPdf } from '@/app/dashboard/sigap/(fungsional)/pelayanan/components/TandaTerimaLayananPdf'; 
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { Label } from '@/components/ui/label';

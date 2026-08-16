@@ -57,8 +57,8 @@ export default function ProfilPage() {
     const [isPasswordSaving, setIsPasswordSaving] = useState(false);
     
     // User Cache State
-    
-    
+    const [localUserCache, setLocalUserCache] = useState<Map<string, UserProfile>>(new Map());
+    const [isCacheLoading, setIsCacheLoading] = useState(true);
 
     // Modal States
     const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);

@@ -73,10 +73,10 @@ export function LaporanTindakLanjutModal({
         <Dialog open={isOpen} onOpenChange={(open) => {
             if (!open && !isSubmitting && uploadStatus !== 'uploading') onClose();
         }}>
-            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto nk-card border-[var(--nk-teal-light)]/20 shadow-[var(--nk-shadow-lg)]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5 text-blue-600" />
+                        <FileText className="w-5 h-5 text-[var(--nk-teal-mid)]" />
                         Laporan Tindak Lanjut Otomatis
                     </DialogTitle>
                     <p className="text-sm text-muted-foreground mt-1">

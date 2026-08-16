@@ -53,6 +53,15 @@ export const useSuratData = (props: UseSuratDataProps) => {
 
       if (isTuOrAdmin) {
           baseConstraints.push(where('opdId', '==', userProfile.opdId));
+          // [SEDANG-2 FIX]: Server-side filtering untuk TU/Admin
+          if (props.filterStatus && props.filterStatus !== 'Semua') {
+              baseConstraints.push(where('statusPenyelesaian', '==', props.filterStatus));
+          } else if (!props.isArchive) {
+              const visibleStatuses = ['Baru', 'Revisi Disposisi', 'Didisposisikan', 'Proses Tindak Lanjut', 'Selesai'];
+              baseConstraints.push(where('statusPenyelesaian', 'in', visibleStatuses));
+          } else {
+              baseConstraints.push(where('statusPenyelesaian', '==', 'Diarsipkan'));
+          }
       } else {
           baseConstraints.push(where('terlibatJabatanIds', 'array-contains', effectiveJabatan.id));
       }
@@ -84,7 +93,7 @@ export const useSuratData = (props: UseSuratDataProps) => {
       refetch,
       error
   } = useInfiniteQuery({
-      queryKey: ['suratList', userProfile?.opdId, effectiveJabatan?.id], 
+      queryKey: ['suratList', userProfile?.opdId, effectiveJabatan?.id, props.filterStatus, props.isArchive], 
       queryFn: fetchSuratPage,
       getNextPageParam: (lastPage) => lastPage.nextPageParam,
       enabled: !!userProfile && !!effectiveJabatan?.id,

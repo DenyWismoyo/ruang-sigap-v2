@@ -157,7 +157,7 @@ export default function ManajemenOpdPage() {
       <h1 className="text-3xl font-bold text-foreground">Manajemen OPD & Struktur Wilayah</h1>
       <p className="text-muted-foreground mt-2">Kelola data Kecamatan (Induk) dan Kelurahan (Sub-OPD) di sini agar muncul di fitur SKW.</p>
       
-      <div className="p-6 mt-6 bg-card rounded-xl shadow-md border border-border">
+      <div className="p-6 mt-6 nk-card rounded-xl shadow-[var(--nk-shadow-md)] border border-[var(--border)]">
         <h2 className="text-xl font-semibold text-foreground">Tambah Unit Kerja Baru</h2>
         {error && <Alert variant="destructive" className="my-4"><AlertDescription>{error}</AlertDescription></Alert>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
@@ -197,8 +197,8 @@ export default function ManajemenOpdPage() {
         </form>
       </div>
       
-      <div className="mt-8 bg-card rounded-xl shadow-md border border-border">
-        <div className="p-6 flex justify-between items-center border-b border-border">
+      <div className="mt-8 nk-card rounded-xl shadow-[var(--nk-shadow-md)] border border-[var(--border)]">
+        <div className="p-6 flex justify-between items-center border-b border-[var(--border)]">
             <div>
                 <h2 className="text-xl font-semibold text-foreground">Struktur Organisasi</h2>
                 <p className="text-xs text-muted-foreground">Menampilkan hierarki Induk dan Sub-Unit</p>
@@ -208,43 +208,43 @@ export default function ManajemenOpdPage() {
                 <Label htmlFor="showArchived" className="text-sm font-medium cursor-pointer">Tampilkan Arsip (Non-Aktif)</Label>
             </div>
         </div>
-        <div className="p-0 overflow-x-auto">
+        <div className="p-0 overflow-x-auto nk-table-wrapper border-0 shadow-none">
           {isMasterLoading ? <p className="text-center p-8 text-muted-foreground"><Loader2 className="animate-spin inline mr-2"/>Memuat struktur...</p> : (
-            <table className="w-full text-left">
-              <thead className="bg-muted/50">
-                  <tr className="border-b border-border">
-                      <th className="p-3 pl-6 font-medium text-muted-foreground">Nama Unit Kerja</th>
-                      <th className="p-3 font-medium text-muted-foreground">ID Sistem</th>
-                      <th className="p-3 font-medium text-muted-foreground">Tipe</th>
-                      <th className="p-3 font-medium text-muted-foreground">Induk</th>
-                      <th className="p-3 font-medium text-muted-foreground text-center">Aksi</th>
+            <table className="nk-table">
+              <thead>
+                  <tr>
+                      <th className="pl-6">Nama Unit Kerja</th>
+                      <th>ID Sistem</th>
+                      <th>Tipe</th>
+                      <th>Induk</th>
+                      <th className="text-center">Aksi</th>
                   </tr>
               </thead>
               <tbody>
                 {visibleOpdList.map(opd => (
-                  <tr key={opd.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                    <td className={`p-3 ${opd.tipe === 'Sub-OPD' ? 'pl-8' : 'pl-6 font-bold'}`}>
+                  <tr key={opd.id}>
+                    <td className={`${opd.tipe === 'Sub-OPD' ? 'pl-8' : 'pl-6 font-bold'}`}>
                         <div className="flex flex-col">
                             <span>{opd.tipe === 'Sub-OPD' ? '↳ ' : '🏢 '}{opd.namaOpd}</span>
                             <span className="text-xs text-muted-foreground truncate max-w-[200px]">{opd.alamat}</span>
                         </div>
                     </td>
-                    <td className="p-3">
+                    <td>
                         <Badge variant="outline" className="font-mono text-[10px] cursor-pointer hover:bg-muted" onClick={() => copyToClipboard(opd.id || '')}>
                             {opd.id} <Copy size={10} className="ml-1"/>
                         </Badge>
                     </td>
-                    <td className="p-3">
+                    <td>
                         <Badge variant={opd.tipe === 'Induk' ? 'default' : 'secondary'}>{opd.tipe}</Badge>
                     </td>
-                    <td className="p-3 text-sm text-muted-foreground">
+                    <td className="text-sm text-muted-foreground">
                         {opd.idOpdInduk ? (
                             <span className="flex items-center gap-1">
                                 🏢 {opdList.find(i => i.id === opd.idOpdInduk)?.namaOpd || 'Unknown'}
                             </span>
                         ) : '-'}
                     </td>
-                    <td className="flex items-center justify-center p-3 space-x-2">
+                    <td className="flex items-center justify-center space-x-2">
                         <Button variant="ghost" size="icon" onClick={() => { setCurrentOpd(opd); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
                         <Button variant="ghost" size="icon" onClick={() => handleToggleArchive(opd)}>{opd.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
                     </td>
@@ -261,7 +261,7 @@ export default function ManajemenOpdPage() {
       
       {/* Modal Edit */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-card border-border">
+        <DialogContent className="sm:max-w-lg nk-card border-[var(--border)]">
             <DialogHeader><DialogTitle>Edit Unit Kerja</DialogTitle></DialogHeader>
             {currentOpd && (
                 <form onSubmit={handleUpdate} className="mt-4 space-y-4">

@@ -71,6 +71,8 @@ const QuickTindakLanjutModal = ({
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [subOpdPimpinan, setSubOpdPimpinan] = useState<UserProfile[]>([]);
+  const [isStafLoading, setIsStafLoading] = useState(false);
   
 
   const effectiveJabatan = actingJabatanProfile || jabatanProfile;
@@ -196,7 +198,7 @@ const QuickTindakLanjutModal = ({
         return isTargetValid && isActive && notSelf && notSelected;
     });
 
-    const pimpinanSubOpd = subOpdPimpinan.filter(user => !currentTeamIds.has(user.jabatanId));
+    const pimpinanSubOpd = subOpdPimpinan.filter((user: UserProfile) => !currentTeamIds.has(user.jabatanId));
     const combinedList = [...bawahanDiOpdSendiri, ...pimpinanSubOpd];
 
     const results = combinedList.filter(user => {

@@ -46,11 +46,11 @@ export default function MegaMenuPanel({
 
   return (
     <div className="w-64 natakarya-mega-menu flex flex-col h-screen z-50">
-      <div className="p-4 h-16 flex items-center justify-between border-b border-border/30 bg-muted/10 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
+      <div className="p-4 h-[60px] flex items-center justify-between border-b border-[var(--nk-glass-border)] bg-[var(--nk-surface-3)]/30 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2 font-heading">
             <motion.div initial={{ rotate: -90, scale: 0 }} animate={{ rotate: 0, scale: 1 }} transition={{ type: "spring", bounce: 0.5 }}>
-                <section.icon className="w-5 h-5 text-primary"/>
+                <section.icon className="w-5 h-5 text-[var(--nk-teal-mid)]"/>
             </motion.div>
             {section.title}
         </h3>
@@ -76,17 +76,20 @@ export default function MegaMenuPanel({
                             else if (item.notificationKey === 'tugasBaruCount') resetNotificationCount('tugas'); 
                             onClose(); 
                         }} 
-                        className={`relative flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-sm font-medium group ${isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
+                        className={`relative flex items-center justify-between px-3 py-2.5 rounded-lg transition-colors text-sm font-medium group overflow-hidden ${isActive ? 'text-white' : 'text-muted-foreground hover:text-foreground'}`}
                     >
                         {isActive && (
-                            <motion.span layoutId="mega-menu-active-bg" className="absolute inset-0 bg-primary/10 rounded-lg -z-10" />
+                            <motion.span layoutId="mega-menu-active-bg" className="absolute inset-0 bg-[var(--nk-teal-mid)] rounded-lg -z-10 shadow-sm" />
+                        )}
+                        {!isActive && (
+                            <span className="absolute left-0 top-1.5 bottom-1.5 w-1 bg-[var(--nk-teal-light)] opacity-0 group-hover:opacity-100 rounded-r-md transition-opacity"></span>
                         )}
                         <div className="flex items-center">
-                            <item.icon className={`w-4 h-4 mr-3 transition-colors relative z-10 ${isActive ? 'text-primary' : 'text-muted-foreground group-hover:text-primary'}`} />
+                            <item.icon className={`w-4 h-4 mr-3 transition-colors relative z-10 ${isActive ? 'text-white' : 'text-muted-foreground group-hover:text-[var(--nk-teal-mid)]'}`} />
                             <span className="relative z-10">{item.label}</span>
                         </div>
                         {notifCount > 0 && (
-                            <span className="relative z-10 flex items-center justify-center min-w-[1.25rem] h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full shadow-sm">
+                            <span className="relative z-10 flex items-center justify-center min-w-[1.25rem] h-5 px-1 bg-[var(--nk-gold)] text-[var(--nk-deep)] text-[10px] font-bold rounded-full shadow-sm">
                                 {notifCount > 9 ? '9+' : notifCount}
                             </span>
                         )}

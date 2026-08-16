@@ -534,7 +534,7 @@ export default function ManajemenJabatanPage() {
             )}
 
             {/* Form Tambah */}
-            <div className="p-6 mt-8 bg-card rounded-xl shadow-md border border-border">
+            <div className="p-6 mt-8 nk-card rounded-xl shadow-[var(--nk-shadow-md)] border border-[var(--border)]">
                 <h2 className="text-xl font-semibold text-foreground">Tambah Jabatan Baru</h2>
                 {error && <Alert variant="destructive" className="my-4"><AlertDescription>{error}</AlertDescription></Alert>}
                 <form onSubmit={handleSubmit} className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-end">
@@ -572,8 +572,8 @@ export default function ManajemenJabatanPage() {
             </div>
             
             {/* Tabel Jabatan */}
-            <div className="mt-8 bg-card rounded-xl shadow-md border border-border">
-                <div className="p-6 border-b border-border flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+            <div className="mt-8 nk-card rounded-xl shadow-[var(--nk-shadow-md)] border border-[var(--border)]">
+                <div className="p-6 border-b border-[var(--border)] flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                     <h2 className="text-xl font-semibold text-foreground">Daftar Jabatan</h2>
                     <div className='w-full md:w-1/3'>
                         <Label htmlFor="opdFilter" className="mb-1 block">Filter OPD</Label>
@@ -598,61 +598,63 @@ export default function ManajemenJabatanPage() {
                             {userProfile?.role === 'super_admin' && tableOpdFilter === 'Semua' && <p className="text-sm">Silakan pilih OPD terlebih dahulu.</p>}
                         </div>
                     ) : (
-                        <table className="w-full text-left">
-                            <thead className="bg-muted/50">
-                                <tr className="border-b border-border">
-                                    {userProfile?.role === 'super_admin' && (
-                                        <th className="p-3 w-10 text-center">
-                                            <input 
-                                                type="checkbox" 
-                                                className="w-4 h-4 cursor-pointer rounded border-gray-300"
-                                                checked={selectedJabatanIds.length === filteredJabatanForTable.length && filteredJabatanForTable.length > 0}
-                                                onChange={(e) => handleSelectAll(e.target.checked)}
-                                            />
-                                        </th>
-                                    )}
-                                    <th className="p-3 font-medium text-muted-foreground">Nama Jabatan</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Level</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Atasan</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Plt./Plh.</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Status</th>
-                                    <th className="p-3 font-medium text-muted-foreground text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredJabatanForTable.map(jabatan => (
-                                    <tr key={jabatan.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                        <div className="nk-table-wrapper overflow-x-auto border-0 shadow-none">
+                            <table className="nk-table">
+                                <thead>
+                                    <tr>
                                         {userProfile?.role === 'super_admin' && (
-                                            <td className="p-3 text-center">
+                                            <th className="w-10 text-center">
                                                 <input 
-                                                    type="checkbox"
+                                                    type="checkbox" 
                                                     className="w-4 h-4 cursor-pointer rounded border-gray-300"
-                                                    checked={selectedJabatanIds.includes(jabatan.id!)}
-                                                    onChange={(e) => handleSelectOne(jabatan.id!, e.target.checked)}
+                                                    checked={selectedJabatanIds.length === filteredJabatanForTable.length && filteredJabatanForTable.length > 0}
+                                                    onChange={(e) => handleSelectAll(e.target.checked)}
                                                 />
-                                            </td>
+                                            </th>
                                         )}
-                                        <td className="p-3 font-medium">{jabatan.namaJabatan}</td>
-                                        <td className="p-3">{jabatan.level}</td>
-                                        <td className="p-3 text-muted-foreground">{jabatanMap.get(jabatan.idAtasan || '')?.namaJabatan || '-'}</td>
-                                        <td className="p-3 text-muted-foreground">{getPltUserName(jabatan)}</td>
-                                        <td className="p-3"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${jabatan.status === 'aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-gray-100 text-gray-800'}`}>{jabatan.status}</span></td>
-                                        <td className="flex items-center justify-center p-3 space-x-2">
-                                            <Button variant="ghost" size="icon" onClick={() => openPltModal(jabatan)} title="Tunjuk Plt"><Users size={18} className="text-teal-600"/></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => openEditModal(jabatan)} title="Edit"><Edit size={18} className="text-yellow-600"/></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleArchive(jabatan.id!, jabatan.status)} title="Arsipkan">{jabatan.status === 'aktif' ? <Archive size={18} className="text-red-600"/> : <ArchiveRestore size={18} className="text-green-600"/>}</Button>
-                                        </td>
+                                        <th>Nama Jabatan</th>
+                                        <th>Level</th>
+                                        <th>Atasan</th>
+                                        <th>Plt./Plh.</th>
+                                        <th>Status</th>
+                                        <th className="text-center">Aksi</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {filteredJabatanForTable.map(jabatan => (
+                                        <tr key={jabatan.id}>
+                                            {userProfile?.role === 'super_admin' && (
+                                                <td className="text-center">
+                                                    <input 
+                                                        type="checkbox"
+                                                        className="w-4 h-4 cursor-pointer rounded border-gray-300"
+                                                        checked={selectedJabatanIds.includes(jabatan.id!)}
+                                                        onChange={(e) => handleSelectOne(jabatan.id!, e.target.checked)}
+                                                    />
+                                                </td>
+                                            )}
+                                            <td className="font-medium">{jabatan.namaJabatan}</td>
+                                            <td>{jabatan.level}</td>
+                                            <td className="text-muted-foreground">{jabatanMap.get(jabatan.idAtasan || '')?.namaJabatan || '-'}</td>
+                                            <td className="text-muted-foreground">{getPltUserName(jabatan)}</td>
+                                            <td><span className={`px-2 py-1 text-xs font-semibold rounded-full ${jabatan.status === 'aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-gray-100 text-gray-800'}`}>{jabatan.status}</span></td>
+                                            <td className="flex items-center justify-center space-x-2">
+                                                <Button variant="ghost" size="icon" onClick={() => openPltModal(jabatan)} title="Tunjuk Plt"><Users size={18} className="text-teal-600"/></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => openEditModal(jabatan)} title="Edit"><Edit size={18} className="text-yellow-600"/></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleArchive(jabatan.id!, jabatan.status)} title="Arsipkan">{jabatan.status === 'aktif' ? <Archive size={18} className="text-red-600"/> : <ArchiveRestore size={18} className="text-green-600"/>}</Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
                     )}
                 </div>
             </div>
 
             {/* Modal Bulk Edit */}
             <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
-                <DialogContent className="sm:max-w-xl bg-card border-border">
+                <DialogContent className="sm:max-w-xl nk-card border-[var(--border)]">
                     <DialogHeader>
                         <DialogTitle>Edit Massal {selectedJabatanIds.length} Jabatan</DialogTitle>
                         <DialogDescription>Aktifkan centang pada atribut yang ingin Anda ubah untuk seluruh jabatan yang dipilih.</DialogDescription>
@@ -740,7 +742,7 @@ export default function ManajemenJabatanPage() {
             
             {/* Modal Edit Satuan */}
             <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                <DialogContent className="sm:max-w-lg bg-card border-border">
+                <DialogContent className="sm:max-w-lg nk-card border-[var(--border)]">
                     <DialogHeader><DialogTitle>Edit Jabatan</DialogTitle></DialogHeader>
                     {currentJabatan && (
                         <form onSubmit={handleUpdate} className="mt-4 space-y-4">
@@ -767,7 +769,7 @@ export default function ManajemenJabatanPage() {
 
             {/* Modal Plt */}
             <Dialog open={isPltModalOpen} onOpenChange={setIsPltModalOpen}>
-                <DialogContent className="sm:max-w-lg bg-card border-border">
+                <DialogContent className="sm:max-w-lg nk-card border-[var(--border)]">
                     <DialogHeader><DialogTitle>Penugasan Plt./Plh.</DialogTitle></DialogHeader>
                     <form onSubmit={handleSetPlt} className="space-y-4">
                          <div>
@@ -793,7 +795,7 @@ export default function ManajemenJabatanPage() {
             
             {/* Modal Import */}
              <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
-                 <DialogContent className="bg-card border-border sm:max-w-3xl">
+                 <DialogContent className="nk-card border-[var(--border)] sm:max-w-3xl">
                      <DialogHeader>
                          <DialogTitle className="flex items-center gap-2"><FileSpreadsheet className="text-green-600"/> Import Jabatan (CSV)</DialogTitle>
                      </DialogHeader>

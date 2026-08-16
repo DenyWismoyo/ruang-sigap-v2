@@ -32,7 +32,7 @@ export default function AppSettingsPage() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold">⚙️ Pengaturan Aplikasi Lanjutan</h1>
-      <div className="bg-card p-4 rounded-lg shadow border border-border">
+      <div className="nk-card p-4 rounded-lg shadow-[var(--nk-shadow-sm)] border border-[var(--border)]">
         <h2 className="text-xl font-semibold mb-4">Pengaturan Tema Per-OPD</h2>
         <div className="space-y-4">
           {opdList.map(opd => (

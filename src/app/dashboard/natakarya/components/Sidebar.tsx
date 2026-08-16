@@ -587,7 +587,7 @@ const Sidebar = memo(
                 {isActive && (
                   <motion.div
                     layoutId="sidebar-active-bg"
-                    className="absolute inset-x-2 inset-y-1 bg-accent rounded-xl z-0 shadow-sm"
+                    className="absolute inset-y-2 left-0 w-1.5 bg-[var(--nk-deep)] rounded-r-full z-0 shadow-sm"
                   />
                 )}
                 <div className="relative z-10 flex items-center justify-center">
@@ -595,7 +595,7 @@ const Sidebar = memo(
                     <motion.div
                       initial={{ opacity: 0, scale: 0.8 }}
                       animate={{ opacity: 1, scale: 1 }}
-                      className="absolute inset-0 bg-primary/20 blur-md rounded-full"
+                      className="absolute inset-0 bg-[var(--nk-teal-light)]/20 blur-md rounded-full"
                     />
                   )}
                   <motion.div
@@ -603,13 +603,13 @@ const Sidebar = memo(
                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
                   >
                     <Icon
-                      className={`w-6 h-6 relative z-10 ${isActive ? "text-primary" : ""}`}
+                      className={`w-6 h-6 relative z-10 transition-colors ${isActive ? "text-[var(--nk-teal-mid)]" : "group-hover:text-[var(--nk-teal-mid)]"}`}
                     />
                   </motion.div>
                   {hasNotif && (
-                    <span className="absolute -top-1 -right-1 flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500 border-2 border-card"></span>
+                    <span className="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--nk-gold)] border-[1.5px] border-[var(--nk-surface-2)]"></span>
                     </span>
                   )}
                 </div>
@@ -644,7 +644,7 @@ const Sidebar = memo(
             whileHover={{ scale: 1.1 }}
             whileTap={{ rotate: 360, scale: 0.9 }}
             transition={{ type: "spring" }}
-            className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] flex items-center justify-center font-bold text-xs text-white cursor-default shadow-[0_2px_8px_rgba(17,94,89,0.3)]"
+            className="w-8 h-8 rounded-full bg-[var(--nk-teal-mid)] flex items-center justify-center font-bold text-xs text-white cursor-default shadow-sm ring-2 ring-transparent hover:ring-[var(--nk-teal-light)]/40 transition-all"
             title={userProfile.namaLengkap}
           >
             {userProfile.namaLengkap.charAt(0)}

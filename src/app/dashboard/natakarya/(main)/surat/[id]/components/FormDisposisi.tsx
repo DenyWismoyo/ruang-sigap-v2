@@ -259,13 +259,16 @@ export default function FormDisposisi({
   const isStillLoadingTargets = isBawahanLoading && !isTuOrAdmin && !isRevising;
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border">
+    <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/20 relative overflow-hidden group/form">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-90"></div>
         {/* Penyesuaian Padding Header */}
-        <div className="p-3 md:p-6 border-b border-border">
+        <div className="p-3 md:p-6 border-b border-[var(--nk-gradient-start)]/10 bg-muted/10">
             <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                    <Send size={18} className="mr-2 md:mr-3 text-blue-600 md:w-5 md:h-5" />
-                    <h2 className="text-base md:text-xl font-semibold text-foreground">
+                    <div className="p-2 bg-gradient-to-br from-[var(--nk-gradient-start)]/20 to-transparent rounded-xl mr-3 shadow-sm border border-[var(--nk-gradient-start)]/20">
+                        <Send size={18} className="text-[var(--nk-gradient-start)] md:w-5 md:h-5" />
+                    </div>
+                    <h2 className="text-base md:text-xl font-bold font-heading text-foreground tracking-tight">
                     {isPemberitahuanMode ? 'Kirim Pemberitahuan' : (isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi')}
                     </h2>
                 </div>
@@ -401,10 +404,10 @@ export default function FormDisposisi({
                         </>
                     ) : (
                         <>
-                           <Button type="button" variant="secondary" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
-                                <UserCheck size={14} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
+                           <Button type="button" variant="outline" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="flex-1 w-full h-10 md:h-11 text-xs md:text-sm rounded-xl hover:bg-[var(--nk-gradient-start)]/10 hover:text-[var(--nk-gradient-start)] hover:border-[var(--nk-gradient-start)]/30 transition-all">
+                                <UserCheck size={16} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
                            </Button>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-10 md:h-11 text-xs md:text-sm rounded-xl bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] hover:shadow-[0_4px_15px_rgba(17,94,89,0.3)] transition-all">
                                 {isProcessing ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 animate-spin" /> : <Send size={14} className="md:w-4 md:h-4 mr-2" />}
                                 {isProcessing ? 'Memproses...' : (isRevising ? 'Kirim Revisi Ulang' : 'Kirim Disposisi')}
                            </Button>

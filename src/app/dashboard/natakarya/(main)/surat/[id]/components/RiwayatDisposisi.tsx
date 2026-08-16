@@ -119,10 +119,11 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
 
   return (
     <>
-      <div className="w-full bg-card rounded-xl shadow-sm border border-border flex flex-col">
-          <div className="flex justify-between items-center p-3 md:p-6 border-b border-border">
-              <h2 className="text-base md:text-xl font-semibold text-foreground flex items-center">
-                  <Users size={18} className="mr-2 md:mr-3 text-muted-foreground" />
+      <div className="w-full bg-card/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/10 flex flex-col relative overflow-hidden group/riwayat">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
+          <div className="flex justify-between items-center p-3 md:p-5 border-b border-border/50 bg-muted/20">
+              <h2 className="text-base md:text-xl font-bold font-heading text-foreground flex items-center">
+                  <Users size={18} className="mr-2 md:mr-3 text-[var(--nk-gradient-start)]" />
                   Riwayat Disposisi
               </h2>
           </div>
@@ -149,7 +150,7 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                     <motion.li 
                       key={d.id} 
                       variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                      className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-muted border border-border"
+                      className="p-3 md:p-4 text-xs md:text-sm rounded-xl bg-muted/30 border border-border/60 hover:bg-muted/50 hover:shadow-md hover:border-[var(--nk-gradient-start)]/20 transition-all"
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex items-start space-x-2.5 md:space-x-3 min-w-0">

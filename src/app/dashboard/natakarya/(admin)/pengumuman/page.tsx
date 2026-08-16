@@ -203,7 +203,7 @@ const HeroAnnouncement = ({
     const hasImage = displayImages.length > 0;
 
     return (
-        <div className="mb-8 group relative bg-card rounded-2xl border border-border shadow-lg overflow-hidden hover:shadow-xl transition-all duration-300">
+        <div className="mb-8 group relative nk-card rounded-2xl border border-[var(--border)] shadow-[var(--nk-shadow-lg)] overflow-hidden hover:shadow-xl transition-all duration-300">
              {/* Label Penting Absolut */}
              <div className="absolute top-0 left-0 bg-yellow-500 text-white text-xs font-bold px-4 py-1.5 rounded-br-xl z-20 shadow-md flex items-center gap-1">
                 <Pin size={14} className="fill-current" /> PENGUMUMAN UTAMA
@@ -534,7 +534,7 @@ const FormPengumumanModal = ({ isOpen, onClose, onSave, pengumumanToEdit, isProc
     
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
+            <DialogContent className="sm:max-w-2xl nk-card border-[var(--border)] flex flex-col max-h-[90vh] p-0 gap-0">
                 <DialogHeader className="p-6 pb-4">
                     <DialogTitle>{formData.id ? 'Edit' : 'Buat'} Pengumuman</DialogTitle>
                 </DialogHeader>
@@ -806,7 +806,7 @@ export default function PengumumanPage() {
                         placeholder="Cari pengumuman..." 
                         value={searchTerm} 
                         onChange={e => setSearchTerm(e.target.value)} 
-                        className="pl-10 bg-card"
+                        className="pl-10 nk-card"
                     />
                 </div>
                 <div className="flex gap-2 overflow-x-auto pb-2">
@@ -869,7 +869,7 @@ export default function PengumumanPage() {
                             ))}
                         </div>
                     ) : !heroAnnouncement && (
-                        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
+                        <div className="text-center py-16 text-muted-foreground nk-glass-card rounded-xl border-2 border-dashed border-[var(--border)]">
                             <Megaphone size={48} className="mx-auto text-muted-foreground/30 mb-4" />
                             <p className="font-semibold">Tidak ada pengumuman ditemukan.</p>
                         </div>

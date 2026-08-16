@@ -29,8 +29,8 @@ export default function KanbanBoard({
 
   if (tugasList.length === 0) {
     return (
-        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-dashed border-border">
-            <ClipboardList size={48} className="mx-auto text-muted-foreground/30"/>
+        <div className="text-center py-16 text-muted-foreground nk-glass-card rounded-xl border border-dashed border-[var(--border)] mt-4">
+            <ClipboardList size={48} className="mx-auto text-[var(--nk-teal-mid)]/30"/>
             <p className="mt-4 font-semibold">Tidak ada tugas untuk ditampilkan.</p>
         </div>
     );
@@ -42,7 +42,7 @@ export default function KanbanBoard({
         const tasks = tugasList.filter(t => t.status === col.id);
         
         return (
-          <div key={col.id} className="flex-1 min-w-[300px] w-full bg-card rounded-xl border border-border shadow-sm flex flex-col">
+          <div key={col.id} className="flex-1 min-w-[300px] w-full nk-card border-[var(--border)] shadow-[var(--nk-shadow-sm)] flex flex-col">
             <div className={`p-3 border-b font-semibold flex justify-between items-center ${col.color}`}>
               <span>{col.title}</span>
               <span className="bg-background px-2 py-1 rounded-md text-xs border">{tasks.length}</span>
@@ -59,7 +59,7 @@ export default function KanbanBoard({
                     exit={{ opacity: 0, scale: 0.9 }}
                     transition={{ duration: 0.2 }}
                   >
-                    <div className="bg-card border border-border rounded-lg shadow-sm p-3 hover:shadow-md transition-shadow">
+                    <div className="nk-card border-[var(--border)] rounded-lg shadow-sm p-3 hover:shadow-[var(--nk-shadow-md)] transition-shadow">
                       <div className="flex justify-between items-start mb-2">
                         <span className="text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary">
                           {tugas.prioritas}

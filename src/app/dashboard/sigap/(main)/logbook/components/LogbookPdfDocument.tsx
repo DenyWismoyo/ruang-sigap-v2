@@ -2,6 +2,7 @@ import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
 import { UserProfile, LogbookHarian } from '@/types';
 
+
 // Register font (Opsional, kita pakai Helvetica standar dulu agar ringan dan kompatibel)
 // Font.register({ family: 'Roboto', src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf' });
 
@@ -142,13 +143,11 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
         const dateStr = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
         
-        if (daily.kegiatan.length === 0) {
-             // Opsional: Masukkan baris kosong jika hari kerja tapi tidak ada kegiatan?
-             // Untuk sekarang kita skip hari kosong agar hemat kertas
-        } else {
-            daily.kegiatan.forEach(k => {
+        const kegiatanList = daily.kegiatan || [];
+        if (kegiatanList.length > 0) {
+            kegiatanList.forEach((k, idx) => {
                 allActivities.push({
-                    fullDate: `${dayName}, ${dateStr}`,
+                    fullDate: idx === 0 ? `${dayName},\n${dateStr}` : '', // Show date only on first item of the day for cleaner look
                     deskripsi: k.deskripsi,
                     status: k.selesai ? 'Selesai' : 'Proses',
                     tugas: k.tugasTerkaitJudul

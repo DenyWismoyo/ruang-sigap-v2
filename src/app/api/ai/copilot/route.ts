@@ -1,5 +1,5 @@
 // Lokasi: src/app/api/ai/copilot/route.ts
-// [UPDATE ENTERPRISE] Natakarya AI Chat Copilot dengan Real-Time Database Query (RAG)
+// [UPDATE ENTERPRISE] Natakarya AI Chat Copilot dengan Native Gemini Tool Calling & RAG
 // Mengambil data nyata Firestore (Surat, Disposisi, Tugas, Draf) secara langsung sehingga AI dapat memberikan informasi faktual dan tombol aksi langsung ke dokumen.
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -18,7 +18,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { messages, userContext } = await req.json();
+    const { messages, userContext, pageContext } = await req.json();
 
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json(
@@ -33,66 +33,97 @@ export async function POST(req: Request) {
     const userId = userContext?.uid || userContext?.userId;
 
     // =========================================================================
-    // 1. QUERY REAL-TIME DATA DARI FIRESTORE (SURAT, DISPOSISI, TUGAS, DRAF)
+    // 1. QUERY REAL-TIME DATA DARI FIRESTORE (SURAT, DISPOSISI, DLL) - RAG Dasar
     // =========================================================================
     let realSuratList: any[] = [];
     let realDisposisiList: any[] = [];
     let realTugasList: any[] = [];
     let realDrafList: any[] = [];
+    let logbookHariIni: any[] = [];
+    let tindakLanjutList: any[] = [];
 
     if (db && opdId) {
       try {
+        // Fungsi helper untuk mengambil data dengan sorting in-memory sebagai fallback jika index hilang
+        const getRecentDocs = async (collName: string, orderByField: string = "createdAt", lim: number = 10) => {
+            return db!.collection(collName).where("opdId", "==", opdId).orderBy(orderByField, "desc").limit(lim).get().catch(async () => {
+                const all = await db!.collection(collName).where("opdId", "==", opdId).get();
+                const sorted = all.docs.sort((a, b) => {
+                    const dateA = a.data()[orderByField]?.toDate?.()?.getTime() || 0;
+                    const dateB = b.data()[orderByField]?.toDate?.()?.getTime() || 0;
+                    return dateB - dateA;
+                });
+                return { docs: sorted.slice(0, lim) };
+            });
+        };
+
         // A. Ambil 20 Surat Masuk Terbaru di OPD
-        const suratPromise = db
-          .collection("surat")
-          .where("opdId", "==", opdId)
-          .orderBy("createdAt", "desc")
-          .limit(20)
-          .get()
-          .catch(async () => {
-            // Fallback jika belum ada index createdAt
-            return db!.collection("surat").where("opdId", "==", opdId).limit(20).get();
-          });
+        const suratPromise = getRecentDocs("surat", "tanggalDiterima", 20);
 
-        // B. Ambil 20 Disposisi Terbaru di OPD
-        const dispoPromise = db
-          .collection("disposisi")
-          .where("opdId", "==", opdId)
+        // B. Ambil 30 Disposisi Terbaru untuk User ini
+        const dispoPromise = db.collection("disposisi")
+          .where("kepadaJabatanId", "array-contains", jabatanId || "")
           .orderBy("tanggalDisposisi", "desc")
+          .limit(30)
+          .get()
+          .catch(async () => {
+              const all = await db!.collection("disposisi").where("opdId", "==", opdId).get();
+              const myDocs = all.docs.filter((d: any) => (d.data().kepadaJabatanId || []).includes(jabatanId));
+              const sorted = myDocs.sort((a: any, b: any) => {
+                  const dateA = a.data().tanggalDisposisi?.toDate?.()?.getTime() || 0;
+                  const dateB = b.data().tanggalDisposisi?.toDate?.()?.getTime() || 0;
+                  return dateB - dateA;
+              });
+              return { docs: sorted.slice(0, 30) };
+          });
+
+        // C. Ambil Tugas Aktif untuk User ini
+        const tugasPromise = db.collection("tugas")
+          .where("kepadaJabatanId", "==", jabatanId || "")
+          .orderBy("tanggalDibuat", "desc")
           .limit(20)
           .get()
           .catch(async () => {
-            return db!.collection("disposisi").where("opdId", "==", opdId).limit(20).get();
+              const all = await db!.collection("tugas").where("opdId", "==", opdId).get();
+              const myDocs = all.docs.filter((d: any) => d.data().kepadaJabatanId === jabatanId);
+              const sorted = myDocs.sort((a: any, b: any) => {
+                  const dateA = a.data().tanggalDibuat?.toDate?.()?.getTime() || 0;
+                  const dateB = b.data().tanggalDibuat?.toDate?.()?.getTime() || 0;
+                  return dateB - dateA;
+              });
+              return { docs: sorted.slice(0, 20) };
           });
-
-        // C. Ambil Tugas Aktif di OPD
-        const tugasPromise = db
-          .collection("tugas")
-          .where("opdId", "==", opdId)
-          .limit(15)
-          .get()
-          .catch(() => ({ docs: [] }));
 
         // D. Ambil Draf Persetujuan
-        const drafPromise = db
-          .collection("drafPersetujuan")
-          .where("opdId", "==", opdId)
-          .limit(10)
-          .get()
-          .catch(() => ({ docs: [] }));
+        const drafPromise = getRecentDocs("drafPersetujuan", "createdAt", 10);
 
-        const [suratSnap, dispoSnap, tugasSnap, drafSnap] = await Promise.all([
-          suratPromise,
-          dispoPromise,
-          tugasPromise,
-          drafPromise,
+        // E. Ambil Logbook Hari Ini
+        const todayDateStr = new Date().toISOString().split('T')[0];
+        const logbookDocId = `${userId}_${todayDateStr}`;
+        const logbookPromise = db.collection("logbookHarian").doc(logbookDocId).get().catch(() => ({ exists: false, data: () => null }));
+
+        // F. Ambil Riwayat Tindak Lanjut terbaru
+        const tindakLanjutPromise = db.collection("tindakLanjut").where("userId", "==", userId || "").orderBy("tanggalLaporan", "desc").limit(10).get().catch(async () => {
+            const all = await db!.collection("tindakLanjut").where("userId", "==", userId || "").get();
+            const sorted = all.docs.sort((a, b) => {
+                const dateA = a.data().tanggalLaporan?.toDate?.()?.getTime() || 0;
+                const dateB = b.data().tanggalLaporan?.toDate?.()?.getTime() || 0;
+                return dateB - dateA;
+            });
+            return { docs: sorted.slice(0, 10) };
+        });
+
+        const [suratSnap, dispoSnap, tugasSnap, drafSnap, logbookSnap, tindakLanjutSnap] = await Promise.all([
+          suratPromise, dispoPromise, tugasPromise, drafPromise, logbookPromise, tindakLanjutPromise
         ]);
 
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-        realSuratList = suratSnap.docs
-          .map((d: any) => {
+        const isStafTuOrAdminOpd = role === 'staf_tu' || role === 'admin_opd' || role === 'super_admin';
+        const mySuratIds = new Set(dispoSnap.docs.map((d: any) => d.data().suratId));
+
+        realSuratList = suratSnap.docs.map((d: any) => {
             const data = d.data();
             const createdAtDate = data.createdAt ? data.createdAt.toDate() : (data.tanggalDiterima ? data.tanggalDiterima.toDate() : new Date());
             return {
@@ -100,48 +131,64 @@ export async function POST(req: Request) {
               nomorSurat: data.nomorSurat || "Tanpa Nomor",
               pengirim: data.pengirim || "Tidak Diketahui",
               perihal: data.perihal || "Tanpa Perihal",
-              jenisSurat: data.jenisSurat || "Umum",
-              statusDisposisi: data.statusDisposisi || "Belum Didisposikan",
               statusPenyelesaian: data.statusPenyelesaian || "Proses",
-              tanggalSurat: data.tanggalSurat || "",
               tanggalDiterima: data.tanggalDiterima ? data.tanggalDiterima.toDate?.()?.toLocaleDateString("id-ID") : "",
-              ringkasan: data.ringkasan || "",
               actionUrl: `/dashboard/natakarya/surat/${d.id}`,
               _dateObj: createdAtDate,
+              _rawData: data,
             };
-          })
-          .filter((s: any) => s._dateObj >= sevenDaysAgo)
-          .slice(0, 20);
+          }).filter((s: any) => {
+              if (s._dateObj < thirtyDaysAgo) return false;
+              if (isStafTuOrAdminOpd) return true;
+              
+              const data = s._rawData;
+              if (data?.tujuanJabatanId === jabatanId) return true;
+              if (mySuratIds.has(s.id)) return true;
+              if (data?.jenisSurat === 'Undangan') return true;
+              
+              return false;
+          }).map((s: any) => {
+              delete s._rawData;
+              return s;
+          }).slice(0, 20);
 
-        realDisposisiList = dispoSnap.docs.map((d: any) => {
+        realDisposisiList = await Promise.all(dispoSnap.docs.map(async (d: any) => {
           const data = d.data();
           const isForMe = jabatanId ? (data.kepadaJabatanId || []).includes(jabatanId) : false;
           const isDoneByMe = jabatanId ? (data.penerimaSelesai || []).includes(jabatanId) : false;
-          const isAcknowledged = jabatanId ? (data.penerimaDiterima || []).includes(jabatanId) : false;
+          
+          let suratAsli = suratSnap.docs.find((s: any) => s.id === data.suratId)?.data();
+          
+          if (!suratAsli && data.suratId && db) {
+             try {
+                const missingSuratSnap = await db.collection("surat").doc(data.suratId).get();
+                if (missingSuratSnap.exists) {
+                    suratAsli = missingSuratSnap.data();
+                }
+             } catch (e) {
+                 console.warn("Gagal fetch missing surat", data.suratId);
+             }
+          }
+
+          const perihalSebenarnya = suratAsli?.perihal || data.perihal || "";
 
           return {
             id: d.id,
             suratId: data.suratId,
             nomorSurat: data.nomorSurat || "",
-            perihal: data.perihal || "",
+            perihal: perihalSebenarnya,
             instruksi: data.instruksi || "",
-            catatan: data.catatan || "",
-            status: data.status || "Terkirim",
             dariJabatanNama: data.dariJabatanNama || "Pimpinan",
-            isForMe,
             isWaitingAction: isForMe && !isDoneByMe,
-            isAcknowledged,
-            actionUrl: `/dashboard/natakarya/ruang-kerja`,
             suratUrl: data.suratId ? `/dashboard/natakarya/surat/${data.suratId}` : `/dashboard/natakarya/ruang-kerja`,
           };
-        });
+        }));
 
         realTugasList = tugasSnap.docs.map((d: any) => {
           const data = d.data();
           return {
             id: d.id,
             judulTugas: data.judulTugas || "Tugas",
-            deskripsi: data.deskripsi || "",
             prioritas: data.prioritas || "Sedang",
             status: data.status || "Baru",
             batasWaktu: data.batasWaktu ? data.batasWaktu.toDate?.()?.toLocaleDateString("id-ID") : "",
@@ -149,230 +196,378 @@ export async function POST(req: Request) {
           };
         });
 
-        realDrafList = drafSnap.docs.map((d: any) => {
-          const data = d.data();
-          return {
+        realDrafList = drafSnap.docs.map((d: any) => ({
             id: d.id,
-            judul: data.judul || "Draf",
-            status: data.status || "Proses Review",
+            judul: d.data().judul || "Draf",
+            status: d.data().status || "Proses Review",
             actionUrl: `/dashboard/natakarya/persetujuan-draf`,
-          };
-        });
+        }));
+
+        if ((logbookSnap as any).exists) {
+          const data = (logbookSnap as any).data();
+          if (data && data.kegiatan) logbookHariIni = data.kegiatan;
+        }
+
+        tindakLanjutList = (tindakLanjutSnap as any).docs.map((d: any) => ({
+            id: d.id,
+            disposisiId: d.data().disposisiId,
+            ringkasanTindakan: d.data().isiLaporan,
+        }));
       } catch (dbErr) {
         console.error("[Natakarya Copilot] Firestore Context Fetch Error:", dbErr);
       }
     }
 
-    // Filter disposisi yang benar-benar menunggu tindakan pengguna saat ini
     const pendingDisposisiForUser = realDisposisiList.filter((dp) => dp.isWaitingAction);
-    const unDisposedSurat = realSuratList.filter((s) => s.statusDisposisi === "Belum Didisposikan");
 
     // =========================================================================
-    // 2. SUSUN SYSTEM INSTRUCTION BERDASARKAN DATA FAKTUAL NYATA (RAG)
+    // 2. SYSTEM INSTRUCTION (PERSONA & MENTAL MODEL)
     // =========================================================================
     const systemInstruction = `
-Anda adalah **Natakarya Copilot**, asisten AI cerdas dan asisten pribadi ASN terpercaya yang terintegrasi langsung dengan database operasional digital **NATAKARYA**.
+Anda adalah **Natakarya Copilot**, asisten AI jenius dan asisten pribadi ASN terpercaya yang terintegrasi langsung dengan database operasional digital **NATAKARYA**.
+
+KERANGKA BERPIKIR (MENTAL MODELS) & ATURAN KERAS:
+1. **URGENSI-FIRST**: Selalu sebut dokumen/tugas yang paling mendesak lebih dulu (terutama Disposisi Menunggu Tindakan).
+2. **AKURASI FAKTUAL**: Jawab pertanyaan HANYA berdasarkan data RAG di bawah atau hasil Tool Call. Jika data kosong, jujurlah dan jangan mengarang.
+3. **PROAKTIF**: Jika pengguna ingin mengisi tindak lanjut atau jika Anda menyarankan pengisian tindak lanjut, SELALU gunakan action SHOW_BATCH_TINDAK_LANJUT_FORM. Isi array 'items' di dalam payload dengan data disposisi yang relevan dari RAG.
+4. **FORMAT JSON WAJIB**: Selalu kembalikan respon dalam format JSON yang didefinisikan di bawah.
 
 === PROFIL PENGGUNA SAAT INI ===
-- Nama Lengkap: ${userContext?.namaLengkap || "Pengguna"}
-- Jabatan: ${userContext?.namaJabatan || "Staf / Pejabat"}
-- Peran (Role): ${role}
-- Instansi/OPD: ${userContext?.opdName || opdId || "Instansi Pemerintah"}
-- ID Jabatan: ${jabatanId || "Umum"}
+- Nama: ${userContext?.namaLengkap || "Pengguna"}
+- Jabatan: ${userContext?.namaJabatan || "Staf"}
+- Instansi: ${userContext?.opdName || opdId || "Instansi Pemerintah"}
 
-=== DATA REAL-TIME DARI DATABASE INSTANSI (FIRESTORE) ===
+=== KONTEKS HALAMAN SAAT INI ===
+${pageContext ? `Pengguna sedang berada di halaman: ${pageContext.pathname}` : 'Tidak ada konteks halaman khusus.'}
 
-1. **DAFTAR SURAT MASUK TERBARU DI INSTANSI (7 Hari Terakhir, Max 20 Surat)**:
-${
-  realSuratList.length > 0
-    ? realSuratList
-        .map(
-          (s, idx) =>
-            `${idx + 1}. [ID: ${s.id}] No: "${s.nomorSurat}" | Dari: "${s.pengirim}" | Perihal: "${s.perihal}" | Tanggal: ${s.tanggalDiterima || s.tanggalSurat} | Status Disposisi: ${s.statusDisposisi} | Status Penyelesaian: ${s.statusPenyelesaian} | URL: ${s.actionUrl}`
-        )
-        .join("\n")
-    : "Tidak ada surat masuk dalam 7 hari terakhir."
+=== DATA REAL-TIME (RAG) ===
+1. **Surat Masuk (Max 20)**: ${realSuratList.length > 0 ? realSuratList.map((s, i) => `[${i+1}] ID:${s.id} | ${s.nomorSurat} | Dari: ${s.pengirim} | Perihal: ${s.perihal} | Status: ${s.statusPenyelesaian}`).join('\n') : "Tidak ada."}
+2. **Disposisi Menunggu Tindakan Anda**: ${pendingDisposisiForUser.length > 0 ? pendingDisposisiForUser.map((d, i) => `[${i+1}] ID:${d.id} | SuratID:${d.suratId} | Perihal: ${d.perihal} | Instruksi: ${d.instruksi} | Dari: ${d.dariJabatanNama}`).join('\n') : "Tidak ada disposisi aktif."}
+3. **Tugas Aktif**: ${realTugasList.length > 0 ? realTugasList.map((t, i) => `[${i+1}] ID:${t.id} | Judul: ${t.judulTugas} | Status: ${t.status} | Deadline: ${t.batasWaktu}`).join('\n') : "Tidak ada tugas."}
+4. **Logbook Hari Ini**: ${logbookHariIni.length > 0 ? logbookHariIni.map((l, i) => `[${i+1}] ${l.deskripsi} (${l.selesai ? 'Selesai' : 'Belum'})`).join('\n') : "Kosong."}
+
+=== FORMAT RESPONS WAJIB (SANGAT PENTING) ===
+Anda HARUS menghasilkan respons dalam format JSON murni:
+\`\`\`json
+{
+  "reply": "Teks Markdown respons Anda. (Gunakan bullet point yang compact, jangan banyak enter kosong. Pastikan menyebutkan 'Perihal' jika menampilkan daftar surat/disposisi)",
+  "actions": [
+    {
+      "type": "NAVIGATE | SELESAI_DISPOSISI | BUAT_TUGAS | WRITE_LOGBOOK_RICH | TANDAI_SELESAI_TUGAS | SHOW_BATCH_TINDAK_LANJUT_FORM",
+      "label": "Teks tombol aksi",
+      "url": "URL tujuan (untuk NAVIGATE)",
+      "payload": {
+        "id_disposisi": "...",
+        "surat_id": "...",
+        "judul_tugas": "...",
+        "deskripsi_logbook": "...",
+        "items": [
+          { "id_disposisi": "...", "surat_id": "...", "instruksi": "...", "perihal_surat": "...", "pengirim_disposisi": "..." }
+        ]
+      }
+    }
+  ],
+  "data_tables": []
 }
-
-2. **DAFTAR DISPOSISI AKTIF (${realDisposisiList.length} Total, ${pendingDisposisiForUser.length} Menunggu Tindakan Anda)**:
-${
-  realDisposisiList.length > 0
-    ? realDisposisiList
-        .map(
-          (d, idx) =>
-            `${idx + 1}. [DispoID: ${d.id}] Surat: "${d.perihal || d.nomorSurat}" | Dari: ${d.dariJabatanNama} | Instruksi: "${d.instruksi}" | Khusus Untuk Anda: ${d.isForMe ? "YA" : "TIDAK"} | Butuh Tindak Lanjut Anda: ${d.isWaitingAction ? "YA (BELUM SELESAI)" : "TIDAK / SUDAH SELESAI"} | SuratURL: ${d.suratUrl}`
-        )
-        .join("\n")
-    : "Tidak ada riwayat disposisi aktif."
-}
-
-3. **DAFTAR TUGAS AKTIF (${realTugasList.length} Tugas)**:
-${
-  realTugasList.length > 0
-    ? realTugasList
-        .map(
-          (t, idx) =>
-            `${idx + 1}. Judul: "${t.judulTugas}" | Prioritas: ${t.prioritas} | Status: ${t.status} | Deadline: ${t.batasWaktu || "Tidak ditentukan"} | URL: ${t.actionUrl}`
-        )
-        .join("\n")
-    : "Tidak ada tugas aktif."
-}
-
-4. **DRAF PERSETUJUAN (${realDrafList.length} Draf)**:
-${
-  realDrafList.length > 0
-    ? realDrafList
-        .map(
-          (dr, idx) =>
-            `${idx + 1}. Judul: "${dr.judul}" | Status: ${dr.status} | URL: ${dr.actionUrl}`
-        )
-        .join("\n")
-    : "Tidak ada draf dalam proses."
-}
-
-=== INSTRUKSI RESPON KHUSUS (SANGAT PENTING!) ===
-1. **AKURASI FAKTUAL PENUH (JANGAN MENGARANG BEBAS)**:
-   - Jawab pertanyaan pengguna mengenai surat, disposisi, dan tugas HANYA dengan merujuk data faktual di atas.
-   - Jika pengguna bertanya tentang "surat yang belum didisposisi", sebutkan nomor surat, pengirim, dan perihal spesifik dari daftar surat yang bertatus "Belum Didisposikan".
-   - Jika pengguna bertanya tentang "disposisi yang harus ditindaklanjuti", sebutkan secara jelas surat dan instruksi spesifik yang ditujukan kepada jabatan pengguna.
-   - Jika data kosong atau 0, jelaskan bahwa berdasarkan database saat ini memang tidak ada dokumen terkait.
-
-2. **WAJIB SERTAKAN TAUTAN AKSI LANGSUNG (ACTIONABLE LINKS)**:
-   - Setiap kali Anda menyebutkan surat tertentu, sertakan link Markdown langsung dengan format:
-     \`[Buka Surat: No. {nomorSurat}](/dashboard/natakarya/surat/{id})\`
-   - Setiap kali menyarankan membuka ruang kerja, disposisi, atau tugas:
-     \`[Buka Ruang Kerja](/dashboard/natakarya/ruang-kerja)\` atau \`[Buka Manajemen Tugas](/dashboard/natakarya/tugas)\`
-   - Tautan internal ini akan otomatis diubah menjadi tombol aksi interaktif di antarmuka pengguna!
-
-3. **GAYA BAHASA & TATA NASKAH**:
-   - Gunakan Bahasa Indonesia kedinasan yang profesional, santun, lugas, dan terstruktur rapi (gunakan bullet points, bold, dan numbering).
-   - Jika diminta menyusun draf naskah dinas atau nota dinas, berikan format resmi yang lengkap dan siap salin.
-
-=== INSTRUKSI AKSI OTOMATIS (AGENTIC) ===
-Jika pengguna meminta secara eksplisit untuk mengeksekusi suatu aksi, sertakan Tanda Aksi berikut di AKHIR pesan Anda:
-1. Menandai disposisi selesai: \`[ACTION:SELESAI_DISPOSISI:id_disposisi]\` (ganti id_disposisi dengan DispoID yang relevan).
-2. Membuat tugas baru untuk dirinya sendiri: \`[ACTION:BUAT_TUGAS:Judul Tugas]\` (ganti Judul Tugas dengan judul singkat).
-
-Contoh Balasan:
-"Baik, saya telah membuat tugas 'Menyiapkan Laporan' untuk Anda. [ACTION:BUAT_TUGAS:Menyiapkan Laporan]"
+\`\`\`
+Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke dalam "reply".
 `;
 
     // =========================================================================
-    // 3. FORMAT CHAT HISTORY UNTUK GEMINI
+    // 3. TOOLS DEFINITION (FUNCTION CALLING)
     // =========================================================================
-    const formattedContents: Array<{ role: "user" | "model"; parts: Array<{ text: string }> }> = [];
-
-    const historyMessages = messages.slice(0, -1);
-    const lastMessage = messages[messages.length - 1];
-
-    for (const msg of historyMessages) {
-      formattedContents.push({
-        role: msg.role === "user" ? "user" : "model",
-        parts: [{ text: msg.content }],
-      });
-    }
-
-    formattedContents.push({
-      role: "user",
-      parts: [{ text: lastMessage.content }],
-    });
-
-    // =========================================================================
-    // 4. GENERASI KONTEN DENGAN GEMINI 3.5 FLASH LITE
-    // =========================================================================
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-3.5-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite",
+    const tools = [
+        {
+          functionDeclarations: [
+            {
+              name: "search_surat",
+              description: "Mencari surat masuk di instansi berdasarkan kata kunci pada perihal atau nama pengirim.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  keyword: {
+                    type: "STRING",
+                    description: "Kata kunci pencarian (misal: 'Rapat Koordinasi', 'BKN', 'Undangan')"
+                  }
+                },
+                required: ["keyword"]
+              }
+            },
+            {
+              name: "calculate_deadline_urgency",
+              description: "Menghitung sisa hari dari deadline tugas/disposisi untuk menentukan tingkat urgensi.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  tanggal_deadline: {
+                    type: "STRING",
+                    description: "Tanggal deadline dalam format YYYY-MM-DD"
+                  }
+                },
+                required: ["tanggal_deadline"]
+              }
+            },
+            {
+              name: "get_disposisi_detail",
+              description: "Mengambil detail instruksi dan pengirim dari sebuah disposisi berdasarkan ID.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  id_disposisi: {
+                    type: "STRING",
+                    description: "ID disposisi"
+                  }
+                },
+                required: ["id_disposisi"]
+              }
+            },
+            {
+              name: "get_tugas_detail",
+              description: "Mengambil detail dan status dari sebuah tugas berdasarkan ID.",
+              parameters: {
+                type: "OBJECT",
+                properties: {
+                  id_tugas: {
+                    type: "STRING",
+                    description: "ID tugas"
+                  }
+                },
+                required: ["id_tugas"]
+              }
+            },
+            {
+              name: "get_kinerja_summary",
+              description: "Menghitung ringkasan kinerja pengguna bulan ini (total disposisi selesai, tugas selesai).",
+              parameters: {
+                type: "OBJECT",
+                properties: {},
+                required: []
+              }
+            }
+          ]
+        }
     ];
 
+    // =========================================================================
+    // 4. FORMAT CHAT HISTORY UNTUK GEMINI
+    // =========================================================================
+    const formattedContents: any[] = [];
+    
+    // Parse the history to Gemini's format. If role is 'user' it's user, if 'model'/'assistant' it's model.
+    for (const msg of messages) {
+        if (msg.role === 'function_call_result') {
+            formattedContents.push({
+                role: "user", // For function responses, the role in Gemini is usually 'function' but in API v1beta it might be different. Wait, Gemini SDK uses role: "function"
+                parts: [{
+                    functionResponse: {
+                        name: msg.name,
+                        response: msg.response
+                    }
+                }]
+            });
+        } else if (msg.role === 'function_call') {
+            formattedContents.push({
+                role: "model",
+                parts: [{
+                    functionCall: {
+                        name: msg.name,
+                        args: msg.args
+                    }
+                }]
+            });
+        } else {
+            formattedContents.push({
+                role: msg.role === "user" ? "user" : "model",
+                parts: [{ text: msg.content }],
+            });
+        }
+    }
+
+    // =========================================================================
+    // 5. GENERASI KONTEN (DENGAN LOOP TOOL CALL)
+    // =========================================================================
+    const modelOptions = {
+        model: "gemini-3.5-flash-lite",
+        systemInstruction,
+        tools: tools as any,
+    };
+    
+    let model = genAI.getGenerativeModel(modelOptions);
+
     let replyText = "";
-    let usedModel = candidateModels[0];
-    let lastErr: any = null;
+    let finalPayload: any = null;
+    let usedModel = "gemini-3.5-flash-lite";
 
-    for (const modelName of candidateModels) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          systemInstruction: systemInstruction,
-          generationConfig: {
-            temperature: 0.5, // Temperature lebih rendah untuk akurasi data faktual
-            maxOutputTokens: 2048,
-          },
-        });
-
+    // Loop execution untuk tool calls (max 3 iterasi)
+    const maxIterations = 3;
+    let iteration = 0;
+    
+    while (iteration < maxIterations) {
+        iteration++;
         const result = await model.generateContent({
-          contents: formattedContents,
+            contents: formattedContents,
+            generationConfig: {
+                temperature: 0.1, // Diturunkan agar lebih presisi dan tidak halusinasi data
+                maxOutputTokens: 2048,
+            }
         });
 
         const response = result.response;
-        replyText = response.text();
-        usedModel = modelName;
-
-        if (replyText) {
-          // --- LOGIKA AGENTIC: PARSING ACTION TAGS ---
-          const dispoMatch = replyText.match(/\[ACTION:SELESAI_DISPOSISI:(.+?)\]/);
-          if (dispoMatch && db) {
-              const dispoId = dispoMatch[1].trim();
-              try {
-                  const dispoRef = db.collection("disposisi").doc(dispoId);
-                  const docSnap = await dispoRef.get();
-                  if (docSnap.exists) {
-                      const data = docSnap.data();
-                      const penerimaSelesai = data?.penerimaSelesai || [];
-                      if (jabatanId && !penerimaSelesai.includes(jabatanId)) {
-                          penerimaSelesai.push(jabatanId);
-                          await dispoRef.update({ 
-                              penerimaSelesai, 
-                              updatedAt: new Date() 
-                          });
-                      }
-                  }
-              } catch (e) {
-                  console.error("Gagal eksekusi ACTION:SELESAI_DISPOSISI", e);
-              }
-              replyText = replyText.replace(dispoMatch[0], "").trim();
-          }
-
-          const tugasMatch = replyText.match(/\[ACTION:BUAT_TUGAS:(.+?)\]/);
-          if (tugasMatch && db) {
-              const judulTugas = tugasMatch[1].trim();
-              try {
-                  await db.collection("tugas").add({
-                      judulTugas,
-                      opdId: opdId || "",
-                      status: "Baru",
-                      prioritas: "Sedang",
-                      pembuatId: userId || "",
-                      penerimaIds: [userId || ""],
-                      createdAt: new Date(),
-                      updatedAt: new Date()
-                  });
-              } catch (e) {
-                  console.error("Gagal eksekusi ACTION:BUAT_TUGAS", e);
-              }
-              replyText = replyText.replace(tugasMatch[0], "").trim();
-          }
-
-          break;
+        
+        // Cek jika model memutuskan memanggil fungsi
+        const functionCalls = response.functionCalls();
+        
+        if (functionCalls && functionCalls.length > 0) {
+            // Tambahkan function call ke history
+            formattedContents.push({
+                role: "model",
+                parts: response.candidates?.[0]?.content?.parts || []
+            });
+            
+            // Eksekusi fungsi
+            const functionResponsesParts = [];
+            for (const call of functionCalls) {
+                let funcResult = {};
+                
+                if (call.name === 'search_surat' && db) {
+                    const keyword = ((call.args as any).keyword || "").toLowerCase();
+                    try {
+                        // Ambil semua untuk in-memory search agar bisa di sort by date (fallback FTS)
+                        const allSurat = await db.collection("surat").where("opdId", "==", opdId).get();
+                        const matched = allSurat.docs.map(d => ({id: d.id, ...d.data()})).filter((s: any) => 
+                            (s.perihal && s.perihal.toLowerCase().includes(keyword)) ||
+                            (s.pengirim && s.pengirim.toLowerCase().includes(keyword)) ||
+                            (s.nomorSurat && s.nomorSurat.toLowerCase().includes(keyword))
+                        );
+                        
+                        // Sort by date descending
+                        matched.sort((a: any, b: any) => {
+                            const dateA = a.createdAt?.toDate?.()?.getTime() || 0;
+                            const dateB = b.createdAt?.toDate?.()?.getTime() || 0;
+                            return dateB - dateA;
+                        });
+                        
+                        const finalMatched = matched.slice(0, 5);
+                        
+                        funcResult = { 
+                            status: "success", 
+                            matchedCount: matched.length, 
+                            results: finalMatched.map((m: any) => ({
+                                nomorSurat: m.nomorSurat, pengirim: m.pengirim, perihal: m.perihal, status: m.statusDisposisi
+                            })) 
+                        };
+                    } catch (e) {
+                        funcResult = { error: "Gagal mencari surat" };
+                    }
+                } else if (call.name === 'calculate_deadline_urgency') {
+                    const deadline = new Date((call.args as any).tanggal_deadline);
+                    const now = new Date();
+                    const diffTime = deadline.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    let urgency = "Normal";
+                    if (diffDays < 0) urgency = "Overdue (Sangat Kritis)";
+                    else if (diffDays <= 1) urgency = "Tinggi (Kritis)";
+                    else if (diffDays <= 3) urgency = "Sedang";
+                    
+                    funcResult = { sisaHari: diffDays, tingkatUrgensi: urgency };
+                } else if (call.name === 'get_disposisi_detail' && db) {
+                    try {
+                        const id = (call.args as any).id_disposisi;
+                        const docSnap = await db.collection("disposisi").doc(id).get();
+                        if (docSnap.exists) {
+                            funcResult = { status: "success", data: { id: docSnap.id, ...docSnap.data() } };
+                        } else {
+                            funcResult = { status: "not_found", message: "Disposisi tidak ditemukan" };
+                        }
+                    } catch (e) {
+                        funcResult = { error: "Gagal mengambil disposisi" };
+                    }
+                } else if (call.name === 'get_tugas_detail' && db) {
+                    try {
+                        const id = (call.args as any).id_tugas;
+                        const docSnap = await db.collection("tugas").doc(id).get();
+                        if (docSnap.exists) {
+                            funcResult = { status: "success", data: { id: docSnap.id, ...docSnap.data() } };
+                        } else {
+                            funcResult = { status: "not_found", message: "Tugas tidak ditemukan" };
+                        }
+                    } catch (e) {
+                        funcResult = { error: "Gagal mengambil tugas" };
+                    }
+                } else if (call.name === 'get_kinerja_summary' && db) {
+                    try {
+                        // For summary, we can just aggregate based on the RAG context we already have, or query DB
+                        // Since we have realDisposisiList and realTugasList in memory, let's use it
+                        const dispoSelesai = realDisposisiList.filter(d => 
+                            d.penerimaSelesai && userContext?.jabatanId && d.penerimaSelesai.includes(userContext.jabatanId)
+                        ).length;
+                        const tugasSelesai = realTugasList.filter(t => t.status === "Selesai").length;
+                        
+                        funcResult = { 
+                            status: "success", 
+                            summary: {
+                                totalDisposisiSelesaiBulanIni: dispoSelesai,
+                                totalTugasSelesaiBulanIni: tugasSelesai,
+                                message: "Kinerja yang sangat baik!"
+                            }
+                        };
+                    } catch (e) {
+                        funcResult = { error: "Gagal menghitung kinerja" };
+                    }
+                }
+                
+                functionResponsesParts.push({
+                    functionResponse: {
+                        name: call.name,
+                        response: funcResult
+                    }
+                });
+            }
+            
+            // Tambahkan respons fungsi ke history dan ulangi loop
+            // For @google/generative-ai, function responses must be role "user" if they are the latest part before model
+            // Actually it's role: "function" or role: "user" depending on SDK version. v0.24.1 uses role: "user" with functionResponse inside
+            formattedContents.push({
+                role: "user",
+                parts: functionResponsesParts
+            });
+            continue;
         }
-      } catch (err: any) {
-        lastErr = err;
-        console.warn(`[Natakarya Copilot] Model ${modelName} gagal: ${err.message || err}. Mencoba model berikutnya...`);
-      }
+        
+        // Jika tidak ada function call, ini adalah respon final
+        replyText = response.text();
+        
+        try {
+            const cleanJson = replyText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
+            finalPayload = JSON.parse(cleanJson);
+            break;
+        } catch (e) {
+            console.error("Gagal parse JSON dari model:", replyText);
+            finalPayload = {
+                reply: replyText,
+                actions: [],
+                data_tables: []
+            };
+            break;
+        }
     }
 
-    if (!replyText) {
-      throw lastErr || new Error("Gagal mendapatkan respons dari model Gemini.");
-    }
+    // =========================================================================
+    // 6. SERVER-SIDE ACTION EXECUTION (DIHAPUS UNTUK KEAMANAN)
+    // Eksekusi action seperti SELESAI_DISPOSISI sekarang ditangani sepenuhnya
+    // di client-side melalui ConfirmModal untuk menghindari update DB tanpa
+    // sepengetahuan/konfirmasi user.
+    // =========================================================================
 
     return NextResponse.json({
       success: true,
       model: usedModel,
-      reply: replyText,
+      reply: finalPayload.reply || "",
+      actions: finalPayload.actions || [],
+      data_tables: finalPayload.data_tables || [],
     });
+    
   } catch (error: any) {
     console.error("[Natakarya Copilot Error]:", error);
     return NextResponse.json(

@@ -175,7 +175,7 @@ export interface DokumenLink { id?: string; opdId: string; folderId: string | nu
 export type RepositoryItemType = "folder" | "link";
 export type DocumentIconType = "sheet" | "doc" | "pdf" | "video" | "image" | "zip" | "lainnya";
 export interface RepositoryItem { id: string; nama: string; tipe: RepositoryItemType; parentId: string | null; folderId?: string | null; opdId: string; ownerId: string; path: { id: string | null; nama: string }[]; url?: string; tipeDokumen?: DocumentIconType; createdAt: any; updatedAt: any; }
-export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; }
+export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
 export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; createdAt: Timestamp; }
 export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string; tanggalRapat: Timestamp; pemimpinRapat: string; notulis: string; peserta: string; createdBy: string; createdAt: Timestamp; isiNotulensi: string; }
@@ -214,6 +214,7 @@ export interface KertasKerja { id?: string; opdId: string; judul: string; deskri
 export interface KertasKerjaRow { id?: string; kertasKerjaId: string; data: { [columnId: string]: any }; createdAt: Timestamp; }
 export interface PelayananTransaksi { id?: string; opdId: string; tanggal: Timestamp; namaPemohon: string; noHp?: string; namaPengambil?: string; alamat?: string; customData?: Record<string, any>; kategori: 'Pengambilan' | 'Layanan Umum'; jenisDokumen?: string; judulLayanan?: string; catatan?: string; status: 'Selesai' | 'Diproses' | 'Menunggu'; fotoBuktiUrl?: string; petugasId: string; petugasNama: string; createdAt: Timestamp; }
 export interface TindakLanjut { id?: string; disposisiId: string; suratId: string; userId: string; jabatanId: string; tanggalLaporan: Timestamp; isiLaporan: string; googleDriveLink?: string; googleDriveFileName?: string; tautanLaporanUrl?: string; tautanLaporanNama?: string; fileLaporanUrl?: string; fileLaporanName?: string; opdId?: string; terlibatJabatanIds?: string[]; }
+export interface LaporanTindakLanjut { id?: string; tugasId?: string; suratId: string; disposisiId: string; userId: string; jabatanId: string; opdId: string; instruksiAwal?: string; ringkasanTindakan: string; hasilTindakan: string; kendala?: string; buktiFileUrl?: string; createdAt: Timestamp; }
 export interface TargetTahunan { tahun: number; target: number | string; realisasi?: number | string; }
 export interface IndikatorSasaran { id: string; nama: string; satuan: string; target: TargetTahunan[]; }
 export interface SasaranStrategis { id?: string; opdId: string; renstraId: string; deskripsi: string; indikator: IndikatorSasaran[]; createdAt: Timestamp; }
@@ -231,6 +232,16 @@ export interface EnrichedSuratAgenda extends Surat {
   disposisiStatus: 'Sudah Didisposisi' | 'Belum Didisposikan';
   isSelfDispo?: boolean;
   isForMe?: boolean;
+}
+
+export interface CopilotMemory {
+  id?: string;
+  userId: string;
+  preferredLogbookStyle?: 'ringkas' | 'naratif';
+  commonCategories?: string[];
+  lastProactiveAt?: Timestamp;
+  avgResponseTimeDisposisi?: number;
+  updatedAt: Timestamp;
 }
 export type CombinedAgendaItem = { id: string; type: 'surat' | 'internal'; item: Surat | JadwalTempat; time: string; title: string; location: string; penerimaDisposisi?: string; disposisiStatus?: 'Sudah Didisposisi' | 'Belum Didisposikan'; };
 export interface ActionableSuratItem { surat: Surat; disposisi: Disposisi; needsAcknowledge: boolean; needsTindakLanjut: boolean; isOverdue: boolean; }

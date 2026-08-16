@@ -48,7 +48,7 @@ const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: ()
             <DialogContent className="sm:max-w-2xl bg-card border-border">
                 <DialogHeader>
                     <DialogTitle className="flex items-center">
-                        <HelpCircle className="mr-3 text-blue-600" />
+                        <HelpCircle className="mr-3 text-[var(--nk-teal-mid)]" />
                         Bantuan: Pusat Komando Tugas
                     </DialogTitle>
                 </DialogHeader>
@@ -179,7 +179,7 @@ export default function TugasSayaPage() {
          <div className="flex-1">
             <div className="flex items-center gap-3">
               <h1 className="text-3xl font-bold text-foreground">Pusat Komando Tugas</h1>
-              <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
+              <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-[var(--nk-teal-mid)]">
                   <HelpCircle size={20} />
               </Button>
             </div>
@@ -198,7 +198,7 @@ export default function TugasSayaPage() {
       </div>
       
       {/* Filter Desktop */}
-      <div className="hidden md:flex p-4 bg-card rounded-xl border border-border shadow-sm mb-6 items-center gap-4">
+      <div className="hidden md:flex p-4 nk-card mb-6 items-center gap-4">
         <div className="text-sm font-semibold">Tampilkan:</div>
         <Select value={assignmentFilter} onValueChange={(v) => setAssignmentFilter(v as any)}>
           <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>

@@ -162,8 +162,8 @@ export default function DevelopmentTab({ combinedData }: DevelopmentTabProps) {
                                 <History className="text-gray-600" /> Riwayat Diklat & Pelatihan
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 nk-table-wrapper border-0 rounded-none shadow-none">
+                            <Table className="nk-table">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Nama Diklat</TableHead>
@@ -206,8 +206,8 @@ export default function DevelopmentTab({ combinedData }: DevelopmentTabProps) {
                                 <Medal className="text-orange-500" /> Riwayat Penghargaan
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            <Table>
+                        <CardContent className="p-0 nk-table-wrapper border-0 rounded-none shadow-none">
+                            <Table className="nk-table">
                                 <TableHeader>
                                     <TableRow>
                                         <TableHead>Penghargaan</TableHead>

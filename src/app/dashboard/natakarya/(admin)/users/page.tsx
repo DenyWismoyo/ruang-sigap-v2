@@ -58,7 +58,7 @@ const secondaryAuth = getAuth(secondaryApp);
 const ConfirmActionModal = ({ isOpen, onClose, onConfirm, title, message, confirmText = "Ya, Lanjutkan", isProcessing = false }: { isOpen: boolean, onClose: () => void, onConfirm: () => void, title: string, message: string, confirmText?: string, isProcessing?: boolean }) => {
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-md bg-card border-border">
+            <DialogContent className="sm:max-w-md nk-card border-[var(--border)]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center text-foreground">
                         <AlertTriangle className="mr-3 text-yellow-500" />
@@ -88,7 +88,7 @@ const UserCard = ({ user, getJabatanName, getOpdName, onEdit, onReset, onLoginAs
         return () => { document.removeEventListener("mousedown", handleClickOutside); };
     }, []);
     return (
-        <div className={`p-4 rounded-lg shadow-sm border ${isSelected ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20' : 'bg-card border-border'}`}>
+        <div className={`p-4 rounded-lg shadow-[var(--nk-shadow-sm)] border ${isSelected ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20' : 'nk-card border-[var(--border)]'}`}>
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3 min-w-0"> 
                      <Checkbox 
@@ -115,7 +115,7 @@ const UserCard = ({ user, getJabatanName, getOpdName, onEdit, onReset, onLoginAs
                     )}
                 </div>
             </div>
-            <div className="mt-3 pt-3 border-t border-border space-y-1 text-sm text-muted-foreground">
+            <div className="mt-3 pt-3 border-t border-[var(--border)] space-y-1 text-sm text-muted-foreground">
                 <p className="truncate"><strong>Jabatan:</strong> {getJabatanName(user.jabatanId)}</p>
                 <p className="truncate"><strong>OPD:</strong> {getOpdName(user.opdId)}</p>
             </div>
@@ -580,7 +580,7 @@ export default function ManajemenUserPage() {
                 </div>
             )}
 
-            <div className="mt-6 p-4 bg-card rounded-xl border border-border shadow-sm space-y-4">
+            <div className="mt-6 p-4 nk-card rounded-xl border border-[var(--border)] shadow-[var(--nk-shadow-sm)] space-y-4">
                 {(userProfile?.role === 'super_admin' || isAdminInduk) && (
                      <div className='grid grid-cols-1 md:grid-cols-3 gap-4'>
                         <div><Label htmlFor="opd-search" className="mb-1">Cari Nama Pengguna</Label><div className="relative"><Input id="opd-search" type="text" placeholder="Ketik nama pengguna..." value={opdSearchTerm} onChange={e => setOpdSearchTerm(e.target.value)} className="pl-8" /><Search size={16} className="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground" /></div></div>
@@ -602,10 +602,10 @@ export default function ManajemenUserPage() {
             </div>
 
             <div className="mt-8">
-                {isMasterLoading ? ( <div className="text-center p-8 text-muted-foreground"><Loader2 className="animate-spin mx-auto h-8 w-8 mb-2"/>Memuat data...</div> ) : (filteredUsers.length === 0) ? ( <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-dashed border-border"><p className="font-semibold">Tidak Ada Pengguna Ditemukan</p><p className="text-sm">Silakan pilih filter OPD yang lain atau tambahkan pengguna baru.</p></div> ) : (
+                {isMasterLoading ? ( <div className="text-center p-8 text-muted-foreground"><Loader2 className="animate-spin mx-auto h-8 w-8 mb-2"/>Memuat data...</div> ) : (filteredUsers.length === 0) ? ( <div className="text-center py-16 text-muted-foreground nk-glass-card rounded-xl border border-dashed border-[var(--border)]"><p className="font-semibold">Tidak Ada Pengguna Ditemukan</p><p className="text-sm">Silakan pilih filter OPD yang lain atau tambahkan pengguna baru.</p></div> ) : (
                     <>
                         <div className="space-y-4 md:hidden">{filteredUsers.map(user => ( <UserCard key={user.id} user={user} getJabatanName={getJabatanNameById} getOpdName={getOpdName} onEdit={u => openModal('edit', u)} onReset={u => openModal('reset', u)} onLoginAs={u => openModal('loginAs', u)} onMutasi={u => openModal('mutasi', u)} onDelete={handleDeleteUser} onSelect={handleSelectUser} isSelected={selectedUsers.includes(user.id!)} /> ))}</div>
-                        <div className="hidden md:block bg-card rounded-xl shadow-sm border border-border overflow-hidden">
+                        <div className="hidden md:block nk-card rounded-xl shadow-[var(--nk-shadow-sm)] border border-[var(--border)] overflow-hidden">
                             <Table>
                                 <TableHeader><TableRow><TableHead className="w-10 text-center"><Checkbox checked={selectedUsers.length === filteredUsers.length && filteredUsers.length > 0} onCheckedChange={(checked) => setSelectedUsers(checked ? filteredUsers.map(u => u.id!) : [])} aria-label="Pilih Semua"/></TableHead><TableHead>Nama</TableHead><TableHead>Jabatan</TableHead><TableHead>OPD</TableHead><TableHead>Status</TableHead><TableHead className="text-center">Aksi</TableHead></TableRow></TableHeader>
                                 <TableBody>
@@ -631,7 +631,7 @@ export default function ManajemenUserPage() {
             {/* --- MODAL MUTASI --- */}
             {isMutasiModalOpen && currentUser && (
                 <Dialog open={isMutasiModalOpen} onOpenChange={setIsMutasiModalOpen}>
-                    <DialogContent className="sm:max-w-lg bg-card border-border">
+                    <DialogContent className="sm:max-w-lg nk-card border-[var(--border)]">
                         <DialogHeader>
                             <DialogTitle className="flex items-center gap-2 text-orange-600">
                                 <ArrowRightLeft size={20}/> Form Mutasi / Rotasi Pegawai
@@ -705,7 +705,7 @@ export default function ManajemenUserPage() {
 
             {isEditModalOpen && currentUser && (
                 <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-                    <DialogContent className="sm:max-w-2xl bg-card border-border max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="sm:max-w-2xl nk-card border-[var(--border)] max-h-[90vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Edit Data Lengkap Pengguna</DialogTitle>
                             <DialogDescription>Sesuaikan informasi profil, kontak, dan hak akses pengguna.</DialogDescription>

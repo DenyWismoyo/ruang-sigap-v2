@@ -68,82 +68,85 @@ const AgendaItem = ({ surat }: { surat: EnrichedSuratAgenda }) => (
 
 const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
     <div className="overflow-x-auto pb-4">
-        <table className="w-full text-left text-sm border-separate border-spacing-y-2">
-            <thead className="text-xs text-muted-foreground uppercase bg-transparent">
-                <tr>
-                    <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Waktu</th>
-                    <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Perihal & Pengirim</th>
-                    <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Lokasi</th>
-                    <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Disposisi Kepada</th>
-                </tr>
-            </thead>
-            <tbody>
+        <div className="nk-table-wrapper">
+            <table className="nk-table">
+                <thead>
+                    <tr>
+                        <th>Waktu</th>
+                        <th>Perihal & Pengirim</th>
+                        <th>Lokasi</th>
+                        <th>Disposisi Kepada</th>
+                    </tr>
+                </thead>
+                <tbody>
                 {agendas.map(surat => (
-                    <tr key={surat.id} className="bg-card hover:bg-[var(--nk-gradient-start)]/5 transition-all shadow-sm hover:shadow-[0_4px_20px_rgba(17,94,89,0.08)] group">
-                        <td className="px-4 py-4 text-foreground whitespace-nowrap align-top w-32 rounded-l-xl border-y border-l border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
+                    <tr key={surat.id} className="group">
+                        <td className="w-32">
                             <div className="flex flex-col">
                                 <span className="font-bold text-base">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
-                                <span className="text-xs font-bold text-[var(--nk-gradient-start)]">{surat.detailAgenda?.jam}</span>
+                                <span className="text-xs font-bold text-[var(--nk-teal-mid)]">{surat.detailAgenda?.jam}</span>
                             </div>
                         </td>
-                        <td className="px-4 py-4 align-top border-y border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
-                            <Link href={`/dashboard/surat/${surat.id}`} className="text-foreground hover:text-[var(--nk-gradient-start)] font-semibold line-clamp-2 block mb-1">
+                        <td>
+                            <Link href={`/dashboard/surat/${surat.id}`} className="text-foreground hover:text-[var(--nk-teal-mid)] font-semibold line-clamp-2 block mb-1">
                                 {surat.perihal}
                             </Link>
                             <p className="text-xs text-muted-foreground">No: {surat.nomorSurat}</p>
                             <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1.5 font-medium">
-                                <span className="p-1 rounded-full bg-primary/10 text-[var(--nk-gradient-start)]"><User size={10} /></span>
+                                <span className="p-1 rounded-full bg-primary/10 text-[var(--nk-teal-mid)]"><User size={10} /></span>
                                 {surat.pengirim}
                             </p>
                         </td>
-                        <td className="px-4 py-4 text-sm text-muted-foreground align-top border-y border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">{surat.detailAgenda?.lokasi}</td>
-                        <td className="px-4 py-4 text-sm align-top rounded-r-xl border-y border-r border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
+                        <td className="text-sm text-muted-foreground">{surat.detailAgenda?.lokasi}</td>
+                        <td className="text-sm">
                             {surat.disposisiStatus === 'Sudah Didisposisi' ? (
                                 <span className="text-foreground font-medium line-clamp-2">{surat.penerimaDisposisi}</span>
                             ) : (
-                                <span className="text-amber-600 dark:text-amber-400 font-medium flex items-center gap-1.5">
-                                    <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span></span> Belum Didisposikan
+                                <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5">
+                                    <span className="relative flex h-2 w-2"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--nk-gold)]"></span></span> Belum Didisposikan
                                 </span>
                             )}
                         </td>
                     </tr>
                 ))}
             </tbody>
-        </table>
+            </table>
+        </div>
     </div>
 );
 
 const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[], onRowClick: (jadwal: JadwalTempat) => void }) => (
   <div className="overflow-x-auto pb-4">
-    <table className="w-full text-left text-sm border-separate border-spacing-y-2">
-      <thead className="text-xs text-muted-foreground uppercase bg-transparent">
-        <tr>
-            <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Tanggal & Jam</th>
-            <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Kegiatan</th>
-            <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Lokasi / Tautan</th>
-            <th scope="col" className="px-4 py-2 font-semibold font-heading tracking-wider">Status</th>
-        </tr>
-      </thead>
-      <tbody>
+    <div className="nk-table-wrapper">
+        <table className="nk-table">
+          <thead>
+            <tr>
+                <th>Tanggal & Jam</th>
+                <th>Kegiatan</th>
+                <th>Lokasi / Tautan</th>
+                <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
         {agendas.map(jadwal => (
-          <tr key={jadwal.id} onClick={() => onRowClick(jadwal)} className="bg-card hover:bg-[var(--nk-gradient-start)]/5 cursor-pointer transition-all shadow-sm hover:shadow-[0_4px_20px_rgba(17,94,89,0.08)] group">
-            <td className="px-4 py-4 font-medium text-foreground whitespace-nowrap align-top w-40 rounded-l-xl border-y border-l border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
+          <tr key={jadwal.id} onClick={() => onRowClick(jadwal)} className="cursor-pointer group">
+            <td className="font-medium text-foreground w-40">
                 <div className="flex flex-col">
                     <span>{jadwal.tanggalMulai?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
-                    <span className="font-bold text-xs text-[var(--nk-gradient-start)]">{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
+                    <span className="font-bold text-xs text-[var(--nk-teal-mid)]">{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
                 </div>
             </td>
-            <td className="px-4 py-4 font-semibold text-foreground align-top border-y border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">{jadwal.kegiatan}</td>
-            <td className="px-4 py-4 align-top border-y border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
+            <td className="font-semibold text-foreground">{jadwal.kegiatan}</td>
+            <td>
                 {jadwal.jenis === 'Virtual' && jadwal.tautanRapat ? (
-                    <a href={jadwal.tautanRapat} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center text-[var(--nk-gradient-start)] hover:underline font-medium">
+                    <a href={jadwal.tautanRapat} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()} className="flex items-center text-[var(--nk-teal-mid)] hover:underline font-medium">
                         <ExternalLink size={14} className="mr-1.5"/> Link Rapat
                     </a>
                 ) : (
                     <span className="flex items-center text-muted-foreground"><MapPin size={14} className="mr-1.5"/> {jadwal.namaTempat}</span>
                 )}
             </td>
-            <td className="px-4 py-4 align-top rounded-r-xl border-y border-r border-border/40 group-hover:border-[var(--nk-gradient-start)]/20 transition-colors">
+            <td>
                 {jadwal.status !== 'Disetujui' && (
                     <span className={`px-2 py-1 text-[10px] font-bold rounded-md uppercase tracking-wider shadow-sm ${jadwal.status === 'Menunggu Persetujuan' ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-200 dark:border-amber-800' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300 border border-rose-200 dark:border-rose-800'}`}>
                         {jadwal.status}
@@ -153,7 +156,8 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
           </tr>
         ))}
       </tbody>
-    </table>
+      </table>
+    </div>
   </div>
 );
 
@@ -376,12 +380,11 @@ export default function DashboardPage() {
              >
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <Card ref={agendaRef} className="flex flex-col h-fit rounded-2xl shadow-[0_4px_20px_-4px_rgba(17,94,89,0.1)] border border-[var(--nk-gradient-start)]/10 overflow-hidden relative group">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
-                    <div className="p-4 border-b border-border/50 flex justify-between items-center bg-gradient-to-r from-[var(--nk-gradient-start)]/5 to-transparent">
+                <div className="nk-card flex flex-col h-fit">
+                    <div className="p-4 border-b border-border/50 flex justify-between items-center bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-[var(--nk-gradient-start)]/10 rounded-xl">
-                                <CalendarClock className="w-5 h-5 text-[var(--nk-gradient-start)]"/>
+                            <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
+                                <CalendarClock className="w-5 h-5 text-[var(--nk-teal-mid)]"/>
                             </div>
                             <h2 className="text-lg font-bold font-heading text-foreground">Agenda Undangan OPD</h2>
                         </div>
@@ -446,15 +449,14 @@ export default function DashboardPage() {
                         )}
                     </motion.div>
                     </AnimatePresence>
-                </Card>
+                </div>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
-                <Card className="flex flex-col h-fit rounded-2xl shadow-[0_4px_20px_-4px_rgba(17,94,89,0.1)] border border-[var(--nk-gradient-start)]/10 overflow-hidden relative group mt-6">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
-                    <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-[var(--nk-gradient-start)]/5 to-transparent gap-3">
+                <div className="nk-card flex flex-col h-fit mt-6">
+                    <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent gap-3">
                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-[var(--nk-gradient-start)]/10 rounded-xl">
-                                <CalendarDays className="w-5 h-5 text-[var(--nk-gradient-start)]"/>
+                            <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
+                                <CalendarDays className="w-5 h-5 text-[var(--nk-teal-mid)]"/>
                             </div>
                             <h3 className="text-lg font-bold font-heading text-foreground">Agenda Internal Bulan Ini</h3>
                         </div>
@@ -496,7 +498,7 @@ export default function DashboardPage() {
                             </div>
                         )}
                     </div>
-                </Card>
+                </div>
 
              </motion.div>
 

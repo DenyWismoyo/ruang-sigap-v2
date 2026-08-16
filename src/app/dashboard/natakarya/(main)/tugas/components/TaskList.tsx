@@ -47,8 +47,8 @@ export default function TaskList({ tugasList, onOpenDetail, onStatusChange, onDe
 
   if (tugasList.length === 0) {
     return (
-        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-dashed border-border">
-            <ClipboardList size={48} className="mx-auto text-muted-foreground/30"/>
+        <div className="text-center py-16 text-muted-foreground nk-glass-card rounded-xl border border-dashed border-[var(--border)] mt-4">
+            <ClipboardList size={48} className="mx-auto text-[var(--nk-teal-mid)]/30"/>
             <p className="mt-4 font-semibold">Tidak ada tugas untuk ditampilkan.</p>
             <p className="text-sm">Coba ubah filter atau buat tugas baru.</p>
         </div>

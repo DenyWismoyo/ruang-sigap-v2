@@ -59,12 +59,8 @@ export const useSuratActions = () => {
   const refreshData = () => {
       queryClient.invalidateQueries({ queryKey: ['suratList'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] }); 
-      
-      // [FIX CRITICAL] Beri jeda 2.5 detik untuk Feed agar Cloud Functions
-      // selesai mengupdate dokumen 'userSummaries' di backend.
-      setTimeout(() => {
-          queryClient.invalidateQueries({ queryKey: ['feed'] });
-      }, 2500);
+      // Cache 'feed' (user_summaries) sudah di-update secara optimistic di masing-masing action
+      // sehingga tidak perlu di-invalidate dengan hardcoded delay yang memicu ghosting.
   };
 
   const getActorName = () => {
@@ -165,6 +161,15 @@ export const useSuratActions = () => {
       }
 
       await batch.commit();
+
+      try {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+              id: `auto_disp_${surat.id}_${Date.now()}`,
+              deskripsi: `Mendisposisikan surat: "${surat.perihal}"`,
+              selesai: true
+          });
+      } catch (logErr) { console.error(logErr); }
+
       addToast(`Berhasil mengirim ke ${targets.length} orang.`, "success");
       refreshData();
       return true;
@@ -244,6 +249,15 @@ export const useSuratActions = () => {
       }
 
       await batch.commit();
+
+      try {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+              id: `auto_esk_${surat.id}_${Date.now()}`,
+              deskripsi: `Eskalasi surat ke pimpinan: "${surat.perihal}"`,
+              selesai: true
+          });
+      } catch (logErr) { console.error(logErr); }
+
       addToast(`Surat berhasil dinaikkan ke pimpinan.`, "success");
       refreshData();
       return true;
@@ -265,10 +279,46 @@ export const useSuratActions = () => {
       batch.update(disposisiRef, { penerimaDiterima: arrayUnion(effectiveJabatan.id) });
       await logActivity(surat.id!, getActorName(), disposisi.isInformational ? "Menerima pemberitahuan" : "Menerima disposisi");
       
+      // [STATUS UPDATE]
+      if (surat.statusPenyelesaian === 'Baru' || surat.statusPenyelesaian === 'Didisposisikan') {
+          const suratRef = doc(db, 'surat', surat.id!);
+          batch.update(suratRef, { statusPenyelesaian: 'Proses Tindak Lanjut' });
+      }
+
+      // [NOTIFIKASI]
+      if (disposisi.dariJabatanId) {
+          const { query, collection, where, limit, getDocs } = await import('firebase/firestore');
+          const usersQ = query(collection(db, 'users'), where('jabatanId', '==', disposisi.dariJabatanId), limit(1));
+          const usersSnap = await getDocs(usersQ);
+          if (!usersSnap.empty) {
+              const sender = usersSnap.docs[0].data();
+              if (sender.uid !== userProfile.uid) {
+                  const notifRef = doc(collection(db, 'notifications'));
+                  batch.set(notifRef, {
+                      userId: sender.uid,
+                      userNip: sender.nip,
+                      message: `Disposisi telah diterima oleh ${getActorName()}.`,
+                      link: `/dashboard/surat/${surat.id!}`,
+                      isRead: false,
+                      timestamp: serverTimestamp() as Timestamp,
+                  });
+              }
+          }
+      }
+
       // [SINKRONISASI UI INSTAN]
       optimisticUpdateAcknowledge(disposisi.id!);
 
       await batch.commit();
+
+      // [AUTO LOGBOOK]
+      try {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+              id: `auto_terima_${disposisi.id}_${Date.now()}`,
+              deskripsi: `Menerima ${disposisi.isInformational ? 'pemberitahuan' : 'disposisi'} surat: "${surat.perihal}"`,
+              selesai: true
+          });
+      } catch (logErr) { console.error(logErr); }
       addToast("Disposisi diterima.", "success");
       refreshData();
       return true;
@@ -323,6 +373,27 @@ export const useSuratActions = () => {
             batch.update(disposisiRef, { penerimaSelesai: arrayUnion(effectiveJabatan.id) });
             // [SINKRONISASI UI INSTAN]
             optimisticRemoveDisposisi(disposisi.id!);
+        }
+
+        // [NOTIFIKASI PENGIRIM DISPOSISI]
+        if (disposisi.dariJabatanId) {
+            const { query, collection, where, limit, getDocs } = await import('firebase/firestore');
+            const usersQ = query(collection(db, 'users'), where('jabatanId', '==', disposisi.dariJabatanId), limit(1));
+            const usersSnap = await getDocs(usersQ);
+            if (!usersSnap.empty) {
+                const sender = usersSnap.docs[0].data();
+                if (sender.uid !== userProfile.uid) {
+                    const notifRef = doc(collection(db, 'notifications'));
+                    batch.set(notifRef, {
+                        userId: sender.uid,
+                        userNip: sender.nip,
+                        message: `Tindak lanjut baru dari ${actorName}: "${payload.judulLaporan || 'Proses'}"`,
+                        link: `/dashboard/surat/${surat.id!}`,
+                        isRead: false,
+                        timestamp: serverTimestamp() as Timestamp,
+                    });
+                }
+            }
         }
 
         const suratRef = doc(db, 'surat', surat.id!);
@@ -389,6 +460,26 @@ export const useSuratActions = () => {
           
           await logActivity(suratId, actorName, "Merevisi Laporan/Catatan", logText.substring(0, 100));
 
+          // [AUTO LOGBOOK]
+          try {
+              await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+                  id: `auto_edit_tinjut_${tindakLanjutId}_${Date.now()}`,
+                  deskripsi: `Merevisi catatan/tindak lanjut: ${payload.judulLaporan || 'Proses'}`,
+                  selesai: false
+              });
+          } catch (logErr) { console.error(logErr); }
+
+          // [SINKRONISASI UI INSTAN]
+          queryClient.setQueryData(['suratDetail', suratId], (oldData: any) => {
+              if (!oldData || !oldData.tindakLanjutList) return oldData;
+              return {
+                  ...oldData,
+                  tindakLanjutList: oldData.tindakLanjutList.map((tl: any) => 
+                      tl.id === tindakLanjutId ? { ...tl, isiLaporan: payload.isiLaporan, judulLaporan: payload.judulLaporan || '', warnaLabel: payload.warnaLabel || 'default', checklist: payload.checklist || [] } : tl
+                  )
+              };
+          });
+
           await batch.commit();
           addToast("Catatan berhasil diperbarui.", "success");
           refreshData();
@@ -415,6 +506,24 @@ export const useSuratActions = () => {
             alasanArsip: alasan
         });
         await logActivity(surat.id, getActorName(), 'Surat Diarsipkan', `Alasan: ${alasan}`);
+        
+        // [AUTO LOGBOOK]
+        try {
+            await updateLogbook(userProfile?.uid || '', effectiveJabatan?.opdId || '', new Date(), {
+                id: `auto_arsip_${surat.id}_${Date.now()}`,
+                deskripsi: `Mengarsipkan surat: "${surat.perihal}". Alasan: ${alasan}`,
+                selesai: true
+            });
+        } catch (logErr) { console.error(logErr); }
+
+        // [SINKRONISASI UI INSTAN]
+        if (effectiveJabatan?.opdId) {
+            queryClient.setQueryData(['suratList', effectiveJabatan.opdId], (oldData: any) => {
+                if (!oldData) return oldData;
+                return oldData.filter((s: any) => s.id !== surat.id);
+            });
+        }
+
         await batch.commit();
         addToast("Surat berhasil diarsipkan.", "success");
         refreshData(); 
@@ -437,15 +546,25 @@ export const useSuratActions = () => {
         const suratRef = doc(db, 'surat', disposisi.suratId);
         batch.update(suratRef, { statusPenyelesaian: 'Revisi Disposisi' });
         
-        // [SINKRONISASI UI INSTAN]
-        optimisticRemoveDisposisi(disposisi.id);
+        // [SINKRONISASI UI INSTAN dipindah ke setelah commit]
+
+        // [SEDANG-5 FIX]: Fallback fetch jika pengirim tidak ada di cache (beda OPD)
+        let finalSenderProfile = senderProfile;
+        if (!finalSenderProfile && disposisi.dariJabatanId) {
+            const { query, collection, where, limit, getDocs } = await import('firebase/firestore');
+            const usersQ = query(collection(db, 'users'), where('jabatanId', '==', disposisi.dariJabatanId), limit(1));
+            const usersSnap = await getDocs(usersQ);
+            if (!usersSnap.empty) {
+                finalSenderProfile = usersSnap.docs[0].data() as UserProfile;
+            }
+        }
 
         // Tambah notifikasi untuk pengirim
-        if (senderProfile?.uid) {
+        if (finalSenderProfile?.uid) {
             const notifRef = doc(collection(db, 'notifications'));
             batch.set(notifRef, {
-                userId: senderProfile.uid,
-                userNip: senderProfile.nip,
+                userId: finalSenderProfile.uid,
+                userNip: finalSenderProfile.nip,
                 message: `Disposisi dikembalikan oleh ${getActorName()}. Alasan: ${alasan}`,
                 link: `/dashboard/surat/${disposisi.suratId}`,
                 isRead: false,
@@ -454,6 +573,19 @@ export const useSuratActions = () => {
         }
 
         await batch.commit();
+        
+        // [SINKRONISASI UI INSTAN]
+        optimisticRemoveDisposisi(disposisi.id);
+
+        // [AUTO LOGBOOK]
+        try {
+            await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
+                id: `auto_kembali_${disposisi.id}_${Date.now()}`,
+                deskripsi: `Mengembalikan disposisi surat. Alasan: ${alasan}`,
+                selesai: true
+            });
+        } catch (logErr) { console.error(logErr); }
+
         addToast('Disposisi dikembalikan.', 'success');
         refreshData(); 
         return true;
@@ -517,6 +649,23 @@ export const useSuratActions = () => {
               await batch.commit();
           }
 
+          // [AUTO LOGBOOK]
+          try {
+              await updateLogbook(userProfile?.uid || '', effectiveJabatan?.opdId || '', new Date(), {
+                  id: `auto_delete_${surat.id}_${Date.now()}`,
+                  deskripsi: `Menghapus surat dan data terkait: "${surat.perihal}"`,
+                  selesai: true
+              });
+          } catch (logErr) { console.error(logErr); }
+
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.opdId) {
+              queryClient.setQueryData(['suratList', effectiveJabatan.opdId], (oldData: any) => {
+                  if (!oldData) return oldData;
+                  return oldData.filter((s: any) => s.id !== surat.id);
+              });
+          }
+
           addToast("Surat berhasil dihapus beserta data terkait.", "success");
           refreshData(); 
           return true;
@@ -537,6 +686,17 @@ export const useSuratActions = () => {
           targetUsers.forEach(u => {
               const arsipRef = doc(db, 'suratPerPengguna', u.uid, 'arsip', surat.id);
               batch.set(arsipRef, { ...surat, diarsipkanOleh: userProfile.uid, tanggalArsip: Timestamp.now() });
+
+              // [NOTIFIKASI PENERIMA ARSIP]
+              const notifRef = doc(collection(db, 'notifications'));
+              batch.set(notifRef, {
+                  userId: u.uid,
+                  userNip: u.nip,
+                  message: `Anda mendapat tembusan arsip surat: "${surat.perihal}" dari ${getActorName()}`,
+                  link: `/dashboard/surat/${surat.id}`,
+                  isRead: false,
+                  timestamp: serverTimestamp() as Timestamp,
+              });
           });
           await batch.commit();
           addToast(`Surat berhasil diarsipkan ke ${targetUsers.length} penerima.`, 'success');
