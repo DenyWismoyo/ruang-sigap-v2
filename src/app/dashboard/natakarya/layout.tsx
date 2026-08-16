@@ -196,7 +196,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 nk-glass-panel border-b-0 h-[60px] transition-all duration-300 border-l-[3px] border-l-[var(--nk-deep)]">
+              <header className="sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 bg-background/95 backdrop-blur-sm h-[60px] transition-all duration-300">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-[var(--nk-surface-3)] rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>

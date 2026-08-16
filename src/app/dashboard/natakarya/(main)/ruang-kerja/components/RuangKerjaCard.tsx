@@ -283,8 +283,8 @@ export default function RuangKerjaCard({
             {/* Baris 1: Header Kompak */}
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
-                    <HeaderBadge />
-                    <StatusBadges />
+                    {HeaderBadge()}
+                    {StatusBadges()}
                 </div>
                 <div className="flex items-center text-[10px] text-muted-foreground">
                     <Clock size={10} className="mr-1" />
@@ -307,14 +307,14 @@ export default function RuangKerjaCard({
                         {title}
                     </h4>
                     
-                    <ContentPreview />
+                    {ContentPreview()}
                 </div>
             </div>
         </div>
 
         {/* FOOTER */}
         <div className="px-4 py-3 bg-muted/30 border-t border-border rounded-b-lg">
-            <ActionButtons />
+            {ActionButtons()}
             
             <AnimatePresence>
                 {isSuratDisposisi && openInlineTindakLanjutId === item.disposisi.id && (

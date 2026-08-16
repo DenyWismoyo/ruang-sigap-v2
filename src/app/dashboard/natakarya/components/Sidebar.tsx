@@ -566,8 +566,8 @@ const Sidebar = memo(
         transition={{ duration: 0.3, ease: "easeOut" }}
         className="relative w-20 natakarya-sidebar text-foreground flex flex-col h-full z-50"
       >
-        <div className="p-4 h-16 flex items-center justify-center border-b border-border">
-          <Logo className="h-8 w-10" />
+        <div className="p-4 h-16 flex items-center justify-center">
+          <Logo className="h-8 w-10 mix-blend-multiply dark:mix-blend-normal" />
         </div>
 
         <div className="flex-1 flex flex-col overflow-y-auto overflow-x-hidden py-4 space-y-1 custom-scrollbar">
