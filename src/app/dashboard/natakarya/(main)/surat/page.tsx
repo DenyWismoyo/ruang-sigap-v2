@@ -957,10 +957,12 @@ export default function KotakMasukPage() {
             {/* --- MODAL QUICK REPORT --- */}
             <Dialog open={!!quickReportSurat} onOpenChange={(open) => !open && resetQuickReportForm()}>
                 <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0 backdrop-blur-none bg-card' : 'w-full h-[100dvh] sm:h-auto sm:max-h-[90vh] sm:max-w-lg sm:rounded-2xl rounded-none backdrop-blur-xl bg-card/95 border-border/40 shadow-2xl'} p-0 overflow-hidden flex flex-col transition-all duration-300`}>
-                    <DialogHeader className="px-4 py-3 sm:px-5 sm:pt-5 sm:pb-3 bg-muted/30 border-b border-border flex flex-row items-start justify-between shrink-0">
+                    <DialogHeader className="px-4 py-3 sm:px-5 sm:pt-5 sm:pb-3 bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent border-b border-border/50 flex flex-row items-start justify-between shrink-0">
                         <div className="flex-1 pr-4">
-                            <DialogTitle className="flex items-center gap-2 text-foreground">
-                                <MessageSquare className="h-5 w-5 text-blue-600" />
+                            <DialogTitle className="flex items-center gap-3 text-foreground font-heading">
+                                <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
+                                    <MessageSquare className="h-5 w-5 text-[var(--nk-teal-mid)]" />
+                                </div>
                                 {isMeetingMode ? 'Catatan Rapat' : 'Laporan Cepat'}
                             </DialogTitle>
                             <DialogDescription className="line-clamp-2 mt-1">
@@ -982,9 +984,10 @@ export default function KotakMasukPage() {
                     {quickReportSurat && (
                         <div className={`${isMeetingMode ? 'p-0' : 'p-4 md:p-5'} flex-1 flex flex-col bg-background ${isMeetingMode ? 'overflow-hidden' : ''}`}>
                             {!isMeetingMode && (
-                                <div className="p-3 mb-4 bg-muted/40 border border-border rounded-lg text-sm text-foreground">
-                                    <span className="text-xs font-semibold text-muted-foreground block mb-1">Instruksi Atasan:</span>
-                                    <span className="italic opacity-90">"{quickReportSurat.disposisi.instruksi}"</span>
+                                <div className="p-3 mb-4 bg-[var(--nk-gold)]/5 border border-[var(--nk-gold)]/20 rounded-xl text-sm text-foreground relative overflow-hidden">
+                                    <div className="absolute top-0 left-0 w-1 h-full bg-[var(--nk-gold)]/50"></div>
+                                    <span className="text-[11px] font-bold tracking-wider text-[var(--nk-gold)] block mb-1 uppercase">Instruksi Atasan</span>
+                                    <span className="italic font-medium text-foreground/90">"{quickReportSurat.disposisi.instruksi}"</span>
                                 </div>
                             )}
                             
@@ -1092,12 +1095,12 @@ export default function KotakMasukPage() {
                             variant="outline" 
                             onClick={() => submitQuickReport(false)}
                             disabled={(quickIsi.trim() === '' && quickChecklist.length === 0) || isActionProcessing}
-                            className="w-full sm:w-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            className="w-full sm:w-auto text-[var(--nk-teal-mid)] border-[var(--nk-teal-mid)]/30 hover:bg-[var(--nk-teal-mid)]/10 hover:text-[var(--nk-teal-mid)]"
                         >
                             Kirim {isMeetingMode ? 'Catatan' : 'Progres'}
                         </Button>
                         <Button 
-                            className="bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto" 
+                            className="w-full sm:w-auto bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] text-white shadow-md hover:shadow-lg transition-all border-none" 
                             onClick={() => submitQuickReport(true)}
                             disabled={(quickIsi.trim() === '' && quickChecklist.length === 0) || isActionProcessing}
                         >

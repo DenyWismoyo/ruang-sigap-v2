@@ -108,89 +108,125 @@ export default function PersonalPerformanceWidget() {
   }, [userProfile, actingJabatanProfile, jabatanProfile]);
 
   return (
-    <Card className="card-solid rounded-xl border-t-4 border-t-green-500 shadow-md overflow-hidden bg-gradient-to-br from-card to-card/90">
-      <CardHeader className="bg-muted/30 border-b border-border p-4 pb-3">
-        <CardTitle className="text-lg font-bold flex items-center justify-between text-foreground">
-          <div className="flex items-center gap-2">
-            <Target className="w-5 h-5 text-green-500" />
-            Kinerja Saya (30 Hari)
+    <Card className="nk-card bg-gradient-to-br from-card/90 to-card/50 backdrop-blur-md border border-white/10 dark:border-white/5 shadow-xl overflow-hidden relative">
+      {/* Decorative background glow */}
+      <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary/20 rounded-full blur-[80px] pointer-events-none" />
+      <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-blue-500/10 rounded-full blur-[80px] pointer-events-none" />
+
+      <CardHeader className="bg-white/5 dark:bg-black/10 border-b border-white/10 p-5 pb-4 relative z-10">
+        <CardTitle className="text-lg font-bold flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 shadow-[0_0_15px_rgba(13,107,98,0.2)] animate-nk-glow-pulse">
+              <Target className="w-5 h-5 text-primary" />
+            </div>
+            <span className="nk-text-gradient tracking-tight">Kinerja Saya (30 Hari)</span>
           </div>
-          <span className="text-xs font-normal text-muted-foreground bg-background px-2 py-1 rounded-full border border-border">Real-time</span>
+          <span className="nk-badge-gold flex items-center gap-1.5 shadow-sm border border-amber-500/20">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+            </span>
+            Real-time
+          </span>
         </CardTitle>
       </CardHeader>
       
-      <CardContent className="p-5 space-y-5">
+      <CardContent className="p-6 space-y-6 relative z-10">
         {isLoading ? (
-          <div className="space-y-4 animate-pulse">
-            <div className="h-10 bg-muted rounded w-full"></div>
-            <div className="h-10 bg-muted rounded w-full"></div>
-            <div className="h-10 bg-muted rounded w-full"></div>
+          <div className="space-y-6 animate-pulse">
+            {[1, 2, 3].map(i => (
+              <div key={i}>
+                <div className="flex justify-between mb-2">
+                  <div className="h-4 bg-muted/50 rounded w-1/3"></div>
+                  <div className="h-6 bg-muted/50 rounded w-1/4"></div>
+                </div>
+                <div className="h-3 bg-muted/30 rounded-full w-full"></div>
+              </div>
+            ))}
           </div>
         ) : (
           <motion.div 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="space-y-5"
+            className="space-y-7"
           >
             {/* Tugas Progress */}
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <CheckCircle2 size={16} className="text-blue-500" />
+            <div className="group">
+              <div className="flex justify-between items-end mb-2.5">
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-foreground/90 group-hover:text-blue-500 transition-colors">
+                  <div className="p-1.5 rounded-md bg-blue-500/10 border border-blue-500/20">
+                    <CheckCircle2 size={16} className="text-blue-500" />
+                  </div>
                   Tugas Diselesaikan
                 </div>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-black text-foreground drop-shadow-sm">
                   {stats.tugasSelesai} <span className="text-sm font-medium text-muted-foreground">/ {stats.totalTugas}</span>
                 </div>
               </div>
-              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-secondary/50 dark:bg-black/20 border border-black/5 dark:border-white/5 h-3 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className="bg-blue-500 h-full rounded-full transition-all duration-1000" 
+                  className="h-full rounded-full transition-all duration-1000 bg-gradient-to-r from-blue-600 to-cyan-400 shadow-[0_0_10px_rgba(59,130,246,0.5)] relative overflow-hidden" 
                   style={{ width: `${stats.totalTugas > 0 ? (stats.tugasSelesai / stats.totalTugas) * 100 : 0}%` }}
-                ></div>
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-nk-shimmer" />
+                </div>
               </div>
             </div>
 
             {/* Ketepatan Waktu */}
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Clock size={16} className="text-emerald-500" />
+            <div className="group">
+              <div className="flex justify-between items-end mb-2.5">
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-foreground/90 group-hover:text-emerald-500 transition-colors">
+                  <div className="p-1.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
+                    <Clock size={16} className="text-emerald-500" />
+                  </div>
                   Ketepatan Waktu
                 </div>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
                   {stats.ketepatanWaktu >= 80 ? (
-                    <TrendingUp size={16} className="text-emerald-500" />
+                    <TrendingUp size={16} className="text-emerald-500 drop-shadow-sm" />
                   ) : stats.ketepatanWaktu < 50 && stats.tugasSelesai > 0 ? (
-                    <TrendingDown size={16} className="text-red-500" />
+                    <TrendingDown size={16} className="text-red-500 drop-shadow-sm" />
                   ) : null}
-                  <span className="text-2xl font-bold text-foreground">{stats.ketepatanWaktu}%</span>
+                  <span className={`text-2xl font-black drop-shadow-sm ${stats.ketepatanWaktu >= 80 ? 'text-emerald-500' : stats.ketepatanWaktu >= 50 ? 'text-amber-500' : 'text-red-500'}`}>
+                    {stats.ketepatanWaktu}%
+                  </span>
                 </div>
               </div>
-              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-secondary/50 dark:bg-black/20 border border-black/5 dark:border-white/5 h-3 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className={`h-full rounded-full transition-all duration-1000 ${stats.ketepatanWaktu >= 80 ? 'bg-emerald-500' : stats.ketepatanWaktu >= 50 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                  className={`h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_currentColor] relative overflow-hidden ${
+                    stats.ketepatanWaktu >= 80 ? 'bg-gradient-to-r from-emerald-600 to-teal-400 text-emerald-500' : 
+                    stats.ketepatanWaktu >= 50 ? 'bg-gradient-to-r from-amber-600 to-yellow-400 text-amber-500' : 
+                    'bg-gradient-to-r from-red-600 to-rose-400 text-red-500'
+                  }`}
                   style={{ width: `${stats.ketepatanWaktu}%` }}
-                ></div>
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-nk-shimmer" />
+                </div>
               </div>
             </div>
 
             {/* Disposisi Diproses */}
-            <div>
-              <div className="flex justify-between items-end mb-2">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <Send size={16} className="text-indigo-500" />
+            <div className="group">
+              <div className="flex justify-between items-end mb-2.5">
+                <div className="flex items-center gap-2.5 text-sm font-semibold text-foreground/90 group-hover:text-indigo-500 transition-colors">
+                  <div className="p-1.5 rounded-md bg-indigo-500/10 border border-indigo-500/20">
+                    <Send size={16} className="text-indigo-500" />
+                  </div>
                   Disposisi Diproses
                 </div>
-                <div className="text-2xl font-bold text-foreground">
+                <div className="text-2xl font-black text-foreground drop-shadow-sm">
                   {stats.disposisiDiproses} <span className="text-sm font-medium text-muted-foreground">/ {stats.totalDisposisi}</span>
                 </div>
               </div>
-              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+              <div className="w-full bg-secondary/50 dark:bg-black/20 border border-black/5 dark:border-white/5 h-3 rounded-full overflow-hidden shadow-inner">
                 <div 
-                  className="bg-indigo-500 h-full rounded-full transition-all duration-1000" 
+                  className="h-full rounded-full transition-all duration-1000 bg-gradient-to-r from-indigo-600 to-purple-400 shadow-[0_0_10px_rgba(79,70,229,0.5)] relative overflow-hidden" 
                   style={{ width: `${stats.totalDisposisi > 0 ? (stats.disposisiDiproses / stats.totalDisposisi) * 100 : 0}%` }}
-                ></div>
+                >
+                  <div className="absolute inset-0 bg-white/20 animate-nk-shimmer" />
+                </div>
               </div>
             </div>
             

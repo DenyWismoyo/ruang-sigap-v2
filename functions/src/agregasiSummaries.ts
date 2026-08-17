@@ -56,7 +56,9 @@ export const syncDisposisiToSummary = onDocumentWritten({
                 const needsAcknowledge = !(dataAfter.penerimaDiterima || []).includes(jabId);
 
                 // --- INTEGRASI CLOUD TASKS (PENJADWALAN NOTIFIKASI) ---
-                if (needsAcknowledge) {
+                const wasAcknowledge = dataBefore ? (dataBefore.penerimaDiterima || []).includes(jabId) : false;
+                const newlyNeedsAcknowledge = needsAcknowledge && (!dataBefore || wasAcknowledge);
+                if (newlyNeedsAcknowledge) {
                     const queue = getFunctions().taskQueue('sendReminderTask');
                     await queue.enqueue({
                         uid: jabId,
@@ -111,50 +113,60 @@ export const syncTugasToSummary = onDocumentWritten({
     const dataAfter = change.after.exists ? change.after.data() : null;
     const dataBefore = change.before.exists ? change.before.data() : null;
 
-      const jabId = dataAfter?.kepadaJabatanId || dataBefore?.kepadaJabatanId;
-      if (!jabId) return;
+      const allJabatanIds = new Set<string>();
+      if (dataAfter?.kepadaJabatanId) allJabatanIds.add(dataAfter.kepadaJabatanId);
+      if (dataBefore?.kepadaJabatanId) allJabatanIds.add(dataBefore.kepadaJabatanId);
+      if (dataAfter?.collaboratorIds) dataAfter.collaboratorIds.forEach((id: string) => allJabatanIds.add(id));
+      if (dataBefore?.collaboratorIds) dataBefore.collaboratorIds.forEach((id: string) => allJabatanIds.add(id));
 
-      await db.runTransaction(async (transaction) => {
-          const summaryRef = db.collection('userSummaries').doc(jabId);
-          const summaryDoc = await transaction.get(summaryRef);
-          
-          let summaryData = summaryDoc.exists ? summaryDoc.data()! : { pendingTugas: {} };
-          if (!summaryData.pendingTugas) summaryData.pendingTugas = {};
+      if (allJabatanIds.size === 0) return;
 
-          // BUAT OBJEK UPDATE KHUSUS FIRESTORE
-          const updateData: any = {
-              pendingTugas: { ...summaryData.pendingTugas }
-          };
+      for (const jabId of allJabatanIds) {
+          await db.runTransaction(async (transaction) => {
+              const summaryRef = db.collection('userSummaries').doc(jabId);
+              const summaryDoc = await transaction.get(summaryRef);
+              
+              let summaryData = summaryDoc.exists ? summaryDoc.data()! : { pendingTugas: {} };
+              if (!summaryData.pendingTugas) summaryData.pendingTugas = {};
 
-          if (!dataAfter || dataAfter.status === 'Selesai' || dataAfter.status === 'Dibatalkan') {
-              // [FIX CRITICAL]: Wajib gunakan FieldValue.delete()
-              updateData.pendingTugas[tugasId] = admin.firestore.FieldValue.delete();
-              delete summaryData.pendingTugas[tugasId];
-          } else {
-              // --- INTEGRASI CLOUD TASKS UNTUK TUGAS ---
-              const queue = getFunctions().taskQueue('sendReminderTask');
-              await queue.enqueue({
-                  uid: jabId,
-                  type: 'tugas',
-                  docId: tugasId
-              }, {
-                  scheduleDelaySeconds: 2 * 60 * 60 // Delay 2 Jam (7200 detik)
+              // BUAT OBJEK UPDATE KHUSUS FIRESTORE
+              const updateData: any = {
+                  pendingTugas: { ...summaryData.pendingTugas }
+              };
+
+              if (!dataAfter || dataAfter.status === 'Selesai' || dataAfter.status === 'Dibatalkan') {
+                  // [FIX CRITICAL]: Wajib gunakan FieldValue.delete()
+                  updateData.pendingTugas[tugasId] = admin.firestore.FieldValue.delete();
+                  delete summaryData.pendingTugas[tugasId];
+              } else {
+                  // --- INTEGRASI CLOUD TASKS UNTUK TUGAS ---
+                  const isNewOrChangedStatus = !dataBefore || dataBefore.status !== dataAfter.status;
+                  if (isNewOrChangedStatus) {
+                      const queue = getFunctions().taskQueue('sendReminderTask');
+                      await queue.enqueue({
+                          uid: jabId,
+                          type: 'tugas',
+                          docId: tugasId
+                      }, {
+                          scheduleDelaySeconds: 2 * 60 * 60 // Delay 2 Jam (7200 detik)
+                      });
+                  }
+
+                  const clonedData = { ...dataAfter, id: tugasId };
+                  updateData.pendingTugas[tugasId] = clonedData;
+                  summaryData.pendingTugas[tugasId] = clonedData;
+              }
+
+              // Hitung ulang angka notifikasi
+              let tugasBaruCount = 0;
+              Object.values(summaryData.pendingTugas).forEach((item: any) => {
+                  if (item && item.id) tugasBaruCount++;
               });
 
-              const clonedData = { ...dataAfter, id: tugasId };
-              updateData.pendingTugas[tugasId] = clonedData;
-              summaryData.pendingTugas[tugasId] = clonedData;
-          }
+              updateData.tugasBaruCount = tugasBaruCount;
 
-          // Hitung ulang angka notifikasi
-          let tugasBaruCount = 0;
-          Object.values(summaryData.pendingTugas).forEach((item: any) => {
-              if (item && item.id) tugasBaruCount++;
+              // Eksekusi update
+              transaction.set(summaryRef, updateData, { merge: true });
           });
-
-          updateData.tugasBaruCount = tugasBaruCount;
-
-          // Eksekusi update
-          transaction.set(summaryRef, updateData, { merge: true });
-      });
+      }
   });

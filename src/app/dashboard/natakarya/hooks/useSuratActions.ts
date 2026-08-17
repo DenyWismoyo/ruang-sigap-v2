@@ -5,7 +5,7 @@
 import { useState } from 'react';
 import { 
   doc, updateDoc, deleteDoc, Timestamp, writeBatch, collection, 
-  serverTimestamp, arrayUnion 
+  serverTimestamp, arrayUnion, getDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUserAuth } from '@/context/AuthContext';
@@ -101,12 +101,27 @@ export const useSuratActions = () => {
 
       const disposisiRef = doc(collection(db, 'disposisi'));
       const targetJabatanIds = targets.map(t => t.jabatanId);
+
+      // Fetch OPD Name for the sender
+      let dariOpdNama = 'Instansi';
+      if (effectiveJabatan.opdId) {
+          try {
+              const opdSnap = await getDoc(doc(db, 'opd', effectiveJabatan.opdId));
+              if (opdSnap.exists()) {
+                  dariOpdNama = opdSnap.data().namaOpd || 'Instansi';
+              }
+          } catch (e) {
+              console.error("Gagal mengambil nama OPD:", e);
+          }
+      }
       
       const disposisiData: Partial<Disposisi> = {
         suratId: surat.id,
         dariJabatanId: effectiveJabatan.id!,
         dariJabatanNama: effectiveJabatan.namaJabatan,
         opdId: effectiveJabatan.opdId,
+        dariOpdId: effectiveJabatan.opdId,
+        dariOpdNama: dariOpdNama,
         kepadaJabatanId: targetJabatanIds,
         instruksi: instruksi,
         tanggalDisposisi: serverTimestamp() as Timestamp,
@@ -335,7 +350,7 @@ export const useSuratActions = () => {
      surat: Surat, disposisi: Disposisi, 
      payload: TindakLanjutPayload, 
      fileData?: { url: string, name: string }, 
-     opsi?: { buatTugasPengingat?: boolean, teruskanKe?: { targets: UserProfile[], instruksi: string }, isFinalAction?: boolean }
+     opsi?: { buatTugasPengingat?: boolean, teruskanKe?: { targets: UserProfile[], instruksi: string }, isFinalAction?: boolean, closePersonalDisposisi?: boolean }
   ) => {
     if (!userProfile || !effectiveJabatan) return false;
     setIsProcessing(true);
@@ -344,6 +359,7 @@ export const useSuratActions = () => {
         const batch = writeBatch(db);
         const actorName = getActorName();
         const isFinal = opsi?.isFinalAction || false;
+        const closePersonal = opsi?.closePersonalDisposisi ?? isFinal;
 
         const tindakLanjutRef = doc(collection(db, 'tindakLanjut'));
         
@@ -369,7 +385,7 @@ export const useSuratActions = () => {
         await logActivity(surat.id!, actorName, actionLogText, logText.substring(0, 100));
 
         const disposisiRef = doc(db, 'disposisi', disposisi.id!);
-        if (isFinal) {
+        if (closePersonal) {
             batch.update(disposisiRef, { penerimaSelesai: arrayUnion(effectiveJabatan.id) });
             // [SINKRONISASI UI INSTAN]
             optimisticRemoveDisposisi(disposisi.id!);
@@ -395,11 +411,31 @@ export const useSuratActions = () => {
                 }
             }
         }
+        // [PARALLEL DISPOSISI CHECK] - Cegah Bug Ghosting Surat Hilang
+        let isGloballyFinal = isFinal;
+        if (isFinal) {
+            const { query, collection, where, getDocs } = await import('firebase/firestore');
+            const dispQ = query(collection(db, 'disposisi'), where('suratId', '==', surat.id));
+            const dispSnap = await getDocs(dispQ);
+            
+            let allDispoCompleted = true;
+            dispSnap.forEach(dDoc => {
+                const dData = dDoc.data() as Disposisi;
+                if (dData.id === disposisi.id) return; // Abaikan disposisi yang sedang kita tutup ini
+                
+                const isCompleted = dData.kepadaJabatanId?.every(id => dData.penerimaSelesai?.includes(id));
+                if (!isCompleted && dData.status !== 'Dikembalikan') {
+                    allDispoCompleted = false;
+                }
+            });
+            
+            isGloballyFinal = allDispoCompleted;
+        }
 
         const suratRef = doc(db, 'surat', surat.id!);
         const suratUpdates: any = { terlibatJabatanIds: arrayUnion(effectiveJabatan.id!) };
 
-        if (isFinal) { suratUpdates.statusPenyelesaian = 'Selesai'; } 
+        if (isGloballyFinal) { suratUpdates.statusPenyelesaian = 'Selesai'; } 
         else { suratUpdates.statusPenyelesaian = 'Proses Tindak Lanjut'; }
         batch.update(suratRef, suratUpdates);
         
@@ -601,6 +637,16 @@ export const useSuratActions = () => {
       if (!userProfile) return false;
       setIsProcessing(true);
       try {
+          if (updatedData.detailAgenda && originalSurat.detailAgenda) {
+              const newAgenda = updatedData.detailAgenda;
+              const oldAgenda = originalSurat.detailAgenda;
+              const isDateChanged = newAgenda.tanggal?.seconds !== oldAgenda.tanggal?.seconds;
+              const isTimeChanged = newAgenda.jam !== oldAgenda.jam;
+              if (isDateChanged || isTimeChanged) {
+                  updatedData.reminderSent = false;
+              }
+          }
+
           if (newFile) {
               const { storage, ref, uploadBytesResumable, getDownloadURL } = await import('@/lib/firebase');
               const fileRef = ref(storage, `surat_files/${Date.now()}_${newFile.name}`);

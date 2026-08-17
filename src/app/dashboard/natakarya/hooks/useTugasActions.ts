@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { 
-    doc, writeBatch, collection, Timestamp, deleteDoc, arrayUnion, arrayRemove, serverTimestamp, updateDoc, addDoc
+    doc, writeBatch, collection, Timestamp, deleteDoc, arrayUnion, arrayRemove, serverTimestamp, updateDoc, addDoc, getDocs, query, where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUserAuth } from '@/context/AuthContext';
@@ -140,8 +140,14 @@ export const useTugasActions = () => {
           }
 
           batch.update(tugasRef, updateData);
-          const myCopyRef = doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', task.id!);
-          batch.update(myCopyRef, updateData);
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.update(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!), updateData);
+              });
+          }
 
           if (task.suratId) {
               await logActivity(task.suratId, getActorName(), logMessage);
@@ -262,7 +268,12 @@ export const useTugasActions = () => {
       setIsProcessing(true);
       try {
           const { getDocs, query, collection, where } = await import('firebase/firestore');
-          const usersSnap = await getDocs(query(collection(db, 'users'), where('opdId', '==', task.opdId)));
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          let usersDocs: any[] = [];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersDocs = usersSnap.docs;
+          }
           
           let currentBatch = writeBatch(db);
           let count = 0;
@@ -276,7 +287,7 @@ export const useTugasActions = () => {
               count++;
           });
 
-          usersSnap.forEach(userDoc => {
+          usersDocs.forEach(userDoc => {
               const uid = userDoc.data().uid || userDoc.id;
               currentBatch.delete(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!));
               count++;

@@ -1,16 +1,6 @@
 {
   "indexes": [
     {
-      "collectionGroup": "tugas",
-      "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        {
-          "fieldPath": "tanggalDibuat",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "jabatan",
       "queryScope": "COLLECTION",
       "fields": [
@@ -801,6 +791,20 @@
         {
           "fieldPath": "tanggalDiterima",
           "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "natakaryaCopilotChats",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "updatedAt",
+          "order": "DESCENDING"
         }
       ]
     }

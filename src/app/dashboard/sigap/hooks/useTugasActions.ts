@@ -8,7 +8,7 @@
 
 import { useState } from 'react';
 import { 
-    doc, writeBatch, collection, Timestamp, deleteDoc, arrayUnion, arrayRemove, serverTimestamp, updateDoc, addDoc
+    doc, writeBatch, collection, Timestamp, deleteDoc, arrayUnion, arrayRemove, serverTimestamp, updateDoc, addDoc, getDocs, query, where
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useUserAuth } from '@/context/AuthContext';
@@ -140,8 +140,14 @@ export const useTugasActions = () => {
           }
 
           batch.update(tugasRef, updateData);
-          const myCopyRef = doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', task.id!);
-          batch.update(myCopyRef, updateData);
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.update(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!), updateData);
+              });
+          }
 
           if (task.suratId) {
               await logActivity(task.suratId, getActorName(), logMessage);
@@ -261,8 +267,19 @@ export const useTugasActions = () => {
       if (!userProfile || !effectiveJabatan) return false;
       setIsProcessing(true);
       try {
-          await deleteDoc(doc(db, 'tugas', task.id!));
-          await deleteDoc(doc(db, 'tugasPerPengguna', userProfile.uid, 'tugas', task.id!));
+          const batch = writeBatch(db);
+          batch.delete(doc(db, 'tugas', task.id!));
+          
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.delete(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!));
+              });
+          }
+          await batch.commit();
+
           if (task.suratId) await logActivity(task.suratId, getActorName(), `Menghapus tugas: "${task.judulTugas}"`);
           addToast("Tugas berhasil dihapus.", "success");
           return true;

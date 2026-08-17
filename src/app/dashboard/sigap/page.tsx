@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useUserAuth } from '@/context/AuthContext'; 
 import { JadwalTempat, CombinedAgendaItem, EnrichedSuratAgenda } from '@/types'; 
 import Link from 'next/link';
-import { toJpeg } from 'html-to-image';
+import { toPng } from 'html-to-image';
 import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
@@ -150,7 +150,14 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
 export default function DashboardPage() {
   const { userProfile, loading: authLoading } = useUserAuth();
   
-  const [currentDay] = useState(new Date().toISOString().split('T')[0]);
+  const [currentDay] = useState(() => {
+    const now = new Date();
+    now.setHours(now.getHours() - 3); // Pergantian hari (Hari Ini) di jam 3 pagi lokal
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const todayFormatted = new Date(currentDay + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
 
   // --- 1. DATA FETCHING VIA HOOKS (SSOT) ---
@@ -297,13 +304,14 @@ export default function DashboardPage() {
 
   const handleExportAgenda = useCallback(() => {
     if (agendaRef.current) {
-        toJpeg(agendaRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
+        toPng(agendaRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
             .then((dataUrl) => {
                 const link = document.createElement('a');
-                link.download = 'agenda.jpeg';
+                link.download = 'agenda.png';
                 link.href = dataUrl;
                 link.click();
-            });
+            })
+            .catch(err => console.error('Failed to export agenda', err));
     }
   }, []);
 

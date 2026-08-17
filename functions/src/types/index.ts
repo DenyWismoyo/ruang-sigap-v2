@@ -23,6 +23,7 @@ export interface Surat {
     reminderSent?: boolean;
     tanggalSelesai?: Timestamp | null;
     tujuanJabatanId?: string | null; // [MODIFIKASI LINTAS OPD V2] Field baru
+    terlibatJabatanIds?: string[];
 }
 export interface Disposisi {
   id?: string;

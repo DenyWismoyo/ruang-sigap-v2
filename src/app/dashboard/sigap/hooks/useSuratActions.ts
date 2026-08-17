@@ -163,7 +163,7 @@ export const useSuratActions = () => {
       await batch.commit();
 
       try {
-          await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
               id: `auto_disp_${surat.id}_${Date.now()}`,
               deskripsi: `Mendisposisikan surat: "${surat.perihal}"`,
               selesai: true
@@ -251,7 +251,7 @@ export const useSuratActions = () => {
       await batch.commit();
 
       try {
-          await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
               id: `auto_esk_${surat.id}_${Date.now()}`,
               deskripsi: `Eskalasi surat ke pimpinan: "${surat.perihal}"`,
               selesai: true
@@ -313,7 +313,7 @@ export const useSuratActions = () => {
 
       // [AUTO LOGBOOK]
       try {
-          await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
+          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
               id: `auto_terima_${disposisi.id}_${Date.now()}`,
               deskripsi: `Menerima ${disposisi.isInformational ? 'pemberitahuan' : 'disposisi'} surat: "${surat.perihal}"`,
               selesai: true
@@ -404,6 +404,24 @@ export const useSuratActions = () => {
         batch.update(suratRef, suratUpdates);
         
         await batch.commit();
+
+        // --- [AUTO LOGBOOK] ---
+        try {
+            const logDesc = isFinal 
+                ? `Menyelesaikan surat: "${surat.perihal}"`
+                : `Tindak Lanjut Surat: "${surat.perihal}" - ${payload.judulLaporan || 'Proses'}`;
+                
+            await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
+                id: `auto_tinjut_${tindakLanjutRef.id}_${Date.now()}`,
+                deskripsi: logDesc,
+                selesai: isFinal
+            });
+            console.log("Auto-logbook tindak lanjut berhasil.");
+        } catch (logErr) {
+            console.error("Gagal auto-logbook tindak lanjut:", logErr);
+        }
+        // --- [AKHIR AUTO LOGBOOK] ---
+
         addToast(isFinal ? "Surat diselesaikan." : "Laporan dikirim.", "success");
         refreshData();
         return true;
@@ -444,7 +462,7 @@ export const useSuratActions = () => {
 
           // [AUTO LOGBOOK]
           try {
-              await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
+              await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
                   id: `auto_edit_tinjut_${tindakLanjutId}_${Date.now()}`,
                   deskripsi: `Merevisi catatan/tindak lanjut: ${payload.judulLaporan || 'Proses'}`,
                   selesai: false
@@ -530,6 +548,30 @@ export const useSuratActions = () => {
         
         // [SINKRONISASI UI INSTAN dipindah ke setelah commit]
 
+        // [SEDANG-5 FIX]: Fallback fetch jika pengirim tidak ada di cache (beda OPD)
+        let finalSenderProfile = senderProfile;
+        if (!finalSenderProfile && disposisi.dariJabatanId) {
+            const { query, collection, where, limit, getDocs } = await import('firebase/firestore');
+            const usersQ = query(collection(db, 'users'), where('jabatanId', '==', disposisi.dariJabatanId), limit(1));
+            const usersSnap = await getDocs(usersQ);
+            if (!usersSnap.empty) {
+                finalSenderProfile = usersSnap.docs[0].data() as UserProfile;
+            }
+        }
+
+        // Tambah notifikasi untuk pengirim
+        if (finalSenderProfile?.uid) {
+            const notifRef = doc(collection(db, 'notifications'));
+            batch.set(notifRef, {
+                userId: finalSenderProfile.uid,
+                userNip: finalSenderProfile.nip,
+                message: `Disposisi dikembalikan oleh ${getActorName()}. Alasan: ${alasan}`,
+                link: `/dashboard/surat/${disposisi.suratId}`,
+                isRead: false,
+                timestamp: serverTimestamp() as Timestamp,
+            });
+        }
+
         await batch.commit();
         
         // [SINKRONISASI UI INSTAN]
@@ -559,12 +601,33 @@ export const useSuratActions = () => {
       if (!userProfile) return false;
       setIsProcessing(true);
       try {
-          const suratRef = doc(db, 'surat', originalSurat.id);
+          if (updatedData.detailAgenda && originalSurat.detailAgenda) {
+              const newAgenda = updatedData.detailAgenda;
+              const oldAgenda = originalSurat.detailAgenda;
+              const isDateChanged = newAgenda.tanggal?.seconds !== oldAgenda.tanggal?.seconds;
+              const isTimeChanged = newAgenda.jam !== oldAgenda.jam;
+              if (isDateChanged || isTimeChanged) {
+                  updatedData.reminderSent = false;
+              }
+          }
+
+          if (newFile) {
+              const { storage, ref, uploadBytesResumable, getDownloadURL } = await import('@/lib/firebase');
+              const fileRef = ref(storage, `surat_files/${Date.now()}_${newFile.name}`);
+              const uploadTask = await uploadBytesResumable(fileRef, newFile);
+              const downloadURL = await getDownloadURL(uploadTask.ref);
+              
+              updatedData.fileUrl = downloadURL;
+              updatedData.fileName = newFile.name;
+          }
+
+          const suratRef = doc(db, 'surat', originalSurat.id!);
           await updateDoc(suratRef, updatedData);
           addToast("Surat berhasil diperbarui.", "success");
           refreshData(); 
           return true;
-      } catch (err) {
+      } catch (err: any) {
+          console.error("Error update surat:", err);
           addToast("Gagal memperbarui surat.", "error");
           return false;
       } finally {
@@ -576,11 +639,48 @@ export const useSuratActions = () => {
       if (!userProfile || !surat.id) return false;
       setIsProcessing(true);
       try {
-          await deleteDoc(doc(db, 'surat', surat.id));
-          addToast("Surat berhasil dihapus.", "success");
+          // Cari dokumen terkait (disposisi dan tindakLanjut)
+          const [disposisiSnap, tlSnap] = await Promise.all([
+              import('firebase/firestore').then(m => m.getDocs(m.query(m.collection(db, 'disposisi'), m.where('suratId', '==', surat.id)))),
+              import('firebase/firestore').then(m => m.getDocs(m.query(m.collection(db, 'tindakLanjut'), m.where('suratId', '==', surat.id))))
+          ]);
+
+          const refsToDelete = [
+              doc(db, 'surat', surat.id),
+              ...disposisiSnap.docs.map(d => d.ref),
+              ...tlSnap.docs.map(d => d.ref)
+          ];
+
+          // Chunking into batches of 500
+          for (let i = 0; i < refsToDelete.length; i += 500) {
+              const chunk = refsToDelete.slice(i, i + 500);
+              const batch = writeBatch(db);
+              chunk.forEach(ref => batch.delete(ref));
+              await batch.commit();
+          }
+
+          // [AUTO LOGBOOK]
+          try {
+              await updateLogbook(userProfile?.uid || '', effectiveJabatan?.opdId || '', new Date(), {
+                  id: `auto_delete_${surat.id}_${Date.now()}`,
+                  deskripsi: `Menghapus surat dan data terkait: "${surat.perihal}"`,
+                  selesai: true
+              });
+          } catch (logErr) { console.error(logErr); }
+
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.opdId) {
+              queryClient.setQueryData(['suratList', effectiveJabatan.opdId], (oldData: any) => {
+                  if (!oldData) return oldData;
+                  return oldData.filter((s: any) => s.id !== surat.id);
+              });
+          }
+
+          addToast("Surat berhasil dihapus beserta data terkait.", "success");
           refreshData(); 
           return true;
       } catch (err) {
+          console.error("Error delete surat:", err);
           addToast("Gagal menghapus surat.", "error");
           return false;
       } finally {

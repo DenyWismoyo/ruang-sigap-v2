@@ -67,6 +67,36 @@ const fetchSubOpdLeaders = async (opdIndukId: string): Promise<UserProfile[]> =>
     return pimpinanProfiles;
 };
 
+// --- MIGRATED: Fetcher untuk Global Leaders Lintas OPD (Khusus Level 1 & 2) ---
+const fetchGlobalLeaders = async (currentLevel: number): Promise<UserProfile[]> => {
+    // 1. Ambil semua jabatan yang levelnya di bawah currentLevel tapi maksimal sampai level 3 (Kadis/Camat)
+    const jabatansQuery = query(
+        collection(db, 'jabatan'), 
+        where('level', '>', currentLevel), 
+        where('level', '<=', 3), 
+        where('status', '==', 'aktif')
+    );
+    
+    const jabatansSnapshot = await getDocs(jabatansQuery);
+    const targetJabatanIds: string[] = [];
+    jabatansSnapshot.forEach(doc => targetJabatanIds.push(doc.id));
+
+    if (targetJabatanIds.length === 0) return [];
+
+    // 2. Ambil User Profile yang menduduki jabatan tersebut
+    const pimpinanProfiles: UserProfile[] = [];
+    const userChunks = [];
+    for (let i = 0; i < targetJabatanIds.length; i += 10) userChunks.push(targetJabatanIds.slice(i, i + 10));
+
+    for (const chunk of userChunks) {
+        const usersQuery = query(collection(db, 'users'), where('jabatanId', 'in', chunk), where('status', '==', 'aktif'));
+        const usersSnapshot = await getDocs(usersQuery);
+        usersSnapshot.forEach(doc => pimpinanProfiles.push(doc.data() as UserProfile));
+    }
+    
+    return pimpinanProfiles;
+};
+
 export const useBawahanList = (
   userCache: Map<string, UserProfile>,
   opdJabatans: Map<string, Jabatan>
@@ -84,11 +114,26 @@ export const useBawahanList = (
   );
 
   // [OPTIMASI] Gunakan useQuery menggantikan useEffect
-  const { data: subOpdPimpinan = [], isLoading: isSubOpdLoading, error } = useQuery({
+  const { data: subOpdPimpinan = [], isLoading: isSubOpdLoading, error: subOpdError } = useQuery({
       queryKey: ['subOpdLeaders', effectiveJabatan?.opdId],
       queryFn: () => fetchSubOpdLeaders(effectiveJabatan!.opdId),
       enabled: shouldFetchSubOpd && !!effectiveJabatan?.opdId,
-      staleTime: 1000 * 60 * 60, // Cache 1 jam (Struktur OPD jarang berubah)
+      staleTime: 1000 * 60 * 60, // Cache 1 jam
+  });
+
+  // Tentukan apakah perlu fetch Global Leaders Lintas OPD
+  const shouldFetchGlobal = !!(
+      effectiveJabatan && 
+      userProfile && 
+      !isTuOrAdmin &&
+      effectiveJabatan.level <= 2 // Hanya untuk Level 1 (Bupati) dan Level 2 (Sekda)
+  );
+
+  const { data: globalLeaders = [], isLoading: isGlobalLoading, error: globalError } = useQuery({
+      queryKey: ['globalLeaders', effectiveJabatan?.level],
+      queryFn: () => fetchGlobalLeaders(effectiveJabatan!.level),
+      enabled: shouldFetchGlobal,
+      staleTime: 1000 * 60 * 60, 
   });
 
   // MEMOIZED LIST (Gabungan)
@@ -105,8 +150,17 @@ export const useBawahanList = (
         return isLowerLevel && isActive && notSelf;
     });
 
-    // B. Gabungkan dengan Pimpinan Sub-OPD
-    const combinedList = [...bawahanDiOpdSendiri, ...subOpdPimpinan];
+    // B. Gabungkan dengan Pimpinan Sub-OPD dan Global Leaders
+    // Hindari duplikasi user (misal Sekda adalah pimpinan Sub-OPD Setda, tapi juga terambil oleh globalLeaders)
+    const combinedList = [...bawahanDiOpdSendiri];
+    const existingIds = new Set(combinedList.map(u => u.uid));
+    
+    [...subOpdPimpinan, ...globalLeaders].forEach(user => {
+        if (!existingIds.has(user.uid) && user.uid !== effectiveJabatan.id) {
+            existingIds.add(user.uid);
+            combinedList.push(user);
+        }
+    });
 
     // C. Sortir (Perbaikan logika hirarki)
     return combinedList.sort((a, b) => {
@@ -137,11 +191,11 @@ export const useBawahanList = (
         return a.namaLengkap.localeCompare(b.namaLengkap);
     });
 
-  }, [userCache, opdJabatans, effectiveJabatan, subOpdPimpinan]);
+  }, [userCache, opdJabatans, effectiveJabatan, subOpdPimpinan, globalLeaders]);
 
   return {
     bawahanList,
-    isLoading: isSubOpdLoading && shouldFetchSubOpd, // Hanya loading jika fetch aktif
-    error: error ? (error as Error).message : null
+    isLoading: (isSubOpdLoading && shouldFetchSubOpd) || (isGlobalLoading && shouldFetchGlobal),
+    error: (subOpdError || globalError) ? ((subOpdError || globalError) as Error).message : null
   };
 };

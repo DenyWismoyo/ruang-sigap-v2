@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { Disposisi, UserProfile } from '@/types';
-import { Loader2, Users } from 'lucide-react';
+import { Loader2, Users, Briefcase } from 'lucide-react';
 import { formatDateRelative } from '@/lib/utils';
 import { motion } from 'framer-motion';
 import Avatar from '@/app/dashboard/natakarya/components/Avatar';
@@ -144,6 +144,7 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                   
                   const { nama: pengirimNama, jabatan: pengirimJabatan } = getPengirimInfo(d);
                   const safeAvatarName = pengirimNama && pengirimNama !== 'Pengirim Tidak Dikenal' ? pengirimNama : '?';
+                  const isCrossOpd = d.dariOpdId && userProfile?.opdId && d.dariOpdId !== userProfile.opdId;
 
                   return (
                     // Penyesuaian Padding Mobile
@@ -160,6 +161,12 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                                 <p className="text-muted-foreground truncate leading-tight">
                                     <strong className="text-foreground">{pengirimNama}</strong>
                                     <span className="text-[10px] md:text-xs"> ({pengirimJabatan})</span>
+                                    {isCrossOpd && (
+                                        <span className="text-[10px] md:text-xs font-semibold text-purple-600 dark:text-purple-400 ml-1.5 inline-flex items-center gap-0.5">
+                                            <Briefcase size={10} className="inline" />
+                                            {d.dariOpdNama || 'Pimpinan Daerah'}
+                                        </span>
+                                    )}
                                 </p>
                                 <p className="text-muted-foreground mt-0.5 leading-snug line-clamp-2">
                                     <strong>Kepada:</strong> {renderPenerima(d)}

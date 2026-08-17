@@ -4,7 +4,7 @@ import React, { useState, useMemo, useRef, useCallback } from 'react';
 import { useUserAuth } from '@/context/AuthContext'; 
 import { JadwalTempat, CombinedAgendaItem, EnrichedSuratAgenda } from '@/types'; 
 import Link from 'next/link';
-import { toJpeg } from 'html-to-image';
+import { toPng } from 'html-to-image';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
     CalendarClock, MapPin, Calendar, Send, Info,
@@ -166,7 +166,14 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
 export default function DashboardPage() {
   const { userProfile, loading: authLoading } = useUserAuth();
   
-  const [currentDay] = useState(new Date().toISOString().split('T')[0]);
+  const [currentDay] = useState(() => {
+    const now = new Date();
+    now.setHours(now.getHours() - 3); // Pergantian hari (Hari Ini) di jam 3 pagi lokal
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  });
   const todayFormatted = new Date(currentDay + 'T00:00:00').toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' });
 
   // --- 1. DATA FETCHING VIA HOOKS (SSOT) ---
@@ -338,13 +345,14 @@ export default function DashboardPage() {
 
   const handleExportAgenda = useCallback(() => {
     if (agendaRef.current) {
-        toJpeg(agendaRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
+        toPng(agendaRef.current, { cacheBust: true, backgroundColor: '#ffffff' })
             .then((dataUrl) => {
                 const link = document.createElement('a');
-                link.download = 'agenda.jpeg';
+                link.download = 'agenda.png';
                 link.href = dataUrl;
                 link.click();
-            });
+            })
+            .catch(err => console.error('Failed to export agenda', err));
     }
   }, []);
 
@@ -364,7 +372,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col h-full p-4 md:p-6 bg-background">
-      <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
 
       {/* --- Layout Utama (Desktop Grid System) --- */}
       <div className="hidden md:block space-y-6">
@@ -381,7 +388,7 @@ export default function DashboardPage() {
              >
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <NkCard className="flex flex-col h-fit">
+                <NkCard ref={agendaRef} className="flex flex-col h-fit bg-card">
                     <div className="p-4 border-b border-border/50 flex justify-between items-center bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
@@ -452,8 +459,11 @@ export default function DashboardPage() {
                     </AnimatePresence>
                 </NkCard>
 
-                {/* CARD 2: Agenda Internal Bulan Ini */}
-                <div className="nk-card flex flex-col h-fit mt-6">
+                {/* ROW: Agenda Internal & Kinerja Saya */}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                  <div className="lg:col-span-2">
+                    {/* CARD 2: Agenda Internal Bulan Ini */}
+                    <div className="nk-card flex flex-col h-full">
                     <div className="p-4 border-b border-border/50 flex flex-col sm:flex-row justify-between items-center bg-gradient-to-r from-[var(--nk-teal-mid)]/10 to-transparent gap-3">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-[var(--nk-teal-mid)]/10 rounded-xl">
@@ -500,6 +510,21 @@ export default function DashboardPage() {
                         )}
                     </div>
                 </div>
+                  </div>
+
+                  <div className="lg:col-span-1 h-full">
+                      {/* [PERSONAL PERFORMANCE] */}
+                      <motion.div
+                          initial={{ opacity: 0, scale: 0.95 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.2 }}
+                          className="h-full"
+                      >
+                          <PersonalPerformanceWidget />
+                      </motion.div>
+                  </div>
+                </div>
 
              </motion.div>
 
@@ -525,25 +550,16 @@ export default function DashboardPage() {
                     ))}
                 </motion.div>
 
-                {/* [PERSONAL PERFORMANCE] */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: 0.1 }}
-                >
-                    <PersonalPerformanceWidget />
-                </motion.div>
-
                 {/* [MINI KALENDER] */}
                 <motion.div
                     initial={{ opacity: 0, scale: 0.95 }}
                     whileInView={{ opacity: 1, scale: 1 }}
                     viewport={{ once: true }}
-                    transition={{ delay: 0.2 }}
+                    transition={{ delay: 0.15 }}
                 >
                     <MiniCalendarWidget agendas={combinedAllAgendas} />
                 </motion.div>
+
             </div>
         </div>
 

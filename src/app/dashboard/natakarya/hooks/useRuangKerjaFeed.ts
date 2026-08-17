@@ -188,7 +188,22 @@ export const useRuangKerjaFeed = () => {
                   : (disp.batasWaktu as any).seconds * 1000;
           }
 
-          const isOverdue = !!(batasWaktuMillis && batasWaktuMillis < now && !needsAcknowledge);
+          let isOverdue = false;
+          if (!needsAcknowledge) {
+              if (batasWaktuMillis && batasWaktuMillis < now) {
+                  isOverdue = true;
+              } else if (suratInfo.jenisSurat === 'Undangan' && suratInfo.detailAgenda?.tanggal) {
+                  const agendaDate = typeof suratInfo.detailAgenda.tanggal.toMillis === 'function' 
+                      ? suratInfo.detailAgenda.tanggal.toMillis() 
+                      : (suratInfo.detailAgenda.tanggal as any).seconds * 1000;
+                  
+                  // Anggap overdue jika hari ini sudah lebih dari 1 hari setelah tanggal agenda
+                  const oneDay = 24 * 60 * 60 * 1000;
+                  if (agendaDate + oneDay < now) {
+                      isOverdue = true;
+                  }
+              }
+          }
 
           items.push({
             type: 'surat_disposisi',
@@ -234,7 +249,15 @@ export const useRuangKerjaFeed = () => {
           return Date.now();
       };
 
-      return getMillis(getDate(b)) - getMillis(getDate(a));
+      const millisA = getMillis(getDate(a));
+      const millisB = getMillis(getDate(b));
+      
+      // 1. Overdue Items Prioritas Utama
+      if (a.isOverdue && !b.isOverdue) return -1;
+      if (!a.isOverdue && b.isOverdue) return 1;
+
+      // 2. Default: Terbaru di atas
+      return millisB - millisA;
     });
   }, [unifiedSuratList, activeDisposisi, activeTugas, drafQuery.data, effectiveJabatan, isAdminOrTU, isPimpinan, topLeaderId, isAdminOnly]);
 

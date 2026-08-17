@@ -113,6 +113,13 @@ export default function RuangKerjaCard({
   
   const senderName = item.fromJabatanName;
   
+  const senderDisplay = useMemo(() => {
+      if (item.type === 'surat_disposisi' && item.disposisi.dariOpdId && effectiveJabatan?.opdId && item.disposisi.dariOpdId !== effectiveJabatan.opdId) {
+          return `${item.fromJabatanName} (${item.disposisi.dariOpdNama || 'Lintas OPD'})`;
+      }
+      return item.fromJabatanName;
+  }, [item, effectiveJabatan]);
+  
   const timestampDate = useMemo(() => {
     if (isSuratDisposisi) return item.disposisi.tanggalDisposisi?.toDate();
     if (isTugas) return item.tugas.tanggalDibuat?.toDate();
@@ -122,11 +129,19 @@ export default function RuangKerjaCard({
   }, [isSuratDisposisi, isTugas, isSuratBaru, isDraf, item]);
 
   const timeAgo = timestampDate ? formatDistanceToNow(timestampDate, { addSuffix: true, locale: id }) : '';
+  
+  const isCardOverdue = (item.type === 'surat_disposisi' && item.isOverdue) || 
+                        (item.type === 'tugas' && item.tugas.batasWaktu && item.tugas.batasWaktu.toDate() < new Date());
 
   const HeaderBadge = () => {
-      if (isSuratDisposisi) {
-          if (item.disposisi.isInformational) return <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50">Pemberitahuan</Badge>;
-          return <Badge className="bg-blue-600 hover:bg-blue-700">Disposisi Masuk</Badge>;
+      if (item.type === 'surat_disposisi') {
+          const isCrossOpd = item.disposisi.dariOpdId && effectiveJabatan?.opdId && item.disposisi.dariOpdId !== effectiveJabatan.opdId;
+          return (
+              <>
+                  {item.disposisi.isInformational ? <Badge variant="outline" className="border-blue-200 text-blue-600 bg-blue-50">Pemberitahuan</Badge> : <Badge className="bg-blue-600 hover:bg-blue-700">Disposisi Masuk</Badge>}
+                  {isCrossOpd && <Badge className="bg-purple-600 hover:bg-purple-700 text-white gap-1 px-1.5"><Briefcase size={10} /> Pimpinan Daerah</Badge>}
+              </>
+          );
       }
       if (isTugas) {
           return <Badge className="bg-emerald-600 hover:bg-emerald-700">Tugas</Badge>;
@@ -143,7 +158,7 @@ export default function RuangKerjaCard({
   const StatusBadges = () => {
       return (
         <div className="flex flex-wrap gap-1.5 mt-1">
-           {(isSuratDisposisi && item.isOverdue) || (isTugas && item.tugas.batasWaktu && item.tugas.batasWaktu.toDate() < new Date()) ? (
+           {isCardOverdue ? (
                <Badge variant="destructive" className="text-[10px] px-1.5 h-5 flex items-center gap-1"><AlertTriangle size={10}/> Terlambat</Badge>
            ) : null}
            
@@ -275,8 +290,18 @@ export default function RuangKerjaCard({
 
   return (
     <div className="w-full mb-3">
-      <div className="nk-card shadow-[var(--nk-shadow-sm)] border border-[var(--border)] transition-colors hover:border-[var(--nk-teal-light)]/50 rounded-xl overflow-hidden">
+      <div className={`nk-card shadow-[var(--nk-shadow-sm)] border transition-colors hover:border-[var(--nk-teal-light)]/50 rounded-xl overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-1 ring-red-500/20' : 'border-[var(--border)]'}`}>
         
+        {/* OVERDUE BANNER */}
+        {isCardOverdue && (
+            <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-100 dark:border-red-900/50 px-4 py-2 flex items-center justify-between text-red-700 dark:text-red-400">
+                <div className="flex items-center gap-2 text-xs font-bold">
+                    <AlertTriangle size={14} className="animate-pulse" />
+                    Waktu Telah Berlalu - Segera Tindaklanjuti
+                </div>
+            </div>
+        )}
+
         {/* BODY UTAMA */}
         <div onClick={handleCardClick} className="cursor-pointer p-4 pb-3">
             
@@ -294,12 +319,12 @@ export default function RuangKerjaCard({
 
             {/* Baris 2: Konten Utama */}
             <div className="flex items-start gap-3">
-                <Avatar name={senderName} className="h-9 w-9 text-[10px] mt-0.5 hidden sm:flex" />
+                <Avatar name={senderDisplay} className="h-9 w-9 text-[10px] mt-0.5 hidden sm:flex" />
                 
                 <div className="flex-1 min-w-0">
                     <div className="flex items-baseline gap-1.5 text-xs text-muted-foreground mb-0.5">
-                        <span className="font-medium text-foreground flex items-center gap-1 sm:hidden"><User size={10}/> {senderName}</span>
-                        <span className="font-medium text-foreground hidden sm:inline">{senderName}</span>
+                        <span className="font-medium text-foreground flex items-center gap-1 sm:hidden"><User size={10}/> {senderDisplay}</span>
+                        <span className="font-medium text-foreground hidden sm:inline">{senderDisplay}</span>
                         {isSuratDisposisi && <span>&rarr; Anda</span>}
                     </div>
                     

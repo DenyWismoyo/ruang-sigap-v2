@@ -507,8 +507,8 @@ export const onNotificationCreated = onDocumentCreated(
             // --- [MODIFIKASI PWA BADGE] Ambil hitungan notifikasi dari userSummaries ---
             let totalCount = 0;
             try {
-                // Ambil dokumen summary berdasarkan UID pengguna
-                const summaryRef = db.collection("userSummaries").doc(userId);
+                // Ambil dokumen summary berdasarkan jabatanId pengguna
+                const summaryRef = db.collection("userSummaries").doc(userDoc.jabatanId);
                 const summarySnap = await summaryRef.get();
                 if (summarySnap.exists) {
                     const summaryData = summarySnap.data() as { suratBaruCount?: number, tugasBaruCount?: number };
@@ -1326,18 +1326,32 @@ export const onSuratDelete = onDocumentDeleted(
                     logger.log(`Marked ${querySnapshot.size} docs from ${collectionName} related to ${suratId} for deletion.`);
                 }
             }
-            const usersSnapshot = await db.collection("users").get();
-            usersSnapshot.forEach(userDoc => {
-                const user = userDoc.data() as UserProfile;
-                const inboxRef = db.collection("suratPerPengguna").doc(user.uid).collection("inbox").doc(suratId);
-                const arsipRef = db.collection("suratPerPengguna").doc(user.uid).collection("arsip").doc(suratId);
-                const delegatedRef = db.collection("suratPerPengguna").doc(user.uid).collection("delegated").doc(suratId);
-                batch.delete(inboxRef);
-                batch.delete(arsipRef);
-                batch.delete(delegatedRef);
-            });
-            if (usersSnapshot.size > 0) {
-                 logger.log(`Marked inbox/arsip/delegated entries for deletion across ${usersSnapshot.size} users for surat ${suratId}.`);
+            const involvedJabatanIds = surat.terlibatJabatanIds || [];
+            if (involvedJabatanIds.length > 0) {
+                const chunks: string[][] = [];
+                for (let i = 0; i < involvedJabatanIds.length; i += 30) {
+                    chunks.push(involvedJabatanIds.slice(i, i + 30));
+                }
+                
+                let usersProcessed = 0;
+                for (const chunk of chunks) {
+                    const usersSnapshot = await db.collection("users").where("jabatanId", "in", chunk).get();
+                    usersSnapshot.forEach(userDoc => {
+                        const user = userDoc.data() as UserProfile;
+                        const inboxRef = db.collection("suratPerPengguna").doc(user.uid).collection("inbox").doc(suratId);
+                        const arsipRef = db.collection("suratPerPengguna").doc(user.uid).collection("arsip").doc(suratId);
+                        const delegatedRef = db.collection("suratPerPengguna").doc(user.uid).collection("delegated").doc(suratId);
+                        batch.delete(inboxRef);
+                        batch.delete(arsipRef);
+                        batch.delete(delegatedRef);
+                        usersProcessed++;
+                    });
+                }
+                if (usersProcessed > 0) {
+                     logger.log(`Marked inbox/arsip/delegated entries for deletion across ${usersProcessed} users for surat ${suratId}.`);
+                }
+            } else {
+                 logger.log(`No terlibatJabatanIds found for surat ${suratId}, skipping fan-out deletion.`);
             }
             await batch.commit();
             logger.log(`Cleanup successfully completed for deleted surat ${suratId}.`);

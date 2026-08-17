@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Surat, Disposisi, UserProfile, Jabatan, InstruksiTemplat } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Loader2, CheckCircle, Send, X, Search, Sparkles, CornerDownRight } from 'lucide-react';
+import { Loader2, CheckCircle, Send, X, Search, Sparkles, CornerDownRight, UserCheck } from 'lucide-react';
 import { updateLogbook } from '@/lib/logbookUtils';
 import { useBawahanList } from '@/app/dashboard/natakarya/hooks/useBawahanList';
 import { useSuratActions, TindakLanjutPayload } from '@/app/dashboard/natakarya/hooks/useSuratActions'; // IMPORT SSOT
@@ -60,6 +60,15 @@ export default function InlineTindakLanjutForm({
   // [SINKRONISASI] Deteksi tipe surat
   const isPemberitahuanMode = surat.jenisSurat === 'Pemberitahuan';
 
+  const isCrossOpd = disposisi.dariOpdId && effectiveJabatan?.opdId && disposisi.dariOpdId !== effectiveJabatan.opdId;
+  const senderDisplay = useMemo(() => {
+      const baseName = disposisi.dariJabatanNama || 'Atasan';
+      if (isCrossOpd) {
+          return `${baseName} (${disposisi.dariOpdNama || 'Lintas OPD'})`;
+      }
+      return baseName;
+  }, [disposisi, isCrossOpd]);
+
   useEffect(() => {
     if (isPemberitahuanMode && activeTab === 'teruskan' && !instruksi) {
       setInstruksi("Untuk diketahui dan dipedomani.");
@@ -101,8 +110,8 @@ export default function InlineTindakLanjutForm({
             checklist: []
         };
 
-        // isFinalAction: true akan menutup status surat dan disposisi
-        const success = await kirimTindakLanjut(surat, disposisi, payload, undefined, { isFinalAction: true });
+        // isFinalAction: true akan mencoba menutup status surat, closePersonalDisposisi: true pasti menutup kartu ini
+        const success = await kirimTindakLanjut(surat, disposisi, payload, undefined, { isFinalAction: true, closePersonalDisposisi: true });
         
         if (success) {
           const logbookEntry = {
@@ -113,6 +122,34 @@ export default function InlineTindakLanjutForm({
             tugasTerkaitJudul: surat.perihal,
           };
           await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), logbookEntry);
+          onSuccess();
+        }
+    } finally {
+        setIsSubmittingLocal(false);
+    }
+  };
+
+  // --- EKSEKUSI TINDAK LANJUTI SENDIRI (1-KLIK) ---
+  const submitSelfAction = async () => {
+    if (!userProfile || !effectiveJabatan) return;
+    setIsSubmittingLocal(true);
+    try {
+        const payload: TindakLanjutPayload = {
+            isiLaporan: "Pimpinan telah menindaklanjuti secara mandiri.",
+            judulLaporan: 'Selesai',
+            warnaLabel: 'green',
+            checklist: []
+        };
+        const success = await kirimTindakLanjut(surat, disposisi, payload, undefined, { isFinalAction: true, closePersonalDisposisi: true });
+        
+        if (success) {
+          await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), {
+            id: `tl_self_${disposisi.id}_${Date.now()}`,
+            deskripsi: `Menindaklanjuti disposisi secara mandiri: "${surat.perihal}"`,
+            selesai: true,
+            tugasTerkaitId: surat.id!,
+            tugasTerkaitJudul: surat.perihal,
+          });
           onSuccess();
         }
     } finally {
@@ -139,8 +176,8 @@ export default function InlineTindakLanjutForm({
             checklist: []
         };
 
-        // isFinalAction: false karena ini hanya menutup disposisi personal, bukan menutup suratnya secara total
-        const tlSuccess = await kirimTindakLanjut(surat, disposisi, autoPayload, undefined, { isFinalAction: false });
+        // isFinalAction: false karena ini hanya meneruskan, tapi closePersonalDisposisi: true agar kartu ini HILANG dari ruang kerja Pimpinan
+        const tlSuccess = await kirimTindakLanjut(surat, disposisi, autoPayload, undefined, { isFinalAction: false, closePersonalDisposisi: true });
 
         if (tlSuccess) {
             // 2. SSOT: Setelah tertutup, kirim disposisi baru ke bawahan
@@ -199,6 +236,17 @@ export default function InlineTindakLanjutForm({
 
   return (
     <div className="bg-background rounded-lg border border-border overflow-hidden mt-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+      <div className="bg-blue-50/50 dark:bg-slate-800/50 p-3 border-b border-border text-sm flex flex-col gap-1.5">
+          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+              <CornerDownRight size={14} className="text-blue-500" />
+              <span>Disposisi dari:</span>
+              <span className="font-semibold text-foreground">{senderDisplay}</span>
+          </div>
+          <div className="pl-5 text-foreground leading-snug">
+              <span className="opacity-70 mr-1 text-xs">Instruksi:</span>
+              <span className="font-medium italic">"{disposisi.instruksi}"</span>
+          </div>
+      </div>
       <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)}>
         <div className="bg-muted/50 border-b border-border p-2">
             <TabsList className="grid w-full grid-cols-2 bg-transparent gap-1 p-0 h-auto">
@@ -223,7 +271,10 @@ export default function InlineTindakLanjutForm({
                       disabled={isFormDisabled}
                   />
                </div>
-               <div className="flex justify-end">
+               <div className="flex flex-col sm:flex-row justify-end gap-2 mt-2">
+                  <Button variant="secondary" size="sm" onClick={submitSelfAction} disabled={isFormDisabled} className="h-8">
+                      <UserCheck size={14} className="mr-1.5" /> Tindak Lanjuti Sendiri
+                  </Button>
                   <Button size="sm" onClick={submitLaporan} disabled={isFormDisabled || !laporanText.trim()} className="h-8 bg-green-600 hover:bg-green-700 text-white">
                      {isFormDisabled ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <CheckCircle size={14} className="mr-1.5" />}
                      Kirim Laporan & Selesai
