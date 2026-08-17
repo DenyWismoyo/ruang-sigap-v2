@@ -14,7 +14,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, doc, getDocs, onSnapshot, setDoc, Timestamp, addDoc, query, where, orderBy, deleteDoc, updateDoc, writeBatch, getDoc } from 'firebase/firestore';
+import { collection, doc, getDocs, onSnapshot, setDoc, Timestamp, addDoc, query, where, orderBy, deleteDoc, updateDoc, writeBatch, getDoc, getCountFromServer } from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions'; // <-- TAMBAHAN AUTO HEAL
 import { useUserAuth } from '@/context/AuthContext'; 
 import { OPD, OpdConfig, PaymentHistory, PricingPackage, Tagihan } from '@/types'; 
@@ -430,20 +430,36 @@ const ProyeksiModal = ({ isOpen, onClose, data }: { isOpen: boolean, onClose: ()
                 </DialogHeader>
                 <div className="p-0 pt-2 space-y-3">
                     <h3 className="font-semibold text-lg">{data.namaOpd}</h3>
-                    <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border dark:border-dark-border space-y-2">
-                        <div className="flex justify-between text-sm"><span>Paket Aktif:</span><span className="font-semibold">{data.packageName}</span></div>
-                        <div className="flex justify-between text-sm"><span>Harga/Pengguna/Bulan:</span><span className="font-semibold">Rp {data.hargaPerPengguna.toLocaleString('id-ID')}</span></div>
-                        <div className="flex justify-between text-sm"><span>Pengguna Aktif Saat Ini:</span><span className="font-semibold">{data.penggunaAktif.toLocaleString('id-ID')}</span></div>
-                    </div>
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                        <p className="text-sm font-semibold text-blue-800 dark:text-blue-300">Proyeksi Tagihan Bulanan</p>
-                        <p className="text-3xl font-bold text-blue-900 dark:text-blue-200">Rp {data.totalBulanan.toLocaleString('id-ID')}</p>
-                    </div> 
-                    <div className="p-3 bg-gray-100 dark:bg-slate-700 rounded-lg border dark:border-dark-border">
-                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-300">Proyeksi Tagihan Tahunan</p>
-                        <p className="text-xl font-bold text-gray-900 dark:text-white">Rp {data.totalTahunan.toLocaleString('id-ID')}</p>
-                    </div>
-                    <p className="text-xs text-gray-500 text-center italic">*Proyeksi berdasarkan jumlah pengguna aktif saat ini. Tagihan final akan dihitung pada akhir periode.</p>
+                    {data.error ? (
+                        <div className="p-4 bg-red-50 text-red-600 rounded-md">Gagal memuat data proyeksi.</div>
+                    ) : data.loading ? (
+                        <div className="p-4 text-center text-gray-500">Menghitung penggunaan riil dari database...</div>
+                    ) : (
+                        <>
+                            <div className="p-3 bg-gray-50 dark:bg-slate-800 rounded-lg border dark:border-dark-border space-y-2">
+                                <div className="flex justify-between text-sm"><span>Paket Aktif (Saat Ini):</span><span className="font-semibold">{data.packageName}</span></div>
+                                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400"><span>Pengguna Aktif (Riil):</span><span className="font-semibold">{data.penggunaAktif.toLocaleString('id-ID')}</span></div>
+                                <div className="flex justify-between text-sm text-gray-600 dark:text-gray-400"><span>Surat Bulan Ini (Riil):</span><span className="font-semibold">{data.suratBulanIni.toLocaleString('id-ID')}</span></div>
+                            </div>
+                            
+                            <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800 space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-sm font-semibold text-blue-800 dark:text-blue-300">Rekomendasi Paket</span>
+                                    <span className="px-2 py-1 bg-blue-200 dark:bg-blue-800 text-blue-900 dark:text-blue-100 rounded text-xs font-bold">{data.recommendedPackageName}</span>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-blue-700 dark:text-blue-400">Proyeksi Tagihan Bulanan Baru</p>
+                                    <p className="text-3xl font-bold text-blue-900 dark:text-blue-200">Rp {data.totalBulanan.toLocaleString('id-ID')}</p>
+                                </div>
+                            </div> 
+                            
+                            <div className="p-3 bg-gray-100 dark:bg-slate-700 rounded-lg border dark:border-dark-border flex justify-between items-center">
+                                <span className="text-sm font-semibold text-gray-800 dark:text-gray-300">Proyeksi Tagihan Tahunan Baru</span>
+                                <span className="text-xl font-bold text-gray-900 dark:text-white">Rp {data.totalTahunan.toLocaleString('id-ID')}</span>
+                            </div>
+                            <p className="text-xs text-gray-500 text-center italic">*Proyeksi didasarkan pada paket termurah yang dapat mengakomodasi penggunaan riil OPD (surat & pengguna) bulan ini.</p>
+                        </>
+                    )}
                 </div>
                 <DialogFooter className="mt-6 p-4 border-t border-gray-200 dark:border-dark-border -mx-6 -mb-6">
                     <Button variant="outline" onClick={onClose}>Tutup</Button>
@@ -498,14 +514,19 @@ const PaketModal = ({ isOpen, onClose, onSave, onDelete, packageData, setPackage
                                     placeholder="Contoh: Profesional" 
                                 />
                             </div>
-                            <div>
-                                <Label htmlFor="pkg-harga">Harga per Pengguna per Bulan (Rp)</Label>
-                                <Input 
-                                    id="pkg-harga"
-                                    type="number" 
-                                    value={packageData.hargaPerPenggunaPerBulan || 0} 
-                                    onChange={e => setPackageData({ ...packageData, hargaPerPenggunaPerBulan: Number(e.target.value) })} 
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="pkg-harga">Harga Flat / Bulan (Rp)</Label>
+                                    <Input id="pkg-harga" type="number" value={packageData.hargaBulanan || 0} onChange={e => setPackageData({ ...packageData, hargaBulanan: Number(e.target.value) })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pkg-user">Batas Kuota Pengguna (-1 untuk Tak Terbatas)</Label>
+                                    <Input id="pkg-user" type="number" value={packageData.batasPengguna ?? -1} onChange={e => setPackageData({ ...packageData, batasPengguna: Number(e.target.value) })} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="pkg-surat">Batas Kuota Surat / Bulan (-1 untuk Tak Terbatas)</Label>
+                                    <Input id="pkg-surat" type="number" value={packageData.batasSuratBulanan ?? -1} onChange={e => setPackageData({ ...packageData, batasSuratBulanan: Number(e.target.value) })} />
+                                </div>
                             </div>
                             <div className="space-y-2">
                                 <h4 className="font-bold">Fitur yang Termasuk</h4>
@@ -558,6 +579,7 @@ const LaporanLanggananPage = () => {
 
     const [isProyeksiModalOpen, setIsProyeksiModalOpen] = useState(false);
     const [selectedOpdForProyeksi, setSelectedOpdForProyeksi] = useState<OPD | null>(null);
+    const [proyeksiData, setProyeksiData] = useState<any>({ loading: true });
 
     const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
     const [selectedTagihan, setSelectedTagihan] = useState<Tagihan | null>(null);
@@ -608,7 +630,7 @@ const LaporanLanggananPage = () => {
 
         const unsubHistory = onSnapshot(collection(db, 'paymentHistory'), snap => setPaymentHistory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as PaymentHistory))));
 
-        const unsubPricing = onSnapshot(query(collection(db, 'pricingPackages'), orderBy('hargaPerPenggunaPerBulan', 'asc')), snap => {
+        const unsubPricing = onSnapshot(query(collection(db, 'pricingPackages'), orderBy('hargaBulanan', 'asc')), snap => {
              const packages = snap.docs.map(doc => {
                  const data = doc.data() as PricingPackage;
                  return { id: doc.id, ...data, features: { ...defaultFeatures, ...data.features } } as PricingPackage;
@@ -680,9 +702,57 @@ const LaporanLanggananPage = () => {
         return { totalPendapatan, langgananAktif, segeraKedaluwarsa, sudahKedaluwarsa };
     }, [paymentHistory, opdConfigs, opdList]);
 
-    const openProyeksiModal = (opd: OPD) => {
+    const openProyeksiModal = async (opd: OPD) => {
         setSelectedOpdForProyeksi(opd);
+        setProyeksiData({ loading: true, namaOpd: opd.namaOpd });
         setIsProyeksiModalOpen(true);
+        
+        try {
+            const config = opdConfigs.get(opd.id!) || { packageName: 'Starter', penggunaAktifSaatIni: 0 };
+            const now = new Date();
+            const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+            
+            const q = query(collection(db, 'surat'), where('opdId', '==', opd.id!), where('tanggalDiterima', '>=', Timestamp.fromDate(startOfMonth)));
+            const snapshot = await getCountFromServer(q);
+            const suratBulanIni = snapshot.data().count;
+            
+            const penggunaAktif = config.penggunaAktifSaatIni || 0;
+            
+            const sortedPackages = [...pricingPackages].sort((a, b) => a.hargaBulanan - b.hargaBulanan);
+            
+            let recommendedPackage = sortedPackages[0] || null;
+            for (const pkg of sortedPackages) {
+                const userFits = pkg.batasPengguna === -1 || penggunaAktif <= pkg.batasPengguna;
+                const suratFits = pkg.batasSuratBulanan === -1 || suratBulanIni <= pkg.batasSuratBulanan;
+                
+                if (userFits && suratFits) {
+                    recommendedPackage = pkg;
+                    break;
+                }
+            }
+            
+            if (!recommendedPackage && sortedPackages.length > 0) {
+                 recommendedPackage = sortedPackages[sortedPackages.length - 1];
+            }
+            
+            const hargaBulanan = recommendedPackage?.hargaBulanan || 0;
+            
+            setProyeksiData({
+                loading: false,
+                namaOpd: opd.namaOpd,
+                packageName: config.packageName,
+                penggunaAktif: penggunaAktif,
+                suratBulanIni: suratBulanIni,
+                recommendedPackageName: recommendedPackage?.id || 'Custom/Unknown',
+                hargaBulanan: hargaBulanan,
+                totalBulanan: hargaBulanan,
+                totalTahunan: hargaBulanan * 12,
+            });
+            
+        } catch (error) {
+            console.error("Gagal menarik data proyeksi", error);
+            setProyeksiData({ error: true, namaOpd: opd.namaOpd });
+        }
     };
     
     const openKonfigModal = (opd: OPD) => {
@@ -705,10 +775,10 @@ const LaporanLanggananPage = () => {
                 
                 const opd = opdList.find(o => o.id === opdId);
                 const pkg = pricingPackages.find(p => p.id === newConfig.packageName);
-                const hargaPerPengguna = pkg?.hargaPerPenggunaPerBulan || 0;
+                const hargaBulanan = pkg?.hargaBulanan || 0;
                 const penggunaAktif = newConfig.penggunaAktifSaatIni || 0;
                 
-                const totalTagihan = hargaPerPengguna * penggunaAktif;
+                const totalTagihan = hargaBulanan;
 
                 const paymentRef = doc(collection(db, 'paymentHistory'));
                 batch.set(paymentRef, {
@@ -722,7 +792,7 @@ const LaporanLanggananPage = () => {
                     opdId: opdId, namaOpd: opd?.namaOpd || opdId,
                     bulanTagihan: new Date().getMonth() + 1, tahunTagihan: new Date().getFullYear(),
                     packageName: newConfig.packageName, jumlahPenggunaAktif: penggunaAktif,
-                    hargaPerPengguna: hargaPerPengguna, totalTagihan: totalTagihan > 0 ? totalTagihan : 0,
+                    hargaBulanan: hargaBulanan, totalTagihan: totalTagihan > 0 ? totalTagihan : 0,
                     status: "Lunas", tanggalDibuat: now, tanggalDibayar: now,
                     catatan: "Tagihan otomatis dari aktivasi Super Admin"
                 });
@@ -832,7 +902,7 @@ const LaporanLanggananPage = () => {
                 bulanTagihan: billingMonth, tahunTagihan: billingYear,
                 packageName: config?.packageName || 'Custom',
                 jumlahPenggunaAktif: config?.penggunaAktifSaatIni || 0,
-                hargaPerPengguna: pkg?.hargaPerPenggunaPerBulan || 0,
+                hargaBulanan: pkg?.hargaBulanan || 0,
                 totalTagihan: Number(manualTagihanData.totalTagihan),
                 status: "Belum Dibayar", tanggalDibuat: Timestamp.now(), tanggalDibayar: null,
                 catatan: `Tagihan manual: ${manualTagihanData.catatan || `Tagihan untuk ${manualTagihanData.periodeBulan} bulan`}`
@@ -852,7 +922,7 @@ const LaporanLanggananPage = () => {
             setPackageFormState({ ...pkg, features: { ...defaultFeatures, ...pkg.features } });
             setIsEditingPackage(true);
         } else {
-            setPackageFormState({ id: '', hargaPerPenggunaPerBulan: 0, features: defaultFeatures });
+            setPackageFormState({ id: '', hargaBulanan: 0, batasPengguna: -1, batasSuratBulanan: -1, features: { ...defaultFeatures, aiSuratReader: true, aiNotulensi: true, analitika: true, manajemenAset: true, persetujuanDraf: true, formBuilder: true } });
             setIsEditingPackage(false);
         }
         setIsPackageModalOpen(true);
@@ -868,7 +938,9 @@ const LaporanLanggananPage = () => {
         try {
             const packageRef = doc(db, 'pricingPackages', packageFormState.id);
             await setDoc(packageRef, { 
-                hargaPerPenggunaPerBulan: packageFormState.hargaPerPenggunaPerBulan || 0, 
+                hargaBulanan: packageFormState.hargaBulanan || 0, 
+                batasPengguna: packageFormState.batasPengguna ?? -1,
+                batasSuratBulanan: packageFormState.batasSuratBulanan ?? -1,
                 features: packageFormState.features 
             });
             setIsPackageModalOpen(false);
@@ -882,6 +954,36 @@ const LaporanLanggananPage = () => {
             try {
                 await deleteDoc(doc(db, 'pricingPackages', packageId));
             } catch (error) { console.error(error); alert("Gagal menghapus paket."); }
+        }
+    };
+
+    const handleGenerateDefaultPackages = async () => {
+        if (!window.confirm("Apakah Anda yakin ingin membuat/menimpa paket default (Starter, Basic, Standard, Pro, Enterprise)?")) return;
+        setIsSaving(true);
+        try {
+            const batch = writeBatch(db);
+            const defaultPkgs = [
+                { id: "Starter", hargaBulanan: 500000, batasPengguna: 30, batasSuratBulanan: 500 },
+                { id: "Basic", hargaBulanan: 1000000, batasPengguna: 75, batasSuratBulanan: 1000 },
+                { id: "Standard", hargaBulanan: 1500000, batasPengguna: 75, batasSuratBulanan: 2500 },
+                { id: "Pro", hargaBulanan: 3500000, batasPengguna: 150, batasSuratBulanan: 10000 },
+                { id: "Enterprise", hargaBulanan: 11000000, batasPengguna: -1, batasSuratBulanan: -1 }
+            ];
+            
+            const featuresAllTrue = { aiSuratReader: true, aiNotulensi: true, analitika: true, manajemenAset: true, persetujuanDraf: true, formBuilder: true };
+
+            defaultPkgs.forEach(pkg => {
+                const ref = doc(db, 'pricingPackages', pkg.id);
+                batch.set(ref, { ...pkg, features: featuresAllTrue });
+            });
+
+            await batch.commit();
+            alert("Paket default berhasil di-generate!");
+        } catch (error: any) {
+            console.error("Gagal generate paket", error);
+            alert("Gagal generate paket: " + error.message);
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -915,20 +1017,7 @@ const LaporanLanggananPage = () => {
 
     if (userProfile?.role !== 'super_admin') return <div className="p-6 text-center text-red-700 bg-red-100 rounded-lg">Akses ditolak.</div>;
 
-    const proyeksiData = useMemo(() => {
-        if (!selectedOpdForProyeksi || pricingPackages.length === 0) { return null; }
-        const config = opdConfigs.get(selectedOpdForProyeksi.id!) || { packageName: 'Dasar', penggunaAktifSaatIni: 0 };
-        const pkg = pricingPackages.find(p => p.id === config.packageName);
-        const hargaPerPengguna = pkg?.hargaPerPenggunaPerBulan || 0;
-        const penggunaAktif = config.penggunaAktifSaatIni || 0;
-        const totalBulanan = hargaPerPengguna * penggunaAktif;
-
-        return {
-            namaOpd: selectedOpdForProyeksi.namaOpd, packageName: config.packageName,
-            penggunaAktif: penggunaAktif, hargaPerPengguna: hargaPerPengguna,
-            totalBulanan: totalBulanan, totalTahunan: totalBulanan * 12,
-        };
-    }, [selectedOpdForProyeksi, opdConfigs, pricingPackages]);
+    if (userProfile?.role !== 'super_admin') return <div className="p-6 text-center text-red-700 bg-red-100 rounded-lg">Akses ditolak.</div>;
 
     return (
         <div className="animate-fadeInUp">
@@ -1066,22 +1155,29 @@ const LaporanLanggananPage = () => {
                 {/* --- TAB 3: PENGATURAN PAKET HARGA --- */}
                 <TabsContent value="paket" className="mt-6">
                     <div className="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border">
-                        <div className="p-4 border-b dark:border-dark-border flex justify-between items-center">
+                        <div className="p-4 border-b dark:border-dark-border flex justify-between items-center flex-wrap gap-4">
                             <h2 className="text-xl font-semibold">Pengaturan Paket Harga</h2>
-                            <Button onClick={() => openPackageModal(null)} size="sm" className="bg-green-600 hover:bg-green-700">
-                                <Plus size={16} className="mr-1.5"/> Tambah Paket Baru
-                            </Button>
+                            <div className="flex gap-2">
+                                <Button onClick={handleGenerateDefaultPackages} variant="outline" size="sm" className="border-green-600 text-green-600 hover:bg-green-50">
+                                    <CheckCircle size={16} className="mr-1.5"/> Generate Paket Default
+                                </Button>
+                                <Button onClick={() => openPackageModal(null)} size="sm" className="bg-green-600 hover:bg-green-700">
+                                    <Plus size={16} className="mr-1.5"/> Tambah Paket Baru
+                                </Button>
+                            </div>
                         </div>
                         <div className="p-4 overflow-x-auto">
                             <Table>
                                 <TableHeader>
-                                    <TableRow><TableHead>Paket</TableHead><TableHead>Harga/Pengguna/Bulan</TableHead><TableHead>Fitur</TableHead><TableHead>Aksi</TableHead></TableRow>
+                                    <TableRow><TableHead>Paket</TableHead><TableHead>Harga Flat / Bulan</TableHead><TableHead>Batas User</TableHead><TableHead>Batas Surat</TableHead><TableHead>Fitur</TableHead><TableHead>Aksi</TableHead></TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {loading ? <TableRow><TableCell colSpan={4} className="p-4 text-center">Memuat...</TableCell></TableRow> : pricingPackages.map(pkg => (
+                                    {loading ? <TableRow><TableCell colSpan={6} className="p-4 text-center">Memuat...</TableCell></TableRow> : pricingPackages.map(pkg => (
                                         <TableRow key={pkg.id}>
                                             <TableCell className="font-bold">{pkg.id}</TableCell>
-                                            <TableCell>Rp {pkg.hargaPerPenggunaPerBulan.toLocaleString('id-ID')}</TableCell>
+                                            <TableCell>Rp {pkg.hargaBulanan?.toLocaleString('id-ID') || 0}</TableCell>
+                                            <TableCell>{pkg.batasPengguna === -1 ? 'Tak Terbatas' : pkg.batasPengguna}</TableCell>
+                                            <TableCell>{pkg.batasSuratBulanan === -1 ? 'Tak Terbatas' : pkg.batasSuratBulanan}</TableCell>
                                             <TableCell className="text-xs space-x-2">
                                                 {Object.entries(pkg.features).map(([key, value]) => value && (
                                                     <span key={key} className="bg-gray-200 dark:bg-slate-700 px-1.5 py-0.5 rounded whitespace-nowrap">

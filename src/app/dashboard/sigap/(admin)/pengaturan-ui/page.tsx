@@ -112,7 +112,7 @@ export default function PengaturanUIPage() {
     try {
       setLoading(true);
       await callThemeApi('setOpdUiTheme', { opdId, theme });
-      addToast(`Tema OPD berhasil diubah menjadi ${theme === 'sigap' ? 'SIGAP' : 'NataKarya'}.`, 'success');
+      addToast(`Tema OPD berhasil diubah menjadi ${theme === 'sigap' ? 'SIGAP' : 'Poros'}.`, 'success');
     } catch (error: any) {
       addToast(error.message, 'error');
     } finally {
@@ -124,7 +124,7 @@ export default function PengaturanUIPage() {
     try {
       setLoading(true);
       await callThemeApi('setUserUiTheme', { nip, theme });
-      addToast(`Tema User berhasil dioverride menjadi ${theme === 'sigap' ? 'SIGAP' : 'NataKarya'}.`, 'success');
+      addToast(`Tema User berhasil dioverride menjadi ${theme === 'sigap' ? 'SIGAP' : 'Poros'}.`, 'success');
       
       // Update local state temporarily
       setUsers(prev => prev.map(u => u.nip === nip ? { ...u, app_theme: theme as any } : u));
@@ -219,7 +219,7 @@ export default function PengaturanUIPage() {
                             {currentTheme === 'sigap' ? (
                               <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">SIGAP</Badge>
                             ) : (
-                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">NataKarya</Badge>
+                              <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">Poros</Badge>
                             )}
                           </TableCell>
                           <TableCell>
@@ -233,7 +233,7 @@ export default function PengaturanUIPage() {
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="sigap">SIGAP</SelectItem>
-                                <SelectItem value="natakarya">NataKarya</SelectItem>
+                                <SelectItem value="poros">Poros</SelectItem>
                               </SelectContent>
                             </Select>
                           </TableCell>
@@ -297,7 +297,7 @@ export default function PengaturanUIPage() {
                           <TableCell>
                              {hasOverride ? (
                                 <Badge variant="default" className={user.app_theme === 'sigap' ? 'bg-blue-600' : 'bg-purple-600'}>
-                                  {user.app_theme === 'sigap' ? 'SIGAP' : 'NataKarya'}
+                                  {user.app_theme === 'sigap' ? 'SIGAP' : 'Poros'}
                                 </Badge>
                              ) : (
                                 <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -318,7 +318,7 @@ export default function PengaturanUIPage() {
                                   </SelectTrigger>
                                   <SelectContent>
                                     <SelectItem value="sigap">SIGAP</SelectItem>
-                                    <SelectItem value="natakarya">NataKarya</SelectItem>
+                                    <SelectItem value="poros">Poros</SelectItem>
                                   </SelectContent>
                                 </Select>
 

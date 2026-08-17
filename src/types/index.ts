@@ -1,7 +1,7 @@
 import { Timestamp } from "firebase/firestore";
 import { ReactNode } from "react";
 
-export type AppTheme = 'sigap' | 'natakarya';
+export type AppTheme = 'sigap' | 'poros';
 
 // [UPDATE] Tambahkan Role Baru
 export type FunctionalRole = 
@@ -181,7 +181,7 @@ export interface BuktiKinerja { id?: string; userId: string; opdId: string; judu
 export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string; tanggalRapat: Timestamp; pemimpinRapat: string; notulis: string; peserta: string; createdBy: string; createdAt: Timestamp; isiNotulensi: string; }
 export interface KnowledgeArticle { id?: string; opdId: string; judul: string; kategori: string; konten: string; attachmentUrl?: string; createdBy: string; createdAt: Timestamp; lastUpdatedAt: Timestamp; sharedWithOpdIds?: string[]; }
 export interface PengumumanAttachment { url: string; fileName: string; type: string; }
-export interface Pengumuman { id?: string; opdId: string; judul: string; isi: string; penulis: string; createdAt: Timestamp; target: 'Semua OPD' | string; penting: boolean; tanggalMulai: Timestamp; tanggalSelesai: Timestamp; attachmentUrl?: string | null; attachmentFileName?: string | null; attachmentType?: string | null; attachments?: PengumumanAttachment[]; sharedWithOpdIds?: string[]; }
+export interface Pengumuman { id?: string; opdId: string; judul: string; isi: string; penulis: string; createdAt: Timestamp; target: 'Semua OPD' | string; penting: boolean; tanggalMulai: Timestamp; tanggalSelesai: Timestamp; attachmentUrl?: string | null; attachmentFileName?: string | null; attachmentType?: string | null; attachments?: PengumumanAttachment[]; sharedWithOpdIds?: string[]; readBy?: string[]; }
 export interface BankTemplate { id?: string; judul: string; deskripsi: string; googleDriveUrl: string; googleDriveId?: string; kategori: string; opdId: string; createdBy: string; createdAt: Timestamp; sharedWithOpdIds?: string[]; }
 export interface ApprovalStep { jabatanId: string; namaJabatan: string; status: 'Menunggu' | 'Disetujui' | 'Revisi'; timestamp?: Timestamp; comments?: string; }
 export interface RiwayatPersetujuan { timestamp: Timestamp; actorName: string; action: string; comments: string; }
@@ -194,8 +194,8 @@ export interface KinerjaAgregat { id?: string; tanggal: Timestamp; opdId: string
 export interface ChecklistItem { id: string; teks: string; status: 'Todo' | 'In Progress' | 'Done'; }
 export interface ChecklistBoard { id?: string; userId: string; judul: string; items: ChecklistItem[]; createdAt: Timestamp; tugasTerkaitId?: string; }
 export interface PaymentHistory { id?: string; opdId: string; tanggalBayar: Timestamp; jumlah: number; paket: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; periodeBulan: number; dicatatOleh: string; catatan?: string; }
-export interface PricingPackage { id?: string; hargaPerPenggunaPerBulan: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; }
-export interface Tagihan { id?: string; opdId: string; namaOpd: string; bulanTagihan: number; tahunTagihan: number; packageName: string; jumlahPenggunaAktif: number; hargaPerPengguna: number; totalTagihan: number; status: 'Belum Dibayar' | 'Lunas' | 'Kedaluwarsa'; tanggalDibuat: Timestamp; tanggalDibayar: Timestamp | null; catatan?: string; }
+export interface PricingPackage { id?: string; hargaBulanan: number; batasPengguna: number; batasSuratBulanan: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; }
+export interface Tagihan { id?: string; opdId: string; namaOpd: string; bulanTagihan: number; tahunTagihan: number; packageName: string; jumlahPenggunaAktif: number; hargaBulanan: number; totalTagihan: number; status: 'Belum Dibayar' | 'Lunas' | 'Kedaluwarsa'; tanggalDibuat: Timestamp; tanggalDibayar: Timestamp | null; catatan?: string; dokumenKelengkapan?: { spk: boolean; bast: boolean; invoice: boolean; kwitansi: boolean; fakturPajak: boolean; }; }
 export type KepuasanType = "Sangat Puas" | "Puas" | "Cukup" | "Kurang Puas" | "Sangat Tidak Puas";
 export type KemudahanType = "Sangat Mudah" | "Mudah" | "Cukup" | "Sulit" | "Sangat Sulit";
 export type TipeFeedbackType = "Laporan Bug" | "Saran Fitur" | "Komentar Umum";

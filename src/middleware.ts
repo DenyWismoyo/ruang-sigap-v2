@@ -8,7 +8,7 @@ export function middleware(request: NextRequest) {
   // Hanya berlaku untuk /dashboard
   if (!pathname.startsWith('/dashboard')) return NextResponse.next();
   // Cegah infinite loop
-  if (pathname.includes('/sigap') || pathname.includes('/natakarya')) {
+  if (pathname.includes('/sigap') || pathname.includes('/poros')) {
     return NextResponse.next();
   }
   
@@ -21,7 +21,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Cegah akses langsung ke folder UI (contoh: /dashboard/sigap) agar URL tetap rapi
-  if (pathname.startsWith('/dashboard/sigap') || pathname.startsWith('/dashboard/natakarya')) {
+  if (pathname.startsWith('/dashboard/sigap') || pathname.startsWith('/dashboard/poros')) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 

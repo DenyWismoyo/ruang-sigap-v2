@@ -90,7 +90,7 @@ export interface UserProfile {
   googleRefreshToken?: string | null;
   googleAccessToken?: string | null;
   googleTokenExpiry?: number | null;
-    app_theme?: 'sigap' | 'natakarya';
+    app_theme?: 'sigap' | 'poros';
   googleCalendarSyncEnabled?: boolean;
   // --- [AKHIR TAMBAHAN] ---
 

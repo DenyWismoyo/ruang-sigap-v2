@@ -1,5 +1,5 @@
 // Lokasi: src/app/api/ai/copilot/route.ts
-// [UPDATE ENTERPRISE] Natakarya AI Chat Copilot dengan Native Gemini Tool Calling & RAG
+// [UPDATE ENTERPRISE] Poros AI Chat Copilot dengan Native Gemini Tool Calling & RAG
 // Mengambil data nyata Firestore (Surat, Disposisi, Tugas, Draf) secara langsung sehingga AI dapat memberikan informasi faktual dan tombol aksi langsung ke dokumen.
 
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -133,7 +133,7 @@ export async function POST(req: Request) {
               perihal: data.perihal || "Tanpa Perihal",
               statusPenyelesaian: data.statusPenyelesaian || "Proses",
               tanggalDiterima: data.tanggalDiterima ? data.tanggalDiterima.toDate?.()?.toLocaleDateString("id-ID") : "",
-              actionUrl: `/dashboard/natakarya/surat/${d.id}`,
+              actionUrl: `/dashboard/poros/surat/${d.id}`,
               _dateObj: createdAtDate,
               _rawData: data,
             };
@@ -180,7 +180,7 @@ export async function POST(req: Request) {
             instruksi: data.instruksi || "",
             dariJabatanNama: data.dariJabatanNama || "Pimpinan",
             isWaitingAction: isForMe && !isDoneByMe,
-            suratUrl: data.suratId ? `/dashboard/natakarya/surat/${data.suratId}` : `/dashboard/natakarya/ruang-kerja`,
+            suratUrl: data.suratId ? `/dashboard/poros/surat/${data.suratId}` : `/dashboard/poros/ruang-kerja`,
           };
         }));
 
@@ -192,7 +192,7 @@ export async function POST(req: Request) {
             prioritas: data.prioritas || "Sedang",
             status: data.status || "Baru",
             batasWaktu: data.batasWaktu ? data.batasWaktu.toDate?.()?.toLocaleDateString("id-ID") : "",
-            actionUrl: `/dashboard/natakarya/tugas`,
+            actionUrl: `/dashboard/poros/tugas`,
           };
         });
 
@@ -200,7 +200,7 @@ export async function POST(req: Request) {
             id: d.id,
             judul: d.data().judul || "Draf",
             status: d.data().status || "Proses Review",
-            actionUrl: `/dashboard/natakarya/persetujuan-draf`,
+            actionUrl: `/dashboard/poros/persetujuan-draf`,
         }));
 
         if ((logbookSnap as any).exists) {
@@ -214,7 +214,7 @@ export async function POST(req: Request) {
             ringkasanTindakan: d.data().isiLaporan,
         }));
       } catch (dbErr) {
-        console.error("[Natakarya Copilot] Firestore Context Fetch Error:", dbErr);
+        console.error("[Poros Copilot] Firestore Context Fetch Error:", dbErr);
       }
     }
 
@@ -224,7 +224,7 @@ export async function POST(req: Request) {
     // 2. SYSTEM INSTRUCTION (PERSONA & MENTAL MODEL)
     // =========================================================================
     const systemInstruction = `
-Anda adalah **Natakarya Copilot**, asisten AI jenius dan asisten pribadi ASN terpercaya yang terintegrasi langsung dengan database operasional digital **NATAKARYA**.
+Anda adalah **Poros Copilot**, asisten AI jenius dan asisten pribadi ASN terpercaya yang terintegrasi langsung dengan database operasional digital **POROS**.
 
 KERANGKA BERPIKIR (MENTAL MODELS) & ATURAN KERAS:
 1. **URGENSI-FIRST**: Selalu sebut dokumen/tugas yang paling mendesak lebih dulu (terutama Disposisi Menunggu Tindakan).
@@ -569,7 +569,7 @@ Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke d
     });
     
   } catch (error: any) {
-    console.error("[Natakarya Copilot Error]:", error);
+    console.error("[Poros Copilot Error]:", error);
     return NextResponse.json(
       { error: error.message || "Terjadi kesalahan saat memproses permintaan AI Copilot." },
       { status: 500 }

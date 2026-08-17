@@ -100,6 +100,7 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/rekap-surat', label: 'Rekap Surat', icon: FileText, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
   { href: '/dashboard/laporan', label: 'Laporan Umum', icon: BarChart3, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
   { href: '/dashboard/laporan-langganan', label: 'Laporan Langganan', icon: DollarSign, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
+  { href: '/dashboard/dokumen-penagihan', label: 'Dokumen Penagihan', icon: FileText, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-blue-600' },
   
   // --- ADMINISTRASI ---
   // [UPDATE] Menambahkan 'staf_tu' pada allowedRoles

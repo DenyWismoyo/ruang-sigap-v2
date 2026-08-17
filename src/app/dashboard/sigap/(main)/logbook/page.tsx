@@ -17,7 +17,7 @@ import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/sigap/hook
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
-import { SmartAddKegiatanModal } from '@/app/dashboard/natakarya/(main)/logbook/components/SmartAddKegiatanModal';
+import { SmartAddKegiatanModal } from '@/app/dashboard/poros/(main)/logbook/components/SmartAddKegiatanModal';
 
 // --- Impor Komponen Shadcn ---
 import {

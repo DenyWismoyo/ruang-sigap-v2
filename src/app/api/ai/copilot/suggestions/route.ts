@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     }
 
     const systemInstruction = `
-Anda adalah asisten AI "Natakarya Copilot" untuk ASN. 
+Anda adalah asisten AI "Poros Copilot" untuk ASN. 
 Tugas Anda: berdasarkan metrik dashboard (Konteks Pengguna) dan lokasi halaman saat ini, hasilkan tepat 3 saran *prompt* yang paling KRUSIAL, SPESIFIK, dan BISA DITINDAKLANJUTI (*actionable*).
 ATURAN KETAT:
 1. Hindari saran yang ambigu, puitis, atau tidak relevan dengan tugas administratif ASN.

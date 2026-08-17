@@ -32,7 +32,7 @@ export default function LandingPage() {
             <Send className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-400">
-            NataKarya
+            Poros
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -75,7 +75,7 @@ export default function LandingPage() {
             </motion.h1>
             
             <motion.p variants={fadeIn} className="text-lg lg:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Tinggalkan cara manual. NataKarya menghadirkan solusi E-Office modern untuk pengelolaan surat, disposisi otomatis, dan pemantauan tugas secara real-time antar Instansi.
+              Tinggalkan cara manual. Poros menghadirkan solusi E-Office modern untuk pengelolaan surat, disposisi otomatis, dan pemantauan tugas secara real-time antar Instansi.
             </motion.p>
             
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -84,7 +84,7 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-500/30 px-8 py-6 text-lg h-auto transition-all hover:scale-105"
               >
-                Mulai NataKarya
+                Mulai Poros
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </motion.div>
@@ -150,7 +150,7 @@ export default function LandingPage() {
              <div className="w-8 h-8 bg-blue-600 dark:bg-blue-700 rounded-lg flex items-center justify-center">
                 <Send className="w-4 h-4 text-white" />
              </div>
-             <span className="text-lg font-bold text-white">NataKarya</span>
+             <span className="text-lg font-bold text-white">Poros</span>
           </div>
           <p className="mb-6">Sistem ERP Pemerintahan Modern</p>
           <p className="text-sm">© {new Date().getFullYear()} Pemerintah Kabupaten. All rights reserved.</p>
