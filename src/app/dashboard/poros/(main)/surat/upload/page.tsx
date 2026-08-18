@@ -64,6 +64,7 @@ function UploadSuratComponent() {
   const [file, setFile] = useState<File | null>(null);
   const [klasifikasi, setKlasifikasi] = useState<'Biasa' | 'Penting' | 'Segera' | 'Rahasia'>('Biasa');
   const [jenisSurat, setJenisSurat] = useState<Surat['jenisSurat']>('Lainnya');
+  const [ringkasanEksekutif, setRingkasanEksekutif] = useState(''); // [BARU] State untuk AI Summary
   const [tujuanJabatanId, setTujuanJabatanId] = useState<string>('none'); 
   
   // [TAMBAHAN LINTAS OPD]
@@ -241,6 +242,8 @@ function UploadSuratComponent() {
             setPengirim(parsedData.pengirim || '');
             setTanggalSurat(parsedData.tanggalSurat || '');
             setJenisSurat(parsedData.jenisSurat || 'Lainnya');
+            setRingkasanEksekutif(parsedData.ringkasanEksekutif || ''); // [BARU]
+            
             
             if (parsedData.detailAgenda) {
                 setTanggalAgenda(parsedData.detailAgenda.tanggal || '');
@@ -372,6 +375,7 @@ function UploadSuratComponent() {
       createdBy: userProfile!.uid,
       opdId: userProfile!.opdId,
       jenisSurat: jenisSurat,
+      ringkasanEksekutif: ringkasanEksekutif || undefined, // [BARU]
       detailAgenda: detailAgendaPayload,
       tujuanJabatanId: tujuanJabatanId !== 'none' ? tujuanJabatanId : null,
       terlibatJabatanIds: uniqueTerlibatIds,
@@ -569,6 +573,23 @@ function UploadSuratComponent() {
                 required 
                 placeholder="Isi ringkasan perihal surat..."
               />
+            </div>
+
+            {/* [BARU] Field Ringkasan Eksekutif */}
+            <div>
+              <Label htmlFor="ringkasanEksekutif" className="flex items-center gap-2">
+                 <Sparkles size={14} className="text-blue-500" />
+                 Ringkasan Eksekutif (Otomatis dari AI / Opsional)
+              </Label>
+              <Textarea 
+                id="ringkasanEksekutif"
+                value={ringkasanEksekutif} 
+                onChange={e => setRingkasanEksekutif(e.target.value)} 
+                rows={3}
+                className="mt-1"
+                placeholder="Poin-poin penting isi surat yang di-generate oleh AI..."
+              />
+              <p className="text-[11px] text-muted-foreground mt-1">Jika menggunakan fitur <b>Baca Otomatis</b>, kolom ini akan terisi sendiri.</p>
             </div>
             
             <div>

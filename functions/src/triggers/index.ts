@@ -542,6 +542,10 @@ export const onNotificationCreated = onDocumentCreated(
             // --- [AKHIR MODIFIKASI BATCH 3] ---
 
             const messagePayload: admin.messaging.MulticastMessage = {
+                notification: {
+                    title: "SIGAP: Notifikasi Baru",
+                    body: message,
+                },
                 data: {
                     title: "SIGAP: Notifikasi Baru",
                     body: message,

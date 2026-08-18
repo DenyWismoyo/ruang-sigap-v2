@@ -1,9 +1,9 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
+
 import { Surat } from "./types";
 import { FieldValue } from "firebase-admin/firestore";
 
-const db = admin.firestore();
+import { db } from "./config/firebase";
 
 export const onSuratEksternalDikirim = onDocumentCreated(
     { document: "surat/{suratId}", region: "asia-southeast2" },

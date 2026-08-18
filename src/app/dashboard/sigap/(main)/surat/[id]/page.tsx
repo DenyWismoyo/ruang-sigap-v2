@@ -131,6 +131,20 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
           </div>
         </div>
 
+        {/* Ringkasan Eksekutif AI */}
+        {surat.ringkasanEksekutif && (
+          <div className="pt-4 mt-2 border-t border-border/60">
+            <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border-l-2 border-blue-500">
+               <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">✨ Ringkasan Eksekutif (AI)</span>
+               </h5>
+               <p className="text-sm text-foreground leading-relaxed italic opacity-90">
+                   {surat.ringkasanEksekutif}
+               </p>
+            </div>
+          </div>
+        )}
+
         {surat.jenisSurat === 'Undangan' && surat.detailAgenda && (
           <>
             <div className="pt-4 mt-2 border-t border-border/60">

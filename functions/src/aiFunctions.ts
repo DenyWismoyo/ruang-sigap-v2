@@ -101,6 +101,10 @@ export const extractSuratDataAIV2 = onCall({
               3. **AGENDA**:
                  - Jika surat ini adalah Undangan atau Panggilan Rapat, isi detail agenda selengkap mungkin.
 
+              4. **RINGKASAN EKSEKUTIF (TL;DR)**:
+                 - Buat 1 hingga 2 kalimat ringkasan padat tentang isi utama surat ini.
+                 - Tulis secara lugas dan profesional agar pimpinan langsung paham inti surat tanpa membaca teks panjang.
+
               Ekstrak data dalam format JSON berikut:
               {
                 "nomorSurat": "string",
@@ -108,6 +112,7 @@ export const extractSuratDataAIV2 = onCall({
                 "pengirim": "string (Nama Instansi)",
                 "tanggalSurat": "YYYY-MM-DD",
                 "jenisSurat": "Pilih satu: Undangan, Pemberitahuan, Permohonan, Lainnya",
+                "ringkasanEksekutif": "string",
                 "detailAgenda": {
                    "tanggal": "YYYY-MM-DD",
                    "jamMulai": "HH:mm",
@@ -128,6 +133,7 @@ export const extractSuratDataAIV2 = onCall({
                     type: "STRING", 
                     enum: ["Undangan", "Pemberitahuan", "Permohonan", "Lainnya"] 
                 },
+                ringkasanEksekutif: { type: "STRING" },
                 detailAgenda: {
                     type: "OBJECT", 
                     nullable: true,
@@ -140,7 +146,7 @@ export const extractSuratDataAIV2 = onCall({
                     required: ["tanggal", "jamMulai", "lokasi"]
                 }
             },
-            required: ["nomorSurat", "perihal", "pengirim", "tanggalSurat", "jenisSurat"]
+            required: ["nomorSurat", "perihal", "pengirim", "tanggalSurat", "jenisSurat", "ringkasanEksekutif"]
         };
 
         const payload = {
@@ -151,6 +157,7 @@ export const extractSuratDataAIV2 = onCall({
                 ]
             }],
             generationConfig: {
+                temperature: 0.1,
                 responseMimeType: "application/json",
                 responseSchema: schemaConfig
             }

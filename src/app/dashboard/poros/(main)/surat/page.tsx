@@ -255,6 +255,12 @@ const SuratRow = React.memo(({
         >
             <td className="px-4 py-4 align-top w-1/4 font-medium text-sm">
                 <div className="text-foreground hover:text-[var(--nk-teal-mid)] line-clamp-2 transition-colors">{surat.perihal}</div>
+                {surat.ringkasanEksekutif && (
+                    <div className="mt-2 text-xs bg-purple-50/50 border border-purple-100 rounded-md p-2 text-purple-900 flex items-start gap-1.5 shadow-sm">
+                        <Sparkles size={12} className="text-purple-500 shrink-0 mt-0.5" />
+                        <p className="leading-snug italic opacity-90 line-clamp-3">{surat.ringkasanEksekutif}</p>
+                    </div>
+                )}
                 <p className="text-[11px] text-muted-foreground font-normal truncate mt-1">No: {surat.nomorSurat}</p>
             </td>
             <td className="px-4 py-4 align-top">

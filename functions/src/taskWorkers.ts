@@ -4,16 +4,9 @@
 // [MIGRASI DATABASE]: Menambahkan getFirestore("database-siyap")
 
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
-import * as admin from "firebase-admin";
-import { getFirestore } from "firebase-admin/firestore"; // <-- Tambahan Import
-
+import { db } from "./config/firebase";
 import { sendFcmMessageByUid } from "./utils/helpers";
 
-// Mencegah error "app already initialized" saat di-deploy bersama fungsi lain
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
-const db = getFirestore("database-siyap"); // <-- Inisialisasi Database Baru
 
 // PENTING: Nama variabel 'sendReminderTask' otomatis akan menjadi nama Queue di Cloud Tasks
 export const sendReminderTask = onTaskDispatched({ region: 'asia-southeast2' }, async (request) => {

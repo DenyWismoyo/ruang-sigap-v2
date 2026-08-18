@@ -24,6 +24,7 @@ export interface Surat {
     tanggalSelesai?: Timestamp | null;
     tujuanJabatanId?: string | null; // [MODIFIKASI LINTAS OPD V2] Field baru
     terlibatJabatanIds?: string[];
+    ringkasanEksekutif?: string; // [BARU]
     // [FITUR PREMIUM - LINTAS OPD]
     isLintasOpd?: boolean;
     sumberEksternalOpdId?: string;

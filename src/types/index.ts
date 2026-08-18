@@ -138,6 +138,7 @@ export interface Surat {
     statusPenyelesaian: "Baru" | "Didisposisikan" | "Proses Tindak Lanjut" | "Selesai" | "Diarsipkan" | "Revisi Disposisi"; 
     createdBy: string; 
     opdId: string; 
+    ringkasanEksekutif?: string; // [BARU] TL;DR dari isi surat oleh AI
     jenisSurat?: 'Undangan' | 'Pemberitahuan' | 'Permohonan' | 'Lainnya'; 
     detailAgenda?: AgendaDetail | null; 
     searchKeywords?: string[]; 

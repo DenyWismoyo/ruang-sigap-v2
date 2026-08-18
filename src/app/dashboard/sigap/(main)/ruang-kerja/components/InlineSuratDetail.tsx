@@ -52,6 +52,18 @@ export default function InlineSuratDetail({ surat }: InlineSuratDetailProps) {
                     </p>
                 </div>
 
+                {/* [BARU] Bagian Ringkasan Eksekutif AI */}
+                {surat.ringkasanEksekutif && (
+                  <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border-l-2 border-blue-500">
+                      <h5 className="text-xs font-bold text-foreground mb-1 flex items-center gap-2">
+                          <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">✨ Ringkasan Eksekutif (AI)</span>
+                      </h5>
+                      <p className="text-sm text-foreground leading-relaxed italic opacity-90">
+                          {surat.ringkasanEksekutif}
+                      </p>
+                  </div>
+                )}
+
                 {/* Metadata Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-muted-foreground">
                     <div className="space-y-2">
