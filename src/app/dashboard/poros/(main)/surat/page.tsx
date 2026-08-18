@@ -11,9 +11,10 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { useSuratData } from '@/app/dashboard/poros/hooks/useSuratData';
 import { useMasterData } from '@/app/dashboard/poros/hooks/useMasterData';
-import { useSuratDetail } from '@/app/dashboard/poros/hooks/useSuratDetail'; 
+import { useSuratDetail, fetchSuratLengkap } from '@/app/dashboard/poros/hooks/useSuratDetail'; 
 import { useSuratActions, TindakLanjutPayload } from '@/app/dashboard/poros/hooks/useSuratActions'; 
 import { useUserSuratSummary } from '@/app/dashboard/poros/hooks/useUserSummaries'; 
+import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/context/ToastContext'; 
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
@@ -28,7 +29,8 @@ import {
   Loader2, Search, ChevronDown, Users as UsersIcon, Activity,
   Clock, CheckCircle, MessageSquare, CornerDownRight,
   MoreVertical, Eye, Copy, Archive, ExternalLink, AlertTriangle,
-  Palette, ListTodo, X, Maximize2, Minimize2, Save
+  Palette, ListTodo, X, Maximize2, Minimize2, Save,
+  Sparkles
 } from 'lucide-react';
 
 // Shadcn UI
@@ -101,7 +103,7 @@ const getJenisSuratStyle = (jenis?: string) => {
 const SuratCard = React.memo(({ 
     surat, actionItem, recipientNames, onNavigate, onQuickTrack, 
     onQuickPreview, onQuickArchive, onCopyNomor, canArchive,
-    onQuickAccept, onQuickReport, isActionProcessing 
+    onQuickAccept, onQuickReport, isActionProcessing, onPrefetch
 }: any) => {
     const borderColorClass = 
         surat.statusPenyelesaian === 'Baru' ? 'border-l-red-500' : 
@@ -112,7 +114,10 @@ const SuratCard = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s:string) => s.trim()))).join(', ') : null;
 
     return (
-        <div className={`nk-card flex flex-col h-fit overflow-hidden relative group transition-all duration-300 hover:shadow-[var(--nk-shadow-md)] hover:-translate-y-1 mb-4 ${borderColorClass}`}>
+        <div 
+            className={`nk-card flex flex-col h-fit overflow-hidden relative group transition-all duration-300 hover:shadow-[var(--nk-shadow-md)] hover:-translate-y-1 mb-4 ${borderColorClass}`}
+            onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}
+        >
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
             <div className="p-3.5 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
@@ -240,7 +245,7 @@ SuratCard.displayName = 'SuratCard';
 const SuratRow = React.memo(({ 
     surat, actionItem, recipientNames, onClick, onNavigate, onQuickTrack, 
     onQuickPreview, onQuickArchive, onCopyNomor, canArchive,
-    onQuickAccept, onQuickReport, isActionProcessing
+    onQuickAccept, onQuickReport, isActionProcessing, onPrefetch
 }: any) => {
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s: string) => s.trim()))).join(', ') : null;
 
@@ -252,6 +257,7 @@ const SuratRow = React.memo(({
             transition={{ duration: 0.2 }}
             className="group cursor-pointer"
             onClick={() => { onNavigate(); onClick(); }}
+            onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}
         >
             <td className="px-4 py-4 align-top w-1/4 font-medium text-sm">
                 <div className="text-foreground hover:text-[var(--nk-teal-mid)] line-clamp-2 transition-colors">{surat.perihal}</div>
@@ -485,6 +491,15 @@ export default function KotakMasukPage() {
     
     const { archiveSurat, terimaDisposisi, kirimTindakLanjut, isProcessing: isActionProcessing } = useSuratActions();
     const effectiveJabatanId = actingJabatanProfile?.id || jabatanProfile?.id;
+    const queryClient = useQueryClient();
+
+    const handlePrefetch = useCallback((id: string) => {
+        queryClient.prefetchQuery({
+            queryKey: ['suratDetailFull', id],
+            queryFn: () => fetchSuratLengkap(id),
+            staleTime: 1000 * 60 * 5 // 5 menit
+        });
+    }, [queryClient]);
 
     // Filter & UI State
     const [statusFilter, setStatusFilter] = useState('Semua');
@@ -812,6 +827,7 @@ export default function KotakMasukPage() {
                                                 onQuickReport={handleQuickReport}
                                                 isActionProcessing={isActionProcessing}
                                                 canArchive={canArchive}
+                                                onPrefetch={handlePrefetch}
                                             />
                                         </motion.div>
                                     );
@@ -850,6 +866,7 @@ export default function KotakMasukPage() {
                                                     onQuickReport={handleQuickReport}
                                                     isActionProcessing={isActionProcessing}
                                                     canArchive={canArchive}
+                                                    onPrefetch={handlePrefetch}
                                                 />
                                             );
                                         })}

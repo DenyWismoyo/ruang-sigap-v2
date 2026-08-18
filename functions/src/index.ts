@@ -13,6 +13,7 @@ import * as backupFunction from "./backupFunction";
 import * as manualMigrateOpd from "./manualMigrateOpd";
 import * as lintasOpd from "./lintasOpd";
 import * as migrateSubcollections from "./migrateSubcollections";
+import * as compressPdf from "./compressPdf";
 
 const allModules = {
     ...api,
@@ -27,6 +28,7 @@ const allModules = {
     ...manualMigrateOpd,
     ...lintasOpd,
     ...migrateSubcollections,
+    ...compressPdf,
 };
 
 // Revert to original behavior: export modules without 'dev_' prefix

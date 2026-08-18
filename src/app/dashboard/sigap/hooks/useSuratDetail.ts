@@ -20,7 +20,7 @@ interface SuratDetailAggregated {
 }
 
 // --- SINGLE AGGREGATED FETCHER ---
-const fetchSuratLengkap = async (suratId: string): Promise<SuratDetailAggregated> => {
+export const fetchSuratLengkap = async (suratId: string): Promise<SuratDetailAggregated> => {
     if (!suratId) return { surat: null, disposisiList: [], tindakLanjutList: [] };
 
     // 1. Siapkan semua promise (Mereka akan berjalan paralel secara independen di background)
