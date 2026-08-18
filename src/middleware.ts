@@ -31,7 +31,10 @@ export function middleware(request: NextRequest) {
     // 2. Cek claims app_theme (dari token)
     // 3. Fallback ke sigap
     const cookieTheme = request.cookies.get('app-theme')?.value;
-    const theme = cookieTheme || claims.app_theme || 'sigap';
+    let theme = cookieTheme || claims.app_theme || 'sigap';
+    // Mapping tema lama 'natakarya' ke 'poros' dan validasi tema
+    if (theme === 'natakarya') theme = 'poros';
+    if (!['sigap', 'poros'].includes(theme)) theme = 'sigap';
     
     // Rewrite URL ke folder yang sesuai secara transparan
     const newUrl = request.nextUrl.clone();

@@ -1,8 +1,10 @@
 // Lokasi: functions/src/aiFunctions.ts
 import * as functions from "firebase-functions/v1";
 import * as logger from "firebase-functions/logger";
+import { defineSecret } from "firebase-functions/params";
 
 const REGION = "asia-southeast2";
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 /**
  * FUNGSI: Ekstrak Data Surat via Gemini AI
@@ -10,7 +12,8 @@ const REGION = "asia-southeast2";
  */
 export const extractSuratDataAI = functions.region(REGION).runWith({
     timeoutSeconds: 60, // AI membutuhkan waktu proses lebih lama
-    memory: "512MB"
+    memory: "512MB",
+    secrets: [geminiApiKey]
 }).https.onCall(async (data, context) => {
     // 1. Validasi Autentikasi (Keamanan)
     if (!context.auth) {
@@ -23,11 +26,11 @@ export const extractSuratDataAI = functions.region(REGION).runWith({
          throw new functions.https.HttpsError("invalid-argument", "Gambar surat tidak disertakan.");
     }
 
-    // 3. Ambil API KEY dari Environment Variables backend
-    // [PERBAIKAN KEAMANAN]: DIBERSIHKAN DARI FALLBACK NEXT_PUBLIC DAN FIREBASE
-    const apiKey = process.env.GEMINI_API_KEY; 
+    // 3. Ambil API KEY dari Google Cloud Secret Manager
+    // [PERBAIKAN KEAMANAN]: Menggunakan Secret Manager alih-alih .env
+    const apiKey = geminiApiKey.value(); 
     if (!apiKey) {
-        logger.error("API Key untuk Gemini tidak ditemukan di environment backend.");
+        logger.error("API Key untuk Gemini tidak ditemukan di Secret Manager.");
         throw new functions.https.HttpsError("internal", "Sistem AI tidak terkonfigurasi di server.");
     }
 

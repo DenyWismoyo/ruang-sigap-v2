@@ -2,11 +2,15 @@
 import { onCall, HttpsError } from "firebase-functions/v2/https";
 import * as logger from "firebase-functions/logger";
 import * as admin from "firebase-admin";
+import { defineSecret } from "firebase-functions/params";
 
 import { getFirestore } from "firebase-admin/firestore";
 
 const REGION = "asia-southeast2";
 const COOLDOWN_SECONDS = 30; // JEDA MINIMAL (30 Detik)
+
+// Definisikan secret dari Google Cloud Secret Manager
+const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
 /**
  * FUNGSI: Ekstrak Data Surat via Gemini AI
@@ -16,8 +20,8 @@ export const extractSuratDataAIV2 = onCall({
     region: REGION,
     timeoutSeconds: 60,
     memory: "512MiB",
-    cors: true 
-    
+    cors: true,
+    secrets: [geminiApiKey] // Sematkan secret ke dalam environment runtime fungsi ini
 }, async (request) => { 
     
     // 1. Validasi Autentikasi (Keamanan)
@@ -68,10 +72,10 @@ export const extractSuratDataAIV2 = onCall({
          throw new HttpsError("invalid-argument", "Gambar surat tidak disertakan.");
     }
 
-    // 4. Ambil API KEY
-    const apiKey = process.env.GEMINI_API_KEY; 
+    // 4. Ambil API KEY dari Google Cloud Secret Manager
+    const apiKey = geminiApiKey.value(); 
     if (!apiKey) {
-        logger.error("API Key untuk Gemini tidak ditemukan di environment backend.");
+        logger.error("API Key untuk Gemini tidak ditemukan di Secret Manager.");
         throw new HttpsError("internal", "Sistem AI tidak terkonfigurasi di server.");
     }
 
