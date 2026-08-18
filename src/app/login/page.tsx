@@ -288,10 +288,10 @@ function LoginComponent() {
                 </motion.div>
                 {/* [PERBAIKAN DARK MODE] */}
                 <h1 className="text-3xl font-bold mt-6 text-foreground">
-                  Poros: ERP Birokrasi Modern.
+                  Workspace Birokrasi Digital
                 </h1>
                 <p className="text-lg text-muted-foreground mt-4">
-                  Poros mengorkestrasikan seluruh alur kerja Anda dalam satu
+                  Sistem terpadu yang mengorkestrasikan seluruh alur kerja Anda dalam satu
                   platform cerdas.
                 </p>
               </div>

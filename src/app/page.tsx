@@ -32,7 +32,7 @@ export default function LandingPage() {
             <Send className="w-5 h-5 text-white" />
           </div>
           <span className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-700 to-indigo-700 dark:from-blue-400 dark:to-indigo-400">
-            Poros
+            Workspace
           </span>
         </div>
         <div className="flex items-center gap-3">
@@ -64,7 +64,7 @@ export default function LandingPage() {
           >
             <motion.div variants={fadeIn} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-100/80 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 font-medium text-sm mb-6 border border-blue-200 dark:border-blue-800/50 shadow-sm backdrop-blur-sm">
               <Zap className="w-4 h-4" />
-              <span>Sistem ERP Birokrasi Modern</span>
+              <span>Workspace Birokrasi Digital</span>
             </motion.div>
             
             <motion.h1 variants={fadeIn} className="text-5xl lg:text-7xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-8 leading-tight">
@@ -75,7 +75,7 @@ export default function LandingPage() {
             </motion.h1>
             
             <motion.p variants={fadeIn} className="text-lg lg:text-xl text-slate-600 dark:text-slate-300 mb-10 max-w-2xl mx-auto leading-relaxed">
-              Tinggalkan cara manual. Poros menghadirkan solusi E-Office modern untuk pengelolaan surat, disposisi otomatis, dan pemantauan tugas secara real-time antar Instansi.
+              Tinggalkan cara manual. Platform ini menghadirkan solusi E-Office modern untuk pengelolaan surat, disposisi otomatis, dan pemantauan tugas secara real-time antar Instansi.
             </motion.p>
             
             <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -84,7 +84,7 @@ export default function LandingPage() {
                 size="lg"
                 className="w-full sm:w-auto rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-xl shadow-blue-500/30 px-8 py-6 text-lg h-auto transition-all hover:scale-105"
               >
-                Mulai Poros
+                Mulai Sekarang
                 <ArrowRight className="w-5 h-5 ml-2" />
               </Button>
             </motion.div>
@@ -150,9 +150,9 @@ export default function LandingPage() {
              <div className="w-8 h-8 bg-blue-600 dark:bg-blue-700 rounded-lg flex items-center justify-center">
                 <Send className="w-4 h-4 text-white" />
              </div>
-             <span className="text-lg font-bold text-white">Poros</span>
+             <span className="text-lg font-bold text-white">Workspace</span>
           </div>
-          <p className="mb-6">Sistem ERP Pemerintahan Modern</p>
+          <p className="mb-6">Sistem Terpadu Pemerintahan Modern</p>
           <p className="text-sm">© {new Date().getFullYear()} Pemerintah Kabupaten. All rights reserved.</p>
         </div>
       </footer>

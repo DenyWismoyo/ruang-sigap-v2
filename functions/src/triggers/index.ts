@@ -6,6 +6,8 @@ import { db, storage, REGION } from "../config/firebase";
 
 const DB_TARGET = process.env.FIRESTORE_DATABASE || "database-siyap";
 
+export * from "./doubleWrite";
+
 import { 
   getUserNameFromJabatanId, getUserNameFromUid, 
   generateSearchKeywords, createRfc3339DateTimeWIB, createCalendarEvent, 

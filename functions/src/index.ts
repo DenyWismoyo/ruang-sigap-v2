@@ -10,6 +10,10 @@ import * as taskWorkers from "./taskWorkers";
 import * as autoHeal from "./autoHeal";
 import * as backupFunction from "./backupFunction";
 
+import * as manualMigrateOpd from "./manualMigrateOpd";
+import * as lintasOpd from "./lintasOpd";
+import * as migrateSubcollections from "./migrateSubcollections";
+
 const allModules = {
     ...api,
     ...triggers,
@@ -20,6 +24,9 @@ const allModules = {
     ...taskWorkers,
     ...autoHeal,
     ...backupFunction,
+    ...manualMigrateOpd,
+    ...lintasOpd,
+    ...migrateSubcollections,
 };
 
 // Revert to original behavior: export modules without 'dev_' prefix

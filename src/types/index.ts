@@ -152,6 +152,13 @@ export interface Surat {
         recipientNames?: string;
         isInformational?: boolean;
     };
+    // [FITUR PREMIUM - LINTAS OPD]
+    isLintasOpd?: boolean;
+    sumberEksternalOpdId?: string;
+    tujuanEksternalOpdId?: string;
+    sumberEksternalNama?: string;
+    tujuanEksternalNama?: string;
+    statusLintasOpd?: 'dikirim' | 'diterima' | 'ditolak';
 }
 
 export interface AgendaDetail { tanggal: Timestamp; jam: string; jamSelesai?: string | null; lokasi: string; }

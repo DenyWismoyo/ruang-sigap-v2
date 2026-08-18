@@ -55,7 +55,7 @@ function UploadSuratComponent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   
-  const { jabatanMap } = useMasterData(true);
+  const { jabatanMap, opdList } = useMasterData(true);
   
   const [nomorSurat, setNomorSurat] = useState('');
   const [perihal, setPerihal] = useState('');
@@ -65,6 +65,10 @@ function UploadSuratComponent() {
   const [klasifikasi, setKlasifikasi] = useState<'Biasa' | 'Penting' | 'Segera' | 'Rahasia'>('Biasa');
   const [jenisSurat, setJenisSurat] = useState<Surat['jenisSurat']>('Lainnya');
   const [tujuanJabatanId, setTujuanJabatanId] = useState<string>('none'); 
+  
+  // [TAMBAHAN LINTAS OPD]
+  const [isLintasOpd, setIsLintasOpd] = useState(false);
+  const [tujuanEksternalOpdId, setTujuanEksternalOpdId] = useState('');
   
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
 
@@ -85,11 +89,7 @@ function UploadSuratComponent() {
   // [TAMBAHAN] State untuk Cooldown Timer AI
   const [cooldownRemaining, setCooldownRemaining] = useState<number>(0);
 
-  // [TAMBAHAN] State untuk Math CAPTCHA
-  const [isMathModalOpen, setIsMathModalOpen] = useState(false);
-  const [mathChallenge, setMathChallenge] = useState<{text: string, answer: number} | null>(null);
-  const [userMathAnswer, setUserMathAnswer] = useState('');
-  const [mathError, setMathError] = useState('');
+  // [TAMBAHAN] State dihapus karena Math CAPTCHA dihilangkan
 
   const isAiReaderEnabled = useMemo(() => {
     if (userProfile?.role === 'super_admin') return true;
@@ -166,44 +166,13 @@ function UploadSuratComponent() {
     }
   };
 
-  // --- LOGIKA MATH CAPTCHA ---
-  const generateMathQuestion = () => {
-    const operations = ['+', '-', '*', '/'];
-    const op = operations[Math.floor(Math.random() * operations.length)];
-    let num1 = 0, num2 = 0, answer = 0, text = '';
-
-    switch (op) {
-      case '+':
-        num1 = Math.floor(Math.random() * 20) + 1;
-        num2 = Math.floor(Math.random() * 20) + 1;
-        answer = num1 + num2;
-        text = `Berapa hasil dari ${num1} + ${num2}?`;
-        break;
-      case '-':
-        num1 = Math.floor(Math.random() * 20) + 10; // num1 selalu lebih besar
-        num2 = Math.floor(Math.random() * num1) + 1;
-        answer = num1 - num2;
-        text = `Berapa hasil dari ${num1} - ${num2}?`;
-        break;
-      case '*':
-        num1 = Math.floor(Math.random() * 10) + 1;
-        num2 = Math.floor(Math.random() * 10) + 1;
-        answer = num1 * num2;
-        text = `Berapa hasil dari ${num1} x ${num2}?`;
-        break;
-      case '/':
-        num2 = Math.floor(Math.random() * 9) + 2; // Hindari bagi 1 atau 0
-        answer = Math.floor(Math.random() * 10) + 1;
-        num1 = num2 * answer;
-        text = `Berapa hasil dari ${num1} dibagi ${num2}?`;
-        break;
+  const handleStartAnalysis = (e: React.MouseEvent<HTMLButtonElement>) => {
+    // Simple anti-bot check: Ensure the click was actually performed by a human user
+    if (!e.isTrusted) {
+      addToast("Aktivitas mencurigakan (bot) terdeteksi. Harap klik tombol secara manual.", "error");
+      return;
     }
-    setMathChallenge({ text, answer });
-    setUserMathAnswer('');
-    setMathError('');
-  };
-
-  const openMathChallenge = () => {
+    
     if (cooldownRemaining > 0) {
         addToast(`Sistem Anti-Spam aktif. Tunggu ${cooldownRemaining} detik lagi.`, "error");
         return;
@@ -217,22 +186,8 @@ function UploadSuratComponent() {
       return;
     }
     
-    generateMathQuestion();
-    setIsMathModalOpen(true);
+    handleAutoRead();
   };
-
-  const verifyMathChallenge = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (parseInt(userMathAnswer) === mathChallenge?.answer) {
-        setIsMathModalOpen(false);
-        handleAutoRead(); // Jika benar, jalankan AI
-    } else {
-        setMathError('Jawaban salah. Sistem memberikan soal baru.');
-        generateMathQuestion(); // Acak soal baru jika salah
-    }
-  };
-  // ---------------------------
-  
   const handleAutoRead = async () => {
     if (!file) return;
 
@@ -422,6 +377,20 @@ function UploadSuratComponent() {
       terlibatJabatanIds: uniqueTerlibatIds,
     };
 
+    // [TAMBAHAN LINTAS OPD]
+    if (isLintasOpd && tujuanEksternalOpdId) {
+        const targetOpd = opdList.find(o => o.id === tujuanEksternalOpdId);
+        const myOpd = opdList.find(o => o.id === userProfile!.opdId);
+        Object.assign(newSuratData, {
+            isLintasOpd: true,
+            statusLintasOpd: 'dikirim',
+            tujuanEksternalOpdId: tujuanEksternalOpdId,
+            tujuanEksternalNama: targetOpd?.namaOpd || 'Instansi Eksternal',
+            sumberEksternalOpdId: userProfile!.opdId,
+            sumberEksternalNama: myOpd?.namaOpd || 'Internal',
+        });
+    }
+
     if (!navigator.onLine) {
         await handleOfflineSubmit(newSuratData, file!);
         setIsUploading(false);
@@ -540,7 +509,7 @@ function UploadSuratComponent() {
                     {isAiReaderEnabled ? (
                       <Button
                           type="button"
-                          onClick={openMathChallenge}
+                          onClick={handleStartAnalysis}
                           disabled={!file || isAnalyzing || !isPdfJsReady || cooldownRemaining > 0}
                           variant={cooldownRemaining > 0 ? "outline" : "secondary"}
                           className={`w-full h-12 text-base font-medium shadow-sm transition-all ${cooldownRemaining > 0 ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-950/40 dark:text-orange-400 dark:border-orange-900 cursor-not-allowed' : ''}`}
@@ -665,6 +634,40 @@ function UploadSuratComponent() {
                 </div>
             </div>
 
+            {/* [TAMBAHAN LINTAS OPD UI] */}
+            <div className="flex flex-col space-y-3 p-4 border border-blue-200 bg-blue-50/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                    <input 
+                        type="checkbox" 
+                        id="lintasOpd"
+                        className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-600"
+                        checked={isLintasOpd}
+                        onChange={(e) => setIsLintasOpd(e.target.checked)}
+                    />
+                    <Label htmlFor="lintasOpd" className="font-semibold text-blue-800">Kirim sebagai Surat Lintas OPD (Ke Instansi Lain)</Label>
+                </div>
+                {isLintasOpd && (
+                    <div className="mt-2 animate-in fade-in slide-in-from-top-2">
+                        <Label htmlFor="tujuanEksternal">Pilih Instansi Tujuan</Label>
+                        <Select value={tujuanEksternalOpdId} onValueChange={setTujuanEksternalOpdId} required={isLintasOpd}>
+                            <SelectTrigger id="tujuanEksternal">
+                                <SelectValue placeholder="-- Pilih OPD Tujuan --" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {opdList.filter(o => o.id !== userProfile?.opdId).map(opd => (
+                                    <SelectItem key={opd.id} value={opd.id!}>
+                                        {opd.namaOpd}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <p className="text-xs text-blue-700 mt-2">
+                            Surat ini akan langsung masuk ke Inbox Surat Masuk instansi yang dituju secara otomatis!
+                        </p>
+                    </div>
+                )}
+            </div>
+
             {jenisSurat === 'Undangan' && (
               <div className="p-4 border border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-900/10 rounded-lg space-y-4 animate-in fade-in slide-in-from-top-2">
                   <h3 className="font-semibold text-blue-800 dark:text-blue-300 flex items-center gap-2">
@@ -708,58 +711,7 @@ function UploadSuratComponent() {
         </div>
       </div>
 
-      {/* --- MODAL MATH CAPTCHA --- */}
-      {isMathModalOpen && mathChallenge && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
-            <div className="bg-background border border-border rounded-xl shadow-2xl max-w-sm w-full p-6 animate-in zoom-in-95 fade-in duration-200">
-                <div className="flex items-center gap-3 mb-4 text-blue-600 dark:text-blue-400">
-                    <ShieldCheck className="w-6 h-6" />
-                    <h2 className="text-xl font-bold">Verifikasi Keamanan</h2>
-                </div>
-                
-                <p className="text-muted-foreground text-sm mb-4">
-                    Untuk mencegah penyalahgunaan sistem AI, silakan jawab pertanyaan berikut dengan benar.
-                </p>
-
-                {mathError && (
-                    <Alert variant="destructive" className="mb-4 py-2 px-3 border-red-500/50">
-                        <AlertDescription className="text-sm font-medium">{mathError}</AlertDescription>
-                    </Alert>
-                )}
-
-                <form onSubmit={verifyMathChallenge} className="space-y-4">
-                    <div className="bg-muted/40 p-4 rounded-lg border border-border/50 text-center mb-4">
-                        <Label className="text-lg md:text-xl font-extrabold text-foreground block mb-3">
-                            {mathChallenge.text}
-                        </Label>
-                        <Input 
-                            type="number" 
-                            value={userMathAnswer} 
-                            onChange={(e) => setUserMathAnswer(e.target.value)} 
-                            placeholder="Ketik angka jawaban..."
-                            required
-                            autoFocus
-                            className="text-center text-xl font-bold h-12 border-primary/30 focus-visible:ring-primary/50"
-                        />
-                    </div>
-
-                    <div className="flex gap-3 justify-end pt-2 border-t border-border/50 mt-4">
-                        <Button 
-                            type="button" 
-                            variant="outline" 
-                            className="w-full sm:w-auto"
-                            onClick={() => setIsMathModalOpen(false)}
-                        >
-                            Batal
-                        </Button>
-                        <Button type="submit" className="w-full sm:w-auto">
-                            Verifikasi
-                        </Button>
-                    </div>
-                </form>
-            </div>
-        </div>
-      )}
+      {/* MODAL MATH CAPTCHA DIHAPUS */}
 
       {/* MODAL KONFIRMASI UPLOAD */}
       {isConfirmModalOpen && (

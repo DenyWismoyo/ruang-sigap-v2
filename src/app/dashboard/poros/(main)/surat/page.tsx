@@ -149,9 +149,23 @@ const SuratCard = React.memo(({
                 </div>
 
                 <div className="flex justify-between items-start mb-2 gap-2 pr-8 mt-1">
-                    <div className="flex items-center text-[11px] text-[var(--nk-teal-mid)] font-bold truncate bg-[var(--nk-surface-3)] px-2 py-0.5 rounded-full border border-[var(--nk-teal-light)]/20">
-                        <User size={10} className="mr-1" />
-                        <span className="truncate">{surat.pengirim}</span>
+                    <div className="flex flex-col gap-1">
+                        <div className="flex items-center text-[11px] text-[var(--nk-teal-mid)] font-bold truncate bg-[var(--nk-surface-3)] px-2 py-0.5 rounded-full border border-[var(--nk-teal-light)]/20 w-fit">
+                            <User size={10} className="mr-1" />
+                            <span className="truncate">{surat.pengirim}</span>
+                        </div>
+                        {surat.isLintasOpd && surat.statusLintasOpd === 'diterima' && (
+                            <div className="flex items-center text-[10px] text-blue-700 bg-blue-100 px-2 py-0.5 rounded border border-blue-300 w-fit">
+                                <ExternalLink size={10} className="mr-1" />
+                                Dari: {surat.sumberEksternalNama}
+                            </div>
+                        )}
+                        {surat.isLintasOpd && surat.statusLintasOpd === 'dikirim' && (
+                            <div className="flex items-center text-[10px] text-purple-700 bg-purple-100 px-2 py-0.5 rounded border border-purple-300 w-fit">
+                                <ExternalLink size={10} className="mr-1" />
+                                Lintas OPD Ke: {surat.tujuanEksternalNama}
+                            </div>
+                        )}
                     </div>
                     <div className="text-[10px] text-muted-foreground whitespace-nowrap bg-muted/50 px-1.5 py-0.5 rounded">
                         {surat.tanggalDiterima?.toDate ? surat.tanggalDiterima.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: '2-digit' }) : 'N/A'}
@@ -244,9 +258,23 @@ const SuratRow = React.memo(({
                 <p className="text-[11px] text-muted-foreground font-normal truncate mt-1">No: {surat.nomorSurat}</p>
             </td>
             <td className="px-4 py-4 align-top">
-                <div className="flex items-center gap-1.5 font-medium text-sm">
-                    <span className="p-1 rounded-full bg-[var(--nk-surface-3)] text-[var(--nk-teal-mid)]"><User size={10} /></span>
-                    <span className="line-clamp-2">{surat.pengirim}</span>
+                <div className="flex flex-col gap-1 font-medium text-sm">
+                    <div className="flex items-center gap-1.5">
+                        <span className="p-1 rounded-full bg-[var(--nk-surface-3)] text-[var(--nk-teal-mid)]"><User size={10} /></span>
+                        <span className="line-clamp-2">{surat.pengirim}</span>
+                    </div>
+                    {surat.isLintasOpd && surat.statusLintasOpd === 'diterima' && (
+                        <div className="flex items-center text-[10px] text-blue-700 bg-blue-100 px-1.5 py-0.5 rounded border border-blue-300 w-fit mt-1">
+                            <ExternalLink size={10} className="mr-1" />
+                            Dari: {surat.sumberEksternalNama}
+                        </div>
+                    )}
+                    {surat.isLintasOpd && surat.statusLintasOpd === 'dikirim' && (
+                        <div className="flex items-center text-[10px] text-purple-700 bg-purple-100 px-1.5 py-0.5 rounded border border-purple-300 w-fit mt-1">
+                            <ExternalLink size={10} className="mr-1" />
+                            Lintas OPD Ke: {surat.tujuanEksternalNama}
+                        </div>
+                    )}
                 </div>
             </td>
             <td className="px-4 py-4 align-top">

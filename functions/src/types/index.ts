@@ -24,6 +24,13 @@ export interface Surat {
     tanggalSelesai?: Timestamp | null;
     tujuanJabatanId?: string | null; // [MODIFIKASI LINTAS OPD V2] Field baru
     terlibatJabatanIds?: string[];
+    // [FITUR PREMIUM - LINTAS OPD]
+    isLintasOpd?: boolean;
+    sumberEksternalOpdId?: string;
+    tujuanEksternalOpdId?: string;
+    sumberEksternalNama?: string;
+    tujuanEksternalNama?: string;
+    statusLintasOpd?: 'dikirim' | 'diterima' | 'ditolak';
 }
 export interface Disposisi {
   id?: string;

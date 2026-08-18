@@ -184,6 +184,7 @@ export default function RuangKerjaPage() {
                       disposisiId: disposisi.id!,
                       jabatanId: currentJabatanId,
                       userId: userProfile.uid,
+                      opdId: surat.opdId,
                       isiLaporan: "Pimpinan telah menindaklanjuti dan menyelesaikan surat ini secara mandiri (Auto-Cleanup).",
                       tanggalLaporan: serverTimestamp() as Timestamp
                   });
@@ -348,7 +349,7 @@ export default function RuangKerjaPage() {
       const disposisiData: Partial<Disposisi> = { suratId: surat.id, dariJabatanId: effectiveJabatan.id!, dariJabatanNama: effectiveJabatan.namaJabatan, opdId: effectiveJabatan.opdId, kepadaJabatanId: [effectiveJabatan.id!], instruksi: "Menindaklanjuti sendiri (Self-Action).", tanggalDisposisi: serverTimestamp() as Timestamp, penerimaDiterima: [effectiveJabatan.id!], penerimaSelesai: [effectiveJabatan.id!], status: 'Terkirim', isInformational: false };
       batch.set(disposisiRef, disposisiData);
       const tindakLanjutRef = doc(collection(db, 'tindakLanjut'));
-      batch.set(tindakLanjutRef, { suratId: surat.id!, disposisiId: disposisiRef.id, jabatanId: effectiveJabatan.id!, userId: userProfile.uid, isiLaporan: "Pimpinan telah menindaklanjuti secara mandiri.", tanggalLaporan: serverTimestamp() as Timestamp });
+      batch.set(tindakLanjutRef, { suratId: surat.id!, disposisiId: disposisiRef.id, jabatanId: effectiveJabatan.id!, userId: userProfile.uid, opdId: surat.opdId, isiLaporan: "Pimpinan telah menindaklanjuti secara mandiri.", tanggalLaporan: serverTimestamp() as Timestamp });
       const suratRef = doc(db, 'surat', surat.id);
       batch.update(suratRef, { 
     statusPenyelesaian: 'Selesai',
