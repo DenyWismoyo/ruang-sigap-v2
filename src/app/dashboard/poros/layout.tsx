@@ -196,11 +196,11 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 bg-background/95 backdrop-blur-sm h-[60px] transition-all duration-300">
+              <header className="sticky top-0 z-30 flex items-center justify-between px-4 lg:px-6 bg-background/95 backdrop-blur-sm border-b border-border/20 h-14 transition-all duration-300">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-[var(--nk-surface-3)] rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
-                <div className="flex items-center space-x-3 md:space-x-6">
+                <div className="flex items-center space-x-2 md:space-x-4">
                   {/* [PERBAIKAN] Menghapus class 'hidden sm:block' agar Search muncul di HP */}
                   <div><GlobalSearch /></div>
                   <Popover>
@@ -233,7 +233,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                       </ScrollArea>
                     </PopoverContent>
                   </Popover>
-                  <ThemeToggleButton />
+                  <div className="flex">
+                    <ThemeToggleButton />
+                  </div>
                   <div className="relative">
                       <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group pl-1 pr-3 py-1 rounded-full hover:bg-[var(--nk-surface-3)] transition-all border border-transparent hover:border-[var(--border)]">
                           <div className="w-8 h-8 rounded-full bg-[var(--nk-teal-mid)] flex items-center justify-center font-bold text-white text-sm shadow-sm group-hover:scale-105 transition-transform ring-2 ring-transparent group-hover:ring-[var(--nk-teal-light)]/30">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
@@ -265,12 +267,14 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </header>
               
               {/* [FIX UI] Main Content Area */}
-              <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 relative scroll-smooth">
+              <main className="flex-1 overflow-y-auto px-0 pt-0 pb-[var(--bottom-nav-height)] md:px-6 md:pt-4 md:pb-6 lg:px-8 lg:pt-6 lg:pb-8 relative scroll-smooth poros-scrollable">
                 {/* Ambient Background Glow */}
                 <div className="absolute top-0 left-0 w-full h-[500px] bg-gradient-to-b from-[var(--nk-gradient-start)]/5 to-transparent pointer-events-none -z-10"></div>
                 <ScrollToTop />
                 <div className="w-full min-h-full flex flex-col">
-                    <Breadcrumbs />
+                    <div className="hidden md:block">
+                        <Breadcrumbs />
+                    </div>
                     <PageTransition>{children}</PageTransition>
                     <footer className="mt-auto pt-10 pb-6 flex flex-col items-center justify-center text-xs text-muted-foreground hidden md:flex border-t border-border/30">
                         <div className="w-16 h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] rounded-full mb-4 opacity-70"></div>

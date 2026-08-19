@@ -52,12 +52,13 @@ export default function GlobalSearch() {
     <>
       <Button
         variant="outline"
-        className="relative h-10 w-full justify-start rounded-[0.5rem] bg-muted/50 text-sm font-normal text-muted-foreground shadow-none sm:pr-12 md:w-40 lg:w-64"
+        className="relative h-9 w-9 p-0 md:h-10 md:w-40 lg:w-64 md:px-4 md:py-2 justify-center md:justify-start rounded-full md:rounded-[0.5rem] bg-transparent border-transparent md:bg-muted/50 md:border-input text-sm font-normal text-muted-foreground shadow-none md:pr-12 hover:bg-accent/50"
         onClick={() => setOpen(true)}
       >
+        <Search className="h-5 w-5 md:hidden text-foreground/70" />
         <span className="hidden lg:inline-flex">Cari sesuatu...</span>
-        <span className="inline-flex lg:hidden">Cari...</span>
-        <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 sm:flex">
+        <span className="hidden md:inline-flex lg:hidden">Cari...</span>
+        <kbd className="pointer-events-none absolute right-[0.3rem] top-[0.3rem] hidden h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium opacity-100 md:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>

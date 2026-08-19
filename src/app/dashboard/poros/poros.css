@@ -44,6 +44,10 @@
     
     --radius: 0.75rem; /* Lebih sleek dari 1rem, tidak setajam 0.5rem */
 
+    /* Variables for layout */
+    --header-height: 56px;
+    --bottom-nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+
     /* --- POROS SIGNATURE TOKENS --- */
     --nk-gradient-start: hsl(172 80% 26%);
     --nk-gradient-end: hsl(190 70% 30%);
@@ -128,6 +132,16 @@
 
 @layer utilities {
   [data-tenant="poros"] {
+    .poros-full-bleed-mobile {
+      @apply -mx-4 px-4 md:mx-0 md:px-0;
+    }
+    
+    .poros-scrollable {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: var(--bottom-nav-height);
+    }
+
     .nk-glass-panel {
       background-color: var(--nk-glass);
       backdrop-filter: blur(12px);

@@ -47,7 +47,7 @@ const AgendaCard = ({ agenda, onInternalClick }: {
           e.preventDefault(); 
           onInternalClick(agenda.item as JadwalTempat);
       } : undefined}
-      className="w-full bg-card border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
+      className="w-full bg-transparent md:bg-card border-x-0 border-t-0 border-b border-border/20 md:border md:border-border rounded-none md:rounded-lg p-4 md:p-4 shadow-none md:shadow-sm hover:shadow-md transition-shadow flex flex-col h-full"
     >
       <div className="flex-1 min-w-0"> {/* [PERBAIKAN] Tambahkan min-w-0 di sini */}
         <div className="flex justify-between items-center">
@@ -290,33 +290,32 @@ export default function AgendaPage() {
   }
 
   return (
-    <div className="animate-fadeInUp">
-        <Button 
-            onClick={() => router.back()} 
-            variant="link"
-            className="inline-flex items-center text-primary hover:underline text-sm mb-4 p-0"
-        >
-            <ArrowLeft size={16} className="mr-2" /> Kembali ke Dashboard
-        </Button>
+    <div className="animate-fadeInUp pt-4 md:pt-0">
+        <div className="px-4 md:px-0">
+            <Button 
+                onClick={() => router.back()} 
+                variant="link"
+                className="inline-flex items-center text-primary hover:underline text-sm mb-4 p-0"
+            >
+                <ArrowLeft size={16} className="mr-2" /> Kembali ke Dashboard
+            </Button>
 
-        <h1 className="text-3xl font-bold text-foreground flex items-center mb-6">
-            <CalendarDays size={28} className="mr-3 text-blue-600"/>
-            Agenda
-        </h1>
+
+        </div>
         
         <ScrollArea className="h-[calc(100vh-200px)]">
-            <div className="p-1 pt-0 space-y-4">
+            <div className="p-0 md:p-1 pt-0 md:pt-0 space-y-0 md:space-y-4">
                 {Object.keys(groupedWeekAgenda).length > 0 ? (
                     // Loop pertama: Iterasi berdasarkan TANGGAL (kunci dari objek)
                     Object.keys(groupedWeekAgenda).map((tanggal) => (
                         <div key={tanggal}>
                             {/* Render Header Tanggal */}
-                            <h3 className="font-semibold text-foreground text-base mb-2 pt-2 border-t border-border first:border-t-0 first:pt-0">
+                            <h3 className="sticky top-0 z-10 font-semibold text-foreground text-sm md:text-base mb-0 md:mb-2 py-2 px-4 md:px-2 bg-background/95 backdrop-blur-sm border-y border-border md:rounded-md shadow-sm md:shadow-none uppercase tracking-wider md:normal-case md:tracking-normal">
                                 {tanggal}
                             </h3>
                             
                             {/* Loop kedua: Iterasi agenda di dalam tanggal tsb */}
-                            <div className="space-y-3">
+                            <div className="space-y-0 md:space-y-3">
                                 {groupedWeekAgenda[tanggal].map((agenda) => (
                                     <AgendaCard 
                                         key={agenda.id} 

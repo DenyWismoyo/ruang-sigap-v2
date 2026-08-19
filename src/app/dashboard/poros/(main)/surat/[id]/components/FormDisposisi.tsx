@@ -67,7 +67,6 @@ export default function FormDisposisi({
 
   const [selectedPenerima, setSelectedPenerima] = useState<UserProfile[]>([]);
   const [batasWaktu, setBatasWaktu] = useState<Date | undefined>(undefined);
-  const [addToCalendar, setAddToCalendar] = useState(false);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -83,11 +82,6 @@ export default function FormDisposisi({
   const isPemberitahuanMode = surat.jenisSurat === 'Pemberitahuan';
   const isTuOrAdmin = userProfile?.role === 'staf_tu' || userProfile?.role === 'admin_opd';
   
-  const showCalendarOption = isPemberitahuanMode || 
-        surat.perihal.toLowerCase().includes('undangan') || 
-        surat.perihal.toLowerCase().includes('rapat') ||
-        surat.perihal.toLowerCase().includes('agenda');
-
   // --- FILTER BAWAHAN ---
   const filteredBawahan = useMemo(() => {
     const searchLower = searchTerm.toLowerCase();
@@ -166,32 +160,9 @@ export default function FormDisposisi({
       );
       
       if (success) {
-          if (addToCalendar && userProfile) {
-              try {
-                  const { addDoc, collection, Timestamp } = require('firebase/firestore');
-                  const { db } = require('@/lib/firebase');
-                  await addDoc(collection(db, 'jadwalTempat'), {
-                      opdId: userProfile.opdId,
-                      namaTempat: 'Sesuai Surat/Internal',
-                      kegiatan: `[Disposisi] ${surat.perihal}`,
-                      penanggungJawab: targets.map(t => t.namaLengkap).join(', '),
-                      tanggalMulai: batasWaktu ? Timestamp.fromDate(batasWaktu) : (surat.detailAgenda?.tanggal || Timestamp.now()),
-                      jamMulai: surat.detailAgenda?.jam || '08:00',
-                      jamSelesai: surat.detailAgenda?.jamSelesai || '16:00',
-                      createdBy: userProfile.uid,
-                      createdAt: Timestamp.now(),
-                      status: 'Disetujui',
-                      jenis: 'Fisik'
-                  });
-              } catch (e) {
-                  console.error("Gagal menambahkan ke kalender:", e);
-              }
-          }
-
           removeInstruksi(); 
           setSelectedPenerima([]);
           setBatasWaktu(undefined);
-          setAddToCalendar(false);
           onDisposisiSuccess();
       }
       setConfirmModal(prev => ({ ...prev, isOpen: false }));
@@ -259,19 +230,15 @@ export default function FormDisposisi({
   const isStillLoadingTargets = isBawahanLoading && !isTuOrAdmin && !isRevising;
 
   return (
-    <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/20 relative overflow-hidden group/form">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-90"></div>
+    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border">
         {/* Penyesuaian Padding Header */}
-        <div className="p-3 md:p-6 border-b border-[var(--nk-gradient-start)]/10 bg-muted/10">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                    <div className="p-2 bg-gradient-to-br from-[var(--nk-gradient-start)]/20 to-transparent rounded-xl mr-3 shadow-sm border border-[var(--nk-gradient-start)]/20">
-                        <Send size={18} className="text-[var(--nk-gradient-start)] md:w-5 md:h-5" />
-                    </div>
-                    <h2 className="text-base md:text-xl font-bold font-heading text-foreground tracking-tight">
-                    {isPemberitahuanMode ? 'Kirim Pemberitahuan' : (isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi')}
-                    </h2>
-                </div>
+        <div className="px-4 pb-3 md:p-6 md:border-b md:border-border flex items-center justify-end md:justify-between">
+            <div className="hidden md:flex items-center">
+                <Send size={18} className="mr-2 md:mr-3 text-blue-600 md:w-5 md:h-5" />
+                <h2 className="text-base md:text-xl font-semibold text-foreground">
+                {isPemberitahuanMode ? 'Kirim Pemberitahuan' : (isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi')}
+                </h2>
+            </div>
                  <Button
                     type="button" variant="ghost" size="sm"
                     onClick={handleAskAi}
@@ -281,11 +248,9 @@ export default function FormDisposisi({
                     {isAiLoading ? <Loader2 size={12} className="md:w-3.5 md:h-3.5 animate-spin mr-1 md:mr-1.5"/> : <Sparkles size={12} className="md:w-3.5 md:h-3.5 mr-1 md:mr-1.5"/>}
                     {isAiLoading ? 'Menganalisis...' : 'Saran AI'}
                 </Button>
-            </div>
         </div>
         
-        {/* Penyesuaian Padding Konten */}
-        <div className="p-3 md:p-6">
+        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
             <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
                 {(isStillLoadingTargets || bawahanError) && (
                   <p className={`text-[11px] md:text-sm p-2.5 md:p-3 rounded-lg border flex items-center gap-2 ${bawahanError ? 'bg-red-100 text-red-700 border-red-200' : 'bg-blue-100 text-blue-700 border-blue-200'}`}>
@@ -349,25 +314,6 @@ export default function FormDisposisi({
                         <Label className="text-xs md:text-sm">Batas Waktu (Opsional)</Label>
                         <DatePicker date={batasWaktu} setDate={setBatasWaktu} />
                     </div>
-
-                    {showCalendarOption && (
-                        <div className="flex items-center space-x-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100 dark:bg-blue-900/10 dark:border-blue-900/50 mt-4">
-                            <Checkbox 
-                                id="calendar" 
-                                checked={addToCalendar}
-                                onCheckedChange={(checked) => setAddToCalendar(checked as boolean)}
-                            />
-                            <div className="grid gap-1.5 leading-none">
-                                <Label htmlFor="calendar" className="text-sm font-medium text-blue-700 dark:text-blue-300 flex items-center">
-                                    <CalendarPlus size={14} className="mr-1" />
-                                    Jadikan Agenda Kalender
-                                </Label>
-                                <p className="text-[10px] md:text-xs text-muted-foreground">
-                                    Otomatis tambahkan acara ini ke kalender OPD untuk penerima.
-                                </p>
-                            </div>
-                        </div>
-                    )}
                 </div>
                 )}
 
@@ -395,20 +341,20 @@ export default function FormDisposisi({
                 <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-4 border-t border-border">
                     {isPemberitahuanMode ? (
                         <>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
-                                <Send size={14} className="md:w-4 md:h-4 mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm shadow-sm">
+                                <Send size={16} className="md:w-4 md:h-4 mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
                            </Button>
-                           <Button type="button" variant="secondary" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="flex-1 w-full h-9 md:h-10 text-xs md:text-sm">
-                                <Bell size={14} className="md:w-4 md:h-4 mr-2" /> Sebarkan ke OPD
+                           <Button type="button" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
+                                <Bell size={16} className="md:w-4 md:h-4 mr-2" /> Sebarkan ke OPD
                            </Button>
                         </>
                     ) : (
                         <>
-                           <Button type="button" variant="outline" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="flex-1 w-full h-10 md:h-11 text-xs md:text-sm rounded-xl hover:bg-[var(--nk-gradient-start)]/10 hover:text-[var(--nk-gradient-start)] hover:border-[var(--nk-gradient-start)]/30 transition-all">
+                           <Button type="button" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
                                 <UserCheck size={16} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
                            </Button>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="flex-1 w-full h-10 md:h-11 text-xs md:text-sm rounded-xl bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] hover:shadow-[0_4px_15px_rgba(17,94,89,0.3)] transition-all">
-                                {isProcessing ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 animate-spin" /> : <Send size={14} className="md:w-4 md:h-4 mr-2" />}
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm shadow-sm">
+                                {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send size={16} className="md:w-4 md:h-4 mr-2" />}
                                 {isProcessing ? 'Memproses...' : (isRevising ? 'Kirim Revisi Ulang' : 'Kirim Disposisi')}
                            </Button>
                         </>

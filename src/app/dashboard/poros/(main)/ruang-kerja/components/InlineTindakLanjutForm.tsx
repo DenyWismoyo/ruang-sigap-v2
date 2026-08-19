@@ -235,7 +235,7 @@ export default function InlineTindakLanjutForm({
   const isFormDisabled = isProcessing || isSubmittingLocal;
 
   return (
-    <div className="bg-background rounded-lg border border-border overflow-hidden mt-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+    <div className="bg-transparent md:bg-background rounded-none md:rounded-lg border-0 md:border md:border-border md:overflow-hidden mt-0 md:mt-3 shadow-none md:shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
       <div className="bg-blue-50/50 dark:bg-slate-800/50 p-3 border-b border-border text-sm flex flex-col gap-1.5">
           <div className="flex items-center gap-2 text-muted-foreground text-xs">
               <CornerDownRight size={14} className="text-blue-500" />
@@ -259,7 +259,7 @@ export default function InlineTindakLanjutForm({
             </TabsList>
         </div>
 
-        <div className="p-4">
+        <div className="p-0 pt-3 md:p-4">
             {/* TAB LAPOR SELESAI */}
             <TabsContent value="lapor" className="mt-0 outline-none space-y-3">
                <div>

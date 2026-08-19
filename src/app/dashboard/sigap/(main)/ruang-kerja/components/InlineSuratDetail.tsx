@@ -22,10 +22,10 @@ export default function InlineSuratDetail({ surat }: InlineSuratDetailProps) {
   const [isExpanded, setIsExpanded] = useState(true);
 
   return (
-    <div className="mb-4 border border-border rounded-lg overflow-hidden bg-card shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+    <div className="mb-4 border-0 md:border md:border-border rounded-none md:rounded-lg md:overflow-hidden bg-transparent md:bg-card shadow-none md:shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
       {/* Header Detail - Klik untuk toggle expand/collapse */}
       <div 
-        className="p-3 bg-muted/50 border-b border-border flex justify-between items-center cursor-pointer hover:bg-muted transition-colors"
+        className="p-3 bg-transparent md:bg-muted/50 border-b border-border/50 md:border-b-border flex justify-between items-center cursor-pointer hover:bg-muted transition-colors px-0 md:px-3"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <h4 className="text-xs font-bold flex items-center gap-2 text-foreground uppercase tracking-wider">
@@ -39,7 +39,7 @@ export default function InlineSuratDetail({ surat }: InlineSuratDetailProps) {
 
       {isExpanded && (
         <div>
-            <div className="p-4 bg-background space-y-4">
+            <div className="px-0 py-4 md:p-4 bg-transparent md:bg-background space-y-4">
                 
                 {/* [BARU] Bagian Perihal Surat */}
                 <div className="p-3 bg-muted/40 rounded-md border border-border">

@@ -71,7 +71,7 @@ const CachedPdfViewer = ({ fileUrl, fileName }: CachedPdfViewerProps) => {
     : fileUrl;
 
   return (
-    <div className="w-full h-full relative bg-gray-100 dark:bg-slate-800 rounded-lg overflow-hidden border border-border flex flex-col">
+    <div className="w-full h-full relative bg-gray-100 dark:bg-slate-800 md:rounded-lg overflow-hidden border-0 md:border md:border-border flex flex-col">
       
       {/* Header Kontrol Kecil */}
       <div className="bg-muted/30 border-b p-2 flex justify-between items-center text-xs">

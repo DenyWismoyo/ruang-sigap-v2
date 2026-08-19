@@ -59,15 +59,15 @@ export default function MiniCalendarWidget({ agendas }: MiniCalendarWidgetProps)
   }, [date, agendas]);
 
   return (
-    <Card className="card-solid rounded-xl border-t-4 border-t-primary shadow-md overflow-hidden">
-      <CardHeader className="bg-muted/30 border-b border-border p-4">
-        <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+    <Card className="card-solid border-x-0 border-b border-t-0 md:border-t-4 md:border-t-primary border-border/20 md:border-border shadow-none md:shadow-md overflow-hidden rounded-none md:rounded-xl bg-transparent md:bg-card">
+      <CardHeader className="bg-transparent md:bg-muted/30 border-b border-border/20 md:border-border px-4 py-2.5 md:p-4">
+        <CardTitle className="text-sm md:text-lg font-bold flex items-center gap-1.5 md:gap-2 text-foreground">
           <CalendarIcon className="w-5 h-5 text-primary" />
           Mini Kalender
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0 flex flex-col">
-        <div className="flex justify-center p-2 border-b border-border/50 bg-card/50">
+        <div className="flex justify-center px-4 py-0 md:py-2 border-b border-border/20 md:border-border/50 bg-transparent md:bg-card/50">
           <Calendar
             mode="single"
             selected={date}
@@ -90,10 +90,10 @@ export default function MiniCalendarWidget({ agendas }: MiniCalendarWidgetProps)
           />
         </div>
         
-        <div className="p-4 bg-muted/10 flex-1 min-h-[150px]">
-          <h4 className="text-sm font-semibold mb-3 text-muted-foreground flex items-center justify-between">
+        <div className="p-4 bg-transparent md:bg-muted/10 flex-1 min-h-[150px]">
+          <h4 className="text-xs md:text-sm font-semibold mb-2 md:mb-3 text-muted-foreground flex items-center justify-between uppercase tracking-wider md:normal-case md:tracking-normal">
             <span>Agenda Tanggal Terpilih</span>
-            {date && <span className="text-primary text-xs">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>}
+            {date && <span className="text-primary text-[10px] md:text-xs font-bold">{date.toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>}
           </h4>
           
           <AnimatePresence mode="wait">
@@ -107,16 +107,16 @@ export default function MiniCalendarWidget({ agendas }: MiniCalendarWidgetProps)
             >
               {selectedDateAgendas.length > 0 ? (
                 selectedDateAgendas.map(agenda => (
-                  <div key={`${agenda.type}-${agenda.id}`} className="p-3 rounded-lg bg-card border border-border shadow-sm flex flex-col gap-2 relative overflow-hidden group">
+                  <div key={`${agenda.type}-${agenda.id}`} className="p-2.5 md:p-3 rounded-lg bg-card border border-border shadow-sm flex flex-col gap-1.5 md:gap-2 relative overflow-hidden group">
                     <div className={`absolute left-0 top-0 bottom-0 w-1 ${agenda.type === 'internal' ? 'bg-blue-500' : 'bg-indigo-500'}`} />
-                    <div className="flex justify-between items-start pl-2">
-                      <p className="text-sm font-semibold text-foreground line-clamp-2">{agenda.title}</p>
-                      <span className="text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded text-muted-foreground whitespace-nowrap ml-2">
+                    <div className="flex justify-between items-start pl-1.5 md:pl-2">
+                      <p className="text-xs md:text-sm font-semibold text-foreground line-clamp-2 leading-tight">{agenda.title}</p>
+                      <span className="text-[9px] md:text-[10px] font-bold bg-muted px-1.5 py-0.5 rounded text-muted-foreground whitespace-nowrap ml-2">
                         {agenda.time}
                       </span>
                     </div>
-                    <div className="pl-2 flex items-center text-xs text-muted-foreground gap-1 line-clamp-1">
-                      <MapPin size={12} className="flex-shrink-0" />
+                    <div className="pl-1.5 md:pl-2 flex items-center text-[10px] md:text-xs text-muted-foreground gap-1 line-clamp-1">
+                      <MapPin className="flex-shrink-0 w-3 h-3 md:w-3 md:h-3" />
                       {agenda.location?.startsWith('http') ? (
                         <a href={agenda.location} target="_blank" rel="noreferrer" className="text-primary hover:underline flex items-center">
                           Virtual Meeting <ExternalLink size={10} className="ml-1"/>
@@ -137,8 +137,8 @@ export default function MiniCalendarWidget({ agendas }: MiniCalendarWidgetProps)
           </AnimatePresence>
         </div>
         
-        <div className="p-3 bg-card border-t border-border mt-auto">
-          <Button asChild className="w-full" size="sm" variant="default">
+        <div className="p-4 md:p-3 bg-transparent md:bg-card mt-auto">
+          <Button asChild className="w-full h-10 md:h-9" size="sm" variant="default">
             <Link href="/dashboard/poros/tugas?action=create">
               <Plus size={16} className="mr-2" /> Buat Tugas Baru
             </Link>

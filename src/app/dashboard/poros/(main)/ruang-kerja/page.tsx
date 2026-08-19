@@ -76,7 +76,39 @@ type CombinedAgendaItem = {
     disposisiStatus?: 'Sudah Didisposisi' | 'Belum Didisposikan';
 };
 
+const SmartGreeting = ({ userName }: { userName: string }) => {
+  const [greetingData, setGreetingData] = useState({ text: '', subText: '', icon: <Sun className="w-8 h-8 text-yellow-500" /> });
 
+  useEffect(() => {
+    const hour = new Date().getHours();
+    if (hour >= 4 && hour < 11) {
+      setGreetingData({ text: "Selamat Pagi", subText: "Siap untuk memulai hari yang produktif?", icon: <CloudSun className="w-8 h-8 text-yellow-400" /> });
+    } else if (hour >= 11 && hour < 15) {
+      setGreetingData({ text: "Selamat Siang", subText: "Jangan lupa istirahat sejenak.", icon: <Sun className="w-8 h-8 text-orange-500" /> });
+    } else if (hour >= 15 && hour < 19) {
+      setGreetingData({ text: "Selamat Sore", subText: "Mari tuntaskan pekerjaan hari ini.", icon: <Sunset className="w-8 h-8 text-orange-400" /> });
+    } else {
+      setGreetingData({ text: "Selamat Malam", subText: "Terima kasih atas dedikasi Anda hari ini.", icon: <Moon className="w-8 h-8 text-indigo-400" /> });
+    }
+  }, []);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
+    >
+      <div className="p-3 bg-card rounded-full shadow-sm border border-border w-fit">{greetingData.icon}</div>
+      <div>
+        <h1 className="text-3xl font-bold text-foreground">
+          {greetingData.text}, <span className="text-primary">{userName}</span>!
+        </h1>
+        <p className="text-muted-foreground mt-1">{greetingData.subText}</p>
+      </div>
+    </motion.div>
+  );
+};
 
 export default function RuangKerjaPage() {
   const { user, userProfile, jabatanProfile, actingJabatanProfile, loading: authLoading, opdConfig } = useUserAuth();
@@ -143,7 +175,7 @@ export default function RuangKerjaPage() {
   // [FIX GHOSTING BUG] State baru untuk menampung ID yang disembunyikan sementara
   const [hiddenItemIds, setHiddenItemIds] = useState<Set<string>>(new Set());
 
-  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf';
+  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf' | 'agenda';
   const [activeFilter, setActiveFilter] = useState<RuangKerjaFilter>('semua');
 
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
@@ -444,7 +476,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   }, [feedItems]);
 
   const filteredFeedItems = useMemo(() => {
-    if (activeFilter === 'semua') return feedItems;
+    if (activeFilter === 'semua' || activeFilter === 'agenda') return feedItems;
     return feedItems.filter(item => {
       if (activeFilter === 'surat') return item.type === 'surat_disposisi' || item.type === 'surat_baru';
       if (activeFilter === 'tugas') return item.type === 'tugas';
@@ -466,7 +498,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   if (isPageLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 bg-transparent">
+    <div className="flex flex-col h-full px-0 md:px-6 pt-2 pb-4 bg-background">
       
       <KPIWidget />
       
@@ -474,22 +506,31 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
         
         <div className="lg:col-span-2 space-y-4">
           {user && userProfile && effectiveJabatan && (
-            <QuickAddTask userProfile={userProfile} effectiveJabatan={effectiveJabatan} addToast={addToast} userUid={user.uid} />
+            <div className="px-3 md:px-0">
+              <QuickAddTask userProfile={userProfile} effectiveJabatan={effectiveJabatan} addToast={addToast} userUid={user.uid} />
+            </div>
           )}
           
-          <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as RuangKerjaFilter)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="semua">Semua ({itemCounts.semua})</TabsTrigger>
-              <TabsTrigger value="surat">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
-              <TabsTrigger value="tugas">Tugas ({itemCounts.tugas})</TabsTrigger>
-              {(isPimpinan || isAdminOrTU) && <TabsTrigger value="draf">Draf ({itemCounts.draf})</TabsTrigger>}
-            </TabsList>
-          </Tabs>
+          <div className="px-3 md:px-0">
+            <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as RuangKerjaFilter)} className="w-full">
+              <TabsList className="w-full flex overflow-x-auto gap-1 h-auto p-1 justify-start border-b-0 md:border-b border-[var(--border)] rounded-none md:rounded-lg">
+                <TabsTrigger value="semua" className="flex-shrink-0">Semua ({itemCounts.semua})</TabsTrigger>
+                <TabsTrigger value="surat" className="flex-shrink-0">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
+                <TabsTrigger value="tugas" className="flex-shrink-0">Tugas ({itemCounts.tugas})</TabsTrigger>
+                {(isPimpinan || isAdminOrTU) && <TabsTrigger value="draf" className="flex-shrink-0 hidden md:block">Draf ({itemCounts.draf})</TabsTrigger>}
+                <TabsTrigger value="agenda" className="flex-shrink-0 lg:hidden">Agenda & Catatan</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
           {/* Menggunakan finalVisibleFeedItems agar UI Instan merespon */}
-          {finalVisibleFeedItems.length === 0 ? (
-            <EmptyStateWidget filterType={activeFilter} userName={userProfile?.namaLengkap.split(' ')[0]} />
-          ) : (
+          {activeFilter !== 'agenda' && (
+            finalVisibleFeedItems.length === 0 ? (
+              <div className="px-3 md:px-0">
+                <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+                <EmptyStateWidget filterType={activeFilter} userName={userProfile?.namaLengkap.split(' ')[0]} />
+              </div>
+            ) : (
             <div className="flex flex-col space-y-4">
               <VisionaryFeed 
                   items={finalVisibleFeedItems}
@@ -527,13 +568,14 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                 </Button>
               )}
             </div>
+            )
           )}
         </div>
 
-        <div className="space-y-6 flex flex-col">
+        <div className={`space-y-6 flex-col ${activeFilter === 'agenda' ? 'flex' : 'hidden lg:flex'}`}>
           <QuickLinksWidget />
-          <Card className="h-[400px] flex flex-col overflow-hidden border-[var(--border)] shadow-[var(--nk-shadow-sm)] nk-card">
-              <CardHeader className="p-4 py-3 bg-muted/30 border-b border-border flex-shrink-0">
+          <Card className="h-[400px] flex flex-col overflow-hidden border-x-0 border-t-0 border-b md:border md:border-[var(--border)] shadow-none md:shadow-[var(--nk-shadow-sm)] bg-transparent md:nk-card rounded-none md:rounded-xl">
+              <CardHeader className="px-4 py-3 md:p-4 md:py-3 md:bg-muted/30 border-b border-border/20 md:border-[var(--border)] flex-shrink-0 mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <StickyNote size={16} className="text-yellow-500"/> Sticky Note
                   </CardTitle>
@@ -542,8 +584,8 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                   <StickyNoteWidget />
               </CardContent>
           </Card>
-          <Card className="shadow-[var(--nk-shadow-sm)] border-[var(--border)] nk-card">
-              <CardHeader className="p-4 py-3 border-b border-border">
+          <Card className="shadow-none md:shadow-[var(--nk-shadow-sm)] border-x-0 border-t-0 border-b md:border md:border-[var(--border)] bg-transparent md:nk-card rounded-none md:rounded-xl">
+              <CardHeader className="px-4 py-3 md:p-4 md:py-3 border-b border-border/20 md:border-[var(--border)] mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <CalendarDays size={16} className="text-blue-500"/> Agenda 7 Hari Kedepan
                   </CardTitle>

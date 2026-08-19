@@ -113,13 +113,12 @@ const SuratCard = React.memo(({
 
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s:string) => s.trim()))).join(', ') : null;
 
+    const isBaru = surat.statusPenyelesaian === 'Baru';
+    const bgClass = isBaru ? 'bg-card' : 'bg-slate-50/70 dark:bg-muted/20';
+
     return (
-        <div 
-            className={`nk-card flex flex-col h-fit overflow-hidden relative group transition-all duration-300 hover:shadow-[var(--nk-shadow-md)] hover:-translate-y-1 mb-4 ${borderColorClass}`}
-            onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}
-        >
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
-            <div className="p-3.5 md:p-4 cursor-pointer relative" onClick={onNavigate}>
+        <Card className={`transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 rounded-none shadow-none md:border md:rounded-xl md:shadow-sm md:hover:shadow-md border-l-[3px] md:border-l-[4px] ${borderColorClass} overflow-hidden ${bgClass}`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+            <div className="p-4 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
                 <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
                     <DropdownMenu>
@@ -154,9 +153,9 @@ const SuratCard = React.memo(({
                 </div>
 
                 <div className="flex justify-between items-start mb-2 gap-2 pr-8 mt-1">
-                    <div className="flex flex-col gap-1">
-                        <div className="flex items-center text-[11px] text-[var(--nk-teal-mid)] font-bold truncate bg-[var(--nk-surface-3)] px-2 py-0.5 rounded-full border border-[var(--nk-teal-light)]/20 w-fit">
-                            <User size={10} className="mr-1" />
+                    <div className="flex flex-col gap-1 min-w-0 flex-1">
+                        <div className="flex items-center text-[11px] text-[var(--nk-teal-mid)] font-bold bg-[var(--nk-surface-3)] px-2 py-0.5 rounded-full border border-[var(--nk-teal-light)]/20 max-w-full w-fit">
+                            <User size={10} className="mr-1 shrink-0" />
                             <span className="truncate">{surat.pengirim}</span>
                         </div>
                         {surat.isLintasOpd && surat.statusLintasOpd === 'diterima' && (
@@ -191,18 +190,16 @@ const SuratCard = React.memo(({
                 </div>
 
                 {safeRecipientNames && (
-                    <div className="bg-slate-50 dark:bg-slate-800/40 rounded-md p-2 border border-slate-100 dark:border-slate-800/60 flex justify-between items-center">
-                        <div className="flex-1 min-w-0 pr-2">
-                            <div className="flex items-start text-[11px] md:text-xs text-muted-foreground">
-                                <UsersIcon size={12} className="mr-1.5 mt-0.5 flex-shrink-0" />
-                                <span className="leading-tight line-clamp-2">Kpda: <strong className="text-foreground font-medium">{safeRecipientNames}</strong></span>
-                            </div>
-                        </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2 mt-2 border-t border-[var(--nk-glass-border)]">
+                        <span className="flex items-center truncate mr-2">
+                            <UsersIcon size={11} className="mr-1 flex-shrink-0" />
+                            Kpda:&nbsp;<strong className="text-foreground font-medium truncate">{safeRecipientNames}</strong>
+                        </span>
                         {surat.statusPenyelesaian !== 'Baru' && (
                             <Button 
-                                variant="outline" 
+                                variant="ghost" 
                                 size="sm" 
-                                className="h-6 px-2 text-[10px] shrink-0 text-blue-600 border-blue-200 hover:bg-blue-50 dark:border-blue-800/50 dark:hover:bg-blue-900/20"
+                                className="h-6 px-2 text-[10px] shrink-0 text-blue-600 hover:bg-blue-50 dark:text-[var(--nk-teal-light)] dark:hover:bg-[var(--nk-teal-mid)]/20"
                                 onClick={(e) => { e.stopPropagation(); onQuickTrack(surat); }}
                             >
                                 <Activity size={12} className="mr-1" /> Pantau
@@ -214,7 +211,7 @@ const SuratCard = React.memo(({
 
             {/* --- AREA QUICK ACTIONS --- */}
             {actionItem?.needsAcknowledge && (
-                <div className="bg-green-50 border-t border-green-200 p-2.5 dark:bg-green-900/20 dark:border-green-800">
+                <div className="bg-green-50/50 border-t border-green-200/40 p-2 dark:bg-green-900/10 dark:border-green-800/50">
                     <Button 
                         className="w-full bg-green-600 hover:bg-green-700 h-9 text-xs text-white shadow-sm"
                         onClick={(e) => { e.stopPropagation(); onQuickAccept(surat, actionItem.disposisi); }}
@@ -226,7 +223,7 @@ const SuratCard = React.memo(({
             )}
 
             {actionItem?.needsTindakLanjut && (
-                <div className="bg-blue-50 border-t border-blue-200 p-2.5 dark:bg-blue-900/20 dark:border-blue-800">
+                <div className="bg-blue-50/50 border-t border-blue-200/40 p-2 dark:bg-blue-900/10 dark:border-blue-800/50">
                     <Button 
                         variant="outline"
                         className="w-full h-9 text-xs border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/50 bg-white dark:bg-background shadow-sm"
@@ -236,7 +233,7 @@ const SuratCard = React.memo(({
                     </Button>
                 </div>
             )}
-        </div>
+        </Card>
     );
 });
 SuratCard.displayName = 'SuratCard';
@@ -701,7 +698,7 @@ export default function KotakMasukPage() {
     if (authLoading) return <div className="p-8 text-center text-muted-foreground">Memuat...</div>;
 
     return (
-        <div className="animate-fadeInUp pb-20 relative">
+        <div className="animate-fadeInUp pb-6 md:pb-0 relative">
             
             {/* OVERLAY LOADING */}
             {isNavigating && (
@@ -717,31 +714,35 @@ export default function KotakMasukPage() {
             )}
 
             {/* Header */}
-            <NkPageHeader 
-                title="Kotak Masuk"
-                subtitle="Kelola dan pantau seluruh surat masuk dan disposisi"
-                icon={Inbox}
-                actions={
-                    canCreate ? (
-                        <Link href="/dashboard/surat/upload" onClick={() => setIsNavigating(true)}>
-                            <Button className="w-full md:w-auto bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] shadow-sm text-white">
-                                <Plus size={16} className="mr-2" /> Tambah Surat Baru
-                            </Button>
-                        </Link>
-                    ) : undefined
-                }
-            />
+            <div className="px-4 md:px-0">
+                <NkPageHeader 
+                    title="Kotak Masuk"
+                    subtitle="Kelola dan pantau seluruh surat masuk dan disposisi"
+                    icon={Inbox}
+                    actions={
+                        canCreate ? (
+                            <Link href="/dashboard/surat/upload" className="hidden md:block" onClick={() => setIsNavigating(true)}>
+                                <Button className="w-full md:w-auto bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] shadow-sm text-white">
+                                    <Plus size={16} className="mr-2" /> Tambah Surat Baru
+                                </Button>
+                            </Link>
+                        ) : undefined
+                    }
+                />
+            </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 
-                <TabsList className="grid w-full md:w-[400px] grid-cols-2 mb-6 h-12">
-                    <TabsTrigger value="daftar-surat" className="flex items-center gap-2 font-semibold">
-                        <FileText size={16} /> Daftar Surat
-                    </TabsTrigger>
-                    <TabsTrigger value="pemantauan" className="flex items-center gap-2 font-semibold">
-                        <Activity size={16} /> Pantau Laporan
-                    </TabsTrigger>
-                </TabsList>
+                <div className="px-4 md:px-0">
+                    <TabsList className="grid w-full md:w-[400px] grid-cols-2 mb-6 h-12">
+                        <TabsTrigger value="daftar-surat" className="flex items-center gap-2 font-semibold">
+                            <FileText size={16} /> Daftar Surat
+                        </TabsTrigger>
+                        <TabsTrigger value="pemantauan" className="flex items-center gap-2 font-semibold">
+                            <Activity size={16} /> Pantau Laporan
+                        </TabsTrigger>
+                    </TabsList>
+                </div>
 
                 {/* --- TAB CONTENT 1: DAFTAR SURAT --- */}
                 <TabsContent value="daftar-surat" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
@@ -754,7 +755,7 @@ export default function KotakMasukPage() {
                             transition={{ duration: 0.2 }}
                         >
                     {/* Filters */}
-                    <div className="flex flex-col md:flex-row gap-3 mb-6">
+                    <div className="px-4 md:px-0 flex flex-col md:flex-row gap-3 mb-6">
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <Input 
@@ -764,7 +765,7 @@ export default function KotakMasukPage() {
                                 className="pl-10"
                             />
                         </div>
-                        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+                        <div className="hidden md:flex gap-2">
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
                                 <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
                                 <SelectContent>
@@ -785,16 +786,32 @@ export default function KotakMasukPage() {
                                 </SelectContent>
                             </Select>
                         </div>
+                        {/* Mobile Filter Chips */}
+                        <div className="md:hidden flex gap-2 overflow-x-auto pb-2 scrollbar-none items-center">
+                            {["Semua", "Baru", "Didisposisikan", "Proses Tindak Lanjut", "Selesai"].map((status) => (
+                                <button
+                                    key={status}
+                                    onClick={() => setStatusFilter(status)}
+                                    className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition-colors ${
+                                        statusFilter === status 
+                                            ? 'bg-[var(--nk-teal-mid)] text-white border-transparent' 
+                                            : 'bg-[var(--nk-surface-2)] text-muted-foreground border-border hover:bg-[var(--nk-surface-3)]'
+                                    }`}
+                                >
+                                    {status === "Semua" ? "Semua Status" : status === "Proses Tindak Lanjut" ? "Proses" : status}
+                                </button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Content List */}
                     {dataLoading ? (
-                        <div className="grid grid-cols-1 md:hidden gap-4">
+                        <div className="flex flex-col md:grid md:grid-cols-1 gap-0 md:gap-4">
                             {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
                         </div>
                     ) : suratList.length === 0 ? (
-                        <div className="text-center py-20 flex flex-col items-center justify-center nk-glass-card opacity-80 hover:opacity-100 transition-opacity mt-4">
-                            <div className="w-24 h-24 mb-4 rounded-full bg-[var(--nk-surface-3)] flex items-center justify-center border border-[var(--nk-teal-light)]/20 shadow-inner relative">
+                        <div className="mx-4 md:mx-0 text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
+                            <div className="w-24 h-24 mb-4 rounded-full bg-[var(--nk-surface-3)] flex items-center justify-center border border-[var(--nk-teal-light)]/20 shadow-inner relative mx-auto">
                                 <div className="absolute inset-0 bg-[var(--nk-teal-light)]/10 blur-xl rounded-full"></div>
                                 <Inbox size={48} className="text-[var(--nk-teal-mid)]/60 relative z-10" />
                             </div>
@@ -804,7 +821,7 @@ export default function KotakMasukPage() {
                     ) : (
                         <>
                             {/* Mobile List */}
-                            <div className="md:hidden space-y-4">
+                            <div className="md:hidden flex flex-col space-y-0">
                                 {suratList.map((surat, index) => {
                                     const actionItem = getActionItem(surat.id);
                                     return (
@@ -878,7 +895,7 @@ export default function KotakMasukPage() {
                     )}
 
                             {hasMore && (
-                                <div className="flex justify-center mb-8">
+                                <div className="flex justify-center mt-6 mb-8">
                                     <Button variant="outline" onClick={() => loadMore()} disabled={isMoreLoading}>
                                         {isMoreLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ChevronDown className="mr-2 h-4 w-4" />}
                                         Tampilkan Lebih Banyak

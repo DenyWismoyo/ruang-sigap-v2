@@ -92,16 +92,15 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
   };
 
   return (
-    <div className="bg-card/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/10 mb-4 md:mb-6 overflow-hidden relative group/card">
-      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
-      <div className="p-3.5 md:p-5 bg-muted/20 border-b border-border/50 flex items-center justify-between">
-        <h3 className="text-sm md:text-base font-bold font-heading flex items-center text-foreground">
-          <Info size={16} className="mr-2 text-[var(--nk-gradient-start)]" />
+    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border mb-4 md:mb-6 overflow-hidden">
+      <div className="px-4 md:px-4 pb-2 md:pb-4 md:pt-4 md:bg-muted/30 border-b border-border/50 md:border-border flex items-center justify-between">
+        <h3 className="text-sm md:text-base font-bold flex items-center text-foreground">
+          <Info size={16} className="mr-2 text-[var(--nk-teal-mid)]" />
           Detail Surat
         </h3>
       </div>
       <motion.div 
-        className="p-4 space-y-4"
+        className="px-4 py-4 md:p-4 space-y-4 md:space-y-5"
         initial="hidden"
         animate="show"
         variants={{
@@ -176,6 +175,17 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
             </div>
           </>
         )}
+        {/* Ringkasan Eksekutif AI */}
+        <div className="pt-4 mt-2 border-t border-border/60">
+          <div className="p-3 bg-[var(--nk-teal-mid)]/5 md:bg-[var(--nk-teal-mid)]/10 rounded-xl md:rounded-md border-l-2 border-[var(--nk-teal-mid)]">
+             <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <span className="bg-gradient-to-r from-[var(--nk-teal-mid)] to-emerald-600 text-transparent bg-clip-text">✨ Ringkasan Eksekutif (AI)</span>
+             </h5>
+             <p className="text-[13px] md:text-sm text-foreground leading-relaxed italic opacity-90">
+                 {surat.ringkasanEksekutif ? surat.ringkasanEksekutif : "Ringkasan eksekutif tidak tersedia. (Fitur AI Ringkasan belum aktif saat surat ini diunggah)"}
+             </p>
+          </div>
+        </div>
       </motion.div>
     </div>
   );
@@ -616,35 +626,37 @@ export default function DetailSuratPage() {
   );
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in pb-24 md:pb-0"> {/* Ditambah pb-24 untuk mobile tab ruang */}
-      <div className="flex-shrink-0">
-        <button onClick={() => router.back()} className="inline-flex items-center text-muted-foreground hover:text-primary transition-colors text-sm mb-3 md:mb-4">
-          <ArrowLeft size={16} className="mr-2" /> Kembali 
-          <span className="hidden md:inline">&nbsp;ke Halaman Sebelumnya</span>
-        </button>
-        <div className="flex items-start justify-between mt-1 md:mt-4 gap-4">
-            <div className="flex-1">
-                {/* Penyesuaian Ukuran Judul Mobile */}
-                <h1 className="text-xl md:text-3xl font-bold font-heading text-foreground leading-snug">{surat.perihal}</h1>
-                <div className="flex items-center flex-wrap gap-2 mt-3">
-                    {/* Penyesuaian Ukuran Badge Mobile */}
-                    <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
-                    <span className={`px-3 py-1 text-[10px] md:text-xs font-bold rounded-full uppercase tracking-wider ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
-                </div>
-            </div>
-            <div className='flex items-center gap-2 flex-shrink-0 bg-card/50 backdrop-blur-sm p-1.5 rounded-full border border-border/50 shadow-sm'>
+    <div className="flex flex-col h-full animate-in fade-in pb-20 md:pb-0"> {/* Ditambah pb-20 untuk mobile tab ruang */}
+      <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0">
+        <div className="flex justify-between items-center mb-3 md:mb-4">
+            <button onClick={() => router.back()} className="inline-flex items-center text-[var(--nk-teal-mid)] hover:text-[var(--nk-teal-dark)] text-sm group">
+            <ArrowLeft size={16} className="mr-2 transition-transform group-hover:-translate-x-1" /> Kembali 
+            <span className="hidden md:inline">&nbsp;ke Halaman Sebelumnya</span>
+            </button>
+            <div className='flex items-center gap-2 flex-shrink-0'>
                 {canEditOrDeleteSurat && !isEditing && (
                     <>
-                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="hidden md:flex rounded-full" variant="ghost" size="sm"><Edit size={16} className="mr-1.5"/> Edit</Button>
-                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="hidden md:flex rounded-full text-red-500 hover:bg-red-50 hover:text-red-600" variant="ghost" size="sm"><Trash2 size={16} className="mr-1.5"/> Hapus</Button>
+                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="hidden md:flex" variant="outline" size="sm"><Edit size={16} className="mr-2"/> Edit</Button>
+                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="hidden md:flex" variant="destructive" size="sm"><Trash2 size={16} className="mr-2"/> Hapus</Button>
                         {/* Mobile Icons */}
-                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="md:hidden rounded-full h-8 w-8" variant="ghost" size="icon"><Edit size={16}/></Button>
-                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="md:hidden rounded-full h-8 w-8 hover:bg-red-50 text-red-500" variant="ghost" size="icon"><Trash2 size={16}/></Button>
+                        <Button onClick={() => setIsEditing(true)} title="Edit Detail Surat" className="md:hidden h-8 w-8" variant="ghost" size="icon"><Edit size={16}/></Button>
+                        <Button onClick={handleDeleteSurat} disabled={isActionProcessing} title="Hapus Surat" className="md:hidden h-8 w-8" variant="ghost" size="icon"><Trash2 size={16} className="text-red-500"/></Button>
                     </>
                 )}
                 {canManuallyArchive && (
-                    <Button onClick={openArchiveConfirmation} className="rounded-full bg-gradient-to-r from-teal-600 to-teal-500 hover:from-teal-700 hover:to-teal-600 h-8 md:h-9 text-xs md:text-sm px-3 shadow-md" size="sm" title="Arsipkan Surat Secara Manual"><Archive size={14} className="mr-1.5 md:mr-2"/> Arsip</Button>
+                    <Button onClick={openArchiveConfirmation} className="bg-gradient-to-r from-[var(--nk-teal-dark)] to-[var(--nk-teal-mid)] hover:from-[var(--nk-teal-mid)] hover:to-[var(--nk-teal-light)] text-white shadow-md shadow-[var(--nk-teal-mid)]/20 border-none h-8 md:h-9 text-xs md:text-sm px-2.5 md:px-3" size="sm" title="Arsipkan Surat Secara Manual"><Archive size={14} className="mr-1.5 md:mr-2"/> Arsip</Button>
                 )}
+            </div>
+        </div>
+        <div className="flex items-start justify-between mt-1 md:mt-2 gap-2">
+            <div className="flex-1">
+                {/* Penyesuaian Ukuran Judul Mobile */}
+                <h1 className="text-lg md:text-3xl font-bold font-heading text-foreground leading-snug">{surat.perihal}</h1>
+                <div className="flex items-center flex-wrap gap-1.5 md:gap-2 mt-3">
+                    {/* Penyesuaian Ukuran Badge Mobile */}
+                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full shadow-sm border border-black/5 ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
+                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full shadow-sm border border-black/5 ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
+                </div>
             </div>
         </div>
       </div>
@@ -653,7 +665,7 @@ export default function DetailSuratPage() {
       <div className="md:hidden flex-1 mt-4 flex flex-col pb-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex flex-col flex-1 min-h-0">
           <TabsContent value="dokumen" className="mt-0 flex-1 overflow-y-auto">
-              <div className="space-y-3 md:space-y-6"> {/* Spacing diringkas */}
+              <div className="space-y-0 md:space-y-6"> {/* Spacing diringkas, card akan border-b jadi tidak butuh gap */}
                   <SuratDetailCard surat={surat} />
                   
                   {isMasterLoading ? (
@@ -667,14 +679,27 @@ export default function DetailSuratPage() {
                   )}
 
                   {(canPerformAction.disposisi || isRevising) && (
-                      <div className="bg-card rounded-xl shadow-sm border border-border">
+                      <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border border-b border-border/50">
                           {isMasterLoading ? (
-                              <MasterDataSkeleton label="Menyiapkan Form Disposisi..." />
+                              <div className="px-4"><MasterDataSkeleton label="Menyiapkan Form Disposisi..." /></div>
                           ) : (
                               <>
-                                  <button onClick={() => setIsMobileDisposisiFormMinimized(!isMobileDisposisiFormMinimized)} className="flex items-center justify-between w-full p-3 md:p-4 border-b border-border">
-                                      <h3 className="text-base font-semibold flex items-center text-foreground"><Send size={16} className="mr-2.5 text-blue-600" />{isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi'}</h3>
-                                      {isMobileDisposisiFormMinimized ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                  <button 
+                                      onClick={() => setIsMobileDisposisiFormMinimized(!isMobileDisposisiFormMinimized)} 
+                                      className={`flex items-center justify-between transition-all duration-300 group ${isMobileDisposisiFormMinimized ? 'bg-gradient-to-r from-[var(--nk-teal-light)]/10 to-transparent hover:bg-[var(--nk-teal-light)]/20 rounded-xl my-4 mx-4 w-[calc(100%-2rem)] border border-[var(--nk-teal-mid)]/30 p-3 shadow-sm' : 'w-full p-4 md:p-4 md:border-b md:border-border'}`}
+                                  >
+                                      <div className="flex items-center">
+                                          <div className={`mr-3 flex items-center justify-center rounded-full transition-colors ${isMobileDisposisiFormMinimized ? 'w-9 h-9 bg-[var(--nk-teal-mid)]/10 text-[var(--nk-teal-mid)]' : 'text-[var(--nk-teal-mid)]'}`}>
+                                            <Send size={16} className={`${isMobileDisposisiFormMinimized ? '-ml-0.5' : ''}`} />
+                                          </div>
+                                          <div className="text-left">
+                                              <h3 className="text-sm md:text-base font-bold text-foreground">{isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi'}</h3>
+                                              {isMobileDisposisiFormMinimized && <p className="text-[10px] md:text-xs text-[var(--nk-teal-mid)] font-medium mt-0.5 flex items-center">Ketuk untuk membuka form</p>}
+                                          </div>
+                                      </div>
+                                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${isMobileDisposisiFormMinimized ? 'bg-[var(--nk-teal-mid)] text-white shadow-md animate-bounce' : 'text-muted-foreground hover:bg-muted'}`}>
+                                          {isMobileDisposisiFormMinimized ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                      </div>
                                   </button>
                                   {!isMobileDisposisiFormMinimized && (
                                       <FormDisposisi
@@ -691,8 +716,10 @@ export default function DetailSuratPage() {
                           )}
                       </div>
                   )}
-                  {/* Tinggi PDF dikurangi agar lebih proporsional di layar HP */}
-                  <div className="h-[60vh] md:h-[70vh] bg-card rounded-xl shadow-sm border border-border"><CachedPdfViewer fileUrl={surat.fileUrl} fileName={surat.fileName} /></div>
+                  {/* Tinggi PDF dikurangi agar lebih proporsional di layar HP, dan border dihilangkan di layar HP */}
+                  <div className="h-[60vh] md:h-[70vh] bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border overflow-hidden mt-4">
+                      <CachedPdfViewer fileUrl={surat.fileUrl} fileName={surat.fileName} />
+                  </div>
               </div>
           </TabsContent>
 
@@ -703,9 +730,7 @@ export default function DetailSuratPage() {
                         <div className="flex items-start"><AlertTriangle size={18} className="mr-2.5 flex-shrink-0" /><div><h3 className="text-sm md:text-base font-bold">Disposisi Dikembalikan</h3><p className="text-xs md:text-sm mt-1">Disposisi terakhir Anda dikembalikan. Silakan periksa riwayat dan kirimkan revisi.</p><Button onClick={() => setIsRevising(true)} className="mt-2.5 h-8 text-xs" variant="secondary" size="sm">Revisi Disposisi</Button></div></div>
                     </div>
                 )}
-                 {(canPerformAction.disposisi || isRevising) && !isDisposisiModalOpen && !isMasterLoading && (
-                     <div className="text-center"><Button size="sm" className="w-full text-xs h-9" onClick={() => setIsDisposisiModalOpen(true)}><Send size={14} className="mr-2" /> {isRevising ? 'Revisi Disposisi' : 'Buat Disposisi'}</Button></div>
-                 )}
+
                 
                 <div id="form-tindak-lanjut-mobile">
                     {isMasterLoading ? (

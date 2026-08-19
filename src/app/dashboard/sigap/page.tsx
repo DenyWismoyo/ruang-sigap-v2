@@ -330,8 +330,10 @@ export default function DashboardPage() {
   if (isLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 bg-background">
-      <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+    <div className="flex flex-col h-full px-0 md:px-6 py-4 md:py-6 bg-background">
+      <div className="px-4 md:px-0">
+        <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+      </div>
 
       {/* --- Layout Utama (Desktop Grid System) --- */}
       <div className="hidden md:block space-y-6">
@@ -437,8 +439,10 @@ export default function DashboardPage() {
       />
 
       {/* Mobile Quick Links */}
-      <div className="md:hidden px-4 grid grid-cols-3 gap-3 mt-6">
-         {quickAccessLinks.map((link) => <QuickAccessCard key={link.href} {...link} />)}
+      <div className="md:hidden px-4">
+          <div className="grid grid-cols-3 gap-3 mt-2">
+             {quickAccessLinks.map((link) => <QuickAccessCard key={link.href} {...link} />)}
+          </div>
       </div>
 
        {/* Modal Global */}

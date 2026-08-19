@@ -5,12 +5,14 @@ import * as path from "path";
 import * as os from "os";
 import * as fs from "fs";
 import { promisify } from "util";
+import * as crypto from "crypto";
 
 const execAsync = promisify(exec);
 
 export const compressUploadedPdf = onObjectFinalized({
   memory: "1GiB",
   timeoutSeconds: 300, // Memberikan waktu hingga 5 menit untuk PDF besar
+  bucket: "wsmy-lab.firebasestorage.app",
 }, async (event) => {
     const fileBucket = event.data.bucket;
     const filePath = event.data.name;
@@ -47,9 +49,9 @@ export const compressUploadedPdf = onObjectFinalized({
         await bucket.file(filePath).download({ destination: tempFilePath });
 
         // 2. Eksekusi Ghostscript
-        // Ghostscript (gs) secara default terinstal di container Ubuntu Cloud Functions v2
-        // dPDFSETTINGS=/screen menurunkan resolusi gambar ke 72dpi yang cocok untuk web/layar
-        const gsCommand = `gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/screen -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${compressedFilePath}" "${tempFilePath}"`;
+        // Menggunakan -dPDFSETTINGS=/ebook (150dpi) agar kualitas gambar/teks hasil scan tetap terbaca dengan jelas,
+        // namun ukuran file tetap terkompresi dengan baik (lebih baik dari /screen yang hanya 72dpi).
+        const gsCommand = `gs -sDEVICE=pdfwrite -dCompatibilityLevel=1.4 -dPDFSETTINGS=/ebook -dNOPAUSE -dQUIET -dBATCH -sOutputFile="${compressedFilePath}" "${tempFilePath}"`;
         
         await execAsync(gsCommand);
 
@@ -71,6 +73,16 @@ export const compressUploadedPdf = onObjectFinalized({
             return;
         }
 
+        // Pertahankan Firebase Storage Download Tokens agar URL lama tetap valid!
+        // event.data.metadata adalah custom metadata (Record<string, string>)
+        let existingTokens = metadata?.firebaseStorageDownloadTokens;
+        
+        // Jika token tidak ada, buat token baru menggunakan UUID agar file tetap bisa diakses secara publik
+        if (!existingTokens) {
+            existingTokens = crypto.randomUUID();
+            console.log("Token lama tidak ditemukan, token baru dibuat:", existingTokens);
+        }
+
         // 3. Upload ulang file yang sudah dikompres untuk mereplace file lama
         console.log(`Mengunggah file kompresi kembali ke ${filePath}...`);
         await bucket.upload(compressedFilePath, {
@@ -78,7 +90,8 @@ export const compressUploadedPdf = onObjectFinalized({
             metadata: {
                 contentType: 'application/pdf',
                 metadata: {
-                    isCompressed: 'true'
+                    isCompressed: 'true',
+                    firebaseStorageDownloadTokens: existingTokens
                 }
             }
         });

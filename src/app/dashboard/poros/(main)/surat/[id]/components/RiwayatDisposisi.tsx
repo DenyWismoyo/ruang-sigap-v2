@@ -119,15 +119,14 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
 
   return (
     <>
-      <div className="w-full bg-card/90 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/10 flex flex-col relative overflow-hidden group/riwayat">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-80"></div>
-          <div className="flex justify-between items-center p-3 md:p-5 border-b border-border/50 bg-muted/20">
-              <h2 className="text-base md:text-xl font-bold font-heading text-foreground flex items-center">
-                  <Users size={18} className="mr-2 md:mr-3 text-[var(--nk-gradient-start)]" />
+      <div className="w-full bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border flex flex-col">
+          <div className="flex justify-between items-center px-4 pb-2 md:p-6 border-b border-border/50 md:border-border">
+              <h2 className="text-sm md:text-xl font-semibold text-foreground flex items-center">
+                  <Users size={16} className="mr-2 md:mr-3 text-muted-foreground" />
                   Riwayat Disposisi
               </h2>
           </div>
-          <div className="p-3 md:p-6 overflow-y-auto max-h-96">
+          <div className="px-4 py-4 md:p-6 overflow-y-auto max-h-96">
             {disposisiList.length > 0 ? (
               <motion.ul 
                 className="space-y-3 md:space-y-4"
@@ -147,12 +146,7 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                   const isCrossOpd = d.dariOpdId && userProfile?.opdId && d.dariOpdId !== userProfile.opdId;
 
                   return (
-                    // Penyesuaian Padding Mobile
-                    <motion.li 
-                      key={d.id} 
-                      variants={{ hidden: { opacity: 0, y: 10 }, show: { opacity: 1, y: 0 } }}
-                      className="p-3 md:p-4 text-xs md:text-sm rounded-xl bg-muted/30 border border-border/60 hover:bg-muted/50 hover:shadow-md hover:border-[var(--nk-gradient-start)]/20 transition-all"
-                    >
+                    <motion.li key={d.id} className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-transparent md:bg-muted border border-border md:border-transparent md:border">
                       <div className="flex justify-between items-start">
                         <div className="flex items-start space-x-2.5 md:space-x-3 min-w-0">
                             {/* Penyesuaian Ukuran Avatar Mobile */}

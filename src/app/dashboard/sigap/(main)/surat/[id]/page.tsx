@@ -91,14 +91,14 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
   };
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border mb-4 md:mb-6 overflow-hidden">
-      <div className="p-3.5 md:p-4 bg-muted/30 border-b border-border flex items-center justify-between">
+    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border mb-4 md:mb-6 overflow-hidden">
+      <div className="px-4 md:px-4 pb-2 md:pb-4 md:pt-4 md:bg-muted/30 border-b border-border/50 md:border-border flex items-center justify-between">
         <h3 className="text-sm md:text-base font-bold flex items-center text-foreground">
           <Info size={16} className="mr-2 text-blue-500" />
           Detail Surat
         </h3>
       </div>
-      <div className="p-4 space-y-4">
+      <div className="px-4 py-4 md:p-4 space-y-4 md:space-y-5">
         {/* Nomor Surat */}
         <div className="flex gap-3 items-start">
           <FileText size={16} className="text-muted-foreground mt-0.5 shrink-0" />
@@ -131,19 +131,7 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
           </div>
         </div>
 
-        {/* Ringkasan Eksekutif AI */}
-        {surat.ringkasanEksekutif && (
-          <div className="pt-4 mt-2 border-t border-border/60">
-            <div className="p-3 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border-l-2 border-blue-500">
-               <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
-                  <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">✨ Ringkasan Eksekutif (AI)</span>
-               </h5>
-               <p className="text-sm text-foreground leading-relaxed italic opacity-90">
-                   {surat.ringkasanEksekutif}
-               </p>
-            </div>
-          </div>
-        )}
+
 
         {surat.jenisSurat === 'Undangan' && surat.detailAgenda && (
           <>
@@ -180,6 +168,18 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
             </div>
           </>
         )}
+
+        {/* Ringkasan Eksekutif AI */}
+        <div className="pt-4 mt-2 border-t border-border/60">
+          <div className="p-3 bg-blue-50/50 md:bg-blue-50/80 dark:bg-blue-900/10 rounded-xl md:rounded-md border-l-2 border-blue-500">
+             <h5 className="text-[11px] font-bold uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+                <span className="bg-gradient-to-r from-blue-600 to-purple-600 text-transparent bg-clip-text">✨ Ringkasan Eksekutif (AI)</span>
+             </h5>
+             <p className="text-[13px] md:text-sm text-foreground leading-relaxed italic opacity-90">
+                 {surat.ringkasanEksekutif ? surat.ringkasanEksekutif : "Ringkasan eksekutif tidak tersedia. (Fitur AI Ringkasan belum aktif saat surat ini diunggah)"}
+             </p>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -628,21 +628,12 @@ export default function DetailSuratPage() {
 
   return (
     <div className="flex flex-col h-full animate-in fade-in pb-20 md:pb-0"> {/* Ditambah pb-20 untuk mobile tab ruang */}
-      <div className="flex-shrink-0">
-        <button onClick={() => router.back()} className="inline-flex items-center text-primary hover:underline text-sm mb-3 md:mb-4">
-          <ArrowLeft size={16} className="mr-2" /> Kembali 
-          <span className="hidden md:inline">&nbsp;ke Halaman Sebelumnya</span>
-        </button>
-        <div className="flex items-start justify-between mt-1 md:mt-4 gap-2">
-            <div className="flex-1">
-                {/* Penyesuaian Ukuran Judul Mobile */}
-                <h1 className="text-lg md:text-3xl font-bold text-foreground leading-snug">{surat.perihal}</h1>
-                <div className="flex items-center flex-wrap gap-1.5 md:gap-2 mt-2">
-                    {/* Penyesuaian Ukuran Badge Mobile */}
-                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
-                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
-                </div>
-            </div>
+      <div className="flex-shrink-0 px-4 pt-4 md:px-0 md:pt-0">
+        <div className="flex justify-between items-center mb-3 md:mb-4">
+            <button onClick={() => router.back()} className="inline-flex items-center text-primary hover:underline text-sm">
+            <ArrowLeft size={16} className="mr-2" /> Kembali 
+            <span className="hidden md:inline">&nbsp;ke Halaman Sebelumnya</span>
+            </button>
             <div className='flex items-center gap-2 flex-shrink-0'>
                 {canEditOrDeleteSurat && !isEditing && (
                     <>
@@ -658,13 +649,24 @@ export default function DetailSuratPage() {
                 )}
             </div>
         </div>
+        <div className="flex items-start justify-between mt-1 md:mt-2 gap-2">
+            <div className="flex-1">
+                {/* Penyesuaian Ukuran Judul Mobile */}
+                <h1 className="text-lg md:text-3xl font-bold text-foreground leading-snug">{surat.perihal}</h1>
+                <div className="flex items-center flex-wrap gap-1.5 md:gap-2 mt-2">
+                    {/* Penyesuaian Ukuran Badge Mobile */}
+                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getKlasifikasiStyle(surat.klasifikasi)}`}>{surat.klasifikasi}</span>
+                    <span className={`px-2.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm font-semibold rounded-full ${getStatusStyle(surat.statusPenyelesaian)}`}>{surat.statusPenyelesaian}</span>
+                </div>
+            </div>
+        </div>
       </div>
 
       {/* --- TAMPILAN MOBILE --- */}
       <div className="md:hidden flex-1 mt-4 flex flex-col pb-4">
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full flex flex-col flex-1 min-h-0">
           <TabsContent value="dokumen" className="mt-0 flex-1 overflow-y-auto">
-              <div className="space-y-3 md:space-y-6"> {/* Spacing diringkas */}
+              <div className="space-y-0 md:space-y-6"> {/* Spacing diringkas, card akan border-b jadi tidak butuh gap */}
                   <SuratDetailCard surat={surat} />
                   
                   {isMasterLoading ? (
@@ -678,14 +680,27 @@ export default function DetailSuratPage() {
                   )}
 
                   {(canPerformAction.disposisi || isRevising) && (
-                      <div className="bg-card rounded-xl shadow-sm border border-border">
+                      <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border border-b border-border/50">
                           {isMasterLoading ? (
-                              <MasterDataSkeleton label="Menyiapkan Form Disposisi..." />
+                              <div className="px-4"><MasterDataSkeleton label="Menyiapkan Form Disposisi..." /></div>
                           ) : (
                               <>
-                                  <button onClick={() => setIsMobileDisposisiFormMinimized(!isMobileDisposisiFormMinimized)} className="flex items-center justify-between w-full p-3 md:p-4 border-b border-border">
-                                      <h3 className="text-base font-semibold flex items-center text-foreground"><Send size={16} className="mr-2.5 text-blue-600" />{isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi'}</h3>
-                                      {isMobileDisposisiFormMinimized ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                  <button 
+                                      onClick={() => setIsMobileDisposisiFormMinimized(!isMobileDisposisiFormMinimized)} 
+                                      className={`flex items-center justify-between transition-all duration-300 group ${isMobileDisposisiFormMinimized ? 'bg-blue-50/80 dark:bg-blue-900/10 hover:bg-blue-100/50 dark:hover:bg-blue-900/20 rounded-xl my-4 mx-4 w-[calc(100%-2rem)] border border-blue-200/50 dark:border-blue-800/30 p-3 shadow-sm' : 'w-full p-4 md:p-4 md:border-b md:border-border'}`}
+                                  >
+                                      <div className="flex items-center">
+                                          <div className={`mr-3 flex items-center justify-center rounded-full transition-colors ${isMobileDisposisiFormMinimized ? 'w-9 h-9 bg-blue-100 dark:bg-blue-800/40 text-blue-600 dark:text-blue-400' : 'text-blue-600'}`}>
+                                            <Send size={16} className={`${isMobileDisposisiFormMinimized ? '-ml-0.5' : ''}`} />
+                                          </div>
+                                          <div className="text-left">
+                                              <h3 className="text-sm md:text-base font-bold text-foreground">{isRevising ? 'Revisi Disposisi' : 'Aksi Disposisi'}</h3>
+                                              {isMobileDisposisiFormMinimized && <p className="text-[10px] md:text-xs text-blue-600 dark:text-blue-400 font-medium mt-0.5 flex items-center">Ketuk untuk membuka form</p>}
+                                          </div>
+                                      </div>
+                                      <div className={`flex items-center justify-center w-8 h-8 rounded-full ${isMobileDisposisiFormMinimized ? 'bg-blue-600 text-white shadow-md animate-bounce' : 'text-muted-foreground hover:bg-muted'}`}>
+                                          {isMobileDisposisiFormMinimized ? <ChevronDown size={18} /> : <ChevronUp size={18} />}
+                                      </div>
                                   </button>
                                   {!isMobileDisposisiFormMinimized && (
                                       <FormDisposisi
@@ -702,8 +717,10 @@ export default function DetailSuratPage() {
                           )}
                       </div>
                   )}
-                  {/* Tinggi PDF dikurangi agar lebih proporsional di layar HP */}
-                  <div className="h-[60vh] md:h-[70vh] bg-card rounded-xl shadow-sm border border-border"><CachedPdfViewer fileUrl={surat.fileUrl} fileName={surat.fileName} /></div>
+                  {/* Tinggi PDF dikurangi agar lebih proporsional di layar HP, dan border dihilangkan di layar HP */}
+                  <div className="h-[60vh] md:h-[70vh] bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border overflow-hidden mt-4">
+                      <CachedPdfViewer fileUrl={surat.fileUrl} fileName={surat.fileName} />
+                  </div>
               </div>
           </TabsContent>
 
@@ -714,10 +731,7 @@ export default function DetailSuratPage() {
                         <div className="flex items-start"><AlertTriangle size={18} className="mr-2.5 flex-shrink-0" /><div><h3 className="text-sm md:text-base font-bold">Disposisi Dikembalikan</h3><p className="text-xs md:text-sm mt-1">Disposisi terakhir Anda dikembalikan. Silakan periksa riwayat dan kirimkan revisi.</p><Button onClick={() => setIsRevising(true)} className="mt-2.5 h-8 text-xs" variant="secondary" size="sm">Revisi Disposisi</Button></div></div>
                     </div>
                 )}
-                 {(canPerformAction.disposisi || isRevising) && !isDisposisiModalOpen && !isMasterLoading && (
-                     <div className="text-center"><Button size="sm" className="w-full text-xs h-9" onClick={() => setIsDisposisiModalOpen(true)}><Send size={14} className="mr-2" /> {isRevising ? 'Revisi Disposisi' : 'Buat Disposisi'}</Button></div>
-                 )}
-                
+
                 <div id="form-tindak-lanjut-mobile">
                     {isMasterLoading ? (
                         <MasterDataSkeleton label="Memuat Form Tindak Lanjut..." />

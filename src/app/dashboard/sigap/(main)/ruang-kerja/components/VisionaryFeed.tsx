@@ -69,9 +69,9 @@ const DailyBriefing = ({ items, isPimpinan }: { items: RuangKerjaItem[], isPimpi
         <motion.div 
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-6"
+            className="mb-6 px-3 md:px-0"
         >
-            <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border-blue-100 dark:border-blue-900 shadow-sm">
+            <Card className="bg-transparent md:bg-blue-50/50 dark:md:bg-blue-900/10 border-x-0 border-t-0 border-b md:border border-blue-100/30 md:border-blue-100 dark:border-blue-900/30 overflow-hidden relative shadow-none md:shadow-sm rounded-none md:rounded-xl">
                 <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                         <h3 className="text-lg font-bold text-blue-900 dark:text-blue-100 flex items-center gap-2">

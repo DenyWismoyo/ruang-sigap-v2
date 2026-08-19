@@ -118,14 +118,14 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
 
   return (
     <>
-      <div className="w-full bg-card rounded-xl shadow-sm border border-border flex flex-col">
-          <div className="flex justify-between items-center p-3 md:p-6 border-b border-border">
-              <h2 className="text-base md:text-xl font-semibold text-foreground flex items-center">
-                  <Users size={18} className="mr-2 md:mr-3 text-muted-foreground" />
+      <div className="w-full bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border flex flex-col">
+          <div className="flex justify-between items-center px-4 pb-2 md:p-6 border-b border-border/50 md:border-border">
+              <h2 className="text-sm md:text-xl font-semibold text-foreground flex items-center">
+                  <Users size={16} className="mr-2 md:mr-3 text-muted-foreground" />
                   Riwayat Disposisi
               </h2>
           </div>
-          <div className="p-3 md:p-6 overflow-y-auto max-h-96">
+          <div className="px-4 py-4 md:p-6 overflow-y-auto max-h-96">
             {disposisiList.length > 0 ? (
               <ul className="space-y-3 md:space-y-4">
                 {disposisiList.map(d => {
@@ -137,7 +137,7 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
 
                   return (
                     // Penyesuaian Padding Mobile
-                    <li key={d.id} className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-muted border border-border">
+                    <li key={d.id} className="p-3 md:p-4 text-xs md:text-sm rounded-lg bg-transparent md:bg-muted border border-border md:border-transparent md:border">
                       <div className="flex justify-between items-start">
                         <div className="flex items-start space-x-2.5 md:space-x-3 min-w-0">
                             {/* Penyesuaian Ukuran Avatar Mobile */}

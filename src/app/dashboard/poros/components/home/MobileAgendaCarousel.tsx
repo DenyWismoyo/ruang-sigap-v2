@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 
 // Komponen internal untuk Card Agenda di Carousel
 const AgendaCarouselCard = ({ agenda }: { agenda: CombinedAgendaItem }) => (
-    <Link href={agenda.type === 'surat' ? `/dashboard/surat/${agenda.id}` : '#'} className="w-full bg-card border border-border rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+    <Link href={agenda.type === 'surat' ? `/dashboard/surat/${agenda.id}` : '#'} className="w-full bg-transparent md:bg-card border-0 md:border md:border-border rounded-none md:rounded-lg p-0 md:p-4 shadow-none md:shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
       <div className="flex-1 flex flex-col">
         <div className="flex justify-between items-center mb-2">
           <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full ${agenda.type === 'surat' ? 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900/50 dark:text-indigo-300' : 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300'}`}>{agenda.type === 'surat' ? 'Undangan' : 'Internal'}</span>
@@ -97,7 +97,7 @@ export default function MobileAgendaCarousel({
               <div className="overflow-hidden" onTouchStart={handleTouchStart} onTouchMove={handleTouchMove} onTouchEnd={handleTouchEnd}>
                 <div className="flex transition-transform duration-700 ease-in-out" style={{ width: `${combinedTodayAgenda.length * 100}%`, transform: `translateX(-${currentAgendaSlide * (100 / combinedTodayAgenda.length)}%)` }}>
                   {combinedTodayAgenda.map((agenda) => (
-                    <div key={agenda.id} className="w-full flex-shrink-0 px-4" style={{ width: `${100 / combinedTodayAgenda.length}%` }}>
+                    <div key={agenda.id} className="w-full flex-shrink-0 px-4 md:px-0" style={{ width: `${100 / combinedTodayAgenda.length}%` }}>
                       <AgendaCarouselCard agenda={agenda} /> 
                     </div>
                   ))}

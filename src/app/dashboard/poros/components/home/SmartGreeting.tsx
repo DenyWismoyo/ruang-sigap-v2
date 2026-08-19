@@ -62,11 +62,11 @@ export default function SmartGreeting({ userName }: { userName: string }) {
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
+      className="flex flex-col md:flex-row md:items-center gap-3 mb-4 md:mb-8 px-1 md:px-0"
     >
-      <motion.div variants={iconVariants} className="p-3 bg-gradient-to-br from-[var(--nk-teal-mid)]/10 to-transparent rounded-full shadow-inner border border-[var(--nk-teal-light)]/20 w-fit relative animate-nk-float">
+      <motion.div variants={iconVariants} className="bg-gradient-to-br from-[var(--nk-teal-mid)]/10 to-transparent rounded-full shadow-inner border border-[var(--nk-teal-light)]/20 w-fit relative animate-nk-float">
         <div className="absolute inset-0 bg-[var(--nk-teal-light)]/20 blur-xl rounded-full"></div>
-        <div className="relative z-10">{greetingData.icon}</div>
+        <div className="relative z-10 p-2 md:p-3">{greetingData.icon}</div>
       </motion.div>
       <div>
         <motion.h1 variants={textVariants} className="text-3xl font-bold text-foreground font-heading">

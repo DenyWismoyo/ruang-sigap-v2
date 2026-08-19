@@ -84,7 +84,7 @@ const AgendaTimelineItem = ({ item, onInternalClick, onQuickNotulensi }: {
       
       {/* Konten Kartu */}
       <div className="flex-1 pb-6 min-w-0">
-        <div className="bg-card border border-border rounded-lg transition-shadow group-hover:shadow-md w-full overflow-hidden">
+        <div className="bg-transparent md:bg-card border-0 md:border md:border-border rounded-none md:rounded-lg border-b border-border/50 md:border-b-border transition-shadow group-hover:shadow-md w-full overflow-hidden shadow-none md:shadow-sm">
           
           {/* Area Klik Utama (Judul & Info) */}
           {/* Kita gunakan div onClick atau Link untuk bagian ini saja */}
@@ -105,7 +105,7 @@ const AgendaTimelineItem = ({ item, onInternalClick, onQuickNotulensi }: {
 
           {/* Area Tombol Aksi (Terpisah dari Link utama untuk menghindari nesting) */}
           {showNotulensiButton && (
-            <div className="px-3 pb-3 bg-card">
+            <div className="px-3 pb-3 bg-transparent md:bg-card">
               <div className="pt-3 border-t border-border">
                 <Button
                   variant="secondary"

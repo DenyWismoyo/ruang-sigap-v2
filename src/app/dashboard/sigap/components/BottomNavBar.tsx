@@ -21,7 +21,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 bg-card border-t border-border shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden safe-area-bottom">
+        <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-[var(--bottom-nav-height)] pb-[env(safe-area-inset-bottom,0px)] bg-card/95 backdrop-blur-lg border-t border-border/20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
             {navLinks.map(link => {
                 let notifCount = 0;
                 if (link.notifKey === 'surat') notifCount = welcomeSummary.suratBaruCount || 0;
@@ -41,9 +41,9 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
                                 {notifCount > 9 ? '!' : notifCount}
                             </span>
                         )}
-                        <link.icon className={`w-5 h-5 mb-1 ${isActive ? 'fill-current opacity-20' : ''}`} />
+                        <link.icon className={`w-5 h-5 mb-1 transition-transform ${isActive ? 'text-primary scale-110' : ''}`} />
                         <span className="text-[10px] font-medium">{link.label}</span>
-                        {isActive && <span className="absolute bottom-0 w-8 h-1 bg-primary rounded-t-full" />}
+                        {isActive && <span className="absolute bottom-0 w-12 h-1 bg-primary rounded-full" />}
                     </Link>
                 );
             })}

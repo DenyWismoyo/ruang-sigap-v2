@@ -122,6 +122,9 @@ export default function RuangKerjaCard({
   }, [isSuratDisposisi, isTugas, isSuratBaru, isDraf, item]);
 
   const timeAgo = timestampDate ? formatDistanceToNow(timestampDate, { addSuffix: true, locale: id }) : '';
+  
+  const isCardOverdue = (item.type === 'surat_disposisi' && item.isOverdue) || 
+                        (item.type === 'tugas' && item.tugas.batasWaktu && item.tugas.batasWaktu.toDate() < new Date());
 
   const HeaderBadge = () => {
       if (isSuratDisposisi) {
@@ -274,9 +277,19 @@ export default function RuangKerjaCard({
   };
 
   return (
-    <div className="w-full mb-3">
-      <Card className="shadow-sm border transition-colors hover:border-primary/50 bg-card">
+    <div className="w-full mb-0 md:mb-3">
+      <Card className={`shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border md:rounded-xl rounded-none border-border/20 md:border-border transition-colors hover:border-primary/50 bg-transparent md:bg-card overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-0 md:ring-1 md:ring-red-500/20' : ''}`}>
         
+        {/* OVERDUE BANNER */}
+        {isCardOverdue && (
+            <div className="bg-red-50 dark:bg-red-950/30 border-b border-red-100 dark:border-red-900/50 px-4 py-2 flex items-center justify-between text-red-700 dark:text-red-400">
+                <div className="flex items-center gap-2 text-xs font-bold">
+                    <AlertTriangle size={14} className="animate-pulse" />
+                    Waktu Telah Berlalu - Segera Tindaklanjuti
+                </div>
+            </div>
+        )}
+
         {/* BODY UTAMA */}
         <div onClick={handleCardClick} className="cursor-pointer p-4 pb-3">
             
@@ -313,7 +326,7 @@ export default function RuangKerjaCard({
         </div>
 
         {/* FOOTER */}
-        <div className="px-4 py-3 bg-muted/30 border-t border-border rounded-b-lg">
+        <div className="px-4 py-3 md:bg-muted/30 border-t border-border/10 md:border-border rounded-b-none md:rounded-b-lg">
             <ActionButtons />
             
             <AnimatePresence>

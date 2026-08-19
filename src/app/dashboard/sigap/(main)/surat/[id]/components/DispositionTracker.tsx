@@ -38,11 +38,11 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
   });
 
   return (
-    <div className="mt-4 md:mt-6 bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-all duration-300">
+    <div className="mt-4 md:mt-6 bg-transparent md:bg-card md:rounded-xl md:border md:border-border md:shadow-sm overflow-hidden transition-all duration-300">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
           
           {/* HEADER */}
-          <div className="p-3 md:p-4 flex items-center justify-between bg-muted/30 border-b border-border hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
+          <div className="px-4 md:px-4 pb-2 md:pb-4 flex items-center justify-between md:bg-muted/30 border-b border-border/50 md:border-border md:hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setIsOpen(!isOpen)}>
               <div className="flex items-center gap-2.5 md:gap-3">
                   <div className="p-1.5 md:p-2 bg-primary/10 rounded-full border border-primary/20 text-primary">
                      <GitCommit size={16} className="md:w-[18px] md:h-[18px]" />
@@ -65,9 +65,9 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
           
           {/* CONTENT */}
           <CollapsibleContent className="animate-in slide-in-from-top-2 data-[state=closed]:animate-out data-[state=closed]:slide-out-to-top-2 overflow-hidden">
-              <div className="p-0 bg-background">
+              <div className="p-0 bg-transparent md:bg-background">
                 {/* Penyesuaian padding mobile */}
-                <ScrollArea className="max-h-[400px] md:max-h-[500px] w-full px-3 py-4 md:px-5 md:py-6">
+                <ScrollArea className="max-h-[400px] md:max-h-[500px] w-full px-4 py-4 md:px-5 md:py-6">
                     <div className="relative space-y-0 pl-1 md:pl-2 pb-2">
                       
                       {sortedDisposisi.map((disp, index) => {

@@ -195,11 +195,11 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between p-4 bg-card/80 backdrop-blur-md border-b border-border h-16 transition-all duration-200">
+              <header className="sticky top-0 z-30 flex items-center justify-between px-3 md:px-4 bg-card/80 backdrop-blur-md border-b border-border/30 h-14 transition-all duration-200">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
-                <div className="flex items-center space-x-3 md:space-x-6">
+                <div className="flex items-center space-x-2 md:space-x-4">
                   {/* [PERBAIKAN] Menghapus class 'hidden sm:block' agar Search muncul di HP */}
                   <div><GlobalSearch /></div>
                   <Popover>
@@ -223,7 +223,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                       </ScrollArea>
                     </PopoverContent>
                   </Popover>
-                  <ThemeToggleButton />
+                  <div className="flex">
+                    <ThemeToggleButton />
+                  </div>
                   <div className="relative">
                       <button onClick={() => setIsProfileDropdownOpen(p => !p)} className="flex items-center space-x-2 group p-1 rounded-full hover:bg-accent transition-all">
                           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-primary/80 flex items-center justify-center font-bold text-primary-foreground text-sm shadow-sm group-hover:shadow-md transition-all">{userProfile.namaLengkap.charAt(0).toUpperCase()}</div>
@@ -252,11 +254,12 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </header>
               
               {/* [FIX UI] Main Content Area */}
-              {/* 'pb-20' (80px) sudah cukup untuk BottomNavBar (64px) + Margin (16px) */}
-              <main className="flex-1 overflow-y-auto p-4 pb-20 md:p-6 md:pb-6 lg:p-8 lg:pb-8 bg-muted/10 relative scroll-smooth">
+              <main className="flex-1 overflow-y-auto px-0 pt-0 pb-[var(--bottom-nav-height)] md:px-6 md:pt-4 md:pb-6 lg:px-8 lg:pt-6 lg:pb-8 bg-muted/10 relative scroll-smooth sigap-scrollable">
                 <ScrollToTop />
                 <div className="w-full min-h-full flex flex-col">
-                    <Breadcrumbs />
+                    <div className="hidden md:block">
+                        <Breadcrumbs />
+                    </div>
                     <PageTransition>{children}</PageTransition>
                     <footer className="mt-auto py-6 text-center text-xs text-muted-foreground hidden md:block">
                         <p>&copy; {new Date().getFullYear()} SIGAP. Sistem Integrasi & Administrasi Persuratan.</p>

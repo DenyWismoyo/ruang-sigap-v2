@@ -402,17 +402,17 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
   const isBusy = isProcessing || uploadStatus === 'uploading';
 
   return (
-    <div className="bg-card rounded-xl shadow-sm border border-border">
+    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border">
         {/* Header */}
-        <div className="p-3 md:p-6 border-b border-border flex items-center justify-between">
-            <h2 className="text-base md:text-xl font-semibold text-foreground flex items-center">
-                <ClipboardCheck size={18} className="mr-2 md:mr-3 md:w-5 md:h-5 text-green-600" />
+        <div className="px-4 pb-2 md:p-6 border-b border-border/50 md:border-border flex items-center justify-between">
+            <h2 className="text-sm md:text-xl font-semibold text-foreground flex items-center">
+                <ClipboardCheck size={16} className="mr-2 md:mr-3 md:w-5 md:h-5 text-green-600" />
                 Tindak Lanjut
             </h2>
         </div>
 
         {/* Konten */}
-        <div className="p-3 md:p-6">
+        <div className="px-4 py-4 md:p-6">
             {canTakeAction && (
                 <div className="space-y-4 pb-6 mb-6 border-b border-border">
                     <h3 className="font-semibold text-sm md:text-base text-foreground mb-3">Buat Laporan / Catatan Progres</h3>

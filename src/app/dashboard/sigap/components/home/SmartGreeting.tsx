@@ -45,9 +45,9 @@ export default function SmartGreeting({ userName }: { userName: string }) {
       initial={{ opacity: 0, y: -20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="flex flex-col md:flex-row md:items-center gap-4 mb-8 px-1 md:px-0"
+      className="flex flex-col md:flex-row md:items-center gap-3 mb-4 md:mb-8 px-1 md:px-0"
     >
-      <div className="p-3 bg-card rounded-full shadow-sm border border-border w-fit">
+      <div className="w-fit opacity-90">
         {greetingData.icon}
       </div>
       <div>

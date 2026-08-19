@@ -58,7 +58,7 @@ export default function EmptyStateWidget({ filterType, userName }: EmptyStateWid
   const Icon = current.icon;
 
   return (
-    <Card className="relative overflow-hidden border-dashed border-2 border-border bg-card/50 p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+    <Card className="relative overflow-hidden border-dashed border-0 md:border-2 border-border bg-transparent md:bg-card/50 p-8 md:p-12 text-center flex flex-col items-center justify-center min-h-[400px] rounded-none md:rounded-xl">
       
       {/* Animasi Latar Belakang (Confetti Sederhana) */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none select-none opacity-30">

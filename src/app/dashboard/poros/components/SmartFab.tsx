@@ -57,6 +57,11 @@ export default function SmartFab() {
 
   const action = getAction();
 
+  // Reposition if on detail page with fixed tab bar
+  // Reposition to sit EXACTLY below the Copilot button
+  const isDetailPage = pathname.match(/\/surat\/[^\/]+$/);
+  const bottomPos = isDetailPage ? 'bottom-[120px]' : 'bottom-20';
+
   return (
     <AnimatePresence>
       {action && (
@@ -66,28 +71,25 @@ export default function SmartFab() {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0, opacity: 0, y: 20 }}
           transition={{ type: "spring", stiffness: 260, damping: 20 }}
-          className="fixed bottom-20 right-4 z-40 md:hidden" // Posisi strategis di atas navbar
+          className={`fixed ${bottomPos} right-0 z-40 md:hidden transition-all duration-300`} // Posisi strategis menempel di kanan
         >
-          {/* Pulse Ring */}
-          <motion.div
-            animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
-            transition={{ repeat: Infinity, duration: 2.5, ease: "easeInOut" }}
-            className={`absolute inset-0 rounded-full ${action.color.split(' ')[0]} blur-sm`}
-          />
           <AnimatePresence mode="wait">
             <motion.div
               key={action.label}
-              initial={{ rotate: -90, opacity: 0, scale: 0.5 }}
-              animate={{ rotate: 0, opacity: 1, scale: 1 }}
-              exit={{ rotate: 90, opacity: 0, scale: 0.5 }}
+              initial={{ x: 20, opacity: 0, scale: 0.5 }}
+              animate={{ x: 0, opacity: 1, scale: 1 }}
+              exit={{ x: 20, opacity: 0, scale: 0.5 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
               <Button
+                variant="ghost"
                 onClick={action.onClick}
-                className={`relative rounded-full shadow-lg h-14 px-6 ${action.color} text-white flex items-center gap-2 transition-transform active:scale-95 border-2 border-transparent`}
+                className="relative group flex items-center justify-center p-1.5 pr-0.5 rounded-tl-none rounded-bl-[24px] rounded-r-none bg-card/90 backdrop-blur-xl border border-primary/30 border-r-0 border-t-0 shadow-[-4px_0_15px_rgba(0,0,0,0.15)] transition-all duration-300 active:scale-95 h-auto w-auto hover:bg-card/95"
+                title={action.label}
               >
-                {action.icon}
-                <span className="font-semibold">{action.label}</span>
+                <div className={`relative w-12 h-12 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0 ${action.color} text-white shadow-inner border border-white/10`}>
+                  <div className="scale-125 pr-1">{action.icon}</div>
+                </div>
               </Button>
             </motion.div>
           </AnimatePresence>

@@ -403,20 +403,20 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
   const isBusy = isProcessing || uploadStatus === 'uploading';
 
   return (
-    <div className="bg-card/95 backdrop-blur-md rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[var(--nk-gradient-start)]/20 relative overflow-hidden group/tindak-lanjut">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-90"></div>
+    <div className="bg-transparent md:bg-card/95 md:backdrop-blur-md md:rounded-2xl md:shadow-[0_8px_30px_rgb(0,0,0,0.04)] border-0 md:border md:border-[var(--nk-gradient-start)]/20 relative overflow-hidden group/tindak-lanjut">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-gradient-start)] to-[var(--nk-gradient-end)] opacity-90 hidden md:block"></div>
         {/* Header */}
-        <div className="p-3 md:p-6 border-b border-[var(--nk-gradient-start)]/10 bg-muted/10 flex items-center justify-between">
-            <h2 className="text-base md:text-xl font-bold font-heading text-foreground flex items-center tracking-tight">
-                <div className="p-2 bg-gradient-to-br from-emerald-500/20 to-transparent rounded-xl mr-3 shadow-sm border border-emerald-500/20">
-                    <ClipboardCheck size={18} className="md:w-5 md:h-5 text-emerald-600" />
+        <div className="px-4 pb-2 md:p-6 border-b border-border/50 md:border-[var(--nk-gradient-start)]/10 md:bg-muted/10 flex items-center justify-between">
+            <h2 className="text-sm md:text-xl font-bold font-heading text-foreground flex items-center tracking-tight">
+                <div className="p-2 md:bg-gradient-to-br from-emerald-500/20 to-transparent rounded-xl mr-2 md:mr-3 md:shadow-sm md:border md:border-emerald-500/20">
+                    <ClipboardCheck size={16} className="md:w-5 md:h-5 text-emerald-600" />
                 </div>
                 Tindak Lanjut
             </h2>
         </div>
 
         {/* Konten */}
-        <div className="p-3 md:p-6">
+        <div className="px-4 py-4 md:p-6">
             {canTakeAction && (
                 <div className="space-y-4 pb-6 mb-6 border-b border-[var(--nk-gradient-start)]/10">
                     <h3 className="font-bold text-sm md:text-base font-heading text-foreground mb-3 text-[var(--nk-gradient-start)]">Buat Laporan / Catatan Progres</h3>

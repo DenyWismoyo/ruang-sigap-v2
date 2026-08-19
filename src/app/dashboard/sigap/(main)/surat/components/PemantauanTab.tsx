@@ -92,14 +92,14 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
             </div>
 
             {/* List Grouped Feed */}
-            <div className="space-y-6">
+            <div className="space-y-0 md:space-y-6">
                 {groupedFeed.map((group) => {
                     const surat = group[0].surat;
                     // Anggap surat selesai jika status utamanya selesai
                     const isSuratSelesai = surat?.statusPenyelesaian === 'Selesai';
 
                     return (
-                        <div key={surat?.id || group[0].id} className="bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+                        <div key={surat?.id || group[0].id} className="bg-card border-x-0 border-b border-t-0 border-border/50 rounded-none md:border md:rounded-xl shadow-none md:shadow-sm overflow-hidden flex flex-col">
                             
                             {/* Header Paket Surat */}
                             <div className="bg-muted/40 p-3 md:p-4 border-b border-border flex flex-col sm:flex-row sm:items-start justify-between gap-3">

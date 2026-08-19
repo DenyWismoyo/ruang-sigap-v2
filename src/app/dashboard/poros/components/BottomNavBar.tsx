@@ -26,7 +26,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
             initial={{ y: 80 }}
             animate={{ y: 0 }}
             transition={{ type: "spring", stiffness: 300, damping: 30 }}
-            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-16 nk-glass-panel shadow-[0_-4px_20px_rgba(17,94,89,0.05)] md:hidden safe-area-bottom border-t-2 border-[var(--nk-deep)]"
+            className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-[var(--bottom-nav-height)] pb-[env(safe-area-inset-bottom,0px)] nk-glass-panel shadow-[0_-8px_30px_rgba(13,107,98,0.1)] md:hidden border-t border-[var(--nk-glass-border)]"
         >
             {navLinks.map(link => {
                 let notifCount = 0;
@@ -67,7 +67,7 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
                             >
                                 {link.label}
                             </motion.span>
-                            {isActive && <motion.span layoutId="bottom-nav-indicator" className="absolute bottom-0 w-8 h-0.5 bg-[var(--nk-teal-mid)] rounded-t-full shadow-[0_-2px_8px_rgba(13,107,98,0.6)]" />}
+                            {isActive && <motion.span layoutId="bottom-nav-indicator" className="absolute bottom-0 w-12 h-1 bg-[var(--nk-teal-mid)] rounded-full shadow-[0_-2px_8px_rgba(13,107,98,0.6)]" />}
                         </motion.div>
                     </Link>
                 );

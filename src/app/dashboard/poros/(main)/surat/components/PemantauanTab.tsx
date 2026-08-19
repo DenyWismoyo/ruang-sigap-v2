@@ -85,8 +85,8 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
     }
 
     return (
-        <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border border-border md:p-6 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border md:border-none md:p-0 md:bg-transparent">
+        <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border border-border md:p-6 space-y-0 md:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card p-4 rounded-xl border border-border md:border-none md:p-0 md:bg-transparent mx-4 md:mx-0 mb-4 md:mb-0">
                 <div>
                     <h2 className="text-base md:text-lg font-bold text-foreground flex items-center gap-2">
                         <Activity className="w-4 h-4 md:w-5 md:h-5 text-blue-500" />
@@ -100,7 +100,7 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
             </div>
 
             {/* List Grouped Feed */}
-            <div className="space-y-6">
+            <div className="space-y-0 md:space-y-6">
                 <AnimatePresence>
                 {groupedFeed.map((group, groupIdx) => {
                     const surat = group[0].surat;
@@ -113,7 +113,7 @@ export default function PemantauanTab({ onNavigate }: PemantauanTabProps) {
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ duration: 0.3, delay: groupIdx * 0.1 }}
-                            className="nk-card flex flex-col relative hover:shadow-[var(--nk-shadow-md)] transition-all duration-300 group/paket"
+                            className="bg-card border-x-0 border-b border-t-0 border-border/50 rounded-none md:nk-card flex flex-col relative hover:shadow-[var(--nk-shadow-md)] transition-all duration-300 group/paket"
                         >
                             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--nk-teal-light)] to-[var(--nk-teal-mid)] opacity-80"></div>
                             {/* Header Paket Surat */}

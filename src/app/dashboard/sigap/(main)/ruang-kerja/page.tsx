@@ -173,7 +173,7 @@ export default function RuangKerjaPage() {
   // [FIX GHOSTING BUG] State baru untuk menampung ID yang disembunyikan sementara
   const [hiddenItemIds, setHiddenItemIds] = useState<Set<string>>(new Set());
 
-  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf';
+  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf' | 'agenda';
   const [activeFilter, setActiveFilter] = useState<RuangKerjaFilter>('semua');
 
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
@@ -474,7 +474,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   }, [feedItems]);
 
   const filteredFeedItems = useMemo(() => {
-    if (activeFilter === 'semua') return feedItems;
+    if (activeFilter === 'semua' || activeFilter === 'agenda') return feedItems;
     return feedItems.filter(item => {
       if (activeFilter === 'surat') return item.type === 'surat_disposisi' || item.type === 'surat_baru';
       if (activeFilter === 'tugas') return item.type === 'tugas';
@@ -496,29 +496,37 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   if (isPageLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full p-4 md:p-6 bg-secondary/40">
-      <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+    <div className="flex flex-col h-full px-0 md:px-6 pt-2 pb-4 bg-secondary/40">
+      <div className="px-3 md:px-0">
+        <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
         
         <div className="lg:col-span-2 space-y-4">
           {user && userProfile && effectiveJabatan && (
-            <QuickAddTask userProfile={userProfile} effectiveJabatan={effectiveJabatan} addToast={addToast} userUid={user.uid} />
+            <div className="px-3 md:px-0">
+              <QuickAddTask userProfile={userProfile} effectiveJabatan={effectiveJabatan} addToast={addToast} userUid={user.uid} />
+            </div>
           )}
           
-          <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as RuangKerjaFilter)} className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="semua">Semua ({itemCounts.semua})</TabsTrigger>
-              <TabsTrigger value="surat">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
-              <TabsTrigger value="tugas">Tugas ({itemCounts.tugas})</TabsTrigger>
-              {(isPimpinan || isAdminOrTU) && <TabsTrigger value="draf">Draf ({itemCounts.draf})</TabsTrigger>}
-            </TabsList>
-          </Tabs>
+          <div className="px-3 md:px-0">
+            <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as RuangKerjaFilter)} className="w-full">
+              <TabsList className="w-full flex overflow-x-auto gap-1 h-auto p-1 justify-start">
+                <TabsTrigger value="semua" className="flex-shrink-0">Semua ({itemCounts.semua})</TabsTrigger>
+                <TabsTrigger value="surat" className="flex-shrink-0">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
+                <TabsTrigger value="tugas" className="flex-shrink-0">Tugas ({itemCounts.tugas})</TabsTrigger>
+                {(isPimpinan || isAdminOrTU) && <TabsTrigger value="draf" className="flex-shrink-0 hidden md:block">Draf ({itemCounts.draf})</TabsTrigger>}
+                <TabsTrigger value="agenda" className="flex-shrink-0 lg:hidden">Agenda & Catatan</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
 
           {/* Menggunakan finalVisibleFeedItems agar UI Instan merespon */}
-          {finalVisibleFeedItems.length === 0 ? (
-            <EmptyStateWidget filterType={activeFilter} userName={userProfile?.namaLengkap.split(' ')[0]} />
-          ) : (
+          {activeFilter !== 'agenda' && (
+            finalVisibleFeedItems.length === 0 ? (
+              <EmptyStateWidget filterType={activeFilter} userName={userProfile?.namaLengkap.split(' ')[0]} />
+            ) : (
             <div className="flex flex-col space-y-4">
               <VisionaryFeed 
                   items={finalVisibleFeedItems}
@@ -556,13 +564,14 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                 </Button>
               )}
             </div>
+            )
           )}
         </div>
 
-        <div className="space-y-6 flex flex-col">
+        <div className={`space-y-6 flex-col ${activeFilter === 'agenda' ? 'flex' : 'hidden lg:flex'}`}>
           <QuickLinksWidget />
-          <Card className="h-[400px] flex flex-col overflow-hidden border-border shadow-sm">
-              <CardHeader className="p-4 py-3 bg-muted/30 border-b border-border flex-shrink-0">
+          <Card className="h-[400px] flex flex-col overflow-hidden border-x-0 border-t-0 border-b md:border md:border-border shadow-none md:shadow-sm bg-transparent md:bg-card rounded-none md:rounded-xl">
+              <CardHeader className="px-4 py-3 md:p-4 md:py-3 md:bg-muted/30 border-b border-border/20 md:border-border flex-shrink-0 mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <StickyNote size={16} className="text-yellow-500"/> Sticky Note
                   </CardTitle>
@@ -571,8 +580,8 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                   <StickyNoteWidget />
               </CardContent>
           </Card>
-          <Card className="shadow-sm border-border">
-              <CardHeader className="p-4 py-3 border-b border-border">
+          <Card className="shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border md:border-border bg-transparent md:bg-card rounded-none md:rounded-xl">
+              <CardHeader className="px-4 py-3 md:p-4 md:py-3 border-b border-border/20 md:border-border mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <CalendarDays size={16} className="text-blue-500"/> Agenda 7 Hari Kedepan
                   </CardTitle>

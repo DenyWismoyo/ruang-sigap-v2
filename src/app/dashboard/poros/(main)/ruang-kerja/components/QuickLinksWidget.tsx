@@ -86,8 +86,8 @@ export default function QuickLinksWidget() {
     }
 
     return (
-        <Card className="shadow-sm border-border flex flex-col">
-            <CardHeader className="p-4 py-3 bg-muted/30 border-b border-border flex-shrink-0 flex flex-row items-center justify-between space-y-0">
+        <Card className="shadow-none md:shadow-[var(--nk-shadow-sm)] border-x-0 border-t-0 border-b md:border border-border/20 md:border-[var(--border)] flex flex-col bg-transparent md:nk-card rounded-none md:rounded-xl">
+            <CardHeader className="px-4 py-3 md:p-4 md:py-3 md:bg-muted/30 border-b border-border/20 md:border-[var(--border)] flex-shrink-0 flex flex-row items-center justify-between space-y-0">
                 <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <Globe size={16} className="text-cyan-600" /> Portal Pintar
                 </CardTitle>

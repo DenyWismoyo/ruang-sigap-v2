@@ -14,7 +14,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Surat, Disposisi, UserProfile, Jabatan, InstruksiTemplat } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Loader2, Send, X, Search, Sparkles, UserCheck } from 'lucide-react';
+import { Loader2, Send, X, Search, Sparkles, UserCheck, Bell } from 'lucide-react';
 import { useBawahanList } from '@/app/dashboard/poros/hooks/useBawahanList';
 import { useSuratActions } from '@/app/dashboard/poros/hooks/useSuratActions'; 
 import { Label } from '@/components/ui/label';
@@ -101,6 +101,36 @@ export default function InlineDisposisiForm({
     }
   };
 
+  const handleSebarkanKeSemua = async () => {
+    if (!userProfile) return;
+    
+    // In inline form, we can simply distribute to everyone in the opd
+    const allUsersInOpd = Array.from(userCache.values()).filter(u => 
+        u.status === 'aktif' && u.uid !== userProfile.uid 
+    );
+
+    if (allUsersInOpd.length === 0) {
+        addToast("Tidak ada pegawai lain ditemukan di OPD ini.", "error"); 
+        return;
+    }
+
+    const finalInstruksi = instruksi.trim() || "Untuk diketahui dan dipedomani.";
+    
+    const success = await kirimDisposisi(
+        surat, 
+        allUsersInOpd, 
+        finalInstruksi,
+        undefined, 
+        false,     
+        undefined, 
+        true // isInformational
+    );
+    
+    if (success) {
+        onSuccess();
+    }
+  };
+
   const handleAskAi = async () => {
     if (!surat || bawahanList.length === 0) return;
     setIsAiLoading(true);
@@ -123,8 +153,8 @@ export default function InlineDisposisiForm({
   };
 
   return (
-    <div className="bg-background rounded-lg border border-border overflow-hidden mt-3 shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
-      <div className="p-4 space-y-4">
+    <div className="bg-transparent md:bg-background rounded-none md:rounded-lg border-0 md:border md:border-border md:overflow-hidden mt-0 md:mt-3 shadow-none md:shadow-sm animate-in fade-in slide-in-from-top-2 duration-200">
+      <div className="p-0 pt-3 md:p-4 space-y-4">
           <div>
             <div className="flex justify-between items-center mb-1.5">
                 <Label className="text-xs text-muted-foreground">Instruksi Disposisi</Label>
@@ -184,19 +214,34 @@ export default function InlineDisposisiForm({
 
           <div className="flex flex-col sm:flex-row justify-end gap-2 pt-3 border-t border-border mt-4">
             {onCancel && (
-                <Button variant="outline" size="sm" onClick={onCancel} disabled={isProcessing} className="h-8">
+                <Button variant="outline" size="sm" onClick={onCancel} disabled={isProcessing} className="h-8 border-muted-foreground/30 hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-500 dark:hover:text-red-400 transition-colors">
                     Batal
                 </Button>
             )}
-            {onSelfDisposition && (
-                <Button variant="secondary" size="sm" onClick={onSelfDisposition} disabled={isProcessing} className="h-8">
-                    <UserCheck size={14} className="mr-1.5" /> Tindak Lanjuti Sendiri
-                </Button>
+            
+            {isPemberitahuanMode ? (
+                <>
+                   <Button size="sm" onClick={submitDisposisi} disabled={isProcessing || selectedPenerima.length === 0 || !instruksi.trim()} className="h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        {isProcessing ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Send size={14} className="mr-1.5" />}
+                        Kirim Pemberitahuan
+                   </Button>
+                   <Button size="sm" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="h-8 bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
+                        <Bell size={14} className="mr-1.5" /> Sebarkan ke OPD
+                   </Button>
+                </>
+            ) : (
+                <>
+                   {onSelfDisposition && (
+                        <Button size="sm" onClick={onSelfDisposition} disabled={isProcessing} className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+                            <UserCheck size={14} className="mr-1.5" /> Tindak Lanjuti Sendiri
+                        </Button>
+                    )}
+                    <Button size="sm" onClick={submitDisposisi} disabled={isProcessing || selectedPenerima.length === 0 || !instruksi.trim()} className="h-8 bg-blue-600 hover:bg-blue-700 text-white shadow-sm">
+                        {isProcessing ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Send size={14} className="mr-1.5" />}
+                        Kirim Disposisi
+                    </Button>
+                </>
             )}
-            <Button size="sm" onClick={submitDisposisi} disabled={isProcessing || selectedPenerima.length === 0 || !instruksi.trim()} className="h-8 bg-blue-600 hover:bg-blue-700 text-white">
-                {isProcessing ? <Loader2 size={14} className="animate-spin mr-1.5" /> : <Send size={14} className="mr-1.5" />}
-                {isPemberitahuanMode ? 'Kirim Pemberitahuan' : 'Kirim Disposisi'}
-            </Button>
           </div>
       </div>
     </div>
