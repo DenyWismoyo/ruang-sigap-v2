@@ -16,7 +16,7 @@ import { useToast } from '@/context/ToastContext';
 import { Tugas, UserProfile, SubTugas, TugasLampiran } from '@/types';
 import { logActivity } from '@/lib/activityLogger';
 import { sendWhatsAppNotification } from '@/lib/whatsapp';
-import { updateLogbook } from '@/lib/logbookUtils'; // Import helper
+
 import { useQueryClient } from '@tanstack/react-query';
 
 export const useTugasActions = () => {
@@ -83,22 +83,7 @@ export const useTugasActions = () => {
 
           await batch.commit();
 
-          // --- [AUTO LOGBOOK] ---
-          // Mencatat pemberian tugas ke logbook pimpinan
-          try {
-            const logDesc = `Memberikan tugas: "${taskData.judulTugas}" kepada ${taskData.kepadaJabatanNama}`;
-            await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), {
-                id: `auto_task_${tugasRef.id}_${Date.now()}`,
-                deskripsi: logDesc,
-                selesai: true, // Aksi memberi tugas dianggap selesai
-                tugasTerkaitId: tugasRef.id,
-                tugasTerkaitJudul: taskData.judulTugas
-            });
-            console.log("Auto-logbook pemberian tugas berhasil.");
-          } catch (logErr) {
-            console.error("Gagal auto-logbook:", logErr);
-          }
-          // --- [AKHIR AUTO LOGBOOK] ---
+
 
           // [SINKRONISASI UI INSTAN]
           if (effectiveJabatan?.id) {
@@ -153,16 +138,7 @@ export const useTugasActions = () => {
               await logActivity(task.suratId, getActorName(), logMessage);
           }
           
-          // [AUTO LOGBOOK]
-          try {
-              await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-                  id: `auto_task_status_${task.id}_${Date.now()}`,
-                  deskripsi: logMessage,
-                  selesai: newStatus === 'Selesai',
-                  tugasTerkaitId: task.id,
-                  tugasTerkaitJudul: task.judulTugas
-              });
-          } catch (logErr) { console.error(logErr); }
+
 
           await batch.commit();
           
@@ -215,16 +191,7 @@ export const useTugasActions = () => {
               await currentBatch.commit();
           }
 
-          // [AUTO LOGBOOK]
-          try {
-              await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), {
-                  id: `auto_task_detail_${taskId}_${Date.now()}`,
-                  deskripsi: `Memperbarui detail tugas: "${taskData.judulTugas}"`,
-                  selesai: false,
-                  tugasTerkaitId: taskId,
-                  tugasTerkaitJudul: taskData.judulTugas
-              });
-          } catch (logErr) { console.error(logErr); }
+
 
           // [NOTIFIKASI REVISI TUGAS]
           if (taskData.kepadaJabatanId) {

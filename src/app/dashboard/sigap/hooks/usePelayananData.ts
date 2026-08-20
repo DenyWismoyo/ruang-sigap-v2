@@ -9,7 +9,7 @@ import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMemo } from 'react';
 import { sendWhatsAppNotification } from '@/lib/whatsapp'; 
-import { updateLogbook } from '@/lib/logbookUtils'; 
+ 
 
 // Tipe Data untuk Pengaturan Kolom
 export interface CustomColumn {
@@ -142,17 +142,7 @@ export const usePelayananData = () => {
         onSuccess: async ({ status, item }) => {
             queryClient.invalidateQueries({ queryKey: ['pelayanan', opdId] });
             addToast(`Status diperbarui menjadi ${status}.`, "success");
-            if (status === 'Selesai' && item && userProfile) {
-                try {
-                    const layananName = item.jenisDokumen || item.judulLayanan || 'Layanan Publik';
-                    await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), {
-                        id: `auto_pelayanan_${item.id}_${Date.now()}`,
-                        deskripsi: `Menyelesaikan pelayanan ${item.kategori}: "${layananName}" untuk a.n. ${item.namaPemohon}.`,
-                        selesai: true,
-                        tugasTerkaitJudul: `Pelayanan: ${layananName}`
-                    });
-                } catch (e) { console.error(e); }
-            }
+
         },
         onError: () => addToast("Gagal update status.", "error")
     });

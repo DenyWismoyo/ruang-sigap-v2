@@ -14,7 +14,7 @@ import { logActivity } from '@/lib/activityLogger';
 import { useToast } from '@/context/ToastContext';
 import { Surat, Disposisi, UserProfile, TindakLanjut } from '@/types';
 import { useQueryClient } from '@tanstack/react-query';
-import { updateLogbook } from '@/lib/logbookUtils';
+
 
 export interface TindakLanjutPayload {
     isiLaporan: string;
@@ -177,13 +177,7 @@ export const useSuratActions = () => {
 
       await batch.commit();
 
-      try {
-          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-              id: `auto_disp_${surat.id}_${Date.now()}`,
-              deskripsi: `Mendisposisikan surat: "${surat.perihal}"`,
-              selesai: true
-          });
-      } catch (logErr) { console.error(logErr); }
+
 
       addToast(`Berhasil mengirim ke ${targets.length} orang.`, "success");
       refreshData();
@@ -265,13 +259,7 @@ export const useSuratActions = () => {
 
       await batch.commit();
 
-      try {
-          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-              id: `auto_esk_${surat.id}_${Date.now()}`,
-              deskripsi: `Eskalasi surat ke pimpinan: "${surat.perihal}"`,
-              selesai: true
-          });
-      } catch (logErr) { console.error(logErr); }
+
 
       addToast(`Surat berhasil dinaikkan ke pimpinan.`, "success");
       refreshData();
@@ -326,14 +314,7 @@ export const useSuratActions = () => {
 
       await batch.commit();
 
-      // [AUTO LOGBOOK]
-      try {
-          await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-              id: `auto_terima_${disposisi.id}_${Date.now()}`,
-              deskripsi: `Menerima ${disposisi.isInformational ? 'pemberitahuan' : 'disposisi'} surat: "${surat.perihal}"`,
-              selesai: true
-          });
-      } catch (logErr) { console.error(logErr); }
+
       addToast("Disposisi diterima.", "success");
       refreshData();
       return true;
@@ -420,22 +401,7 @@ export const useSuratActions = () => {
         
         await batch.commit();
 
-        // --- [AUTO LOGBOOK] ---
-        try {
-            const logDesc = isFinal 
-                ? `Menyelesaikan surat: "${surat.perihal}"`
-                : `Tindak Lanjut Surat: "${surat.perihal}" - ${payload.judulLaporan || 'Proses'}`;
-                
-            await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-                id: `auto_tinjut_${tindakLanjutRef.id}_${Date.now()}`,
-                deskripsi: logDesc,
-                selesai: isFinal
-            });
-            console.log("Auto-logbook tindak lanjut berhasil.");
-        } catch (logErr) {
-            console.error("Gagal auto-logbook tindak lanjut:", logErr);
-        }
-        // --- [AKHIR AUTO LOGBOOK] ---
+
 
         addToast(isFinal ? "Surat diselesaikan." : "Laporan dikirim.", "success");
         refreshData();
@@ -475,14 +441,7 @@ export const useSuratActions = () => {
           
           await logActivity(suratId, actorName, "Merevisi Laporan/Catatan", logText.substring(0, 100));
 
-          // [AUTO LOGBOOK]
-          try {
-              await updateLogbook(userProfile.uid, effectiveJabatan.opdId, new Date(), {
-                  id: `auto_edit_tinjut_${tindakLanjutId}_${Date.now()}`,
-                  deskripsi: `Merevisi catatan/tindak lanjut: ${payload.judulLaporan || 'Proses'}`,
-                  selesai: false
-              });
-          } catch (logErr) { console.error(logErr); }
+
 
           // [SINKRONISASI UI INSTAN]
           queryClient.setQueryData(['suratDetail', suratId], (oldData: any) => {
@@ -522,14 +481,7 @@ export const useSuratActions = () => {
         });
         await logActivity(surat.id, getActorName(), 'Surat Diarsipkan', `Alasan: ${alasan}`);
         
-        // [AUTO LOGBOOK]
-        try {
-            await updateLogbook(userProfile?.uid || '', effectiveJabatan?.opdId || '', new Date(), {
-                id: `auto_arsip_${surat.id}_${Date.now()}`,
-                deskripsi: `Mengarsipkan surat: "${surat.perihal}". Alasan: ${alasan}`,
-                selesai: true
-            });
-        } catch (logErr) { console.error(logErr); }
+
 
         // [SINKRONISASI UI INSTAN]
         if (effectiveJabatan?.opdId) {
@@ -592,14 +544,7 @@ export const useSuratActions = () => {
         // [SINKRONISASI UI INSTAN]
         optimisticRemoveDisposisi(disposisi.id);
 
-        // [AUTO LOGBOOK]
-        try {
-            await updateLogbook(userProfile.uid, effectiveJabatan?.opdId || userProfile.opdId, new Date(), {
-                id: `auto_kembali_${disposisi.id}_${Date.now()}`,
-                deskripsi: `Mengembalikan disposisi surat. Alasan: ${alasan}`,
-                selesai: true
-            });
-        } catch (logErr) { console.error(logErr); }
+
 
         addToast('Disposisi dikembalikan.', 'success');
         refreshData(); 
@@ -674,14 +619,7 @@ export const useSuratActions = () => {
               await batch.commit();
           }
 
-          // [AUTO LOGBOOK]
-          try {
-              await updateLogbook(userProfile?.uid || '', effectiveJabatan?.opdId || '', new Date(), {
-                  id: `auto_delete_${surat.id}_${Date.now()}`,
-                  deskripsi: `Menghapus surat dan data terkait: "${surat.perihal}"`,
-                  selesai: true
-              });
-          } catch (logErr) { console.error(logErr); }
+
 
           // [SINKRONISASI UI INSTAN]
           if (effectiveJabatan?.opdId) {
