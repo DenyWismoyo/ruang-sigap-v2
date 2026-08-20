@@ -258,10 +258,11 @@ function LoginComponent() {
     );
   }
 
-  // [PERBAIKAN] Tampilkan spinner hanya saat Firebase SDK belum selesai inisialisasi
-  // (belum tahu ada sesi atau tidak). Ini mencegah form muncul sebelum waktunya,
-  // sekaligus mencegah infinite loop yang terjadi saat memakai `user && !authLoading`.
-  if (initializing || isSuccessRedirecting) {
+  // [PERBAIKAN FINAL] Tampilkan spinner jika:
+  // 1. Firebase masih inisialisasi (belum tahu ada user atau tidak)
+  // 2. User SUDAH terdeteksi ada (sehingga sedang proses redirect)
+  // 3. Status isSuccessRedirecting aktif
+  if (initializing || isSuccessRedirecting || user) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="text-center flex flex-col items-center gap-4">
