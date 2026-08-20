@@ -3,7 +3,7 @@ import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { db, REGION } from "../config/firebase";
 import { getUserIdFromJabatanId } from "../utils/helpers";
-import { Tugas, Disposisi, PelayananTransaksi, Surat } from "../types";
+import { Tugas, Disposisi, Surat } from "../types";
 
 const DB_TARGET = process.env.FIRESTORE_DATABASE || "database-siyap";
 
@@ -199,8 +199,8 @@ export const onTindakLanjutWrittenLogbook = onDocumentWritten(
 export const onPelayananTransaksiWrittenLogbook = onDocumentWritten(
     { document: "pelayanan_transaksi/{transaksiId}", region: REGION, database: DB_TARGET },
     async (event) => {
-        const beforeData = event.data?.before.data() as PelayananTransaksi | undefined;
-        const afterData = event.data?.after.data() as PelayananTransaksi | undefined;
+        const beforeData = event.data?.before.data() as any | undefined;
+        const afterData = event.data?.after.data() as any | undefined;
 
         if (!afterData) return;
 

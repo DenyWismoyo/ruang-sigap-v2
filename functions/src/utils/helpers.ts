@@ -217,7 +217,7 @@ export const checkPermission = async (context: { auth?: any }, requiredRoles: st
         throw new HttpsError("permission-denied", "Hanya pimpinan (level 5 ke atas) yang diizinkan.");
     }
 };
-export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string, nip?: string) => {
+export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string, nip?: string, prefKey?: "pushSuratMasuk" | "pushDisposisi" | "pushTugas") => {
   try {
     // 1. Cari NIP dan tokens berdasarkan UID
     const userQuery = await db.collection("users").where("uid", "==", uid).limit(1).get();

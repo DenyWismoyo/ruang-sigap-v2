@@ -12,7 +12,7 @@ import { useContext, createContext, useState, useEffect, useRef, ReactNode, useC
 import { signInWithEmailAndPassword, signOut, onIdTokenChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
 import { db, auth, functions } from '@/lib/firebase';
 import { 
-  collection, query, where, getDocs, doc, getDoc, Timestamp
+  collection, query, where, getDocs, doc, getDoc, Timestamp, updateDoc, arrayRemove
 } from 'firebase/firestore';
 import { callCloudFunction } from "@/lib/firebase";
 import { useQueryClient } from '@tanstack/react-query';
@@ -229,6 +229,21 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('disposisi_draft_')) localStorage.removeItem(key);
         });
+        
+        // Hapus token FCM perangkat ini dari Firestore sebelum state user hilang
+        if (userProfile?.nip) {
+            try {
+                const { getFCMToken } = await import('@/lib/firebase-messaging');
+                const token = await getFCMToken();
+                if (token) {
+                    await updateDoc(doc(db, 'users', userProfile.nip), {
+                        fcmTokens: arrayRemove(token)
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal menghapus FCM token saat logout:", e);
+            }
+        }
     }
 
     // Reset State
