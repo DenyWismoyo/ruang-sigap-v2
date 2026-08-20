@@ -14,6 +14,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Logo from "@/app/dashboard/sigap/components/Logo";
 import DomainBanner from "@/components/DomainBanner";
+import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
 import {
   ArrowLeft,
   Mail,
@@ -631,7 +632,6 @@ function LoginComponent() {
 }
 
 // Komponen wrapper yang menyertakan Suspense
-import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
 
 export default function LoginPage() {
   return (
