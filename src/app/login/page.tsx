@@ -59,6 +59,7 @@ function LoginComponent() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [isSuccessRedirecting, setIsSuccessRedirecting] = useState(false);
 
   // States untuk sinkronisasi Google
   const [isLinking, setIsLinking] = useState(false);
@@ -69,7 +70,7 @@ function LoginComponent() {
   const [linkPassword, setLinkPassword] = useState("");
   const [linkedProfile, setLinkedProfile] = useState<any>(null);
 
-  const { logIn, logInWithNip, signInWithGoogle, linkGoogleFromLogin } =
+  const { logIn, logInWithNip, signInWithGoogle, linkGoogleFromLogin, user, loading: authLoading } =
     useUserAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -109,13 +110,13 @@ function LoginComponent() {
       } else {
         await logIn(identifier, password);
       }
+      setIsSuccessRedirecting(true);
       router.push("/dashboard");
     } catch (err: any) {
       setError(
         err.message || "Login gagal. Silakan periksa kembali data Anda.",
       );
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -136,6 +137,7 @@ function LoginComponent() {
 
       // Jika sudah memiliki NIP claim, berarti sudah tertaut
       if (idTokenResult.claims.nip) {
+        setIsSuccessRedirecting(true);
         router.push("/dashboard");
         return;
       }
@@ -148,6 +150,7 @@ function LoginComponent() {
       const snapshot = await getDocs(q);
 
       if (!snapshot.empty) {
+        setIsSuccessRedirecting(true);
         router.push("/dashboard");
         return;
       }
@@ -172,7 +175,6 @@ function LoginComponent() {
         setError("Gagal melakukan login dengan Google: " + (err.message || "Kesalahan tidak diketahui."));
       }
       console.error("Google Login Error:", err);
-    } finally {
       setLoading(false);
     }
   };
@@ -209,11 +211,11 @@ function LoginComponent() {
         pendingCredential,
         pendingUser,
       );
+      setIsSuccessRedirecting(true);
       router.push("/dashboard");
     } catch (err: any) {
       setError(err.message || "Gagal menautkan akun. Pastikan password benar.");
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -232,6 +234,20 @@ function LoginComponent() {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+        </div>
+      </div>
+    );
+  }
+
+  // Menampilkan loader jika user sudah login atau sedang di-redirect
+  if (isSuccessRedirecting || (user && !authLoading)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background p-4">
+        <div className="text-center flex flex-col items-center gap-4">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-lg font-semibold text-foreground">
+            Menyiapkan ruang kerja Anda...
+          </p>
         </div>
       </div>
     );

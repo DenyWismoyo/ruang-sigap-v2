@@ -12,8 +12,21 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
   
-  // Baca token dari cookie
-  const token = request.cookies.get('firebase-auth-token')?.value;
+  // Baca token dari cookie __session (karena Firebase Hosting men-strip cookie lain) atau fallback ke firebase-auth-token
+  let token = request.cookies.get('firebase-auth-token')?.value;
+  let sessionTheme = null;
+  
+  const sessionCookie = request.cookies.get('__session')?.value;
+  if (sessionCookie) {
+      try {
+          const sessionData = JSON.parse(decodeURIComponent(sessionCookie));
+          if (sessionData.token) token = sessionData.token;
+          if (sessionData.theme) sessionTheme = sessionData.theme;
+      } catch(e) {
+          // Jika __session bukan JSON, asumsikan itu raw token (fallback)
+          if (!token) token = sessionCookie;
+      }
+  }
   
   if (!token) {
     // Jika mencoba akses dashboard tapi tidak ada token, redirect ke login
@@ -29,11 +42,12 @@ export function middleware(request: NextRequest) {
 
   try {
     const claims = jwtDecode<{ app_theme?: string }>(token);
-    // 1. Cek cookie app-theme (paling update dari client)
-    // 2. Cek claims app_theme (dari token)
-    // 3. Fallback ke sigap
+    // 1. Cek theme dari __session (paling update dari client)
+    // 2. Cek cookie app-theme (hanya bekerja di lokal)
+    // 3. Cek claims app_theme (dari token)
+    // 4. Fallback ke sigap
     const cookieTheme = request.cookies.get('app-theme')?.value;
-    let theme = cookieTheme || claims.app_theme || 'sigap';
+    let theme = sessionTheme || cookieTheme || claims.app_theme || 'sigap';
     // Mapping tema lama 'natakarya' ke 'poros' dan validasi tema
     if (theme === 'natakarya') theme = 'poros';
     if (!['sigap', 'poros'].includes(theme)) theme = 'sigap';

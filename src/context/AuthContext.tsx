@@ -221,6 +221,11 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
       if (currentUser) {
         const idTokenResult = await currentUser.getIdTokenResult();
         const idToken = await currentUser.getIdToken();
+        // Set cookie untuk middleware SSR (Firebase Hosting mewajibkan nama __session)
+        const sessionPayload = { token: idToken };
+        document.cookie = `__session=${encodeURIComponent(JSON.stringify(sessionPayload))}; path=/; max-age=604800; SameSite=Strict`;
+        
+        // Simpan juga firebase-auth-token untuk legacy
         document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=604800; SameSite=Strict`;
         
         if (idTokenResult.claims.impersonated && idTokenResult.claims.originalUid) {
@@ -232,6 +237,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
         }
       } else {
         document.cookie = "firebase-auth-token=; path=/; max-age=0; SameSite=Strict";
+        document.cookie = "__session=; path=/; max-age=0; SameSite=Strict";
         // Jika tidak ada user, stop loading
         setIsImpersonating(false);
         setOriginalUserUid(null);
@@ -299,7 +305,18 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
             // [PERBAIKAN TEMA] Sinkronisasi Cookie app-theme agar middleware membaca UI yang tepat
             // Prioritas: 1. app_theme dari profil user (jika ada override) -> 2. default_theme dari OPD -> 3. sigap
             const userTheme = profile.app_theme || currentOpdConfig?.default_theme || 'sigap';
+            // [PERBAIKAN TEMA] Sinkronisasi Cookie app-theme agar middleware membaca UI yang tepat
             document.cookie = `app-theme=${userTheme}; path=/; max-age=2592000; SameSite=Strict`; // Berlaku 30 hari
+            
+            // Masukkan juga tema ke dalam __session karena Firebase Hosting men-strip cookie app-theme ke server
+            try {
+               const cookieMatch = document.cookie.match(new RegExp('(^| )__session=([^;]+)'));
+               if (cookieMatch) {
+                   const sessionData = JSON.parse(decodeURIComponent(cookieMatch[2]));
+                   sessionData.theme = userTheme;
+                   document.cookie = `__session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=604800; SameSite=Strict`;
+               }
+            } catch(e) { console.error(e) }
             
             // 3. Ambil Jabatan & PLT (Penting untuk hak akses)
             const pltQuery = query(collection(db, 'jabatan'), where("opdId", "==", profile.opdId), where("pltUserId", "==", user.uid), where("pltMulaiTanggal", "<=", Timestamp.now()));
