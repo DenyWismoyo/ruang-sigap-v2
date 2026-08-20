@@ -24,6 +24,8 @@ import MegaMenuPanel from '@/app/dashboard/sigap/components/MegaMenuPanel';
 import SmartFab from '@/app/dashboard/sigap/components/SmartFab'; // [BARU] Import SmartFab
 import SigapCopilot from '@/app/dashboard/sigap/components/SigapCopilot'; // [BARU] AI Copilot
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
+import DomainBanner from '@/components/DomainBanner';
+
 
 import { app, db } from '@/lib/firebase'; 
 import { getMessaging, onMessage } from "firebase/messaging"; 
@@ -144,6 +146,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
       <div data-tenant="sigap" className="sigap-tenant-wrapper">
         <NetworkStatus />
         <RouteProgress />
+        <DomainBanner />
 
         <div className="flex h-screen bg-background text-foreground overflow-hidden">
           

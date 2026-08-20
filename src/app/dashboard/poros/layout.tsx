@@ -25,6 +25,8 @@ import PorosMegaMenuPanel from '@/app/dashboard/poros/components/PorosMegaMenuPa
 import SmartFab from '@/app/dashboard/poros/components/SmartFab'; // [BARU] Import SmartFab
 import PorosCopilot from '@/app/dashboard/poros/components/PorosCopilot'; // [BARU] AI Copilot
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
+import DomainBanner from '@/components/DomainBanner';
+
 
 import { app, db } from '@/lib/firebase'; 
 import { getMessaging, onMessage } from "firebase/messaging"; 
@@ -145,6 +147,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
       <div data-tenant="poros" className="poros-tenant-wrapper bg-background min-h-screen">
         <NetworkStatus />
         <RouteProgress />
+        <DomainBanner />
 
         <div className="flex h-screen text-foreground overflow-hidden">
           

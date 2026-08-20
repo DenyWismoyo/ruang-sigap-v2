@@ -304,7 +304,7 @@ export default function FormDisposisi({
                         <Label htmlFor="search-penerima" className="text-xs md:text-sm">
                           {isPemberitahuanMode ? 'Kirim ke (Perorangan)' : 'Disposisikan Kepada'}
                         </Label>
-                        {userProfile && userProfile.level < 5 && surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
+                        {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
                             <Button 
                                 type="button" 
                                 variant="outline" 
@@ -370,7 +370,9 @@ export default function FormDisposisi({
                     <div className="flex justify-between items-center">
                         <Label htmlFor="instruksi" className="text-xs md:text-sm">Isi Instruksi</Label>
                         <div className="flex items-center gap-1">
-                            <HelpCircle size={14} className="text-muted-foreground cursor-help mr-1" title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" />
+                            <span title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'">
+                                <HelpCircle size={14} className="text-muted-foreground cursor-help mr-1" />
+                            </span>
                             <Button 
                                 type="button" 
                                 variant="outline" 
@@ -430,19 +432,19 @@ export default function FormDisposisi({
                 <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-4 border-t border-border">
                     {isPemberitahuanMode ? (
                         <>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm shadow-sm">
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm shadow-sm">
                                 <Send size={14} className="md:w-4 md:h-4 mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
                            </Button>
-                           <Button type="button" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
+                           <Button type="button" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
                                 <Bell size={14} className="md:w-4 md:h-4 mr-2" /> Sebarkan ke OPD
                            </Button>
                         </>
                     ) : (
                         <>
-                           <Button type="button" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full h-9 md:h-10 text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
+                           <Button type="button" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
                                 <UserCheck size={14} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
                            </Button>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full h-9 md:h-10 text-xs md:text-sm shadow-sm">
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm shadow-sm">
                                 {isProcessing ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 animate-spin" /> : <Send size={14} className="md:w-4 md:h-4 mr-2" />}
                                 {isProcessing ? 'Memproses...' : (isRevising ? 'Kirim Revisi Ulang' : 'Kirim Disposisi')}
                            </Button>
