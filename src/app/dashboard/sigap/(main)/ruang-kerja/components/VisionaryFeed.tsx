@@ -8,12 +8,14 @@
 
 "use client";
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion, Variants } from "framer-motion"; 
 import { RuangKerjaItem } from "@/types";
 import RuangKerjaCard from "./RuangKerjaCard"; 
+import BatchQuickReportModal from "@/app/dashboard/sigap/components/BatchQuickReportModal";
 import { Zap, Mail, FileText, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 // --- Konfigurasi Animasi ---
 const container: Variants = {
@@ -36,7 +38,7 @@ const itemAnim: Variants = {
 };
 
 // --- Komponen Ringkasan Harian (Daily Briefing) ---
-const DailyBriefing = ({ items, isPimpinan }: { items: RuangKerjaItem[], isPimpinan: boolean }) => {
+const DailyBriefing = ({ items, isPimpinan, onOpenBatch }: { items: RuangKerjaItem[], isPimpinan: boolean, onOpenBatch: () => void }) => {
     const stats = useMemo(() => {
         let suratBaru = 0;
         let draf = 0;
@@ -116,6 +118,15 @@ const DailyBriefing = ({ items, isPimpinan }: { items: RuangKerjaItem[], isPimpi
                                 <ClipboardList size={14} /> {stats.tugas} Tugas
                             </div>
                         )}
+                        {!isPimpinan && stats.disposisi > 0 && (
+                            <Button 
+                                onClick={onOpenBatch}
+                                size="sm" 
+                                className="h-[28px] px-3 text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white rounded-full shadow-sm hover:shadow-md transition-all flex items-center gap-1.5"
+                            >
+                                <Zap size={14} className="fill-white" /> Lapor Masal
+                            </Button>
+                        )}
                     </div>
                 </CardContent>
             </Card>
@@ -133,6 +144,11 @@ interface VisionaryFeedProps extends Omit<RuangKerjaCardProps, 'item' | 'isActio
 }
 
 export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }: VisionaryFeedProps) {
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+
+  const pendingDisposisiCount = items.filter(
+      i => i.type === 'surat_disposisi' && (i as any).disposisi?.status !== 'Selesai'
+  ).length;
 
   const isItemLoading = (item: RuangKerjaItem) => {
     const itemId = item.type === 'surat_disposisi' ? item.disposisi.id 
@@ -152,7 +168,7 @@ export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }
   return (
     <div className="space-y-6 pb-10">
       
-      <DailyBriefing items={items} isPimpinan={isPimpinan} />
+      <DailyBriefing items={items} isPimpinan={isPimpinan} onOpenBatch={() => setIsBatchModalOpen(true)} />
 
       {/* --- DAFTAR FEED KESELURUHAN --- */}
       {items.length > 0 && (
@@ -173,6 +189,14 @@ export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }
                 </motion.div>
             ))}
         </motion.div>
+      )}
+
+      {/* Render Modal Lapor Masal jika dibuka */}
+      {isBatchModalOpen && (
+          <BatchQuickReportModal 
+              items={items} 
+              onClose={() => setIsBatchModalOpen(false)} 
+          />
       )}
     </div>
   );

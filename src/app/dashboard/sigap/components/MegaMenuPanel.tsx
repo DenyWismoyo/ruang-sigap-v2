@@ -31,8 +31,8 @@ export default function MegaMenuPanel({
   );
   
   return (
-    <div className="w-64 bg-popover shadow-2xl border-r border-border flex flex-col h-screen z-50 animate-in slide-in-from-left-5 duration-200">
-      <div className="p-4 h-16 flex items-center justify-between border-b border-border bg-muted/30">
+    <div className="w-64 bg-background shadow-[4px_0_24px_rgba(0,0,0,0.05)] flex flex-col h-screen z-50 animate-in slide-in-from-left-5 duration-200">
+      <div className="p-4 h-16 flex items-center justify-between">
         <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
             <section.icon className="w-5 h-5 text-primary"/>
             {section.title}

@@ -13,7 +13,7 @@ interface QuickAccessCardProps {
 export default function QuickAccessCard({ href, label, icon: Icon, colorClass }: QuickAccessCardProps) {
     return (
         <Link href={href}>
-            <div className={`p-1 md:p-3 bg-transparent md:bg-card text-card-foreground md:rounded-xl shadow-none md:shadow-sm border-0 md:border md:border-border flex flex-col items-center justify-center text-center h-24 md:h-28 hover:shadow-md hover:-translate-y-1 transition-all duration-200 group`}>
+            <div className={`p-1 md:p-3 bg-transparent md:bg-card text-card-foreground md:rounded-xl shadow-none md:shadow-sm border-0 md:border md:border-border flex flex-col items-center justify-center text-center h-24 md:h-28 sg-hover-lift group`}>
                 <div className={`p-2.5 ${colorClass.replace('text-', 'bg-').replace('600', '100')} dark:bg-opacity-20 rounded-full mb-1.5 md:mb-2 group-hover:scale-110 transition-transform`}>
                     <Icon className={`w-5 h-5 ${colorClass}`} />
                 </div>

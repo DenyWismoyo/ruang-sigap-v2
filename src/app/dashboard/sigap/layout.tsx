@@ -25,6 +25,9 @@ import SmartFab from '@/app/dashboard/sigap/components/SmartFab'; // [BARU] Impo
 import SigapCopilot from '@/app/dashboard/sigap/components/SigapCopilot'; // [BARU] AI Copilot
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
 import DomainBanner from '@/components/DomainBanner';
+import { QuickReportProvider } from '@/context/QuickReportContext'; // [BARU] Global Quick Report
+import GlobalQuickReport from '@/app/dashboard/sigap/components/GlobalQuickReport'; // [BARU] Global Quick Report UI
+import GlobalBatchReportWidget from '@/app/dashboard/sigap/components/GlobalBatchReportWidget'; // [BARU] Global Batch Report
 
 
 import { app, db } from '@/lib/firebase'; 
@@ -200,7 +203,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                   </div>
               )}
 
-              <header className="sticky top-0 z-30 flex items-center justify-between px-3 md:px-4 bg-card/80 backdrop-blur-md border-b border-border/30 h-14 transition-all duration-200">
+              <header className="sticky top-0 z-30 flex items-center justify-between px-3 md:px-4 bg-background/90 backdrop-blur-md h-14 transition-all duration-200">
                 <div className="flex items-center space-x-4">
                     <DrawerTrigger asChild><button className="text-muted-foreground md:hidden p-2 hover:bg-accent rounded-full"><Menu size={24} /></button></DrawerTrigger>
                 </div>
@@ -260,7 +263,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </header>
               
               {/* [FIX UI] Main Content Area */}
-              <main className="flex-1 overflow-y-auto px-0 pt-0 pb-[var(--bottom-nav-height)] md:px-6 md:pt-4 md:pb-6 lg:px-8 lg:pt-6 lg:pb-8 bg-muted/10 relative scroll-smooth sigap-scrollable">
+              <main className="flex-1 overflow-y-auto px-0 pt-0 pb-[var(--bottom-nav-height)] md:px-6 md:pt-4 md:pb-6 lg:px-8 lg:pt-6 lg:pb-8 bg-background relative scroll-smooth sigap-scrollable">
                 <ScrollToTop />
                 <div className="w-full min-h-full flex flex-col">
                     <div className="hidden md:block">
@@ -277,6 +280,8 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
             {/* [BARU] Smart FAB & AI Copilot */}
             <SmartFab />
             <SigapCopilot />
+            <GlobalBatchReportWidget />
+            <GlobalQuickReport />
 
             <BottomNavBar 
                 pathname={pathname} 
@@ -310,5 +315,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 };
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
+  return (
+    <QuickReportProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </QuickReportProvider>
+  );
 }

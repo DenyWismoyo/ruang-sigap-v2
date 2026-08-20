@@ -29,12 +29,33 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
     
-    /* Border (Pemisah Solid) - Warna terang yang jelas */
     --border: 214.3 31.8% 91.4%; /* Slate-100 */
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     
     --radius: 0.5rem;
+
+    /* --- SIGAP SIGNATURE TOKENS --- */
+    --sg-surface-1: 220 14% 96%;   /* Page background */
+    --sg-surface-2: 0 0% 100%;     /* Card (di light mode = putih) */
+    --sg-surface-3: 220 13% 91%;   /* Table row hover / muted */
+
+    /* Shadow Ringan (bukan shadow tebal) */
+    --sg-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+    --sg-shadow-md: 0 4px 16px -4px rgba(15, 23, 42, 0.10);
+
+    /* Accent: Royal Blue — identitas SIGAP */
+    --sg-blue: 221 83% 53%;          /* Indigo/Blue primary */
+    --sg-blue-light: 221 83% 96%;    /* Blue tint untuk badge */
+
+    /* Editorial Line */
+    --sg-editorial-line: 3px;
+    --sg-gradient-start: 221 83% 53%;
+    --sg-gradient-end: 240 70% 60%;
+
+    /* Glass Effect */
+    --sg-glass: rgba(255, 255, 255, 0.80);
+    --sg-glass-border: rgba(15, 23, 42, 0.08);
     }
 
   .dark [data-tenant="sigap"] {
@@ -68,6 +89,23 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+
+    /* --- SIGAP SIGNATURE TOKENS (DARK) --- */
+    --sg-surface-1: 222 47% 8%;
+    --sg-surface-2: 222 47% 11%;     /* = background */
+    --sg-surface-3: 217 33% 17%;
+
+    --sg-shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --sg-shadow-md: 0 4px 16px -4px rgba(0, 0, 0, 0.5);
+
+    --sg-blue: 221 83% 53%;
+    --sg-blue-light: 222 47% 15%;
+
+    --sg-gradient-start: 221 83% 53%;
+    --sg-gradient-end: 240 70% 60%;
+
+    --sg-glass: rgba(15, 23, 42, 0.85);
+    --sg-glass-border: rgba(255, 255, 255, 0.06);
     }
 
   /* Utility Classes for SIGAP Mobile UI */
@@ -79,4 +117,174 @@
   
   .sigap-full-bleed-mobile {
     @apply -mx-3 px-3 md:mx-0 md:px-0;
+  }
+
+  /* Utility classes */
+  [data-tenant="sigap"] .sg-card {
+    background-color: hsl(var(--sg-surface-2));
+    border: 1px solid hsl(var(--border) / 0.8);
+    border-radius: var(--radius);
+    box-shadow: var(--sg-shadow-sm);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+  
+  [data-tenant="sigap"] .sg-card:hover {
+    box-shadow: var(--sg-shadow-md);
+  }
+  
+  [data-tenant="sigap"] .sg-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid hsl(var(--border) / 0.6);
+  }
+  
+  [data-tenant="sigap"] .sg-editorial-title {
+    position: relative;
+    padding-left: 1rem;
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: -0.025em;
+  }
+  
+  [data-tenant="sigap"] .sg-editorial-title::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 10%; bottom: 10%;
+    width: var(--sg-editorial-line);
+    background: linear-gradient(to bottom, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
+    border-radius: 4px;
+  }
+  
+  /* Animasi page masuk */
+  @keyframes sg-slide-up {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  
+  [data-tenant="sigap"] .sg-animate-in {
+    animation: sg-slide-up 0.35s ease-out forwards;
+  }
+  
+  [data-tenant="sigap"] .sg-stagger-1 { animation-delay: 0.05s; opacity: 0; }
+  [data-tenant="sigap"] .sg-stagger-2 { animation-delay: 0.10s; opacity: 0; }
+  [data-tenant="sigap"] .sg-stagger-3 { animation-delay: 0.15s; opacity: 0; }
+  [data-tenant="sigap"] .sg-stagger-4 { animation-delay: 0.20s; opacity: 0; }
+  
+  /* Custom scrollbar tipis */
+  [data-tenant="sigap"] ::-webkit-scrollbar { width: 5px; height: 5px; }
+  [data-tenant="sigap"] ::-webkit-scrollbar-track { background: transparent; }
+  [data-tenant="sigap"] ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 10px; }
+  [data-tenant="sigap"] ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sg-blue)); }
+
+  /* --- HAL ISTIMEWA (PREMIUM EFFECTS) --- */
+  
+  /* 1. Glassmorphism Mewah */
+  [data-tenant="sigap"] .sg-glass {
+    background: var(--sg-glass);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--sg-glass-border);
+  }
+
+  /* 2. Text Gradient Keren (Cocok untuk Judul Halaman) */
+  [data-tenant="sigap"] .sg-text-gradient {
+    background: linear-gradient(135deg, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    display: inline-block;
+  }
+
+  /* 3. Micro Hover Lift (Interaksi Halus) */
+  [data-tenant="sigap"] .sg-hover-lift {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+  }
+  [data-tenant="sigap"] .sg-hover-lift:hover {
+    transform: translateY(-2px) scale(1.005);
+    box-shadow: var(--sg-shadow-md);
+  }
+
+  /* 4. Elegant Shimmer Skeleton */
+  @keyframes sg-shimmer {
+    0% { background-position: -1000px 0; }
+    100% { background-position: 1000px 0; }
+  }
+  [data-tenant="sigap"] .sg-shimmer {
+    animation: sg-shimmer 2.5s infinite linear;
+    background: linear-gradient(to right, hsl(var(--muted)) 4%, hsl(var(--muted)/0.3) 25%, hsl(var(--muted)) 36%);
+    background-size: 1000px 100%;
+  }
+
+  /* 5. Standarisasi Tombol Aksi (Action Buttons) */
+  [data-tenant="sigap"] .sg-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+    white-space: nowrap;
+  }
+  
+  [data-tenant="sigap"] .sg-btn:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--sg-shadow-md);
+  }
+  
+  [data-tenant="sigap"] .sg-btn:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  [data-tenant="sigap"] .sg-btn-primary {
+    background-color: hsl(var(--sg-blue));
+    color: white;
+    border: 1px solid transparent;
+  }
+  [data-tenant="sigap"] .sg-btn-primary:hover {
+    background-color: hsl(var(--sg-blue) / 0.9);
+  }
+
+  [data-tenant="sigap"] .sg-btn-success {
+    background-color: #16a34a; /* green-600 */
+    color: white;
+  }
+  [data-tenant="sigap"] .sg-btn-success:hover {
+    background-color: #15803d; /* green-700 */
+  }
+
+  [data-tenant="sigap"] .sg-btn-outline {
+    background-color: transparent;
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+  }
+  [data-tenant="sigap"] .sg-btn-outline:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground));
+  }
+
+  /* 6. Custom Scrollbar Elegan */
+  [data-tenant="sigap"] *::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  [data-tenant="sigap"] *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  [data-tenant="sigap"] *::-webkit-scrollbar-thumb {
+    background: rgba(150, 150, 150, 0.3);
+    border-radius: 10px;
+  }
+  [data-tenant="sigap"] *::-webkit-scrollbar-thumb:hover {
+    background: rgba(150, 150, 150, 0.5);
+  }
+  .dark[data-tenant="sigap"] *::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+  }
+  .dark[data-tenant="sigap"] *::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }

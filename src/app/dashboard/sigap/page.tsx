@@ -344,11 +344,11 @@ export default function DashboardPage() {
              <div className="lg:col-span-9 space-y-6">
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <div ref={agendaRef} className="bg-card rounded-xl shadow-md border border-border">
-                    <div className="p-4 border-b border-border flex justify-between items-center bg-muted/30">
+                <div ref={agendaRef} className="sg-card sg-animate-in sg-stagger-1 overflow-hidden">
+                    <div className="sg-section-header">
                         <div className="flex items-center gap-2">
-                            <CalendarClock className="w-5 h-5 text-indigo-500"/>
-                            <h2 className="text-lg font-bold text-foreground">Agenda Undangan OPD</h2>
+                            <CalendarClock className="w-5 h-5 text-sg-blue"/>
+                            <h2 className="sg-editorial-title text-foreground">Agenda Undangan OPD</h2>
                         </div>
                         <div className="flex items-center space-x-2 w-full md:w-auto">
                             <div className="flex items-center bg-muted rounded-lg p-1 flex-grow md:flex-grow-0">
@@ -381,9 +381,9 @@ export default function DashboardPage() {
                 </div>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
-                <div className="bg-card rounded-xl shadow-md border border-border flex flex-col">
-                    <div className="p-4 border-b border-border flex flex-col sm:flex-row justify-between items-center bg-muted/30 gap-3">
-                        <h3 className="text-lg font-bold flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-blue-600"/> Agenda Internal Bulan Ini</h3>
+                <div className="sg-card flex flex-col sg-animate-in sg-stagger-2 overflow-hidden">
+                    <div className="sg-section-header flex-col sm:flex-row gap-3">
+                        <h3 className="sg-editorial-title flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-sg-blue"/> Agenda Internal Bulan Ini</h3>
                         <div className="flex bg-muted rounded-lg p-1">
                             <button onClick={() => setAgendaInternalView('table')} className={`p-1.5 rounded ${agendaInternalView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><List size={14}/></button>
                             <button onClick={() => setAgendaInternalView('card')} className={`p-1.5 rounded ${agendaInternalView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={14}/></button>
@@ -420,7 +420,7 @@ export default function DashboardPage() {
             {/* --- KOLOM KANAN (SIDEBAR WIDGET) Span 3 --- */}
             <div className='lg:col-span-3 space-y-6'>
                 {/* [QUICK ACCESS] Grid 3x3 untuk menu pintasan */}
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-3 gap-3 sg-animate-in sg-stagger-3">
                     {quickAccessLinks.map((link, index) => (
                         <div key={link.href} className="fade-in" style={{ animationDelay: `${index * 50}ms`}}>
                             <QuickAccessCard href={link.href} label={link.label} icon={link.icon} colorClass={link.colorClass} />

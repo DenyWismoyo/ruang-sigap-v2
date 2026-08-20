@@ -91,8 +91,8 @@ const SuratDetailCard = ({ surat }: { surat: Surat }) => {
   };
 
   return (
-    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border mb-4 md:mb-6 overflow-hidden">
-      <div className="px-4 md:px-4 pb-2 md:pb-4 md:pt-4 md:bg-muted/30 border-b border-border/50 md:border-border flex items-center justify-between">
+    <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border/80 mb-4 md:mb-6 overflow-hidden">
+      <div className="px-4 md:px-4 pb-2 md:pb-4 md:pt-4 border-b border-border/50 flex items-center justify-between sticky top-0 z-10 bg-background/95 backdrop-blur-sm">
         <h3 className="text-sm md:text-base font-bold flex items-center text-foreground">
           <Info size={16} className="mr-2 text-blue-500" />
           Detail Surat

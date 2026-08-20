@@ -528,7 +528,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
   if (isPageLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full px-0 md:px-6 pt-2 pb-4 bg-secondary/40">
+    <div className="flex flex-col h-full px-0 md:px-6 pt-2 pb-4 bg-background sg-animate-in">
       <div className="px-3 md:px-0">
         <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
       </div>
@@ -544,7 +544,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
           
           <div className="px-3 md:px-0">
             <Tabs value={activeFilter} onValueChange={(value) => setActiveFilter(value as RuangKerjaFilter)} className="w-full">
-              <TabsList className="w-full flex overflow-x-auto gap-1 h-auto p-1 justify-start">
+              <TabsList className="w-full flex overflow-x-auto gap-1 h-auto p-1 justify-start sticky top-0 z-20 bg-background/95 backdrop-blur-sm shadow-sm border-b border-border/50">
                 <TabsTrigger value="semua" className="flex-shrink-0">Semua ({itemCounts.semua})</TabsTrigger>
                 <TabsTrigger value="surat" className="flex-shrink-0">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
                 <TabsTrigger value="tugas" className="flex-shrink-0">Tugas ({itemCounts.tugas})</TabsTrigger>

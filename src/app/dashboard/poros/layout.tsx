@@ -26,6 +26,8 @@ import SmartFab from '@/app/dashboard/poros/components/SmartFab'; // [BARU] Impo
 import PorosCopilot from '@/app/dashboard/poros/components/PorosCopilot'; // [BARU] AI Copilot
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
 import DomainBanner from '@/components/DomainBanner';
+import { QuickReportProvider } from '@/context/QuickReportContext'; // [BARU] Global Quick Report
+import GlobalQuickReport from '@/app/dashboard/sigap/components/GlobalQuickReport'; // [BARU] Global Quick Report UI
 
 
 import { app, db } from '@/lib/firebase'; 
@@ -294,6 +296,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
             {/* [BARU] Smart FAB & AI Copilot */}
             <SmartFab />
             <PorosCopilot />
+            <GlobalQuickReport />
 
             <BottomNavBar 
                 pathname={pathname} 
@@ -327,5 +330,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 };
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return <DashboardLayoutContent>{children}</DashboardLayoutContent>;
+  return (
+    <QuickReportProvider>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </QuickReportProvider>
+  );
 }

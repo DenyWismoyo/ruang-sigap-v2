@@ -174,8 +174,8 @@ const Sidebar = memo(({
   }, [isAdminOpd, opdConfig]);
 
   return (
-    <aside className="relative w-20 bg-card text-foreground flex flex-col border-r border-border h-full z-50">
-      <div className="p-4 h-16 flex items-center justify-center border-b border-border">
+    <aside className="relative w-20 bg-background text-foreground flex flex-col h-full z-50">
+      <div className="p-4 h-16 flex items-center justify-center">
         <Logo className="h-8 w-10" />
       </div>
 
@@ -210,7 +210,7 @@ const Sidebar = memo(({
          })}
       </div>
 
-      <div className="p-2 border-t border-border text-center flex flex-col items-center gap-2">
+      <div className="p-2 pb-4 text-center flex flex-col items-center gap-2">
           {isAdminOpd && opdConfig && (
             <div className="w-10 h-1 bg-muted rounded-full overflow-hidden" title={`Kuota: ${opdConfig.penggunaAktifSaatIni}/${opdConfig.kuotaPengguna}`}>
                <div className="bg-primary h-full" style={{ width: `${quotaPercentage}%` }} />

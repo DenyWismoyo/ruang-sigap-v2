@@ -278,7 +278,7 @@ export default function RuangKerjaCard({
 
   return (
     <div className="w-full mb-0 md:mb-3">
-      <Card className={`shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border md:rounded-xl rounded-none border-border/20 md:border-border transition-colors hover:border-primary/50 bg-transparent md:bg-card overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-0 md:ring-1 md:ring-red-500/20' : ''}`}>
+      <Card className={`shadow-none md:shadow-sm border-x-0 border-t-0 border-b border-border/40 md:border-border md:border-x md:border-t rounded-none md:rounded-xl transition-all duration-200 md:hover:-translate-y-[1px] md:hover:shadow-md bg-background md:bg-card overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-0 md:ring-1 md:ring-red-500/20' : ''}`}>
         
         {/* OVERDUE BANNER */}
         {isCardOverdue && (

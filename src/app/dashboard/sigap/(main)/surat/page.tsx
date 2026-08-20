@@ -15,6 +15,7 @@ import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { useSuratDetail, fetchSuratLengkap } from '@/app/dashboard/sigap/hooks/useSuratDetail'; 
 import { useSuratActions, TindakLanjutPayload } from '@/app/dashboard/sigap/hooks/useSuratActions'; 
 import { useUserSuratSummary } from '@/app/dashboard/sigap/hooks/useUserSummaries'; 
+import { useQuickReport } from '@/context/QuickReportContext'; // [BARU] Global Quick Report
 import { useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/context/ToastContext'; 
 import Link from 'next/link';
@@ -115,7 +116,7 @@ const SuratCard = React.memo(({
     const bgClass = isBaru ? 'bg-card' : 'bg-slate-50/70 dark:bg-muted/20';
 
     return (
-        <Card className={`transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 rounded-none shadow-none md:border md:rounded-xl md:shadow-sm md:hover:shadow-md border-l-[3px] md:border-l-4 ${borderColorClass} overflow-hidden ${bgClass}`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+        <Card className={`transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 md:border-border/80 md:border-x md:border-t rounded-none shadow-none md:rounded-xl md:shadow-sm md:hover:shadow-md hover:md:-translate-y-[1px] border-l-[3px] md:border-l-4 ${borderColorClass} overflow-hidden ${bgClass} sg-animate-in`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
             <div className="p-4 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
                 <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
@@ -478,57 +479,12 @@ export default function KotakMasukPage() {
 
     const { actionableItems, mutate: refetchActionable } = useUserSuratSummary(effectiveJabatanId, suratList);
     const { userMap, jabatanMap } = useMasterData(true);
+    const { openQuickReport } = useQuickReport(); // [BARU] Gunakan global state
     
     // State Modal UI
     const [quickTrackSurat, setQuickTrackSurat] = useState<Surat | null>(null);
     const [quickPreviewSurat, setQuickPreviewSurat] = useState<Surat | null>(null);
     const [quickArchiveSurat, setQuickArchiveSurat] = useState<Surat | null>(null);
-
-    // State Modal Laporan Cepat
-    const [quickReportSurat, setQuickReportSurat] = useState<{surat: Surat, disposisi: Disposisi} | null>(null);
-    const [quickIsExpanded, setQuickIsExpanded] = useState(false);
-    const [quickJudul, setQuickJudul] = useState('');
-    const [quickIsi, setQuickIsi] = useState('');
-    const [quickWarna, setQuickWarna] = useState<'default' | 'red' | 'green' | 'blue' | 'yellow' | 'purple'>('default');
-    const [quickIsChecklist, setQuickIsChecklist] = useState(false);
-    const [quickChecklist, setQuickChecklist] = useState<{id: string, teks: string, isDone: boolean}[]>([]);
-    const [quickNewChecklist, setQuickNewChecklist] = useState('');
-    const [isMeetingMode, setIsMeetingMode] = useState(false);
-
-    useEffect(() => {
-        if (quickReportSurat) {
-            const cacheKey = `tindakLanjut_quick_cache_${quickReportSurat.surat.id}`;
-            const cachedData = localStorage.getItem(cacheKey);
-            if (cachedData) {
-                try {
-                    const parsed = JSON.parse(cachedData);
-                    setQuickJudul(parsed.judulLaporan || '');
-                    setQuickIsi(parsed.isiLaporan || '');
-                    setQuickWarna(parsed.warnaLabel || 'default');
-                    setQuickIsChecklist(parsed.isChecklistMode || false);
-                    setQuickChecklist(parsed.checklistItems || []);
-                    setQuickIsExpanded(parsed.isExpanded || false);
-                } catch (e) {
-                    console.error("Gagal membaca cache:", e);
-                }
-            }
-        }
-    }, [quickReportSurat]);
-
-    useEffect(() => {
-        if (quickReportSurat && (quickIsExpanded || quickIsi || quickJudul || quickChecklist.length > 0)) {
-            const cacheKey = `tindakLanjut_quick_cache_${quickReportSurat.surat.id}`;
-            const dataToCache = {
-                judulLaporan: quickJudul,
-                isiLaporan: quickIsi,
-                warnaLabel: quickWarna,
-                isChecklistMode: quickIsChecklist,
-                checklistItems: quickChecklist,
-                isExpanded: quickIsExpanded
-            };
-            localStorage.setItem(cacheKey, JSON.stringify(dataToCache));
-        }
-    }, [quickJudul, quickIsi, quickWarna, quickIsChecklist, quickChecklist, quickIsExpanded, quickReportSurat]);
 
     useEffect(() => {
         setIsNavigating(false);
@@ -565,85 +521,8 @@ export default function KotakMasukPage() {
     }, [terimaDisposisi, refetch, refetchActionable]);
 
     const handleQuickReport = useCallback((s: Surat, d: Disposisi) => {
-        setQuickReportSurat({ surat: s, disposisi: d });
-    }, []);
-
-    const resetQuickReportForm = () => {
-        setQuickReportSurat(null);
-        setQuickIsExpanded(false);
-        setQuickJudul('');
-        setQuickIsi('');
-        setQuickWarna('default');
-        setQuickIsChecklist(false);
-        setQuickChecklist([]);
-        setQuickNewChecklist('');
-        setIsMeetingMode(false);
-    };
-
-    const addQuickChecklistItem = () => {
-        if (!quickNewChecklist.trim()) return;
-        setQuickChecklist([...quickChecklist, { id: Date.now().toString(), teks: quickNewChecklist, isDone: false }]);
-        setQuickNewChecklist('');
-    };
-
-    const handleQuickTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-        if (e.key === 'Enter') {
-            e.preventDefault(); 
-            
-            const target = e.target as HTMLTextAreaElement;
-            const start = target.selectionStart;
-            const end = target.selectionEnd;
-            const value = target.value;
-
-            const lines = value.substring(0, start).split('\n');
-            const currentLine = lines[lines.length - 1];
-
-            if (currentLine.trim() === '-') {
-                const newValue = value.substring(0, start - currentLine.length) + '\n' + value.substring(end);
-                setQuickIsi(newValue);
-                setTimeout(() => {
-                    target.selectionStart = target.selectionEnd = start - currentLine.length + 1;
-                }, 0);
-            } else {
-                const newValue = value.substring(0, start) + '\n- ' + value.substring(end);
-                setQuickIsi(newValue);
-                setTimeout(() => {
-                    target.selectionStart = target.selectionEnd = start + 3;
-                }, 0);
-            }
-        }
-    };
-
-    const submitQuickReport = async (isFinal: boolean) => {
-        if (!quickReportSurat || (!quickIsi && quickChecklist.length === 0)) {
-            addToast("Isi laporan tidak boleh kosong.", "error");
-            return;
-        }
-        
-        const payload: TindakLanjutPayload = {
-            isiLaporan: quickIsi,
-            judulLaporan: quickJudul,
-            warnaLabel: quickWarna,
-            checklist: quickChecklist
-        };
-
-        const success = await kirimTindakLanjut(
-            quickReportSurat.surat,
-            quickReportSurat.disposisi,
-            payload,
-            undefined, 
-            { isFinalAction: isFinal }
-        );
-
-        if (success) {
-            const cacheKey = `tindakLanjut_quick_cache_${quickReportSurat.surat.id}`;
-            localStorage.removeItem(cacheKey);
-
-            resetQuickReportForm();
-            refetch();
-            refetchActionable();
-        }
-    };
+        openQuickReport(s, d);
+    }, [openQuickReport]);
 
     if (authLoading) return <div className="p-8 text-center text-muted-foreground">Memuat...</div>;
 
@@ -665,13 +544,13 @@ export default function KotakMasukPage() {
 
             {/* Header */}
             <div className="px-4 md:px-0 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                <h1 className="text-3xl font-bold text-foreground flex items-center">
-                    <Inbox size={28} className="mr-3 text-blue-600"/> Kotak Masuk
+                <h1 className="text-3xl font-bold flex items-center">
+                    <Inbox size={28} className="mr-3 text-blue-600"/> <span className="sg-text-gradient">Kotak Masuk</span>
                 </h1>
                 {canCreate && (
                   <Link href="/dashboard/surat/upload" className="hidden md:block" onClick={() => setIsNavigating(true)}>
-                    <Button className="w-full md:w-auto bg-green-600 hover:bg-green-700 shadow-sm text-white">
-                        <Plus size={16} className="mr-2" /> Tambah Surat Baru
+                    <Button className="w-full md:w-auto sg-btn sg-btn-success text-white">
+                        <Plus size={16} /> Tambah Surat Baru
                     </Button>
                   </Link>
                 )}
@@ -781,7 +660,7 @@ export default function KotakMasukPage() {
                             </div>
 
                             {/* Desktop Table */}
-                            <Card className="hidden md:block overflow-hidden border border-border shadow-sm">
+                            <div className="hidden md:block overflow-hidden rounded-xl border border-border/40 bg-background">
                                 <Table>
                                     <TableHeader className="bg-muted/50">
                                         <TableRow>
@@ -817,7 +696,7 @@ export default function KotakMasukPage() {
                                         })}
                                     </TableBody>
                                 </Table>
-                            </Card>
+                            </div>
 
                             {hasMore && (
                                 <div className="flex justify-center mt-6 mb-8">
@@ -932,159 +811,6 @@ export default function KotakMasukPage() {
                         <Button variant="destructive" onClick={handleConfirmArchive} disabled={isActionProcessing}>
                             {isActionProcessing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Archive className="w-4 h-4 mr-2" />}
                             Ya, Arsipkan
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
-            {/* --- MODAL QUICK REPORT --- */}
-            <Dialog open={!!quickReportSurat} onOpenChange={(open) => !open && resetQuickReportForm()}>
-                <DialogContent className={`${isMeetingMode ? '!w-screen !h-[100dvh] !max-w-none !m-0 !p-0 !rounded-none border-0' : 'sm:max-w-lg w-[95vw]'} bg-card border-border p-0 overflow-hidden flex flex-col transition-all duration-300`}>
-                    <DialogHeader className="px-5 pt-5 pb-3 bg-muted/30 border-b border-border flex flex-row items-start justify-between">
-                        <div className="flex-1 pr-4">
-                            <DialogTitle className="flex items-center gap-2 text-foreground">
-                                <MessageSquare className="h-5 w-5 text-blue-600" />
-                                {isMeetingMode ? 'Catatan Rapat' : 'Laporan Cepat'}
-                            </DialogTitle>
-                            <DialogDescription className="line-clamp-2 mt-1">
-                                Surat: <strong className="text-foreground">{quickReportSurat?.surat.perihal}</strong>
-                            </DialogDescription>
-                        </div>
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="flex text-muted-foreground hover:text-foreground h-8 px-2 md:px-3 bg-muted/50 md:bg-transparent"
-                            onClick={() => setIsMeetingMode(!isMeetingMode)}
-                            title={isMeetingMode ? "Keluar Mode Rapat" : "Mode Rapat (Layar Penuh)"}
-                        >
-                            {isMeetingMode ? <Minimize2 size={16} className="md:mr-2" /> : <Maximize2 size={16} className="md:mr-2" />}
-                            <span className="hidden md:inline">{isMeetingMode ? 'Keluar Mode' : 'Mode Rapat'}</span>
-                        </Button>
-                    </DialogHeader>
-                    
-                    {quickReportSurat && (
-                        <div className={`${isMeetingMode ? 'p-0' : 'p-4 md:p-5'} flex-1 flex flex-col bg-background ${isMeetingMode ? 'overflow-hidden' : ''}`}>
-                            {!isMeetingMode && (
-                                <div className="p-3 mb-4 bg-muted/40 border border-border rounded-lg text-sm text-foreground">
-                                    <span className="text-xs font-semibold text-muted-foreground block mb-1">Instruksi Atasan:</span>
-                                    <span className="italic opacity-90">"{quickReportSurat.disposisi.instruksi}"</span>
-                                </div>
-                            )}
-                            
-                            {/* --- FORM KEEP NOTE INTERAKTIF --- */}
-                            <div className={`${isMeetingMode ? 'border-0 rounded-none' : 'border rounded-xl shadow-sm'} transition-colors duration-300 focus-within:ring-2 focus-within:ring-primary/20 flex-1 flex flex-col ${getWarnaClass(quickWarna)}`}>
-                                {/* Judul */}
-                                {(quickIsExpanded || quickJudul || isMeetingMode) && (
-                                    <div className="px-4 pt-3 flex-shrink-0">
-                                        <Input 
-                                            placeholder={isMeetingMode ? "Judul Catatan Rapat..." : "Judul Laporan (Opsional)"}
-                                            value={quickJudul}
-                                            onChange={(e) => setQuickJudul(e.target.value)}
-                                            className={`border-0 bg-transparent px-0 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60 h-auto ${isMeetingMode ? 'text-xl md:text-2xl font-bold px-4 pt-2' : 'text-base font-bold'}`} 
-                                        />
-                                    </div>
-                                )}
-                                
-                                <div className={`p-4 flex-1 flex flex-col ${isMeetingMode ? 'overflow-y-auto' : ''}`}>
-                                    {quickIsChecklist ? (
-                                        <div className="space-y-2 flex-1">
-                                            {quickChecklist.map(item => (
-                                                <div key={item.id} className="flex items-center gap-2 group">
-                                                    <Checkbox 
-                                                        checked={item.isDone} 
-                                                        onCheckedChange={(checked) => setQuickChecklist(prev => prev.map(i => i.id === item.id ? {...i, isDone: !!checked} : i))}
-                                                        className="border-current data-[state=checked]:bg-current data-[state=checked]:text-background"
-                                                    />
-                                                    <Input 
-                                                        value={item.teks} 
-                                                        onChange={(e) => setQuickChecklist(prev => prev.map(i => i.id === item.id ? {...i, teks: e.target.value} : i))} 
-                                                        className={`border-0 border-b border-transparent hover:border-current/20 focus-visible:border-current/50 bg-transparent rounded-none px-1 h-7 shadow-none focus-visible:ring-0 ${item.isDone ? 'line-through opacity-60' : ''}`} 
-                                                    />
-                                                    <Button variant="ghost" size="icon" onClick={() => setQuickChecklist(prev => prev.filter(i => i.id !== item.id))} className="opacity-0 group-hover:opacity-100 h-6 w-6"><X size={14}/></Button>
-                                                </div>
-                                            ))}
-                                            <div className="flex items-center gap-2 pt-1 border-t border-current/10">
-                                                <Plus size={16} className="opacity-50 ml-0.5 shrink-0" />
-                                                <Input 
-                                                    placeholder="Ketik item baru lalu tekan Enter..." 
-                                                    value={quickNewChecklist}
-                                                    onChange={(e) => setQuickNewChecklist(e.target.value)}
-                                                    onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addQuickChecklistItem(); } }}
-                                                    className="border-0 bg-transparent px-1 h-7 shadow-none focus-visible:ring-0 placeholder:text-muted-foreground/60 flex-1" 
-                                                />
-                                                <Button size="sm" variant="ghost" onClick={addQuickChecklistItem} className="h-7 text-xs px-2" disabled={!quickNewChecklist.trim()}>Tambah</Button>
-                                            </div>
-                                        </div>
-                                    ) : (
-                                        <Textarea 
-                                            value={quickIsi} 
-                                            onChange={e => setQuickIsi(e.target.value)} 
-                                            onClick={() => setQuickIsExpanded(true)}
-                                            onKeyDown={handleQuickTextareaKeyDown} 
-                                            placeholder={quickIsExpanded || isMeetingMode ? "Ketik catatan Anda di sini..." : "Tuliskan progres/laporan di sini..."} 
-                                            className={`border-0 bg-transparent shadow-none focus-visible:ring-0 px-0 resize-none placeholder:text-muted-foreground/70 flex-1 ${isMeetingMode ? 'min-h-[50vh] text-base leading-relaxed px-4' : 'min-h-[80px]'}`} 
-                                        />
-                                    )}
-                                </div>
-
-                                {/* Footer Note Controls */}
-                                {(quickIsExpanded || quickIsi || quickChecklist.length > 0 || isMeetingMode) && (
-                                    <div className="flex items-center justify-between p-2 border-t border-current/10 bg-black/5 dark:bg-white/5 flex-shrink-0">
-                                        <div className="flex gap-1">
-                                            <Popover>
-                                                <PopoverTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-current/10 rounded-full">
-                                                        <Palette size={16} className="opacity-70" />
-                                                    </Button>
-                                                </PopoverTrigger>
-                                                <PopoverContent align="start" className="w-auto p-2 flex gap-2">
-                                                    {PALETTE_COLORS.map(c => (
-                                                        <button 
-                                                            key={c.id} 
-                                                            onClick={() => setQuickWarna(c.id as any)} 
-                                                            className={`w-6 h-6 rounded-full border-2 ${c.code} ${quickWarna === c.id ? 'ring-2 ring-offset-2 ring-primary' : 'border-transparent hover:scale-110'}`}
-                                                        />
-                                                    ))}
-                                                </PopoverContent>
-                                            </Popover>
-                                            
-                                            <Button 
-                                                variant="ghost" size="icon" 
-                                                className={`h-8 w-8 rounded-full hover:bg-current/10 ${quickIsChecklist ? 'bg-current/10' : ''}`} 
-                                                onClick={() => setQuickIsChecklist(!quickIsChecklist)}
-                                                title="Mode Daftar Centang"
-                                            >
-                                                <ListTodo size={16} className="opacity-70" />
-                                            </Button>
-                                        </div>
-                                        
-                                        <div className="text-[10px] opacity-80 pr-2 flex flex-col items-end gap-1">
-                                            {isMeetingMode && <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full dark:bg-blue-900 dark:text-blue-200 font-semibold">Mode Rapat Aktif</span>}
-                                            <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                                                <Save size={10} /> Auto-save aktif
-                                            </span>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    <DialogFooter className={`px-5 pb-5 pt-3 bg-background border-t-0 flex-col sm:flex-row gap-2 ${isMeetingMode ? 'border-t border-border' : ''}`}>
-                        <Button 
-                            variant="outline" 
-                            onClick={() => submitQuickReport(false)}
-                            disabled={(quickIsi.trim() === '' && quickChecklist.length === 0) || isActionProcessing}
-                            className="w-full sm:w-auto text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/20"
-                        >
-                            Kirim {isMeetingMode ? 'Catatan' : 'Progres'}
-                        </Button>
-                        <Button 
-                            className="bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto" 
-                            onClick={() => submitQuickReport(true)}
-                            disabled={(quickIsi.trim() === '' && quickChecklist.length === 0) || isActionProcessing}
-                        >
-                            Kirim & Selesai
                         </Button>
                     </DialogFooter>
                 </DialogContent>

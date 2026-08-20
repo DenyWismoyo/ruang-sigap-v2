@@ -111,25 +111,16 @@ export default function SigapCopilot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className={`fixed ${bottomPos} md:bottom-6 right-0 md:right-6 z-50 flex items-center gap-2 transition-all duration-300`}
+            className={`fixed ${bottomPos} right-0 z-50 flex items-center transition-all duration-300`}
           >
-            <button
+            <div
               onClick={() => setIsOpen(true)}
-              className="relative group flex items-center justify-center p-1.5 pr-0.5 md:p-2 rounded-l-full rounded-r-none md:rounded-full bg-card/90 backdrop-blur-xl border border-primary/30 border-r-0 md:border-r shadow-[-4px_0_15px_rgba(0,0,0,0.15)] md:shadow-lg hover:shadow-primary/40 transition-all duration-300 active:scale-95 focus:outline-none"
+              className="w-14 h-14 md:w-16 md:h-16 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl border-l border-y border-white/20 rounded-l-full flex items-center justify-center cursor-pointer shadow-xl relative group transition-all duration-300 hover:pr-2"
             >
-              <div className="absolute -inset-1 rounded-full bg-gradient-to-r from-blue-600 via-blue-400 to-blue-600 opacity-40 blur-md group-hover:opacity-80 transition duration-500 animate-pulse pointer-events-none" />
-              <div className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center p-[2px] overflow-hidden flex-shrink-0">
-                <div 
-                  className="absolute inset-0 rounded-full animate-spin-slow"
-                  style={{ background: 'conic-gradient(from 0deg, blue-600, amber-400, blue-400, amber-400, blue-600)' }}
-                />
-                <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-blue-600 to-blue-800 flex items-center justify-center text-white shadow-inner border border-white/10">
-                  <Bot size={24} className="md:w-6 md:h-6 text-white" />
-                  <Sparkles size={14} className="absolute top-1 right-1 text-amber-400 animate-pulse" />
-                </div>
-              </div>
-              <span className="absolute top-1 right-1 w-3.5 h-3.5 rounded-full bg-emerald-500 border-2 border-card z-20 animate-pulse" />
-            </button>
+              <Bot className="w-5 h-5 md:w-6 md:h-6 text-white" />
+              <Sparkles size={12} className="absolute top-2.5 md:top-3 right-3 md:right-4 text-amber-400 animate-pulse" />
+              <span className="absolute top-1 md:top-2 right-1 md:right-2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 border border-white z-20" />
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -138,15 +129,15 @@ export default function SigapCopilot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 60, scale: 0.95 }}
+            initial={{ opacity: 0, y: 50, scale: 0.95 }}
             animate={{ 
               opacity: 1, 
               y: 0, 
               scale: 1,
               height: isMinimized ? '68px' : '85vh',
             }}
-            exit={{ opacity: 0, y: '100%', scale: 0.95 }}
-            transition={{ duration: 0.25, ease: 'easeOut' }}
+            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             drag={typeof window !== 'undefined' && window.innerWidth < 768 ? "y" : false}
             dragControls={dragControls}
             dragListener={false}
@@ -163,44 +154,33 @@ export default function SigapCopilot() {
                 }
               }
             }}
-            className="fixed bottom-0 md:bottom-6 inset-x-0 md:inset-x-auto md:right-6 z-[60] w-full md:w-[650px] md:max-h-[640px] bg-card/98 backdrop-blur-3xl border-t md:border border-border shadow-[0_-10px_40px_rgba(0,0,0,0.3)] md:shadow-2xl rounded-t-[28px] md:rounded-2xl flex flex-col overflow-hidden transition-[height] duration-300"
+            className="fixed bottom-4 right-4 md:bottom-8 md:right-8 z-[60] w-[92vw] sm:w-[500px] md:w-[650px] max-h-[85vh] bg-background border border-border/50 shadow-2xl rounded-2xl flex flex-col overflow-hidden transition-[height] duration-300"
           >
             {/* Header */}
             <div 
-              className="touch-none md:cursor-default cursor-grab active:cursor-grabbing flex-shrink-0"
+              className="px-5 pt-5 pb-4 pr-12 border-b border-border/40 flex flex-row items-start justify-between bg-card/30 flex-shrink-0 touch-none cursor-grab active:cursor-grabbing"
               onPointerDown={(e) => {
                 if (typeof window !== 'undefined' && window.innerWidth < 768) dragControls.start(e);
               }}
             >
-              <div className="w-12 h-1 bg-muted-foreground/30 rounded-full mx-auto mt-2.5 mb-1 md:hidden" />
-              <div className="flex items-center justify-between px-4 py-2 md:py-3 bg-gradient-to-r from-blue-600/10 via-amber-400/5 to-card border-b border-border/80 select-none">
-                <div className="flex items-center gap-2.5">
-                  <div className="relative w-9 h-9 rounded-full p-[1.5px] overflow-hidden flex-shrink-0">
-                    <div 
-                      className="absolute inset-0 rounded-full animate-spin-slow"
-                      style={{ background: 'conic-gradient(from 0deg, blue-600, amber-400, blue-400, amber-400, blue-600)' }}
-                    />
-                    <div className="relative z-10 w-full h-full rounded-full bg-gradient-to-tr from-blue-600 to-blue-800 flex items-center justify-center text-white shadow-md">
-                      <Bot size={17} className="text-white" />
-                    </div>
+              <div className="flex-1 pr-4 pointer-events-none">
+                  <div className="flex items-center gap-2 text-foreground">
+                      <Bot className="h-5 w-5 text-blue-600" />
+                      <h3 className="font-bold">Knowledge Base</h3>
                   </div>
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h3 className="font-bold text-sm text-foreground">Knowledge Base</h3>
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.2 text-[9px] font-extrabold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Interaktif
+                  <p className="line-clamp-2 mt-1 text-sm text-muted-foreground flex items-center gap-1">
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-extrabold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" /> Interaktif
                       </span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} title={isMinimized ? "Perbesar" : "Kecilkan"} className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg">
-                    {isMinimized ? <Maximize2 size={14} /> : <Minimize2 size={14} />}
+                  </p>
+              </div>
+              <div className="absolute top-4 right-4 flex gap-1 z-10">
+                  <Button variant="ghost" size="icon" onClick={() => setIsMinimized(!isMinimized)} title={isMinimized ? "Perbesar" : "Kecilkan"} className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                    {isMinimized ? <Maximize2 size={16} /> : <Minimize2 size={16} />}
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} title="Tutup Panduan" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg">
+                  <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)} title="Tutup Panduan" className="h-8 w-8 text-muted-foreground hover:text-destructive">
                     <X size={16} />
                   </Button>
-                </div>
               </div>
             </div>
 
