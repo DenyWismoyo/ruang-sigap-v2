@@ -8,6 +8,7 @@ import {
   serverTimestamp, arrayUnion 
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { useUserAuth } from '@/context/AuthContext';
 import { logActivity } from '@/lib/activityLogger';
 import { useToast } from '@/context/ToastContext';
@@ -76,7 +77,8 @@ export const useSuratActions = () => {
     batasWaktu?: Date,
     isRevising: boolean = false,
     oldDisposisiId?: string,
-    isInformational: boolean = false
+    isInformational: boolean = false,
+    audioBlob?: Blob | null
   ) => {
     if (!userProfile || !effectiveJabatan) {
         addToast("Sesi tidak valid.", "error");
@@ -85,6 +87,15 @@ export const useSuratActions = () => {
 
     setIsProcessing(true);
     try {
+      let audioUrl = '';
+      if (audioBlob) {
+          const storage = getStorage();
+          const fileName = `disposisi-audio/${surat.id}_${Date.now()}.webm`;
+          const storageRef = ref(storage, fileName);
+          await uploadBytes(storageRef, audioBlob);
+          audioUrl = await getDownloadURL(storageRef);
+      }
+
       const batch = writeBatch(db);
       const actorName = getActorName();
       
@@ -114,6 +125,10 @@ export const useSuratActions = () => {
         status: 'Terkirim',
         isInformational: isInformational,
       };
+
+      if (audioUrl) {
+          disposisiData.audioUrl = audioUrl;
+      }
 
       if (batasWaktu && !isInformational) {
           disposisiData.batasWaktu = Timestamp.fromDate(batasWaktu);

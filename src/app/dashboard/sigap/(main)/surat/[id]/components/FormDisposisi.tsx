@@ -11,13 +11,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { Jabatan, Disposisi, UserProfile, Surat } from '@/types';
-import { UserCheck, Search, Send, X, Bell, Loader2, Sparkles, Save, Info } from 'lucide-react';
+import { UserCheck, Search, Send, X, Bell, Loader2, Sparkles, Save, Info, Mic, HelpCircle } from 'lucide-react';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
 import { useToast } from '@/context/ToastContext';
 import { useBawahanList } from '@/app/dashboard/sigap/hooks/useBawahanList';
 import { useInstruksiTemplat } from '@/app/dashboard/sigap/hooks/useInstruksiTemplat';
 import { useSuratActions } from '@/app/dashboard/sigap/hooks/useSuratActions'; 
 import { useLocalStorage } from '@/app/dashboard/sigap/hooks/useLocalStorage'; 
+import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -59,6 +60,29 @@ export default function FormDisposisi({
   const { bawahanList, isLoading: isBawahanLoading, error: bawahanError } = useBawahanList(userCache, opdJabatans);
   const { templatList, isLoading: isTemplatLoading } = useInstruksiTemplat();
   const { kirimDisposisi, isProcessing } = useSuratActions(); 
+  const { isListening, isProcessingAI, audioBlob, startListening, stopListening, resetAudio } = useVoiceAssistant(bawahanList);
+
+  const handleVoiceAIResult = (result: any) => {
+      if (result) {
+          if (result.instruksi) {
+              setInstruksi(prev => prev ? `${prev}\n${result.instruksi}` : result.instruksi);
+          }
+          if (result.penerimaIds && result.penerimaIds.length > 0) {
+              const matched = bawahanList.filter(b => 
+                  result.penerimaIds.includes(b.uid) || 
+                  result.penerimaIds.includes(b.namaLengkap) || 
+                  result.penerimaIds.includes(b.namaJabatan)
+              );
+              if (matched.length > 0) {
+                  // Merge with existing selectedPenerima to not override what user already selected
+                  setSelectedPenerima(prev => {
+                      const newItems = matched.filter(m => !prev.some(p => p.uid === m.uid));
+                      return [...prev, ...newItems];
+                  });
+              }
+          }
+      }
+  };
 
   // --- STATE DENGAN LOCAL CACHE ---
   const draftKey = `disposisi_draft_${surat.id}`;
@@ -155,7 +179,8 @@ export default function FormDisposisi({
           batasWaktu,
           isRevising,
           latestDisposisi?.id,
-          isInformational
+          isInformational,
+          audioBlob
       );
       
       if (success) {
@@ -271,7 +296,7 @@ export default function FormDisposisi({
                         ))}
                     </div>
                     
-                    <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+                    <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
                         <PopoverTrigger asChild>
                             <div className="relative">
                                 <Input
@@ -312,7 +337,27 @@ export default function FormDisposisi({
                 )}
 
                 <div>
-                    <Label htmlFor="instruksi" className="text-xs md:text-sm">Isi Instruksi</Label>
+                    <div className="flex justify-between items-center">
+                        <Label htmlFor="instruksi" className="text-xs md:text-sm">Isi Instruksi</Label>
+                        <div className="flex items-center gap-1">
+                            <HelpCircle size={14} className="text-muted-foreground cursor-help mr-1" title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" />
+                            <Button 
+                                type="button" 
+                                variant={isListening ? "default" : "outline"} 
+                                size="sm" 
+                                onClick={() => isListening ? stopListening() : startListening(handleVoiceAIResult)} 
+                                disabled={isProcessingAI || isBawahanLoading} 
+                                className={`h-6 px-2 text-[10px] transition-all ${isListening ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20'}`}
+                                title="Disposisi dengan Suara"
+                            >
+                                {isProcessingAI ? <Loader2 size={10} className="animate-spin mr-1"/> : <Mic size={10} className="mr-1"/>} 
+                                {isListening ? 'Mendengarkan...' : 'Suara'}
+                            </Button>
+                            <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
+                                <Sparkles size={10} />
+                            </Button>
+                        </div>
+                    </div>
                     <div className="flex flex-wrap gap-1.5 md:gap-2 my-1.5 md:my-2">
                         {isTemplatLoading ? <p className="text-[10px] md:text-xs text-muted-foreground animate-pulse">Memuat templat...</p> : templatList.map(t => (
                               <Button key={t.id} type="button" variant="secondary" size="sm" className="h-6 md:h-8 text-[10px] md:text-xs px-2 md:px-3" onClick={() => handleTemplatClick(t.teksInstruksi)}>{t.teksInstruksi}</Button>
@@ -324,9 +369,18 @@ export default function FormDisposisi({
                       onChange={e => setInstruksi(e.target.value)} 
                       rows={3} 
                       required 
-                      className="text-xs md:text-sm resize-none"
-                      placeholder={isRevising ? "Tuliskan instruksi revisi..." : "Tuliskan instruksi disposisi..."}
+                      className={`text-xs md:text-sm resize-none ${isListening ? 'border-red-400 ring-1 ring-red-400/50' : ''}`}
+                      placeholder={isListening ? "Mendengarkan suara Anda..." : isRevising ? "Tuliskan instruksi revisi..." : "Tuliskan instruksi disposisi..."}
+                      disabled={isListening || isProcessingAI}
                     />
+                    {audioBlob && (
+                        <div className="flex items-center gap-2 mt-2">
+                            <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0">
+                                <Mic size={10} className="mr-1" /> Voice Note Terlampir
+                            </Badge>
+                            <button onClick={resetAudio} type="button" className="text-[10px] text-red-500 hover:underline">Hapus Rekaman</button>
+                        </div>
+                    )}
                     <div className="flex justify-end mt-1">
                          <span className="text-[9px] md:text-[10px] text-muted-foreground flex items-center"><Save size={10} className="mr-1"/> Draf tersimpan otomatis</span>
                     </div>

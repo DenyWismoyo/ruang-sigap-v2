@@ -202,3 +202,109 @@ export const extractSuratDataAIV2 = onCall({
         throw new HttpsError("internal", error.message || "Terjadi kesalahan internal AI.");
     }
 });
+
+/**
+ * FUNGSI: Ekstrak Niat Disposisi Suara via Gemini AI
+ * Menggunakan Firebase Functions v2
+ */
+export const extractVoiceDisposisiAIV2 = onCall({
+    region: REGION,
+    timeoutSeconds: 30,
+    memory: "256MiB",
+    cors: true,
+    secrets: [geminiApiKey]
+}, async (request) => {
+    // 1. Validasi Autentikasi
+    if (!request.auth || !request.auth.uid) {
+        throw new HttpsError("unauthenticated", "Harus login untuk menggunakan AI.");
+    }
+
+    const { audioBase64, mimeType, bawahanListStr } = request.data;
+    if (!audioBase64 || !mimeType || !bawahanListStr) {
+         throw new HttpsError("invalid-argument", "Data audio atau daftar bawahan tidak valid.");
+    }
+
+    const apiKey = geminiApiKey.value(); 
+    if (!apiKey) {
+        throw new HttpsError("internal", "API Key untuk Gemini tidak ditemukan di Secret Manager.");
+    }
+
+    try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+        
+        const promptText = `
+              Anda adalah asisten cerdas untuk sistem tata kelola persuratan pemerintahan.
+              Tugas Anda adalah mendengarkan file rekaman suara perintah pimpinan (dilampirkan), mentranskripsinya secara internal, lalu mengubah intent perintah tersebut menjadi format JSON terstruktur untuk form disposisi otomatis.
+
+              DAFTAR BAWAHAN (Kandidat Penerima):
+              Setiap baris berisi ID|Nama Lengkap|Jabatan
+              ${bawahanListStr}
+
+              INSTRUKSI EKSTRAKSI:
+              1. **penerimaIds**: Cocokkan nama atau jabatan yang disebutkan dalam teks suara dengan "namaLengkap" atau "namaJabatan" di DAFTAR BAWAHAN. WAJIB KEMBALIKAN array berisi string EXACT dari properti "uid" milik bawahan yang cocok. JANGAN kembalikan nama lengkapnya, HANYA kembalikan ID (uid) nya saja. Contoh: ["ef0pXAXuPiUHYQDMImEEibDD0hr2"].
+              2. **instruksi**: Tulis ulang perintah menjadi kalimat instruksi formal yang singkat dan jelas. Buang kata-kata filler seperti "Tolong ya", "Emm". PENTING: Jangan berhalusinasi. Jika suara tidak jelas atau kosong, biarkan kosong.
+              3. **isInformational**: Set ke true JIKA perintah suara HANYA mengindikasikan bahwa surat ini hanya untuk diketahui/sebagai tembusan. Set false jika ada tindakan nyata yang harus dikerjakan.
+
+              PENTING: Output HARUS berupa JSON murni dengan format/schema:
+              {
+                "penerimaIds": ["string"],
+                "instruksi": "string",
+                "isInformational": boolean
+              }
+        `;
+
+        const schemaConfig = {
+            type: "OBJECT",
+            properties: {
+                penerimaIds: { type: "ARRAY", items: { type: "STRING" } },
+                instruksi: { type: "STRING" },
+                isInformational: { type: "BOOLEAN" }
+            },
+            required: ["penerimaIds", "instruksi", "isInformational"]
+        };
+
+        const payload = {
+            contents: [{ 
+                parts: [
+                    { 
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: audioBase64
+                        }
+                    },
+                    { text: promptText }
+                ] 
+            }],
+            generationConfig: {
+                temperature: 0.1,
+                responseMimeType: "application/json",
+                responseSchema: schemaConfig
+            }
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            logger.error("Gemini API Error Details:", errorBody);
+            throw new HttpsError("internal", "Gagal menghubungi AI Server.");
+        }
+
+        const result = await response.json();
+        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!textPart) {
+             throw new HttpsError("data-loss", "AI tidak memberikan data yang dapat dibaca.");
+        }
+
+        return JSON.parse(textPart);
+
+    } catch (error: any) {
+        logger.error("Error di fungsi extractVoiceDisposisiAIV2:", error);
+        throw new HttpsError("internal", error.message || "Terjadi kesalahan internal AI.");
+    }
+});

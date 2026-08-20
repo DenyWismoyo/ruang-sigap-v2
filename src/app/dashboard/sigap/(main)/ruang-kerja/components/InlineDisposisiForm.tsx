@@ -14,8 +14,9 @@ import { Textarea } from '@/components/ui/textarea';
 import { Surat, Disposisi, UserProfile, Jabatan, InstruksiTemplat } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
-import { Loader2, Send, X, Search, Sparkles, UserCheck, Bell } from 'lucide-react';
+import { Loader2, Send, X, Search, Sparkles, UserCheck, Bell, Mic, HelpCircle } from 'lucide-react';
 import { useBawahanList } from '@/app/dashboard/sigap/hooks/useBawahanList';
+import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
 import { useSuratActions } from '@/app/dashboard/sigap/hooks/useSuratActions'; 
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -49,6 +50,21 @@ export default function InlineDisposisiForm({
   const [isAiLoading, setIsAiLoading] = useState(false);
 
   const { bawahanList, isLoading: isStafLoading } = useBawahanList(userCache, opdJabatans);
+  const { isListening, isProcessingAI, audioBlob, startListening, stopListening, resetAudio } = useVoiceAssistant(bawahanList);
+
+  const handleVoiceAIResult = (result: any) => {
+      if (result) {
+          if (result.instruksi) setInstruksi(result.instruksi);
+          if (result.penerimaIds && result.penerimaIds.length > 0) {
+              const matched = bawahanList.filter(b => 
+                  result.penerimaIds.includes(b.uid) || 
+                  result.penerimaIds.includes(b.namaLengkap) || 
+                  result.penerimaIds.includes(b.namaJabatan)
+              );
+              setSelectedPenerima(matched);
+          }
+      }
+  };
 
   // [SINKRONISASI] Deteksi apakah ini surat pemberitahuan
   const isPemberitahuanMode = surat.jenisSurat === 'Pemberitahuan';
@@ -93,7 +109,8 @@ export default function InlineDisposisiForm({
         undefined, // batas waktu (tidak ada di inline)
         false,     // isRevising
         undefined, // oldDisposisiId
-        isPemberitahuanMode // <-- FIX: Ini yang bikin output sama dengan Detail Surat!
+        isPemberitahuanMode, // <-- FIX: Ini yang bikin output sama dengan Detail Surat!
+        audioBlob
     );
     
     if (success) {
@@ -123,7 +140,8 @@ export default function InlineDisposisiForm({
         undefined, 
         false,     
         undefined, 
-        true // isInformational
+        true, // isInformational
+        audioBlob
     );
     
     if (success) {
@@ -158,9 +176,26 @@ export default function InlineDisposisiForm({
           <div>
             <div className="flex justify-between items-center mb-1.5">
                 <Label className="text-xs text-muted-foreground">Instruksi Disposisi</Label>
-                <Button type="button" variant="ghost" size="sm" onClick={handleAskAi} disabled={isAiLoading || isStafLoading} className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 bg-purple-50 dark:bg-purple-900/20">
-                    {isAiLoading ? <Loader2 size={10} className="animate-spin mr-1"/> : <Sparkles size={10} className="mr-1"/>} Saran AI
-                </Button>
+                <div className="flex items-center gap-1">
+                    <span title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" className="cursor-help flex items-center">
+                        <HelpCircle size={14} className="text-muted-foreground ml-1 mr-1" />
+                    </span>
+                    <Button 
+                        type="button" 
+                        variant={isListening ? "default" : "outline"} 
+                        size="sm" 
+                        onClick={() => isListening ? stopListening() : startListening(handleVoiceAIResult)} 
+                        disabled={isAiLoading || isStafLoading || isProcessingAI} 
+                        className={`h-6 px-2 text-[10px] transition-all ${isListening ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20'}`}
+                        title="Disposisi dengan Suara"
+                    >
+                        {isProcessingAI ? <Loader2 size={10} className="animate-spin mr-1"/> : <Mic size={10} className="mr-1"/>} 
+                        {isListening ? 'Mendengarkan...' : 'Suara'}
+                    </Button>
+                    <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
+                        <Sparkles size={10} />
+                    </Button>
+                </div>
             </div>
             {templatList?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
@@ -172,11 +207,20 @@ export default function InlineDisposisiForm({
               </div>
             )}
             <Textarea 
-                placeholder="Instruksi untuk bawahan..." 
-                value={instruksi} onChange={(e) => setInstruksi(e.target.value)}
-                className="text-sm min-h-[80px] bg-background resize-none focus-visible:ring-1"
-                disabled={isProcessing}
+                placeholder={isListening ? "Mendengarkan suara Anda..." : "Instruksi untuk bawahan..."} 
+                value={instruksi} 
+                onChange={(e) => setInstruksi(e.target.value)}
+                className={`text-sm min-h-[80px] bg-background resize-none focus-visible:ring-1 ${isListening ? 'border-red-400 ring-1 ring-red-400/50' : ''}`}
+                disabled={isProcessing || isListening || isProcessingAI}
             />
+            {audioBlob && (
+                <div className="flex items-center gap-2 mt-2">
+                    <Badge variant="secondary" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px] px-2 py-0">
+                        <Mic size={10} className="mr-1" /> Voice Note Terlampir
+                    </Badge>
+                    <button onClick={resetAudio} type="button" className="text-[10px] text-red-500 hover:underline">Hapus Rekaman</button>
+                </div>
+            )}
           </div>
 
           <div>
@@ -188,14 +232,14 @@ export default function InlineDisposisiForm({
                 </Badge>
               ))}
             </div>
-            <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen}>
+            <Popover open={isDropdownOpen} onOpenChange={setIsDropdownOpen} modal={false}>
               <PopoverTrigger asChild>
                 <div className="relative">
                   <Input placeholder={isStafLoading ? "Memuat..." : "Cari bawahan..."} value={searchTerm} onChange={(e) => { setSearchTerm(e.target.value); setIsDropdownOpen(true); }} className="pl-8 h-8 text-sm" disabled={isStafLoading || isProcessing} autoComplete="off" />
                   <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
                 </div>
               </PopoverTrigger>
-              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 z-50" align="start">
+              <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0 z-50" align="start" onOpenAutoFocus={(e) => e.preventDefault()}>
                   <Command>
                     <CommandList>
                         {isStafLoading && <CommandEmpty>Mencari...</CommandEmpty>}

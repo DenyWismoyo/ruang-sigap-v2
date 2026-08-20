@@ -44,7 +44,7 @@ INPUT TUNGGAL: Staf TU menginput surat masuk (1x kerja)
 
 - **Output 2 — Disposisi Digital:** Pimpinan bisa langsung kirim instruksi ke bawahan lewat sistem, lengkap dengan catatan, batas waktu, dan notifikasi otomatis. Setiap langkah tercatat — siapa, kapan, apa instruksinya.
 
-- **Output 3 — Laporan Tindak Lanjut:** Setiap laporan progres yang dikirim pelaksana tersimpan rapi dan bisa dipantau pimpinan secara langsung (*real-time*), kapan saja.
+- **Output 3 — Laporan Tindak Lanjut:** Setiap laporan progres yang dikirim pelaksana tersimpan rapi dan bisa dipantau pimpinan secara langsung (_real-time_), kapan saja.
 
 - **Output 4 — Bukti E-Kinerja:** Semua aktivitas (terima disposisi, kirim laporan, selesaikan tugas) secara otomatis tercatat di Logbook dan bisa dikonversi menjadi Bukti E-Kinerja yang siap diunggah ke Google Drive.
 
@@ -52,15 +52,15 @@ INPUT TUNGGAL: Staf TU menginput surat masuk (1x kerja)
 
 ## 1.3 Masalah yang Dipecahkan Sistem Ini
 
-| Masalah Lama (Cara Manual)                           | Solusinya di Sistem Ini                                   |
-| ---------------------------------------------------- | --------------------------------------------------------- |
-| Surat menumpuk di meja dan sering terlupakan         | Ruang Kerja digital dengan notifikasi *real-time*         |
-| Disposisi cuma via lisan atau lembar kertas          | Disposisi digital dengan instruksi, deadline, dan riwayat |
-| Tidak tahu apakah bawahan sudah menindaklanjuti      | Tab Pemantauan real-time per surat                        |
-| Laporan kinerja harus diketik ulang setiap bulan     | Logbook otomatis + rekap 1 klik                           |
-| Surat fisik hilang atau susah dicari                 | Arsip digital dengan pencarian canggih                    |
-| Tidak ada bukti tertulis bahwa ASN sudah bekerja     | Logbook + Bukti Kinerja otomatis ter-*generate*           |
-| Jadwal rapat terlewat karena tidak tercatat          | Agenda Harian otomatis dari setiap surat undangan         |
+| Masalah Lama (Cara Manual)                       | Solusinya di Sistem Ini                                   |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| Surat menumpuk di meja dan sering terlupakan     | Ruang Kerja digital dengan notifikasi _real-time_         |
+| Disposisi cuma via lisan atau lembar kertas      | Disposisi digital dengan instruksi, deadline, dan riwayat |
+| Tidak tahu apakah bawahan sudah menindaklanjuti  | Tab Pemantauan real-time per surat                        |
+| Laporan kinerja harus diketik ulang setiap bulan | Logbook otomatis + rekap 1 klik                           |
+| Surat fisik hilang atau susah dicari             | Arsip digital dengan pencarian canggih                    |
+| Tidak ada bukti tertulis bahwa ASN sudah bekerja | Logbook + Bukti Kinerja otomatis ter-_generate_           |
+| Jadwal rapat terlewat karena tidak tercatat      | Agenda Harian otomatis dari setiap surat undangan         |
 
 ---
 
@@ -160,14 +160,14 @@ Pusat manajemen semua surat masuk instansi Anda.
 
 **Arti Status Surat:**
 
-| Status | Artinya |
-|--------|---------|
-| BARU (kuning) | Surat baru masuk, belum ada disposisi |
-| DIDISPOSISIKAN (biru) | Sudah dikirim ke pelaksana, belum dikonfirmasi terima |
-| PROSES TINDAK LANJUT (oranye) | Pelaksana sudah terima dan sedang mengerjakan |
-| SELESAI (hijau) | Semua pihak sudah menyelesaikan |
-| DIARSIPKAN (abu-abu) | Sudah diarsipkan, tidak tampil di daftar aktif |
-| REVISI DISPOSISI (merah muda) | Disposisi dikembalikan, perlu direvisi |
+| Status                        | Artinya                                               |
+| ----------------------------- | ----------------------------------------------------- |
+| BARU (kuning)                 | Surat baru masuk, belum ada disposisi                 |
+| DIDISPOSISIKAN (biru)         | Sudah dikirim ke pelaksana, belum dikonfirmasi terima |
+| PROSES TINDAK LANJUT (oranye) | Pelaksana sudah terima dan sedang mengerjakan         |
+| SELESAI (hijau)               | Semua pihak sudah menyelesaikan                       |
+| DIARSIPKAN (abu-abu)          | Sudah diarsipkan, tidak tampil di daftar aktif        |
+| REVISI DISPOSISI (merah muda) | Disposisi dikembalikan, perlu direvisi                |
 
 **Cara Input Surat Baru (khusus Staf TU):**
 
@@ -233,7 +233,7 @@ Kalau ada satu menu yang wajib Anda buka setiap hari, itulah **Ruang Kerja**. In
 
 **Urutan Tampilan di Feed:**
 
-1. Item yang sudah *overdue* (melewati deadline) — selalu muncul paling atas
+1. Item yang sudah _overdue_ (melewati deadline) — selalu muncul paling atas
 2. Item terbaru — dari yang paling baru
 
 **Panel Samping Kanan (di komputer):**
@@ -320,13 +320,13 @@ Logbook adalah **buku catatan kegiatan digital pribadi** Anda. Bayangkan seperti
 
 **A. Diisi Otomatis oleh Sistem** — tanpa Anda perlu melakukan apapun:
 
-- Kirim disposisi → *"Mendisposisikan surat: [Perihal]"*
-- Terima disposisi → *"Menerima disposisi surat: [Perihal]"*
-- Kirim laporan → *"Tindak Lanjut Surat: [Perihal] - [Judul Laporan]"*
-- Selesaikan surat → *"Menyelesaikan surat: [Perihal]"*
-- Eskalasi surat → *"Eskalasi surat ke pimpinan: [Perihal]"*
-- Arsipkan surat → *"Mengarsipkan surat: [Perihal]"*
-- Selesaikan tugas → *"Menyelesaikan tugas: [Judul Tugas]"*
+- Kirim disposisi → _"Mendisposisikan surat: [Perihal]"_
+- Terima disposisi → _"Menerima disposisi surat: [Perihal]"_
+- Kirim laporan → _"Tindak Lanjut Surat: [Perihal] - [Judul Laporan]"_
+- Selesaikan surat → _"Menyelesaikan surat: [Perihal]"_
+- Eskalasi surat → _"Eskalasi surat ke pimpinan: [Perihal]"_
+- Arsipkan surat → _"Mengarsipkan surat: [Perihal]"_
+- Selesaikan tugas → _"Menyelesaikan tugas: [Judul Tugas]"_
 
 **B. Ditambah Manual oleh Anda:**
 
@@ -351,7 +351,7 @@ Inilah fitur yang paling berguna di akhir bulan untuk menyiapkan laporan kinerja
 4. Preview teks rekap ditampilkan — bisa Anda cek dulu sebelum dikirim
 5. Dua pilihan ekspor:
    - **[Download PDF]** — file PDF format resmi langsung terunduh
-   - **[Upload ke Drive]** — diunggah otomatis ke folder Google Drive E-Kinerja Anda, dengan sub-folder nama otomatis: *"8. 2026 Agustus - Bukti E Kinerja"*
+   - **[Upload ke Drive]** — diunggah otomatis ke folder Google Drive E-Kinerja Anda, dengan sub-folder nama otomatis: _"8. 2026 Agustus - Bukti E Kinerja"_
 
 > **Syarat Upload ke Drive:** Akun Google harus sudah dihubungkan di menu Profil dan link folder Google Drive E-Kinerja sudah diisi.
 
@@ -374,14 +374,14 @@ Inilah fitur yang paling berguna di akhir bulan untuk menyiapkan laporan kinerja
 
 **Arti Warna Label:**
 
-| Warna | Gunakan Saat... |
-|-------|-----------------|
-| Default (putih) | Laporan biasa |
-| Merah | Ada masalah atau kendala |
-| Hijau | Pekerjaan berjalan lancar / sudah selesai |
-| Biru | Informasi penting perlu disampaikan |
-| Kuning | Perlu perhatian lebih dari atasan |
-| Ungu | Laporan khusus / istimewa |
+| Warna           | Gunakan Saat...                           |
+| --------------- | ----------------------------------------- |
+| Default (putih) | Laporan biasa                             |
+| Merah           | Ada masalah atau kendala                  |
+| Hijau           | Pekerjaan berjalan lancar / sudah selesai |
+| Biru            | Informasi penting perlu disampaikan       |
+| Kuning          | Perlu perhatian lebih dari atasan         |
+| Ungu            | Laporan khusus / istimewa                 |
 
 **Setelah laporan dikirim, ini yang terjadi otomatis:**
 
@@ -545,7 +545,7 @@ Sistem pemesanan ruang rapat dan jadwal kegiatan internal instansi.
 
 **Alur:** Menunggu Persetujuan — Disetujui / Ditolak
 
-Jadwal yang disetujui otomatis muncul di Agenda Harian semua peserta. Mendukung mode **Fisik** (nama tempat) dan **Virtual** (tautan *meeting*).
+Jadwal yang disetujui otomatis muncul di Agenda Harian semua peserta. Mendukung mode **Fisik** (nama tempat) dan **Virtual** (tautan _meeting_).
 
 ## 4.6 Persetujuan Draf Dokumen
 
@@ -667,15 +667,15 @@ Salah satu keunggulan utama sistem ini adalah **banyak hal yang berjalan otomati
 
 Setiap aksi penting otomatis membuat catatan di Logbook harian Anda — tanpa perlu input manual:
 
-| Aksi yang Anda Lakukan | Catatan Logbook yang Otomatis Muncul |
-| ---------------------- | ------------------------------------- |
-| Kirim disposisi | "Mendisposisikan surat: [Perihal Surat]" |
-| Terima disposisi | "Menerima disposisi surat: [Perihal Surat]" |
-| Kirim laporan progres | "Tindak Lanjut Surat: [Perihal] - [Judul Laporan]" |
-| Selesaikan surat | "Menyelesaikan surat: [Perihal Surat]" |
-| Eskalasi surat | "Eskalasi surat ke pimpinan: [Perihal Surat]" |
-| Arsipkan surat | "Mengarsipkan surat: [Perihal Surat]" |
-| Selesaikan tugas | "Menyelesaikan tugas: [Judul Tugas]" |
+| Aksi yang Anda Lakukan | Catatan Logbook yang Otomatis Muncul               |
+| ---------------------- | -------------------------------------------------- |
+| Kirim disposisi        | "Mendisposisikan surat: [Perihal Surat]"           |
+| Terima disposisi       | "Menerima disposisi surat: [Perihal Surat]"        |
+| Kirim laporan progres  | "Tindak Lanjut Surat: [Perihal] - [Judul Laporan]" |
+| Selesaikan surat       | "Menyelesaikan surat: [Perihal Surat]"             |
+| Eskalasi surat         | "Eskalasi surat ke pimpinan: [Perihal Surat]"      |
+| Arsipkan surat         | "Mengarsipkan surat: [Perihal Surat]"              |
+| Selesaikan tugas       | "Menyelesaikan tugas: [Judul Tugas]"               |
 
 ## 8.2 Auto-Bukti Kinerja
 
@@ -699,20 +699,20 @@ Sistem secara otomatis membersihkan disposisi yang tidak perlu (misalnya pimpina
 
 ## 9.1 Bagaimana Data Disimpan?
 
-Data tersimpan di infrastruktur *cloud* modern yang andal dan *real-time*. Setiap perubahan data (surat baru masuk, laporan terkirim, dll.) langsung terbarui di semua perangkat yang membuka sistem — tanpa perlu *refresh* halaman manual.
+Data tersimpan di infrastruktur _cloud_ modern yang andal dan _real-time_. Setiap perubahan data (surat baru masuk, laporan terkirim, dll.) langsung terbarui di semua perangkat yang membuka sistem — tanpa perlu _refresh_ halaman manual.
 
-| Jenis Data | Keterangan |
-| --- | --- |
-| Surat | Semua surat masuk instansi |
-| Disposisi | Semua disposisi yang pernah dikirim |
-| Tindak Lanjut | Laporan tindak lanjut per disposisi |
+| Jenis Data     | Keterangan                          |
+| -------------- | ----------------------------------- |
+| Surat          | Semua surat masuk instansi          |
+| Disposisi      | Semua disposisi yang pernah dikirim |
+| Tindak Lanjut  | Laporan tindak lanjut per disposisi |
 | Logbook Harian | Catatan kegiatan harian per pegawai |
-| Tugas | Data semua tugas |
-| Pengguna | Profil semua pengguna |
-| Jabatan | Struktur jabatan instansi |
-| Notifikasi | Riwayat semua notifikasi |
-| Bukti Kinerja | Dokumen bukti kinerja digital |
-| Jadwal Tempat | Booking jadwal ruang rapat |
+| Tugas          | Data semua tugas                    |
+| Pengguna       | Profil semua pengguna               |
+| Jabatan        | Struktur jabatan instansi           |
+| Notifikasi     | Riwayat semua notifikasi            |
+| Bukti Kinerja  | Dokumen bukti kinerja digital       |
+| Jadwal Tempat  | Booking jadwal ruang rapat          |
 
 ## 9.2 Keamanan Data Antar Instansi
 
@@ -735,7 +735,7 @@ Jejak audit ini bisa dilihat di bagian bawah halaman detail setiap surat.
 
 **Q: Kenapa surat saya tidak muncul di Ruang Kerja padahal sudah diinput?**
 
-A: Cek tiga hal: 1) Apakah status surat sudah "Baru"? 2) Apakah Tujuan Jabatan sudah diisi dengan benar? 3) Coba *refresh* halaman. Jika pimpinan tidak melihat surat baru, periksa apakah level jabatan akun Anda sudah benar (level 1-5 untuk pimpinan).
+A: Cek tiga hal: 1) Apakah status surat sudah "Baru"? 2) Apakah Tujuan Jabatan sudah diisi dengan benar? 3) Coba _refresh_ halaman. Jika pimpinan tidak melihat surat baru, periksa apakah level jabatan akun Anda sudah benar (level 1-5 untuk pimpinan).
 
 ---
 
@@ -819,24 +819,24 @@ A: PLT (Pejabat Pelaksana Tugas) adalah fitur untuk mendelegasikan akses jabatan
 
 # KAMUS ISTILAH
 
-| Istilah | Artinya dalam Bahasa Sehari-hari |
-| ---------------------- | ----------------------------------------------------------------------- |
-| **Disposisi** | Pendelegasian instruksi dari atasan ke bawahan terkait surat masuk |
-| **Acknowledge** | Konfirmasi terima disposisi — tanda bahwa Anda sudah membacanya |
-| **Tindak Lanjut (TL)** | Laporan progres pekerjaan yang dikirim pelaksana kepada atasannya |
-| **Eskalasi** | Pengembalian surat ke atasan karena pelaksana tidak bisa menangani |
-| **Feed** | Daftar item yang muncul di Ruang Kerja |
-| **Overdue** | Item yang sudah melewati batas waktu (deadline) |
-| **Instansi** | Organisasi Perangkat Daerah (Dinas, Badan, Kantor, Kecamatan, dll) |
-| **E-Kinerja** | Bukti elektronik kinerja ASN yang digunakan untuk penilaian SKP |
-| **SKP** | Sasaran Kinerja Pegawai — dokumen penilaian kinerja resmi ASN |
-| **Klasifikasi Surat** | Tingkat urgensi surat: Biasa / Penting / Segera / Rahasia |
-| **PLT** | Pejabat Pelaksana Tugas — pengganti sementara pejabat yang berhalangan |
-| **Draf Persetujuan** | Dokumen yang dikirim untuk di-review dan disetujui pimpinan |
-| **Informasional** | Jenis disposisi yang hanya untuk diketahui, tidak perlu tindak lanjut |
-| **Jejak Audit** | Riwayat lengkap semua aksi yang dilakukan pada sebuah surat |
-| **Real-time** | Data yang langsung terbarui saat itu juga, tanpa perlu refresh |
-| **Push Notification** | Pemberitahuan yang langsung muncul di perangkat/browser Anda |
+| Istilah                | Artinya dalam Bahasa Sehari-hari                                       |
+| ---------------------- | ---------------------------------------------------------------------- |
+| **Disposisi**          | Pendelegasian instruksi dari atasan ke bawahan terkait surat masuk     |
+| **Acknowledge**        | Konfirmasi terima disposisi — tanda bahwa Anda sudah membacanya        |
+| **Tindak Lanjut (TL)** | Laporan progres pekerjaan yang dikirim pelaksana kepada atasannya      |
+| **Eskalasi**           | Pengembalian surat ke atasan karena pelaksana tidak bisa menangani     |
+| **Feed**               | Daftar item yang muncul di Ruang Kerja                                 |
+| **Overdue**            | Item yang sudah melewati batas waktu (deadline)                        |
+| **Instansi**           | Organisasi Perangkat Daerah (Dinas, Badan, Kantor, Kecamatan, dll)     |
+| **E-Kinerja**          | Bukti elektronik kinerja ASN yang digunakan untuk penilaian SKP        |
+| **SKP**                | Sasaran Kinerja Pegawai — dokumen penilaian kinerja resmi ASN          |
+| **Klasifikasi Surat**  | Tingkat urgensi surat: Biasa / Penting / Segera / Rahasia              |
+| **PLT**                | Pejabat Pelaksana Tugas — pengganti sementara pejabat yang berhalangan |
+| **Draf Persetujuan**   | Dokumen yang dikirim untuk di-review dan disetujui pimpinan            |
+| **Informasional**      | Jenis disposisi yang hanya untuk diketahui, tidak perlu tindak lanjut  |
+| **Jejak Audit**        | Riwayat lengkap semua aksi yang dilakukan pada sebuah surat            |
+| **Real-time**          | Data yang langsung terbarui saat itu juga, tanpa perlu refresh         |
+| **Push Notification**  | Pemberitahuan yang langsung muncul di perangkat/browser Anda           |
 
 ---
 
@@ -904,25 +904,25 @@ Tabel ini dirancang untuk membantu pengguna baru (dan calon pengguna) memahami s
 
 ## Alur Surat Masuk
 
-| Tahapan | Cara Manual Sebelumnya | Dengan Sistem Ini |
-|---------|----------------------|-------------------|
-| Surat diterima | Dicatat di buku agenda manual | Diinput digital, tersimpan permanen |
-| Pengisian metadata | Ketik satu per satu (nomor, perihal, pengirim) | AI membaca PDF → form terisi otomatis |
-| Penyampaian ke Pimpinan | Bawa fisik atau taruh di tray meja | Muncul otomatis di Ruang Kerja, notifikasi ke HP |
-| Disposisi | Tulisan tangan di lembar disposisi | Form digital dengan instruksi, deadline, penerima |
-| Konfirmasi terima | Pimpinan tidak tahu apakah bawahan sudah baca | Notifikasi "sudah diterima" + timestamp tercatat |
-| Laporan tindak lanjut | Laporan lisan, email, atau kertas terpisah | Laporan digital terhubung ke surat, terpantau real-time |
-| Arsip surat | Dijilid/difotokopi, simpan di lemari | Tersimpan digital, dicari dalam detik kapan saja |
+| Tahapan                 | Cara Manual Sebelumnya                         | Dengan Sistem Ini                                       |
+| ----------------------- | ---------------------------------------------- | ------------------------------------------------------- |
+| Surat diterima          | Dicatat di buku agenda manual                  | Diinput digital, tersimpan permanen                     |
+| Pengisian metadata      | Ketik satu per satu (nomor, perihal, pengirim) | AI membaca PDF → form terisi otomatis                   |
+| Penyampaian ke Pimpinan | Bawa fisik atau taruh di tray meja             | Muncul otomatis di Ruang Kerja, notifikasi ke HP        |
+| Disposisi               | Tulisan tangan di lembar disposisi             | Form digital dengan instruksi, deadline, penerima       |
+| Konfirmasi terima       | Pimpinan tidak tahu apakah bawahan sudah baca  | Notifikasi "sudah diterima" + timestamp tercatat        |
+| Laporan tindak lanjut   | Laporan lisan, email, atau kertas terpisah     | Laporan digital terhubung ke surat, terpantau real-time |
+| Arsip surat             | Dijilid/difotokopi, simpan di lemari           | Tersimpan digital, dicari dalam detik kapan saja        |
 
 ## Rekap Kinerja Bulanan
 
-| Langkah | Cara Manual | Dengan Sistem Ini |
-|---------|-------------|-------------------|
-| Kumpulkan data kegiatan | Ingat-ingat atau cari di email/catatan | Logbook sudah terisi otomatis sepanjang bulan |
-| Susun laporan | Ketik ulang semua kegiatan di Word/Excel | Klik Generate → rekap sudah tersusun rapi |
-| Format dokumen | Atur margin, font, header secara manual | Template profesional sudah tersedia |
-| Kirim ke Drive | Buka Drive, cari folder, upload manual | Klik Upload ke Drive → tersimpan di folder yang tepat otomatis |
-| Waktu total | 2–4 jam per bulan | 5–10 menit per bulan |
+| Langkah                 | Cara Manual                              | Dengan Sistem Ini                                              |
+| ----------------------- | ---------------------------------------- | -------------------------------------------------------------- |
+| Kumpulkan data kegiatan | Ingat-ingat atau cari di email/catatan   | Logbook sudah terisi otomatis sepanjang bulan                  |
+| Susun laporan           | Ketik ulang semua kegiatan di Word/Excel | Klik Generate → rekap sudah tersusun rapi                      |
+| Format dokumen          | Atur margin, font, header secara manual  | Template profesional sudah tersedia                            |
+| Kirim ke Drive          | Buka Drive, cari folder, upload manual   | Klik Upload ke Drive → tersimpan di folder yang tepat otomatis |
+| Waktu total             | 2–4 jam per bulan                        | 5–10 menit per bulan                                           |
 
 ---
 
@@ -938,7 +938,7 @@ Staf TU memeriksa sebentar, mengoreksi satu kata yang kurang tepat, lalu klik **
 
 Detik itu juga: Kepala Dinas menerima notifikasi di ponselnya — "Surat baru: Undangan Rapat Koordinasi APBD". Surat itu muncul di Ruang Kerjanya. Agenda rapat otomatis tercatat di Agenda Harian semua yang akan terlibat.
 
-Pukul 08.30, Kepala Dinas membuka Ruang Kerja, baca sekilas isi surat via preview PDF, lalu mendisposisikan ke Kepala Bidang Anggaran dengan instruksi: *"Mohon disiapkan bahan presentasi pagu anggaran 2026. Laporan H-1 rapat."* Deadline diset hari Selasa.
+Pukul 08.30, Kepala Dinas membuka Ruang Kerja, baca sekilas isi surat via preview PDF, lalu mendisposisikan ke Kepala Bidang Anggaran dengan instruksi: _"Mohon disiapkan bahan presentasi pagu anggaran 2026. Laporan H-1 rapat."_ Deadline diset hari Selasa.
 
 Kepala Bidang Anggaran langsung mendapat notifikasi. Ia buka Ruang Kerja, klik **[Terima Disposisi]**. Kepala Dinas mendapat notifikasi balik: disposisi sudah diterima.
 
@@ -950,7 +950,7 @@ Kepala Bidang Anggaran langsung mendapat notifikasi. Ia buka Ruang Kerja, klik *
 
 Pukul 14.00, Kepala Bidang Anggaran sedang di luar kantor menghadiri rapat teknis. Sambil menunggu rapat dimulai, ia membuka sistem di ponsel, masuk ke Ruang Kerja, dan klik **[Lapor Tindak Lanjut]** pada kartu disposisi surat tadi.
 
-Ia ketik singkat: *"Draft bahan presentasi sudah 70%, koordinasi data realisasi dengan Subbag Keuangan selesai siang ini. Bahan final akan dikirim besok pagi."*
+Ia ketik singkat: _"Draft bahan presentasi sudah 70%, koordinasi data realisasi dengan Subbag Keuangan selesai siang ini. Bahan final akan dikirim besok pagi."_
 
 Pilih warna label **Hijau** (berjalan lancar), klik **[Kirim Laporan - Proses]**.
 
@@ -976,30 +976,30 @@ Selesai. Tidak ada yang perlu mengetik ulang, tidak ada yang perlu mencari-cari 
 
 ## Staf TU — Rutinitas Harian
 
-| Waktu | Aktivitas |
-|-------|-----------|
-| Pagi | Buka dashboard — cek apakah ada surat fisik yang belum diinput |
-| Setelah surat diterima | Upload dan input segera (gunakan AI Scan untuk efisiensi) |
-| Siang | Pastikan tidak ada surat berstatus "Baru" yang sudah lebih dari 1 hari tanpa disposisi |
-| Jika diminta | Cetak agenda harian atau rekap surat untuk keperluan pimpinan |
+| Waktu                  | Aktivitas                                                                              |
+| ---------------------- | -------------------------------------------------------------------------------------- |
+| Pagi                   | Buka dashboard — cek apakah ada surat fisik yang belum diinput                         |
+| Setelah surat diterima | Upload dan input segera (gunakan AI Scan untuk efisiensi)                              |
+| Siang                  | Pastikan tidak ada surat berstatus "Baru" yang sudah lebih dari 1 hari tanpa disposisi |
+| Jika diminta           | Cetak agenda harian atau rekap surat untuk keperluan pimpinan                          |
 
 ## Pelaksana — Rutinitas Harian
 
-| Waktu | Aktivitas |
-|-------|-----------|
-| Pagi | Buka Ruang Kerja — konfirmasi semua disposisi baru yang masuk |
+| Waktu          | Aktivitas                                                                   |
+| -------------- | --------------------------------------------------------------------------- |
+| Pagi           | Buka Ruang Kerja — konfirmasi semua disposisi baru yang masuk               |
 | Sepanjang hari | Kerjakan tugas dari disposisi — kirim laporan progres jika ada perkembangan |
-| Sore | Tambahkan kegiatan non-disposisi ke Logbook secara manual jika perlu |
-| Jika selesai | Klik **[Selesaikan & Tutup]** pada disposisi yang sudah dituntaskan |
+| Sore           | Tambahkan kegiatan non-disposisi ke Logbook secara manual jika perlu        |
+| Jika selesai   | Klik **[Selesaikan & Tutup]** pada disposisi yang sudah dituntaskan         |
 
 ## Pimpinan — Rutinitas Harian
 
-| Waktu | Aktivitas |
-|-------|-----------|
-| Pagi | Buka Ruang Kerja — disposisikan semua surat baru |
-| Siang | Pantau laporan tindak lanjut via tab Pemantauan |
-| Kapan saja | Setujui atau revisi draf dokumen yang menunggu persetujuan |
-| Akhir minggu | Cek tab Laporan Kinerja — lihat statistik tim |
+| Waktu        | Aktivitas                                                  |
+| ------------ | ---------------------------------------------------------- |
+| Pagi         | Buka Ruang Kerja — disposisikan semua surat baru           |
+| Siang        | Pantau laporan tindak lanjut via tab Pemantauan            |
+| Kapan saja   | Setujui atau revisi draf dokumen yang menunggu persetujuan |
+| Akhir minggu | Cek tab Laporan Kinerja — lihat statistik tim              |
 
 ---
 
@@ -1007,18 +1007,18 @@ Selesai. Tidak ada yang perlu mengetik ulang, tidak ada yang perlu mencari-cari 
 
 ## Apa yang Bisa Dilihat Siapa
 
-| Data | Bisa Dilihat Oleh |
-|------|--------------------|
-| Logbook harian | Hanya pemiliknya sendiri |
-| Laporan tindak lanjut | Pembuat laporan + atasan yang mendisposisikan + admin |
-| Detail surat & disposisi | Semua pihak yang terlibat dalam rantai disposisi |
-| Laporan kinerja instansi | Pimpinan (level ≤ 5) + Admin OPD |
-| Data seluruh surat | Staf TU + Admin OPD |
-| Profil pengguna lain | Tidak bisa dilihat (privasi) |
+| Data                     | Bisa Dilihat Oleh                                     |
+| ------------------------ | ----------------------------------------------------- |
+| Logbook harian           | Hanya pemiliknya sendiri                              |
+| Laporan tindak lanjut    | Pembuat laporan + atasan yang mendisposisikan + admin |
+| Detail surat & disposisi | Semua pihak yang terlibat dalam rantai disposisi      |
+| Laporan kinerja instansi | Pimpinan (level ≤ 5) + Admin OPD                      |
+| Data seluruh surat       | Staf TU + Admin OPD                                   |
+| Profil pengguna lain     | Tidak bisa dilihat (privasi)                          |
 
 ## Keamanan Akses
 
-- Setiap pengguna login dengan akun pribadi — tidak ada akun bersama (*shared account*)
+- Setiap pengguna login dengan akun pribadi — tidak ada akun bersama (_shared account_)
 - Sesi login memiliki batas waktu; pengguna yang tidak aktif akan diminta login ulang
 - Semua data terenkripsi dalam perjalanan (HTTPS) dan saat disimpan
 - Admin OPD bisa menonaktifkan akun pegawai yang sudah tidak aktif/mutasi kapan saja
@@ -1039,25 +1039,29 @@ Selesai. Tidak ada yang perlu mengetik ulang, tidak ada yang perlu mencari-cari 
 Sistem saat ini sudah mampu **menghasilkan 5 output dari 1 input surat** dan beroperasi penuh dengan fitur-fitur berikut:
 
 **Administrasi Persuratan Digital:**
+
 - Input surat masuk dengan AI Scan otomatis (Gemini 2.0 Flash — sudah aktif)
 - Rantai Disposisi Digital dengan instruksi, deadline, dan notifikasi
 - Pemantauan tindak lanjut secara real-time oleh pimpinan
 - Arsip Digital yang dapat dicari kapan saja
 
 **Kinerja & Produktivitas:**
+
 - Logbook Harian otomatis per pegawai
 - Rekap Bulanan → PDF atau Google Drive (1 klik)
 - Bukti E-Kinerja otomatis dari setiap laporan & tugas
 - Manajemen Tugas dengan sub-tugas, komentar, dan prioritas
 
 **Kolaborasi & Jadwal:**
+
 - Agenda Harian otomatis dari surat undangan
 - Booking Ruang Rapat terintegrasi Agenda
 - Notulensi Rapat dengan data otomatis terisi
 - Persetujuan Draf Dokumen (Google Docs)
 
 **Infrastruktur:**
-- Notifikasi *push* real-time ke browser/HP (FCM)
+
+- Notifikasi _push_ real-time ke browser/HP (FCM)
 - Integrasi Google Drive (upload bukti kinerja)
 - Offline mode: surat tersimpan lokal jika koneksi terputus
 - Fitur PLT untuk delegasi akses jabatan sementara
@@ -1079,7 +1083,7 @@ Fitur AI Scan surat sudah aktif dan berfungsi membaca PDF surat masuk secara oto
 - **Deteksi Urgensi:** AI menilai tingkat urgensi surat dan menyarankan klasifikasi (Biasa/Penting/Segera/Rahasia) secara otomatis
 - **Multi-halaman:** Saat ini AI membaca halaman 1 — pengembangan selanjutnya memungkinkan analisis multi-halaman untuk surat panjang
 
-*Dampak:* Staf TU cukup verifikasi hasil AI, bukan mengetik dari awal. Pimpinan bisa membaca ringkasan tanpa membuka lampiran.
+_Dampak:_ Staf TU cukup verifikasi hasil AI, bukan mengetik dari awal. Pimpinan bisa membaca ringkasan tanpa membuka lampiran.
 
 ---
 
@@ -1087,7 +1091,7 @@ Fitur AI Scan surat sudah aktif dan berfungsi membaca PDF surat masuk secara oto
 
 Pelaksana cukup mendeskripsikan secara singkat apa yang sudah dikerjakan — dalam poin-poin bebas, bahkan dalam kalimat tidak lengkap — lalu AI menyusunnya menjadi laporan tindak lanjut yang lengkap, profesional, dan terstruktur sesuai format standar pemerintahan.
 
-*Dampak:* Hambatan terbesar dalam pelaporan bukan pekerjaannya, tapi "tidak tahu harus nulis apa." AI menghilangkan hambatan itu dan meningkatkan kualitas laporan yang diterima pimpinan.
+_Dampak:_ Hambatan terbesar dalam pelaporan bukan pekerjaannya, tapi "tidak tahu harus nulis apa." AI menghilangkan hambatan itu dan meningkatkan kualitas laporan yang diterima pimpinan.
 
 ---
 
@@ -1095,17 +1099,17 @@ Pelaksana cukup mendeskripsikan secara singkat apa yang sudah dikerjakan — dal
 
 Dari konteks disposisi, instruksi pimpinan, dan laporan tindak lanjut, AI membantu menyusun draf surat keluar, surat balasan, atau nota dinas dengan format resmi pemerintahan — data sudah otomatis terisi dari konteks yang ada, tinggal direvisi dan disetujui pimpinan.
 
-*Dampak:* Pekerjaan yang sebelumnya butuh 30–60 menit bisa selesai dalam 5 menit. Konsistensi format surat keluar terjaga di seluruh instansi.
+_Dampak:_ Pekerjaan yang sebelumnya butuh 30–60 menit bisa selesai dalam 5 menit. Konsistensi format surat keluar terjaga di seluruh instansi.
 
 ---
 
 ### Sistem Pengingat & Eskalasi Otomatis Berbasis SLA
 
-Setiap jenis surat bisa dikonfigurasi dengan *Service Level Agreement* (SLA): undangan harus direspons dalam 1 hari, surat permohonan dalam 3 hari, dan sebagainya.
+Setiap jenis surat bisa dikonfigurasi dengan _Service Level Agreement_ (SLA): undangan harus direspons dalam 1 hari, surat permohonan dalam 3 hari, dan sebagainya.
 
 Jika sebuah disposisi tidak ditindaklanjuti melebihi SLA, sistem otomatis mengirim pengingat bertahap: pengingat pertama ke pelaksana, pengingat kedua ke atasan langsung, dan eskalasi otomatis ke pimpinan lebih tinggi jika tetap tidak direspons.
 
-*Dampak:* Tidak ada lagi surat yang "tenggelam." Budaya responsif tumbuh secara sistemik karena ada konsekuensi otomatis dari ketidakresponsifan.
+_Dampak:_ Tidak ada lagi surat yang "tenggelam." Budaya responsif tumbuh secara sistemik karena ada konsekuensi otomatis dari ketidakresponsifan.
 
 ---
 
@@ -1113,7 +1117,7 @@ Jika sebuah disposisi tidak ditindaklanjuti melebihi SLA, sistem otomatis mengir
 
 Sistem belajar dari ribuan data historis untuk memberikan rekomendasi: "Surat dari instansi X rata-rata butuh 4 hari untuk selesai — deadline ini terlalu ketat", "Bidang Y sedang kelebihan beban tugas bulan ini", atau "Pola surat masuk setiap Senin pagi biasanya lebih tinggi 40% dari hari lain."
 
-*Dampak:* Pimpinan mendapat wawasan berbasis data untuk pengambilan keputusan yang lebih tepat sasaran.
+_Dampak:_ Pimpinan mendapat wawasan berbasis data untuk pengambilan keputusan yang lebih tepat sasaran.
 
 ---
 
@@ -1121,7 +1125,7 @@ Sistem belajar dari ribuan data historis untuk memberikan rekomendasi: "Surat da
 
 Integrasi dengan BSrE Kominfo atau PERURI untuk tanda tangan digital resmi pada semua dokumen yang dihasilkan sistem — surat keputusan, surat tugas, notulensi rapat, laporan — sehingga dokumen digital memiliki kekuatan hukum yang setara dengan tanda tangan basah.
 
-*Dampak:* Dokumen tidak perlu dicetak-tanda tangan-scan lagi. Proses persetujuan yang biasanya berhari-hari bisa selesai dalam jam dari mana saja.
+_Dampak:_ Dokumen tidak perlu dicetak-tanda tangan-scan lagi. Proses persetujuan yang biasanya berhari-hari bisa selesai dalam jam dari mana saja.
 
 ---
 
@@ -1129,9 +1133,9 @@ Integrasi dengan BSrE Kominfo atau PERURI untuk tanda tangan digital resmi pada 
 
 Selain notifikasi push ke browser, sistem mengirim ringkasan harian atau notifikasi penting ke WhatsApp atau Telegram pengguna — untuk pengguna yang tidak selalu membuka browser sepanjang hari.
 
-Format notifikasi: *"📬 [NAMA], Anda memiliki 3 disposisi baru hari ini. 2 di antaranya mendekati deadline. Buka sistem untuk merespons."*
+Format notifikasi: _"📬 [NAMA], Anda memiliki 3 disposisi baru hari ini. 2 di antaranya mendekati deadline. Buka sistem untuk merespons."_
 
-*Dampak:* Tingkat respons terhadap disposisi meningkat secara signifikan karena notifikasi hadir di platform yang paling sering dibuka pengguna.
+_Dampak:_ Tingkat respons terhadap disposisi meningkat secara signifikan karena notifikasi hadir di platform yang paling sering dibuka pengguna.
 
 ---
 
@@ -1139,7 +1143,7 @@ Format notifikasi: *"📬 [NAMA], Anda memiliki 3 disposisi baru hari ini. 2 di 
 
 Setiap Jumat sore, sistem otomatis menghasilkan dan mengirimkan ringkasan mingguan ke masing-masing pimpinan: berapa surat masuk minggu ini, berapa yang selesai, berapa yang masih dalam proses, dan mana yang sudah melewati deadline.
 
-*Dampak:* Pimpinan mendapat gambaran kondisi timnya setiap akhir minggu tanpa perlu meminta laporan secara manual.
+_Dampak:_ Pimpinan mendapat gambaran kondisi timnya setiap akhir minggu tanpa perlu meminta laporan secara manual.
 
 ---
 
@@ -1147,7 +1151,7 @@ Setiap Jumat sore, sistem otomatis menghasilkan dan mengirimkan ringkasan minggu
 
 Data logbook dan bukti kinerja dapat diekspor langsung dalam format yang kompatibel dengan aplikasi SKP ASN nasional — menghilangkan proses input ulang yang melelahkan di akhir periode penilaian.
 
-*Dampak:* SKP yang akurat, tidak bisa dimanipulasi, dan tidak memakan waktu pegawai di akhir tahun.
+_Dampak:_ SKP yang akurat, tidak bisa dimanipulasi, dan tidak memakan waktu pegawai di akhir tahun.
 
 ---
 
@@ -1155,7 +1159,7 @@ Data logbook dan bukti kinerja dapat diekspor langsung dalam format yang kompati
 
 Masyarakat mengajukan permohonan layanan publik secara online — izin, surat keterangan, pengaduan — yang otomatis masuk sebagai surat masuk di sistem instansi, bisa dilacak statusnya secara real-time oleh pemohon sendiri.
 
-*Dampak:* Antrean fisik berkurang. Masyarakat tahu persis di mana suratnya diproses dan siapa yang menangani.
+_Dampak:_ Antrean fisik berkurang. Masyarakat tahu persis di mana suratnya diproses dan siapa yang menangani.
 
 ---
 
@@ -1169,7 +1173,7 @@ Integrasi API dengan sistem-sistem yang sudah ada:
 - **JDIH** — referensi peraturan perundangan langsung dari detail surat
 - **Satu Data Indonesia** — kontribusi data kinerja pemerintah daerah ke platform nasional
 
-*Dampak:* Input satu kali, bermanfaat di banyak sistem sekaligus. Tidak ada data yang dikerjakan dua kali.
+_Dampak:_ Input satu kali, bermanfaat di banyak sistem sekaligus. Tidak ada data yang dikerjakan dua kali.
 
 ---
 
@@ -1195,7 +1199,7 @@ Selama ini, rapat lintas instansi selalu membutuhkan daftar hadir kertas — die
 
 Ketika seluruh OPD menggunakan sistem ini, setiap undangan rapat menghasilkan **QR Code Kehadiran** unik. Peserta dari instansi manapun scan QR dengan ponsel saat tiba — absensi tercatat otomatis, terhubung ke profil mereka, dan masuk ke rekam jejak kinerja. Penyelenggara mendapat laporan kehadiran lengkap dalam satu halaman, real-time, tanpa kertas.
 
-*Ketika ini terjadi:* Tidak ada lagi titip absen. Data kehadiran rapat seluruh perangkat daerah menjadi bagian permanen dari catatan kinerja ASN yang tidak bisa dimanipulasi.
+_Ketika ini terjadi:_ Tidak ada lagi titip absen. Data kehadiran rapat seluruh perangkat daerah menjadi bagian permanen dari catatan kinerja ASN yang tidak bisa dimanipulasi.
 
 ---
 
@@ -1205,7 +1209,7 @@ Surat dari Sekretaris Daerah ke seluruh Kepala Dinas selama ini melewati proses 
 
 Ketika semua OPD terhubung, surat dari Sekda ke seluruh instansi dikirim dalam satu klik. Surat masuk ke Ruang Kerja Kepala Dinas masing-masing, notifikasi ke ponsel mereka. Tindak lanjutnya bisa dipantau langsung dari meja Sekda — tanpa rapat koordinasi hanya untuk tanya "sudah sampai mana?".
 
-*Ketika ini terjadi:* Koordinasi yang biasanya memakan berhari-hari bisa diselesaikan dalam jam. Tidak ada celah bagi surat penting untuk diabaikan.
+_Ketika ini terjadi:_ Koordinasi yang biasanya memakan berhari-hari bisa diselesaikan dalam jam. Tidak ada celah bagi surat penting untuk diabaikan.
 
 ---
 
@@ -1221,7 +1225,7 @@ Bupati atau Walikota punya **Dashboard Eksekutif** yang menampilkan kondisi nyat
 
 Ini bukan laporan yang sudah dirapikan. Ini **data hidup** dari ribuan meja kerja di seluruh instansi, teragregasi menjadi satu pandangan yang bisa dibaca dalam 60 detik.
 
-*Ketika ini terjadi:* Kepala Daerah tidak lagi bergantung pada laporan yang sudah "dimasak." Keputusan diambil berdasarkan fakta, bukan persepsi.
+_Ketika ini terjadi:_ Kepala Daerah tidak lagi bergantung pada laporan yang sudah "dimasak." Keputusan diambil berdasarkan fakta, bukan persepsi.
 
 ---
 
@@ -1235,17 +1239,17 @@ Ketika semua ASN di seluruh OPD menggunakan sistem yang sama, setiap aktivitas k
 - Konsistensi pengisian logbook
 - Tingkat kehadiran dalam rapat lintas instansi
 
-*Ketika ini terjadi:* Penilaian kinerja tidak lagi subjektif. ASN yang benar-benar rajin mendapat pengakuan yang adil. Budaya kerja bertanggung jawab tumbuh secara organik — bukan karena dipaksa, tapi karena sistemnya mendorong ke arah sana.
+_Ketika ini terjadi:_ Penilaian kinerja tidak lagi subjektif. ASN yang benar-benar rajin mendapat pengakuan yang adil. Budaya kerja bertanggung jawab tumbuh secara organik — bukan karena dipaksa, tapi karena sistemnya mendorong ke arah sana.
 
 ---
 
 ### Deteksi Masalah Lintas OPD secara Otomatis
 
-AI menganalisis pola dari ribuan surat dan laporan seluruh OPD untuk mendeteksi masalah yang tidak terlihat di permukaan: *"47 surat terkait banjir masuk ke 8 instansi berbeda dalam 3 bulan terakhir, namun tidak ada satu pun koordinasi lintas OPD yang terbentuk untuk menanganinya."*
+AI menganalisis pola dari ribuan surat dan laporan seluruh OPD untuk mendeteksi masalah yang tidak terlihat di permukaan: _"47 surat terkait banjir masuk ke 8 instansi berbeda dalam 3 bulan terakhir, namun tidak ada satu pun koordinasi lintas OPD yang terbentuk untuk menanganinya."_
 
 Temuan ini disajikan sebagai rekomendasi kebijakan ke Sekda atau Kepala Daerah — lengkap dengan ringkasan, instansi terlibat, dan usulan koordinasi yang perlu diambil.
 
-*Ketika ini terjadi:* Sistem tidak lagi hanya mencatat administrasi. Ia menjadi **mitra kebijakan** yang membantu pimpinan daerah melihat masalah sebelum membesar.
+_Ketika ini terjadi:_ Sistem tidak lagi hanya mencatat administrasi. Ia menjadi **mitra kebijakan** yang membantu pimpinan daerah melihat masalah sebelum membesar.
 
 ---
 
@@ -1255,7 +1259,7 @@ Ketika lebih dari satu kota/kabupaten menggunakan sistem ini, data agregat (yang
 
 Ini memungkinkan pembelajaran antar daerah: daerah yang kinerjanya lebih baik bisa berbagi praktik terbaik, dan daerah yang tertinggal bisa mendapat intervensi yang lebih tepat sasaran dari pemerintah pusat.
 
-*Ketika ini terjadi:* Kompetisi sehat antar daerah dalam hal kinerja administrasi menjadi nyata dan terukur — bukan sekadar slogan.
+_Ketika ini terjadi:_ Kompetisi sehat antar daerah dalam hal kinerja administrasi menjadi nyata dan terukur — bukan sekadar slogan.
 
 ---
 
@@ -1270,8 +1274,3 @@ Tidak ada surat yang jatuh di antara meja. Tidak ada program yang macet karena k
 Yang ada adalah **tata kelola pemerintahan daerah yang benar-benar modern** — di mana data mengalir transparan dari bawah ke atas dan dari atas ke bawah, keputusan diambil berdasarkan fakta, dan setiap pegawai dari staf paling baru hingga Kepala Daerah bekerja dalam satu ekosistem yang saling terhubung, saling memantau, dan saling mendukung.
 
 Ini bukan utopia. Ini adalah langkah selanjutnya yang sudah bisa dimulai hari ini — satu instansi dalam satu waktu, bergerak bersama menuju pemerintahan daerah yang lebih baik untuk semua.
-
----
-
-*Panduan ini disusun dari audit menyeluruh terhadap seluruh fitur dan alur bisnis sistem — mencakup 29 custom hooks, 30+ halaman, dan keseluruhan logika kerja sistem per Agustus 2026.*
-

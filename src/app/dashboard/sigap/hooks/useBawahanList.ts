@@ -102,7 +102,8 @@ export const useBawahanList = (
         const isLowerLevel = userJabatan.level > effectiveJabatan.level;
         const isActive = user.status === 'aktif';
         const notSelf = user.jabatanId !== effectiveJabatan.id; 
-        return isLowerLevel && isActive && notSelf;
+        const notAdmin = !user.role?.includes('admin');
+        return isLowerLevel && isActive && notSelf && notAdmin;
     });
 
     // B. Gabungkan dengan Pimpinan Sub-OPD

@@ -147,7 +147,8 @@ export const useBawahanList = (
         const isLowerLevel = userJabatan.level > effectiveJabatan.level;
         const isActive = user.status === 'aktif';
         const notSelf = user.jabatanId !== effectiveJabatan.id; 
-        return isLowerLevel && isActive && notSelf;
+        const notAdmin = !user.role?.includes('admin');
+        return isLowerLevel && isActive && notSelf && notAdmin;
     });
 
     // B. Gabungkan dengan Pimpinan Sub-OPD dan Global Leaders
@@ -156,7 +157,8 @@ export const useBawahanList = (
     const existingIds = new Set(combinedList.map(u => u.uid));
     
     [...subOpdPimpinan, ...globalLeaders].forEach(user => {
-        if (!existingIds.has(user.uid) && user.uid !== effectiveJabatan.id) {
+        const notAdmin = !user.role?.includes('admin');
+        if (!existingIds.has(user.uid) && user.uid !== effectiveJabatan.id && notAdmin) {
             existingIds.add(user.uid);
             combinedList.push(user);
         }
