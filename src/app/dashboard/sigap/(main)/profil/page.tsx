@@ -14,7 +14,7 @@ import { db, auth } from '@/lib/firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore'; 
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { UserProfile } from '@/types'; 
-import { UserCircle, ShieldCheck, Save, KeyRound, Palette, Users, Mail, Link as LinkIcon, CheckCircle, AlertTriangle, Loader2, HelpCircle, AlertOctagon, ArrowRight } from 'lucide-react';
+import { UserCircle, ShieldCheck, Save, KeyRound, Palette, Users, Mail, Link as LinkIcon, CheckCircle, AlertTriangle, Loader2, HelpCircle, AlertOctagon, ArrowRight, Bell } from 'lucide-react';
 import DelegasiWidget from '@/app/dashboard/sigap/components/DelegasiWidget';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
 
@@ -48,6 +48,11 @@ export default function ProfilPage() {
     const [linkHelperText, setLinkHelperText] = useState('');
     const [googleCalendarSyncEnabled, setGoogleCalendarSyncEnabled] = useState(false);
     
+    // State for notification preferences
+    const [pushSuratMasuk, setPushSuratMasuk] = useState(true);
+    const [pushDisposisi, setPushDisposisi] = useState(true);
+    const [pushTugas, setPushTugas] = useState(true);
+    
     const [isProfileSaving, setIsProfileSaving] = useState(false);
 
     // State for password form
@@ -79,6 +84,9 @@ export default function ProfilPage() {
             setPersonalEmail(userProfile.personalEmail || '');
             setGoogleDriveLink(userProfile.googleDriveReportLink || '');
             setGoogleCalendarSyncEnabled(userProfile.googleCalendarSyncEnabled || false);
+            setPushSuratMasuk(userProfile.notificationPreferences?.pushSuratMasuk ?? true);
+            setPushDisposisi(userProfile.notificationPreferences?.pushDisposisi ?? true);
+            setPushTugas(userProfile.notificationPreferences?.pushTugas ?? true);
         }
     }, [userProfile]);
     
@@ -148,6 +156,11 @@ export default function ProfilPage() {
                 personalEmail: personalEmail.trim() || null,
                 googleDriveReportLink: googleDriveLink.trim() || null,
                 googleCalendarSyncEnabled: googleCalendarSyncEnabled,
+                notificationPreferences: {
+                    pushSuratMasuk,
+                    pushDisposisi,
+                    pushTugas
+                },
             });
             addToast('Profil berhasil diperbarui.', 'success');
             setLinkHelperText('');
@@ -357,6 +370,54 @@ export default function ProfilPage() {
                                 <ToggleGroupItem value="normal" aria-label="Normal">Normal</ToggleGroupItem>
                                 <ToggleGroupItem value="large" aria-label="Besar">Besar</ToggleGroupItem>
                             </ToggleGroup>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="shadow-md">
+                        <CardHeader>
+                            <CardTitle className="flex items-center">
+                                <Bell size={22} className="mr-3 text-orange-500" />
+                                Pengaturan Notifikasi Push
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-xs text-muted-foreground">Atur jenis notifikasi (pop-up) yang Anda terima di perangkat ini. Notifikasi dalam aplikasi (ikon lonceng) akan tetap masuk.</p>
+                            
+                            <div className="flex items-start space-x-3 pt-2">
+                                <Checkbox
+                                    id="pushSuratMasuk"
+                                    checked={pushSuratMasuk}
+                                    onCheckedChange={(c) => setPushSuratMasuk(c as boolean)}
+                                />
+                                <div className="space-y-1 leading-none">
+                                    <Label htmlFor="pushSuratMasuk">Surat Masuk Baru</Label>
+                                    <p className="text-[11px] text-muted-foreground">Pemberitahuan saat ada surat baru masuk ke kotak masuk Anda.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start space-x-3 pt-2">
+                                <Checkbox
+                                    id="pushDisposisi"
+                                    checked={pushDisposisi}
+                                    onCheckedChange={(c) => setPushDisposisi(c as boolean)}
+                                />
+                                <div className="space-y-1 leading-none">
+                                    <Label htmlFor="pushDisposisi">Disposisi Baru</Label>
+                                    <p className="text-[11px] text-muted-foreground">Pemberitahuan saat pimpinan mendisposisikan surat kepada Anda.</p>
+                                </div>
+                            </div>
+
+                            <div className="flex items-start space-x-3 pt-2">
+                                <Checkbox
+                                    id="pushTugas"
+                                    checked={pushTugas}
+                                    onCheckedChange={(c) => setPushTugas(c as boolean)}
+                                />
+                                <div className="space-y-1 leading-none">
+                                    <Label htmlFor="pushTugas">Tugas Baru</Label>
+                                    <p className="text-[11px] text-muted-foreground">Pemberitahuan saat Anda ditugaskan pada pekerjaan baru.</p>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
 

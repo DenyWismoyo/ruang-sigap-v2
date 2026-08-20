@@ -25,7 +25,12 @@ export function useVoiceAssistant(bawahanList: UserProfile[]) {
       const functionsInstance = getFunctions(app, 'asia-southeast2');
       const extractVoiceDisposisiAIV2 = httpsCallable(functionsInstance, 'extractVoiceDisposisiAIV2');
       
-      const compactBawahanList = bawahanList.map(b => `${b.uid}|${b.namaLengkap}|${b.namaJabatan}`).join('\n');
+      const uidMap = new Map<number, string>();
+      const compactBawahanList = bawahanList.map((b, index) => {
+          const mappingId = index + 1;
+          uidMap.set(mappingId, b.uid);
+          return `[${mappingId}] ${b.namaLengkap} - ${b.namaJabatan}`;
+      }).join('\n');
       
       const payload = {
           audioBase64: base64Audio,
@@ -34,9 +39,22 @@ export function useVoiceAssistant(bawahanList: UserProfile[]) {
       };
 
       const result = await extractVoiceDisposisiAIV2(payload);
-      const data = result.data as VoiceAssistantResult;
+      const data = result.data as any;
       
-      return data;
+      let finalUids: string[] = [];
+      if (Array.isArray(data.penerimaIds)) {
+          finalUids = data.penerimaIds.map((id: any) => {
+               if (typeof id === 'number' || !isNaN(Number(id))) {
+                   return uidMap.get(Number(id)) || id.toString();
+               }
+               return id;
+          }).filter(Boolean);
+      }
+      
+      return {
+          ...data,
+          penerimaIds: finalUids
+      } as VoiceAssistantResult;
     } catch (error: any) {
       console.error("Error processing audio to AI:", error);
       addToast(error.message || 'Terjadi kesalahan saat menghubungi AI.', 'error');

@@ -54,14 +54,21 @@ export default function InlineDisposisiForm({
 
   const handleVoiceAIResult = (result: any) => {
       if (result) {
-          if (result.instruksi) setInstruksi(result.instruksi);
+          if (result.instruksi) {
+              setInstruksi(prev => prev ? `${prev}\n${result.instruksi}` : result.instruksi);
+          }
           if (result.penerimaIds && result.penerimaIds.length > 0) {
               const matched = bawahanList.filter(b => 
                   result.penerimaIds.includes(b.uid) || 
                   result.penerimaIds.includes(b.namaLengkap) || 
                   result.penerimaIds.includes(b.namaJabatan)
               );
-              setSelectedPenerima(matched);
+              if (matched.length > 0) {
+                  setSelectedPenerima(prev => {
+                      const newItems = matched.filter(m => !prev.some(p => p.uid === m.uid));
+                      return [...prev, ...newItems];
+                  });
+              }
           }
       }
   };
@@ -180,21 +187,32 @@ export default function InlineDisposisiForm({
                     <HelpCircle size={14} className="text-muted-foreground cursor-help ml-1 mr-1" title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" />
                     <Button 
                         type="button" 
-                        variant={isListening ? "default" : "outline"} 
+                        variant="outline" 
                         size="sm" 
-                        onClick={() => isListening ? stopListening() : startListening(handleVoiceAIResult)} 
-                        disabled={isAiLoading || isStafLoading || isProcessingAI} 
-                        className={`h-6 px-2 text-[10px] transition-all ${isListening ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'text-teal-600 hover:text-teal-700 bg-teal-50 dark:bg-teal-900/20'}`}
-                        title="Disposisi dengan Suara"
+                        disabled={true} 
+                        className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed"
+                        title="Fitur Disposisi Suara Sedang Dalam Tahap Pengembangan"
                     >
-                        {isProcessingAI ? <Loader2 size={10} className="animate-spin mr-1"/> : <Mic size={10} className="mr-1"/>} 
-                        {isListening ? 'Mendengarkan...' : 'Suara'}
+                        <Mic size={10} className="mr-1"/> 
+                        Suara (Segera)
                     </Button>
                     <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
                         <Sparkles size={10} />
                     </Button>
                 </div>
             </div>
+            {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-2 p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-100 dark:border-blue-800">
+                <span className="text-[10px] font-semibold text-blue-700 flex items-center gap-1"><Sparkles size={10} /> Rekomendasi Asisten Strategis AI:</span>
+                <div className="flex flex-wrap gap-1.5">
+                  {surat.suggestedDisposisi.map((saran, idx) => (
+                      <Badge key={idx} variant="outline" className="cursor-pointer hover:bg-blue-100 text-[10px] py-1 px-2 border-blue-200 text-blue-700 transition-colors" onClick={() => setInstruksi(prev => prev ? `${prev}\n${saran}` : saran)} title={saran}>
+                          Opsi {idx + 1}: {saran.length > 60 ? saran.substring(0, 60) + '...' : saran}
+                      </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
             {templatList?.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-2">
                   {templatList.map(t => (

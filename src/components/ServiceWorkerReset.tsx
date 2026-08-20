@@ -10,7 +10,7 @@ import { useEffect } from "react";
 export function ServiceWorkerReset() {
   useEffect(() => {
     // Ganti string ini jika di masa depan Anda perlu melakukan reset massal lagi
-    const RESET_TOKEN = 'reset-pwa-next15-v1'; 
+    const RESET_TOKEN = 'reset-pwa-dual-theme-v1'; 
     const STORAGE_KEY = 'app_pwa_reset_status';
 
     const performReset = async () => {

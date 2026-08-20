@@ -97,9 +97,17 @@ export interface UserProfile {
   googleTokenExpiry?: number | null;
   googleEmail?: string | null; 
   googleCalendarSyncEnabled?: boolean; 
-  namaJabatan?: string; 
-  level?: number; 
-  searchKeywords?: string[]; 
+  // --- [PENAMBAHAN TAHAP 1 EFISIENSI] ---
+  namaJabatan?: string; // Denormalisasi dari 'jabatan'
+  level?: number; // Denormalisasi dari 'jabatan'
+  searchKeywords?: string[]; // Untuk pencarian cepat
+  // --- [AKHIR PENAMBAHAN] ---
+  
+  notificationPreferences?: {
+    pushSuratMasuk: boolean;
+    pushDisposisi: boolean;
+    pushTugas: boolean;
+  };
   additionalRoles?: FunctionalRole[]; 
   impersonateUid?: string; // Menyimpan UID asli jika sedang mode impresonate
   
@@ -146,6 +154,9 @@ export interface Surat {
     tanggalSelesai?: Timestamp; 
     tujuanJabatanId?: string | null; 
     terlibatJabatanIds?: string[]; // Menyimpan riwayat jabatan yang pernah berinteraksi (Upload/Disposisi/Tindak Lanjut)
+    suggestedDisposisi?: string[]; // [BARU] Saran instruksi disposisi dari AI Strategis
+    suggestedPenerimaIds?: string[]; // [BARU] Saran ID penerima disposisi dari AI Strategis
+    
     // [FITUR BARU - FASE 1 DENORMALISASI] 
     // Menyimpan ringkasan tampilan agar tidak perlu fetch berulang kali ke tabel disposisi
     infoTampilan?: {

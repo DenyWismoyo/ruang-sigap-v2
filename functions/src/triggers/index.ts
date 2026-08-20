@@ -505,6 +505,22 @@ export const onNotificationCreated = onDocumentCreated(
                 logger.log(`User ${userId} has no FCM tokens. Skipping push notification.`);
                 return;
             }
+
+            // --- [MODIFIKASI] PREFERENSI NOTIFIKASI PENGGUNA ---
+            const prefs = userDoc.notificationPreferences;
+            if (prefs) {
+                let shouldPush = true;
+                const linkLower = link.toLowerCase();
+                if (linkLower.includes("/surat") && prefs.pushSuratMasuk === false) shouldPush = false;
+                else if (linkLower.includes("/disposisi") && prefs.pushDisposisi === false) shouldPush = false;
+                else if (linkLower.includes("/tugas") && prefs.pushTugas === false) shouldPush = false;
+                
+                if (!shouldPush) {
+                    logger.log(`User ${userId} has disabled push for this category (${link}). Skipping FCM.`);
+                    return;
+                }
+            }
+            // --- [AKHIR MODIFIKASI] ---
             
             // --- [MODIFIKASI PWA BADGE] Ambil hitungan notifikasi dari userSummaries ---
             let totalCount = 0;

@@ -21,8 +21,10 @@ export function middleware(request: NextRequest) {
   }
 
   // Cegah akses langsung ke folder UI (contoh: /dashboard/sigap) agar URL tetap rapi
+  // Tetapi pertahankan sisa path-nya agar deep link (seperti notifikasi) tidak putus!
   if (pathname.startsWith('/dashboard/sigap') || pathname.startsWith('/dashboard/poros')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url));
+    const cleanPath = pathname.replace(/^\/dashboard\/(sigap|poros)/, '/dashboard');
+    return NextResponse.redirect(new URL(cleanPath, request.url));
   }
 
   try {

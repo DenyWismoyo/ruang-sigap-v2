@@ -22,6 +22,8 @@ import BottomNavBar from '@/app/dashboard/sigap/components/BottomNavBar';
 import MobileMenuSheet from '@/app/dashboard/sigap/components/MobileMenuSheet'; 
 import MegaMenuPanel from '@/app/dashboard/sigap/components/MegaMenuPanel';     
 import SmartFab from '@/app/dashboard/sigap/components/SmartFab'; // [BARU] Import SmartFab
+import SigapCopilot from '@/app/dashboard/sigap/components/SigapCopilot'; // [BARU] AI Copilot
+import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
 
 import { app, db } from '@/lib/firebase'; 
 import { getMessaging, onMessage } from "firebase/messaging"; 
@@ -202,6 +204,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                 <div className="flex items-center space-x-2 md:space-x-4">
                   {/* [PERBAIKAN] Menghapus class 'hidden sm:block' agar Search muncul di HP */}
                   <div><GlobalSearch /></div>
+                  <InstallPwaButton />
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-accent-foreground hover:bg-accent/50">
@@ -268,8 +271,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </main>
             </div>
             
-            {/* [BARU] Smart FAB */}
+            {/* [BARU] Smart FAB & AI Copilot */}
             <SmartFab />
+            <SigapCopilot />
 
             <BottomNavBar 
                 pathname={pathname} 

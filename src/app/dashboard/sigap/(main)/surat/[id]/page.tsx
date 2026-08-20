@@ -757,9 +757,9 @@ export default function DetailSuratPage() {
               </div>
           </TabsContent>
           
-          <TabsList className="grid w-full grid-cols-2 h-[60px] p-1 rounded-none fixed bottom-[64px] left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-              <TabsTrigger value="dokumen" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><FileText size={18}/><span className="text-[10px]">Dokumen</span></TabsTrigger>
-              <TabsTrigger value="tindakLanjut" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><ListChecks size={18}/><span className="text-[10px]">Tindak Lanjut</span></TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-[50px] p-1 rounded-none fixed bottom-[var(--bottom-nav-height)] left-0 right-0 z-30 border-t bg-card/95 backdrop-blur-sm shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+              <TabsTrigger value="dokumen" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><FileText size={16}/><span className="text-[10px]">Dokumen</span></TabsTrigger>
+              <TabsTrigger value="tindakLanjut" className="h-full rounded-md data-[state=active]:bg-primary/10 data-[state=active]:text-primary text-muted-foreground flex flex-col gap-0.5"><ListChecks size={16}/><span className="text-[10px]">Tindak Lanjut</span></TabsTrigger>
           </TabsList>
         </Tabs>
       </div>

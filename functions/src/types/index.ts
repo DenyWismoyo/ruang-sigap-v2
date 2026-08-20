@@ -100,6 +100,11 @@ export interface UserProfile {
   googleTokenExpiry?: number | null;
     app_theme?: 'sigap' | 'poros';
   googleCalendarSyncEnabled?: boolean;
+  notificationPreferences?: {
+    pushSuratMasuk: boolean;
+    pushDisposisi: boolean;
+    pushTugas: boolean;
+  };
   // --- [AKHIR TAMBAHAN] ---
 
   // --- [PENAMBAHAN TAHAP 1 EFISIENSI] ---

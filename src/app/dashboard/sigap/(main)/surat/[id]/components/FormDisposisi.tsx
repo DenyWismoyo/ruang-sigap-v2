@@ -53,7 +53,8 @@ export default function FormDisposisi({
   latestDisposisi,
   isPimpinanPenerimaAwal
 }: FormDisposisiProps) {
-  const { userProfile } = useUserAuth();
+  const { userProfile, jabatanProfile, actingJabatanProfile } = useUserAuth();
+  const effectiveJabatan = actingJabatanProfile || jabatanProfile;
   const { addToast } = useToast();
   
   // --- HOOKS ---
@@ -149,6 +150,21 @@ export default function FormDisposisi({
   const handleRemoveJabatan = (uid: string) => {
     setSelectedPenerima(prev => prev.filter(u => u.uid !== uid));
   };
+
+  const handleSelectSuggestedPenerima = () => {
+      if (!surat.suggestedPenerimaIds || surat.suggestedPenerimaIds.length === 0) return;
+      const matched = bawahanList.filter(b => surat.suggestedPenerimaIds?.includes(b.jabatanId));
+      if (matched.length > 0) {
+          setSelectedPenerima(prev => {
+              const newItems = matched.filter(m => !prev.some(p => p.uid === m.uid));
+              return [...prev, ...newItems];
+          });
+          addToast(`Berhasil menambahkan ${matched.length} penerima rekomendasi AI`, 'success');
+      } else {
+          addToast('Penerima yang disarankan bukan bawahan Anda.', 'info');
+      }
+  };
+
   const handleTemplatClick = (teks: string) => {
     setInstruksi(prev => prev ? `${prev}\n${teks}` : teks);
   };
@@ -284,9 +300,23 @@ export default function FormDisposisi({
                 )}
                 
                 <div>
-                    <Label htmlFor="search-penerima" className="text-xs md:text-sm">
-                      {isPemberitahuanMode ? 'Kirim ke (Perorangan)' : 'Disposisikan Kepada'}
-                    </Label>
+                    <div className="flex justify-between items-center mb-1.5">
+                        <Label htmlFor="search-penerima" className="text-xs md:text-sm">
+                          {isPemberitahuanMode ? 'Kirim ke (Perorangan)' : 'Disposisikan Kepada'}
+                        </Label>
+                        {userProfile && userProfile.level < 5 && surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
+                            <Button 
+                                type="button" 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={handleSelectSuggestedPenerima}
+                                className="h-6 md:h-7 px-2 text-[10px] md:text-xs text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-900/20"
+                                title="Klik untuk memilih penerima yang disarankan AI"
+                            >
+                                <Sparkles size={12} className="mr-1 md:w-3 md:h-3"/> Saran Penerima AI
+                            </Button>
+                        )}
+                    </div>
                     <div className="flex flex-wrap gap-1.5 md:gap-2 my-2">
                         {selectedPenerima.map(user => (
                             <Badge key={user.uid} variant="secondary" className="flex items-center gap-1.5 py-0.5 md:py-1 px-2 text-[10px] md:text-xs">
@@ -343,21 +373,32 @@ export default function FormDisposisi({
                             <HelpCircle size={14} className="text-muted-foreground cursor-help mr-1" title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" />
                             <Button 
                                 type="button" 
-                                variant={isListening ? "default" : "outline"} 
+                                variant="outline" 
                                 size="sm" 
-                                onClick={() => isListening ? stopListening() : startListening(handleVoiceAIResult)} 
-                                disabled={isProcessingAI || isBawahanLoading} 
-                                className={`h-6 px-2 text-[10px] transition-all ${isListening ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse' : 'text-blue-600 hover:text-blue-700 bg-blue-50 dark:bg-blue-900/20'}`}
-                                title="Disposisi dengan Suara"
+                                disabled={true} 
+                                className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed"
+                                title="Fitur Disposisi Suara Sedang Dalam Tahap Pengembangan"
                             >
-                                {isProcessingAI ? <Loader2 size={10} className="animate-spin mr-1"/> : <Mic size={10} className="mr-1"/>} 
-                                {isListening ? 'Mendengarkan...' : 'Suara'}
+                                <Mic size={10} className="mr-1"/> 
+                                Suara (Segera)
                             </Button>
                             <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
                                 <Sparkles size={10} />
                             </Button>
                         </div>
                     </div>
+                    {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-2 mb-1 p-2.5 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-100 dark:border-blue-800">
+                        <span className="text-xs font-semibold text-blue-700 flex items-center gap-1.5"><Sparkles size={12} /> Rekomendasi Asisten Strategis AI:</span>
+                        <div className="flex flex-wrap gap-2">
+                          {surat.suggestedDisposisi.map((saran, idx) => (
+                              <Badge key={idx} variant="outline" className="cursor-pointer hover:bg-blue-100 text-[10px] md:text-xs py-1 px-2.5 border-blue-200 text-blue-700 transition-colors" onClick={() => setInstruksi(prev => prev ? `${prev}\n${saran}` : saran)} title={saran}>
+                                  Opsi {idx + 1}: {saran.length > 70 ? saran.substring(0, 70) + '...' : saran}
+                              </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex flex-wrap gap-1.5 md:gap-2 my-1.5 md:my-2">
                         {isTemplatLoading ? <p className="text-[10px] md:text-xs text-muted-foreground animate-pulse">Memuat templat...</p> : templatList.map(t => (
                               <Button key={t.id} type="button" variant="secondary" size="sm" className="h-6 md:h-8 text-[10px] md:text-xs px-2 md:px-3" onClick={() => handleTemplatClick(t.teksInstruksi)}>{t.teksInstruksi}</Button>
