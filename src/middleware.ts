@@ -29,8 +29,10 @@ export function middleware(request: NextRequest) {
   }
   
   if (!token) {
-    // Jika mencoba akses dashboard tapi tidak ada token, redirect ke login
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Jika mencoba akses dashboard tapi tidak ada token, redirect ke login dengan membawa path tujuan
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Cegah akses langsung ke folder UI (contoh: /dashboard/sigap) agar URL tetap rapi
@@ -43,14 +45,12 @@ export function middleware(request: NextRequest) {
   try {
     const claims = jwtDecode<{ app_theme?: string; exp?: number }>(token);
     
-    // [PERBAIKAN] Cek apakah token sudah kadaluarsa.
-    // Firebase ID Token berlaku 1 jam, tapi Firebase Auth SDK akan me-refresh-nya otomatis
-    // di background. Jika cookie masih ada tapi token sudah expired (misalnya browser ditutup
-    // lama tanpa koneksi), arahkan ke login agar user bisa memperbarui sesi.
-    if (claims.exp && claims.exp < Math.floor(Date.now() / 1000)) {
-      console.warn(`Middleware: Token expired (exp: ${claims.exp}). Redirecting to login.`);
-      return NextResponse.redirect(new URL('/login?session=expired', request.url));
-    }
+    // Token berhasil di-decode.
+    // Pengecekan expired tidak dilakukan di sini, karena Firebase SDK di client 
+    // akan mengurus perpanjangan token secara transparan. Jika token tidak valid,
+    // request API ke Firestore/Functions akan gagal dengan sendirinya, 
+    // dan AuthContext akan memaksa logout.
+    
     
     // 1. Cek theme dari __session (paling update dari client)
     // 2. Cek cookie app-theme (hanya bekerja di lokal)
@@ -69,7 +69,9 @@ export function middleware(request: NextRequest) {
     
   } catch (error) {
     console.error("Middleware JWT Decode error:", error);
-    return NextResponse.redirect(new URL('/login', request.url));
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('redirect', pathname);
+    return NextResponse.redirect(loginUrl);
   }
 }
 

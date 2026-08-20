@@ -60,7 +60,7 @@ export const useSuratData = (props: UseSuratDataProps) => {
               const visibleStatuses = ['Baru', 'Revisi Disposisi', 'Didisposisikan', 'Proses Tindak Lanjut', 'Selesai'];
               baseConstraints.push(where('statusPenyelesaian', 'in', visibleStatuses));
           } else {
-              baseConstraints.push(where('statusPenyelesaian', '==', 'Diarsipkan'));
+              baseConstraints.push(where('statusPenyelesaian', 'in', ['Selesai', 'Diarsipkan']));
           }
       } else {
           baseConstraints.push(where('terlibatJabatanIds', 'array-contains', effectiveJabatan.id));
@@ -133,7 +133,7 @@ export const useSuratData = (props: UseSuratDataProps) => {
           const visibleStatuses = ['Baru', 'Revisi Disposisi', 'Didisposisikan', 'Proses Tindak Lanjut', 'Selesai'];
           list = list.filter(s => visibleStatuses.includes(s.statusPenyelesaian));
       } else {
-          list = list.filter(s => s.statusPenyelesaian === 'Diarsipkan');
+          list = list.filter(s => ['Selesai', 'Diarsipkan'].includes(s.statusPenyelesaian));
       }
 
       if (props.filterJenis && props.filterJenis !== 'Semua') {

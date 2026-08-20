@@ -141,6 +141,12 @@ export const onDisposisiWrittenLogbook = onDocumentWritten(
             const newPenerimaIds = afterPenerima.filter(id => !beforePenerima.includes(id));
             
             for (const jabatanId of newPenerimaIds) {
+                // SKIP jika self-disposisi (pengirim = penerima) atau ditandai sebagai self-action
+                if (jabatanId === afterData.dariJabatanId || (afterData as any).isSelfAction === true) {
+                    logger.log(`Skipping logbook for self-disposition recipient ${jabatanId}`);
+                    continue;
+                }
+
                 const userId = await getUserIdFromJabatanId(jabatanId);
                 if (userId) {
                     await updateLogbook(userId, afterData.opdId || '', now, {
@@ -171,6 +177,12 @@ export const onTindakLanjutWrittenLogbook = onDocumentWritten(
 
         // Created (Laporan dikirim)
         if (!beforeData && afterData) {
+            // Skip logbook untuk auto-cleanup dan self-action karena sudah ditangani oleh frontend
+            if (afterData.sumber === 'auto_cleanup' || afterData.sumber === 'self_action') {
+                logger.log(`Skipping logbook for auto/self tindakLanjut ${event.params.tlId}`);
+                return;
+            }
+
             await updateLogbook(afterData.userId, afterData.opdId, now, {
                 deskripsi: `Tindak Lanjut Surat: "${perihalSurat}" - ${afterData.judulLaporan || 'Proses'}`,
                 selesai: false,

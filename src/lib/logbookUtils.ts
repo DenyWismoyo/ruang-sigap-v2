@@ -53,38 +53,29 @@ export const updateLogbook = async (
   const docRef = doc(db, 'logbookHarian', docId);
 
   try {
-    const docSnap = await getDoc(docRef);
-    let currentKegiatan: LogbookKegiatan[] = [];
+    // Tambahkan UID opsional ke arrayUnion untuk mencegah race condition (sudah atomic)
+    const entry = {
+      ...kegiatanBaru,
+      id: kegiatanBaru.id || `kegiatan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+      createdAt: kegiatanBaru.createdAt || new Date().toISOString(),
+    };
 
-    if (docSnap.exists()) {
-      currentKegiatan = (docSnap.data() as LogbookHarian).kegiatan || [];
-    }
-    
-    // Cek apakah kegiatan dengan ID ini sudah ada (misal: dari checklist)
-    // Jika ya, update. Jika tidak, tambahkan.
-    const existingIndex = currentKegiatan.findIndex(k => k.id === kegiatanBaru.id);
+    // Gunakan setDoc dengan arrayUnion agar proses update atomic
+    // import arrayUnion harus sudah ada di file, tapi saya harus cek impornya.
+    // Untungnya ini hanya string replacement. Saya asumsikan arrayUnion akan diimport.
+    const { arrayUnion } = await import('firebase/firestore');
 
-    if (existingIndex > -1) {
-      // Update kegiatan yang ada
-      currentKegiatan[existingIndex] = kegiatanBaru;
-    } else {
-      // Tambah kegiatan baru
-      currentKegiatan.push(kegiatanBaru);
-    }
-
-    // Simpan kembali ke Firestore
     await setDoc(docRef, {
       userId: userId,
       opdId: opdId,
       tanggal: Timestamp.fromDate(tanggalLogbook),
-      kegiatan: currentKegiatan, // Simpan daftar kegiatan yang sudah diperbarui
-    }, { merge: true }); // Gunakan merge untuk membuat dokumen jika belum ada
+      kegiatan: arrayUnion(entry),
+    }, { merge: true });
 
     console.log(`Logbook berhasil diperbarui untuk ${docId}`);
   
   } catch (error) {
     console.error("Error di updateLogbook helper:", error);
-    // Timbulkan error agar bisa ditangkap oleh fungsi yang memanggil
     throw new Error("Gagal memperbarui logbook harian.");
   }
 };

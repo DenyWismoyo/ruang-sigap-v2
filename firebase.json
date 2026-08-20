@@ -8,7 +8,7 @@
   ],
   "functions": {
     "source": "functions",
-    "codebase": "dev-siyap"
+    "codebase": "default"
   },
   "hosting": {
     "target": "sigap-opd",

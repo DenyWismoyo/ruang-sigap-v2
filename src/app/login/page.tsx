@@ -86,7 +86,8 @@ function LoginComponent() {
     // Jika sudah ada sesi aktif, langsung ke dashboard (persistent login).
     if (user) {
       setIsSuccessRedirecting(true);
-      router.push("/dashboard");
+      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectUrl);
     }
   }, [user, initializing, router]);
 
@@ -133,7 +134,8 @@ function LoginComponent() {
         await logIn(identifier, password);
       }
       setIsSuccessRedirecting(true);
-      router.push("/dashboard");
+      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectUrl);
     } catch (err: any) {
       setError(
         err.message || "Login gagal. Silakan periksa kembali data Anda.",
@@ -160,7 +162,8 @@ function LoginComponent() {
       // Jika sudah memiliki NIP claim, berarti sudah tertaut
       if (idTokenResult.claims.nip) {
         setIsSuccessRedirecting(true);
-        router.push("/dashboard");
+        const redirectUrl = searchParams.get("redirect") || "/dashboard";
+        router.push(redirectUrl);
         return;
       }
 
@@ -173,7 +176,8 @@ function LoginComponent() {
 
       if (!snapshot.empty) {
         setIsSuccessRedirecting(true);
-        router.push("/dashboard");
+        const redirectUrl = searchParams.get("redirect") || "/dashboard";
+        router.push(redirectUrl);
         return;
       }
 
@@ -234,7 +238,8 @@ function LoginComponent() {
         pendingUser,
       );
       setIsSuccessRedirecting(true);
-      router.push("/dashboard");
+      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      router.push(redirectUrl);
     } catch (err: any) {
       setError(err.message || "Gagal menautkan akun. Pastikan password benar.");
       console.error(err);

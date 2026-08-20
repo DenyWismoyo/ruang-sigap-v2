@@ -179,6 +179,9 @@ export default function RuangKerjaPage() {
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
   const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
 
+  // Guard untuk mencegah auto-cleanup ganda
+  const cleanupInProgressRef = useRef<Set<string>>(new Set());
+
   // --- AUTO CLEANUP SYSTEM ---
   useEffect(() => {
     if (!userProfile || !effectiveJabatan || !effectiveJabatan.id || feedItems.length === 0) return;
@@ -191,10 +194,18 @@ export default function RuangKerjaPage() {
          const isFromMe = d.dariJabatanId === currentJabatanId;
          const isToMe = d.kepadaJabatanId.includes(currentJabatanId);
          const isNotFinished = !(d.penerimaSelesai || []).includes(currentJabatanId);
-         return isFromMe && isToMe && isNotFinished;
+         const alreadyProcessing = cleanupInProgressRef.current.has(d.id!);
+         return isFromMe && isToMe && isNotFinished && !alreadyProcessing;
     });
 
     if (itemsToClean.length > 0) {
+        // Tandai sedang diproses
+        itemsToClean.forEach(item => {
+            if (item.type === 'surat_disposisi') {
+                cleanupInProgressRef.current.add(item.disposisi.id!);
+            }
+        });
+
         const autoCleanup = async () => {
              const batch = writeBatch(db);
              
@@ -205,7 +216,8 @@ export default function RuangKerjaPage() {
                   const disposisiRef = doc(db, 'disposisi', disposisi.id!);
                   batch.update(disposisiRef, {
                       penerimaDiterima: arrayUnion(currentJabatanId),
-                      penerimaSelesai: arrayUnion(currentJabatanId)
+                      penerimaSelesai: arrayUnion(currentJabatanId),
+                      isSelfAction: true
                   });
 
                   const tindakLanjutRef = doc(collection(db, 'tindakLanjut'));
@@ -216,6 +228,7 @@ export default function RuangKerjaPage() {
                       userId: userProfile.uid,
                       opdId: surat.opdId,
                       isiLaporan: "Pimpinan telah menindaklanjuti dan menyelesaikan surat ini secara mandiri (Auto-Cleanup).",
+                      sumber: 'auto_cleanup',
                       tanggalLaporan: serverTimestamp() as Timestamp
                   });
 
@@ -227,12 +240,18 @@ export default function RuangKerjaPage() {
                  await batch.commit();
                  refreshFeed();
              } catch (e) {
+                 // Hapus dari guard jika gagal agar bisa diulang
+                 itemsToClean.forEach(item => {
+                     if (item.type === 'surat_disposisi') {
+                         cleanupInProgressRef.current.delete(item.disposisi.id!);
+                     }
+                 });
                  console.error("Auto cleanup failed", e);
              }
         };
         autoCleanup();
     }
-  }, [feedItems, effectiveJabatan, userProfile, refreshFeed]);
+  }, [feedItems, effectiveJabatan, userProfile]);
 
   
   const { data: agendaData, isLoading: isAgendaLoading1 } = useQuery({
@@ -376,17 +395,30 @@ export default function RuangKerjaPage() {
       const batch = writeBatch(db);
       const actorName = `${userProfile.namaLengkap} (${effectiveJabatan.namaJabatan})`;
       const disposisiRef = doc(collection(db, 'disposisi'));
-      const disposisiData: Partial<Disposisi> = { suratId: surat.id, dariJabatanId: effectiveJabatan.id!, dariJabatanNama: effectiveJabatan.namaJabatan, opdId: effectiveJabatan.opdId, kepadaJabatanId: [effectiveJabatan.id!], instruksi: "Menindaklanjuti sendiri (Self-Action).", tanggalDisposisi: serverTimestamp() as Timestamp, penerimaDiterima: [effectiveJabatan.id!], penerimaSelesai: [effectiveJabatan.id!], status: 'Terkirim', isInformational: false };
+      const disposisiData: Partial<Disposisi> = { 
+          suratId: surat.id, 
+          dariJabatanId: effectiveJabatan.id!, 
+          dariJabatanNama: effectiveJabatan.namaJabatan, 
+          opdId: effectiveJabatan.opdId, 
+          kepadaJabatanId: [effectiveJabatan.id!], 
+          instruksi: "Menindaklanjuti sendiri (Self-Action).", 
+          tanggalDisposisi: serverTimestamp() as Timestamp, 
+          penerimaDiterima: [effectiveJabatan.id!], 
+          penerimaSelesai: [effectiveJabatan.id!], 
+          status: 'Terkirim', 
+          isInformational: false, 
+          isSelfAction: true 
+      };
       batch.set(disposisiRef, disposisiData);
-      const tindakLanjutRef = doc(collection(db, 'tindakLanjut'));
-      batch.set(tindakLanjutRef, { suratId: surat.id!, disposisiId: disposisiRef.id, jabatanId: effectiveJabatan.id!, userId: userProfile.uid, opdId: surat.opdId, isiLaporan: "Pimpinan telah menindaklanjuti secara mandiri.", tanggalLaporan: serverTimestamp() as Timestamp });
+      
       const suratRef = doc(db, 'surat', surat.id);
       batch.update(suratRef, { 
-    statusPenyelesaian: 'Selesai',
-    terlibatJabatanIds: arrayUnion(effectiveJabatan.id!) 
-});
+          statusPenyelesaian: 'Selesai',
+          terlibatJabatanIds: arrayUnion(effectiveJabatan.id!) 
+      });
       await logActivity(surat.id, actorName, "Menindaklanjuti Sendiri (Selesai)", "Menutup surat secara mandiri.");
       await batch.commit();
+      
       const logbookEntry = { id: `self_tl_${surat.id}_${Date.now()}`, deskripsi: `Menindaklanjuti dan menyelesaikan surat: "${surat.perihal}"`, selesai: true, tugasTerkaitId: surat.id, tugasTerkaitJudul: surat.perihal };
       await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), logbookEntry);
       addToast("Aksi berhasil dicatat & surat selesai!", "success");

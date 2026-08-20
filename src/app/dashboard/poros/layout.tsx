@@ -62,7 +62,7 @@ const ToastContainer = () => {
 };
 
 const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
-  const { user, userProfile, jabatanProfile, pltJabatanList, actingJabatanProfile, setActingJabatan, loading, logOut, isImpersonating, opdConfig } = useUserAuth(); 
+  const { user, userProfile, jabatanProfile, pltJabatanList, actingJabatanProfile, setActingJabatan, loading, initializing, logOut, isImpersonating, opdConfig } = useUserAuth(); 
   const { welcomeSummary, notifikasiList, resetNotificationCount } = useNotification();
   
   const router = useRouter();
@@ -76,9 +76,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const shouldShowLoader = loading && !userProfile;
+  const shouldShowLoader = (loading || initializing) && !userProfile;
 
-  useEffect(() => { if (!loading && !user) router.push('/login'); }, [user, loading, router]);
+  useEffect(() => { if (!loading && !initializing && !user) router.push(`/login?redirect=${pathname}`); }, [user, loading, initializing, router, pathname]);
 
   // ============================================================================
   // PERBAIKAN UTAMA: SETUP PUSH NOTIFICATION (FCM)

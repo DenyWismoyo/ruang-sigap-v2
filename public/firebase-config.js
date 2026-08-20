@@ -1,11 +1,13 @@
-// PENTING: File ini berisi nilai asli dari .env.local Anda.
+// [GENERATE OTOMATIS SAAT BUILD]
 // File ini HANYA untuk di-load oleh service worker (firebase-messaging-sw.js)
+// File ini tidak boleh di-commit ke Git.
+
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBzMOkF3FLxNrjSkME74bAvRdX1TxJFz9Q",
+  authDomain: "sigap-opd.firebaseapp.com",
+  projectId: "wsmy-lab",
+  storageBucket: "wsmy-lab.firebasestorage.app",
+  messagingSenderId: "346511497826",
+  appId: "1:346511497826:web:16961aa56c389afc934f3b",
+  measurementId: "G-LWHPTCFLXZ"
 };
