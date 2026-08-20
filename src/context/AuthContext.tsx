@@ -1,13 +1,15 @@
 // Lokasi: src/context/AuthContext.tsx
-// [OPTIMASI PERFORMA]
-// - Menghapus fetching `opdTemplatList` (Dipindahkan ke hook terpisah).
-// - AuthContext sekarang hanya fokus pada Identitas User & Konfigurasi Dasar.
-// - Load time aplikasi akan jauh lebih cepat.
+// [PERBAIKAN SESI & PERSISTENT LOGIN]
+// - Pisah state `initializing` (Firebase SDK belum siap) dari `loading` (fetch data).
+// - Gabungkan dua useEffect menjadi SATU untuk eliminasi race condition.
+// - SameSite=Lax + Secure agar cookie bekerja lintas domain (migrasi hosting).
+// - Session 30 hari untuk persistent login "tetap masuk sampai logout manual".
+// - Guard `lastFetchedUidRef` untuk mencegah re-fetch saat Firebase refresh token (1 jam sekali).
 
 "use client";
 
-import { useContext, createContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { signInWithEmailAndPassword, signOut, onAuthStateChanged, onIdTokenChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
+import { useContext, createContext, useState, useEffect, useRef, ReactNode, useCallback } from 'react';
+import { signInWithEmailAndPassword, signOut, onIdTokenChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
 import { db, auth, functions } from '@/lib/firebase';
 import { 
   collection, query, where, getDocs, doc, getDoc, Timestamp
@@ -28,6 +30,9 @@ interface AuthContextType {
   opdConfig: OpdConfig | null;
   // [DIHAPUS] opdTemplatList tidak lagi di sini
   loading: boolean;
+  /** True hanya saat Firebase SDK pertama kali inisialisasi (belum tahu ada sesi atau tidak).
+   *  Berbeda dengan `loading` yang true saat fetch data profil user. */
+  initializing: boolean;
   isImpersonating: boolean;
   originalUserUid: string | null;
   
@@ -47,6 +52,37 @@ interface AuthContextProviderProps {
     children: ReactNode;
 }
 
+// ─── Helper: Set cookie yang aman untuk App Hosting & cross-domain redirect ───
+// SameSite=Lax (bukan Strict) agar cookie tetap dikirim saat navigasi dari
+// domain lain (misal: banner redirect sigap-opd.web.app → sgp.omnifit.cloud).
+// Secure flag wajib ada di production (HTTPS).
+const getSecureFlag = () => 
+  typeof window !== 'undefined' && window.location.protocol === 'https:' ? '; Secure' : '';
+
+// 30 hari dalam detik — untuk persistent session "tetap login sampai logout manual"
+const SESSION_MAX_AGE = 60 * 60 * 24 * 30;
+
+function setSessionCookies(idToken: string, theme?: string | null) {
+  const secureFlag = getSecureFlag();
+  const sessionPayload: Record<string, string> = { token: idToken };
+  if (theme) sessionPayload.theme = theme;
+
+  document.cookie = `__session=${encodeURIComponent(JSON.stringify(sessionPayload))}; path=/; max-age=${SESSION_MAX_AGE}; SameSite=Lax${secureFlag}`;
+  document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=${SESSION_MAX_AGE}; SameSite=Lax${secureFlag}`;
+}
+
+function clearSessionCookies() {
+  const secureFlag = getSecureFlag();
+  document.cookie = `firebase-auth-token=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+  document.cookie = `__session=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+  document.cookie = `app-theme=; path=/; max-age=0; SameSite=Lax${secureFlag}`;
+}
+
+function setThemeCookie(theme: string) {
+  const secureFlag = getSecureFlag();
+  document.cookie = `app-theme=${theme}; path=/; max-age=${SESSION_MAX_AGE}; SameSite=Lax${secureFlag}`;
+}
+
 export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -54,19 +90,31 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const [pltJabatanList, setPltJabatanList] = useState<Jabatan[]>([]);
   const [actingJabatanProfile, setActingJabatanProfile] = useState<Jabatan | null>(null);
   const [opdConfig, setOpdConfig] = useState<OpdConfig | null>(null);
-  const [loading, setLoading] = useState(true); 
+  
+  // `initializing`: true hanya saat Firebase SDK belum selesai cek sesi pertama kali.
+  // Login page menggunakan ini agar tidak render form sebelum tahu ada sesi atau tidak.
+  const [initializing, setInitializing] = useState(true);
+  
+  // `loading`: true saat sedang fetch profil user dari Firestore.
+  const [loading, setLoading] = useState(false);
   
   const [isImpersonating, setIsImpersonating] = useState(false);
   const [originalUserUid, setOriginalUserUid] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
+  // Ref untuk mencegah duplicate fetch saat token di-refresh Firebase (setiap 1 jam).
+  // Menyimpan UID terakhir yang sudah di-fetch agar tidak re-fetch data yang sama.
+  const lastFetchedUidRef = useRef<string | null>(null);
+  // Ref untuk menyimpan instance logOut agar bisa dipanggil di dalam useEffect
+  // tanpa menjadikannya dependency (yang bisa menyebabkan re-subscribe listener).
+  const logOutRef = useRef<() => Promise<void>>(async () => {});
+
   const defaultFeatures: OpdConfig['features'] = {
     aiSuratReader: false, aiNotulensi: false, analitika: false,
     manajemenAset: false, persetujuanDraf: false, formBuilder: false
   };
 
-  // [BARU] Fungsi helper untuk memastikan cookie tema langsung di-set sebelum redirect!
   const syncThemeCookie = async (nip: string) => {
     try {
       const userDocRef = doc(db, "users", nip);
@@ -83,14 +131,13 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
               }
           }
       }
-      document.cookie = `app-theme=${theme || 'sigap'}; path=/; max-age=2592000; SameSite=Strict`;
+      setThemeCookie(theme || 'sigap');
     } catch(e) {
       console.error("Gagal sinkronisasi tema cookie:", e);
     }
   };
 
   const logIn = async (email: string, pass: string): Promise<UserCredential> => {
-    // Logika login email tetap sama...
     let nip: string;
     try {
       const checkAdminEmail = callCloudFunction("checkAdminEmail");
@@ -109,7 +156,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   };
 
   const logInWithNip = async (nip: string, pass: string): Promise<UserCredential> => {
-    // Logika login NIP tetap sama...
     if (!nip || !pass) throw new Error("NIP dan password tidak boleh kosong.");
     let email = '';
     try {
@@ -128,7 +174,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     return userCredential;
   };
 
-  // [BARU] Wrapper untuk sign in dengan token (impersonate)
   const signInWithToken = async (token: string): Promise<UserCredential> => {
       return await signInWithCustomToken(auth, token);
   }
@@ -154,8 +199,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     const isSameEmail = pendingUser?.email?.toLowerCase() === email.toLowerCase();
 
     // [PERBAIKAN PENTING] Hapus user Google sementara HANYA JIKA emailnya berbeda.
-    // Jika sama, Firebase biasanya sudah menggabungkan kredensialnya ke akun asli.
-    // Menghapus pendingUser jika emailnya sama akan MENGHAPUS akun NIP/Admin aslinya!
     if (pendingUser && !isSameEmail) {
       await pendingUser.delete();
     }
@@ -178,13 +221,11 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   };
 
   const logOut = useCallback(async () => {
-    // Bersihkan Cache & LocalStorage
     queryClient.removeQueries(); 
     queryClient.clear();
     
     if (typeof window !== 'undefined') {
         localStorage.removeItem('notulensi_draft_isi');
-        // Bersihkan draft disposisi
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('disposisi_draft_')) localStorage.removeItem(key);
         });
@@ -197,12 +238,20 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     setPltJabatanList([]);
     setActingJabatanProfile(null);
     setOpdConfig(null);
-    // opdTemplatList dihapus
     setIsImpersonating(false);
     setOriginalUserUid(null);
+    lastFetchedUidRef.current = null;
+    
+    // Hapus semua cookie sesi
+    clearSessionCookies();
     
     await signOut(auth);
   }, [queryClient]);
+
+  // Sync ref dengan versi terbaru logOut agar bisa dipanggil dari dalam useEffect
+  useEffect(() => {
+    logOutRef.current = logOut;
+  }, [logOut]);
 
   const setActingJabatan = useCallback((jabatanId: string | null) => {
     if (!jabatanId || jabatanId === jabatanProfile?.id) {
@@ -211,23 +260,22 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
         const actingRole = pltJabatanList.find(j => j.id === jabatanId);
         if (actingRole) setActingJabatanProfile(actingRole);
     }
-    // Invalidate queries agar data (surat/tugas) menyesuaikan jabatan baru
     queryClient.invalidateQueries();
   }, [jabatanProfile, pltJabatanList, queryClient]);
 
+  // ─── SINGLE useEffect untuk Auth State ───────────────────────────────────────
+  // Menggabungkan dua useEffect menjadi satu untuk menghilangkan race condition.
+  // Alur: onIdTokenChanged terpanggil → set cookie → fetch profil (jika UID baru) → selesai.
+  // Dependency array kosong ([]) disengaja: onIdTokenChanged sudah menangani semua perubahan.
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       if (currentUser) {
+        // ── Ada user yang login (atau token di-refresh setiap 1 jam) ──────
+        setUser(currentUser);
+
         const idTokenResult = await currentUser.getIdTokenResult();
-        const idToken = await currentUser.getIdToken();
-        // Set cookie untuk middleware SSR (Firebase Hosting mewajibkan nama __session)
-        const sessionPayload = { token: idToken };
-        document.cookie = `__session=${encodeURIComponent(JSON.stringify(sessionPayload))}; path=/; max-age=604800; SameSite=Strict`;
-        
-        // Simpan juga firebase-auth-token untuk legacy
-        document.cookie = `firebase-auth-token=${idToken}; path=/; max-age=604800; SameSite=Strict`;
-        
+
+        // Tandai impersonation
         if (idTokenResult.claims.impersonated && idTokenResult.claims.originalUid) {
           setIsImpersonating(true);
           setOriginalUserUid(idTokenResult.claims.originalUid as string);
@@ -235,129 +283,153 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
           setIsImpersonating(false);
           setOriginalUserUid(null);
         }
-      } else {
-        document.cookie = "firebase-auth-token=; path=/; max-age=0; SameSite=Strict";
-        document.cookie = "__session=; path=/; max-age=0; SameSite=Strict";
-        // Jika tidak ada user, stop loading
-        setIsImpersonating(false);
-        setOriginalUserUid(null);
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, [logOut]);
 
-  useEffect(() => {
-    if (!user) return;
+        // Set/update cookie sesi dengan token terbaru (penting saat token di-refresh setiap 1 jam)
+        const idToken = idTokenResult.token;
+        // Baca tema yang sudah ada dari cookie sebelum di-overwrite, agar tidak hilang saat token refresh
+        const existingTheme = (() => {
+          try {
+            const match = document.cookie.match(new RegExp('(^| )__session=([^;]+)'));
+            if (match) return JSON.parse(decodeURIComponent(match[2])).theme || null;
+          } catch { /* ignore */ }
+          return null;
+        })();
+        setSessionCookies(idToken, existingTheme);
 
-    const fetchUserAndOpdData = async () => {
+        // ── Guard: Hanya fetch profil jika ini UID yang baru (bukan sekadar token refresh) ──
+        if (lastFetchedUidRef.current === currentUser.uid) {
+          // Token di-refresh tapi user sama → cukup update cookie, tidak perlu re-fetch
+          setInitializing(false);
+          return;
+        }
+
+        // ── Fetch profil & data OPD untuk user baru ──────────────────────
         setLoading(true);
-        let profile: UserProfile | null = null;
-        let nip: string | undefined;
+        lastFetchedUidRef.current = currentUser.uid;
 
-        const idTokenResult = await user.getIdTokenResult();
-        nip = idTokenResult.claims.nip as string | undefined;
-        
+        let nip: string | undefined = idTokenResult.claims.nip as string | undefined;
+
         if (!nip) {
-            // Fallback cari manual jika custom claim belum siap
-            const q = query(collection(db, "users"), where("uid", "==", user.uid));
-            const userQuerySnapshot = await getDocs(q);
-            if (!userQuerySnapshot.empty) {
-                nip = userQuerySnapshot.docs[0].id;
-            }
+          // Fallback cari manual jika custom claim belum siap
+          const q = query(collection(db, "users"), where("uid", "==", currentUser.uid));
+          const userQuerySnapshot = await getDocs(q);
+          if (!userQuerySnapshot.empty) {
+            nip = userQuerySnapshot.docs[0].id;
+          }
         }
 
         if (!nip) {
-            await logOut();
-            setLoading(false);
-            return;
+          // User tidak ditemukan di sistem — paksa logout
+          lastFetchedUidRef.current = null;
+          await logOutRef.current();
+          setInitializing(false);
+          return;
         }
 
         try {
-            // 1. Ambil Profil User
-            const userDocRef = doc(db, "users", nip);
-            const userDocSnap = await getDoc(userDocRef);
+          // 1. Ambil Profil User
+          const userDocRef = doc(db, "users", nip);
+          const userDocSnap = await getDoc(userDocRef);
 
-            if (userDocSnap.exists() && userDocSnap.data().uid === user.uid) {
-                profile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
-            } else { throw new Error("Profil tidak ditemukan."); }
-        
-            if (profile.status === 'nonaktif') { 
-                await logOut(); 
-                setLoading(false); 
-                window.location.href = '/login?error=account_deactivated';
-                return; 
-            }
-            setUserProfile(profile);
-            
-            // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
-            const configRef = doc(db, 'opdConfigs', profile.opdId);
-            const configSnap = await getDoc(configRef);
-            let currentOpdConfig: OpdConfig | null = null;
-            if (configSnap.exists()) {
-                currentOpdConfig = { id: configSnap.id, ...configSnap.data() } as OpdConfig;
-                setOpdConfig({ ...currentOpdConfig, features: { ...defaultFeatures, ...currentOpdConfig.features } });
-            } else {
-                currentOpdConfig = { id: profile.opdId, name: 'OPD Default', features: defaultFeatures, packageName: 'Dasar', langgananAktifHingga: Timestamp.fromMillis(0), paymentStatus: 'Kedaluwarsa', kuotaPengguna: 0, penggunaAktifSaatIni: 0 } as OpdConfig;
-                setOpdConfig(currentOpdConfig);
-            }
+          let profile: UserProfile | null = null;
+          if (userDocSnap.exists() && userDocSnap.data().uid === currentUser.uid) {
+            profile = { id: userDocSnap.id, ...userDocSnap.data() } as UserProfile;
+          } else {
+            throw new Error("Profil tidak ditemukan atau UID tidak cocok.");
+          }
 
-            // [PERBAIKAN TEMA] Sinkronisasi Cookie app-theme agar middleware membaca UI yang tepat
-            // Prioritas: 1. app_theme dari profil user (jika ada override) -> 2. default_theme dari OPD -> 3. sigap
-            const userTheme = profile.app_theme || currentOpdConfig?.default_theme || 'sigap';
-            // [PERBAIKAN TEMA] Sinkronisasi Cookie app-theme agar middleware membaca UI yang tepat
-            document.cookie = `app-theme=${userTheme}; path=/; max-age=2592000; SameSite=Strict`; // Berlaku 30 hari
-            
-            // Masukkan juga tema ke dalam __session karena Firebase Hosting men-strip cookie app-theme ke server
-            try {
-               const cookieMatch = document.cookie.match(new RegExp('(^| )__session=([^;]+)'));
-               if (cookieMatch) {
-                   const sessionData = JSON.parse(decodeURIComponent(cookieMatch[2]));
-                   sessionData.theme = userTheme;
-                   document.cookie = `__session=${encodeURIComponent(JSON.stringify(sessionData))}; path=/; max-age=604800; SameSite=Strict`;
-               }
-            } catch(e) { console.error(e) }
-            
-            // 3. Ambil Jabatan & PLT (Penting untuk hak akses)
-            const pltQuery = query(collection(db, 'jabatan'), where("opdId", "==", profile.opdId), where("pltUserId", "==", user.uid), where("pltMulaiTanggal", "<=", Timestamp.now()));
-            
-            // [OPTIMASI] Hapus request `instruksiTemplat` dari sini!
-            const [jabatanSnap, pltSnapshot] = await Promise.all([
-                profile.jabatanId ? getDoc(doc(db, 'jabatan', profile.jabatanId)) : null,
-                getDocs(pltQuery)
-            ]);
+          if (profile.status === 'nonaktif') {
+            await logOutRef.current();
+            window.location.href = '/login?error=account_deactivated';
+            return;
+          }
+          setUserProfile(profile);
 
-            let definitif: Jabatan | null = null;
-            if (jabatanSnap && jabatanSnap.exists()) {
-                definitif = { id: jabatanSnap.id, ...jabatanSnap.data() } as Jabatan;
-                setJabatanProfile(definitif);
-                setActingJabatanProfile(definitif); 
-            }
+          // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
+          const configRef = doc(db, 'opdConfigs', profile.opdId);
+          const configSnap = await getDoc(configRef);
+          let currentOpdConfig: OpdConfig | null = null;
+          if (configSnap.exists()) {
+            currentOpdConfig = { id: configSnap.id, ...configSnap.data() } as OpdConfig;
+            setOpdConfig({ ...currentOpdConfig, features: { ...defaultFeatures, ...currentOpdConfig.features } });
+          } else {
+            currentOpdConfig = {
+              id: profile.opdId, name: 'OPD Default', features: defaultFeatures,
+              packageName: 'Dasar', langgananAktifHingga: Timestamp.fromMillis(0),
+              paymentStatus: 'Kedaluwarsa', kuotaPengguna: 0, penggunaAktifSaatIni: 0
+            } as OpdConfig;
+            setOpdConfig(currentOpdConfig);
+          }
 
-            const now = Timestamp.now();
-            const activePltRoles = pltSnapshot.docs
-                .map(d => ({ id: d.id, ...d.data() } as Jabatan))
-                .filter(j => j.pltSelesaiTanggal && j.pltSelesaiTanggal.toMillis() >= now.toMillis());
-                
-            setPltJabatanList(activePltRoles);
-            
-            // [DIHAPUS] setOpdTemplatList(...) tidak lagi dilakukan disini.
+          // [PERBAIKAN TEMA] Sinkronisasi cookie app-theme & update __session dengan tema
+          const userTheme = profile.app_theme || currentOpdConfig?.default_theme || 'sigap';
+          setThemeCookie(userTheme);
+          // Update __session dengan tema yang sudah diketahui (mengganti existingTheme di atas)
+          setSessionCookies(idToken, userTheme);
+
+          // 3. Ambil Jabatan & PLT (Penting untuk hak akses)
+          const pltQuery = query(
+            collection(db, 'jabatan'),
+            where("opdId", "==", profile.opdId),
+            where("pltUserId", "==", currentUser.uid),
+            where("pltMulaiTanggal", "<=", Timestamp.now())
+          );
+
+          const [jabatanSnap, pltSnapshot] = await Promise.all([
+            profile.jabatanId ? getDoc(doc(db, 'jabatan', profile.jabatanId)) : null,
+            getDocs(pltQuery)
+          ]);
+
+          let definitif: Jabatan | null = null;
+          if (jabatanSnap && jabatanSnap.exists()) {
+            definitif = { id: jabatanSnap.id, ...jabatanSnap.data() } as Jabatan;
+            setJabatanProfile(definitif);
+            setActingJabatanProfile(definitif);
+          }
+
+          const now = Timestamp.now();
+          const activePltRoles = pltSnapshot.docs
+            .map(d => ({ id: d.id, ...d.data() } as Jabatan))
+            .filter(j => j.pltSelesaiTanggal && j.pltSelesaiTanggal.toMillis() >= now.toMillis());
+          setPltJabatanList(activePltRoles);
 
         } catch (error: any) {
-             console.error("Error fetching user data:", error);
-             if (!isImpersonating) await logOut();
-        } finally { setLoading(false); }
-    };
-    
-    fetchUserAndOpdData();
-  }, [user, logOut, isImpersonating]);
+          console.error("Error fetching user data:", error);
+          lastFetchedUidRef.current = null; // Reset agar bisa retry
+          if (!isImpersonating) await logOutRef.current();
+        } finally {
+          setLoading(false);
+        }
+
+      } else {
+        // ── Tidak ada user (belum login / setelah logout) ─────────────────
+        setUser(null);
+        setUserProfile(null);
+        setJabatanProfile(null);
+        setPltJabatanList([]);
+        setActingJabatanProfile(null);
+        setOpdConfig(null);
+        setIsImpersonating(false);
+        setOriginalUserUid(null);
+        lastFetchedUidRef.current = null;
+        setLoading(false);
+      }
+
+      // Apapun hasilnya, Firebase SDK sudah selesai inisialisasi pertama kali
+      setInitializing(false);
+    });
+
+    return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  // Note: dependency array kosong ([]) disengaja. onIdTokenChanged sudah menangani
+  // semua perubahan auth state. logOut diakses via logOutRef.current (pattern ref).
 
   return (
     <AuthContext.Provider value={{
         user, userProfile, jabatanProfile, pltJabatanList, actingJabatanProfile,
-        opdConfig, 
-        // opdTemplatList dihapus dari value
-        loading, logIn, logInWithNip, logOut, setActingJabatan,
+        opdConfig,
+        loading, initializing, logIn, logInWithNip, logOut, setActingJabatan,
         isImpersonating, originalUserUid, signInWithToken,
         signInWithGoogle, linkGoogleFromLogin
     }}>

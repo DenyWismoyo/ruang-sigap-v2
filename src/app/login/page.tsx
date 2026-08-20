@@ -70,10 +70,23 @@ function LoginComponent() {
   const [linkPassword, setLinkPassword] = useState("");
   const [linkedProfile, setLinkedProfile] = useState<any>(null);
 
-  const { logIn, logInWithNip, signInWithGoogle, linkGoogleFromLogin, user, loading: authLoading } =
+  const { logIn, logInWithNip, signInWithGoogle, linkGoogleFromLogin, user, initializing } =
     useUserAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
+
+  // [PERBAIKAN] Redirect via useEffect, bukan conditional render.
+  // Ini memastikan tidak ada infinite loop: jika user sudah ada saat halaman login dimuat,
+  // redirect dilakukan setelah render pertama, bukan mencegah render form sama sekali.
+  useEffect(() => {
+    // Tunggu Firebase SDK selesai inisialisasi sebelum memutuskan redirect.
+    if (initializing) return;
+    // Jika sudah ada sesi aktif, langsung ke dashboard (persistent login).
+    if (user) {
+      setIsSuccessRedirecting(true);
+      router.push("/dashboard");
+    }
+  }, [user, initializing, router]);
 
   useEffect(() => {
     const impersonateToken = searchParams.get("impersonate_token");
@@ -96,6 +109,13 @@ function LoginComponent() {
     if (errorParam === "account_deactivated") {
       setError(
         "Akun Anda telah dinonaktifkan. Silakan hubungi Administrator OPD Anda (Mungkin batas kuota pengguna telah tercapai).",
+      );
+    }
+
+    const sessionParam = searchParams.get("session");
+    if (sessionParam === "expired") {
+      setError(
+        "Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.",
       );
     }
   }, [searchParams, router]);
@@ -222,7 +242,6 @@ function LoginComponent() {
 
   if (searchParams.get("impersonate_token")) {
     return (
-      // [PERBAIKAN DARK MODE]
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="text-center flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -239,14 +258,16 @@ function LoginComponent() {
     );
   }
 
-  // Menampilkan loader jika user sudah login atau sedang di-redirect
-  if (isSuccessRedirecting || (user && !authLoading)) {
+  // [PERBAIKAN] Tampilkan spinner hanya saat Firebase SDK belum selesai inisialisasi
+  // (belum tahu ada sesi atau tidak). Ini mencegah form muncul sebelum waktunya,
+  // sekaligus mencegah infinite loop yang terjadi saat memakai `user && !authLoading`.
+  if (initializing || isSuccessRedirecting) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="text-center flex flex-col items-center gap-4">
           <Loader2 className="h-8 w-8 animate-spin text-primary" />
           <p className="text-lg font-semibold text-foreground">
-            Menyiapkan ruang kerja Anda...
+            {isSuccessRedirecting ? "Menyiapkan ruang kerja Anda..." : "Memeriksa sesi..."}
           </p>
         </div>
       </div>

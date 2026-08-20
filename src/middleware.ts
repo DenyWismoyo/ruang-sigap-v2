@@ -41,7 +41,17 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    const claims = jwtDecode<{ app_theme?: string }>(token);
+    const claims = jwtDecode<{ app_theme?: string; exp?: number }>(token);
+    
+    // [PERBAIKAN] Cek apakah token sudah kadaluarsa.
+    // Firebase ID Token berlaku 1 jam, tapi Firebase Auth SDK akan me-refresh-nya otomatis
+    // di background. Jika cookie masih ada tapi token sudah expired (misalnya browser ditutup
+    // lama tanpa koneksi), arahkan ke login agar user bisa memperbarui sesi.
+    if (claims.exp && claims.exp < Math.floor(Date.now() / 1000)) {
+      console.warn(`Middleware: Token expired (exp: ${claims.exp}). Redirecting to login.`);
+      return NextResponse.redirect(new URL('/login?session=expired', request.url));
+    }
+    
     // 1. Cek theme dari __session (paling update dari client)
     // 2. Cek cookie app-theme (hanya bekerja di lokal)
     // 3. Cek claims app_theme (dari token)
