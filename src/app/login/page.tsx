@@ -296,13 +296,14 @@ function LoginComponent() {
 
   return (
     // [PERBAIKAN DARK MODE]
-    <div className="flex min-h-screen flex-col bg-muted relative overflow-hidden">
+    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 relative overflow-hidden">
+      {/* Banner Migrasi */}
       <div className="absolute top-0 w-full z-50">
         <DomainBanner />
       </div>
-      <div className="flex flex-1 items-center justify-center p-4">
-        {/* Theme Toggle Button */}
-        <div className="absolute top-6 right-6 z-40">
+
+      {/* Theme Toggle Button */}
+      <div className="absolute top-12 md:top-6 right-6 z-40">
         <ThemeToggleCompact />
       </div>
 
