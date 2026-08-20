@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
+import DomainBanner from "@/components/DomainBanner";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -25,6 +26,11 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 selection:bg-blue-100 dark:selection:bg-blue-900/50 selection:text-blue-900 dark:selection:text-blue-100 transition-colors duration-300">
+      {/* Banner Migrasi Domain */}
+      <div className="absolute top-0 left-0 w-full z-[60]">
+        <DomainBanner />
+      </div>
+
       {/* Navbar Minimalis */}
       <nav className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
         <div className="flex items-center gap-2">
