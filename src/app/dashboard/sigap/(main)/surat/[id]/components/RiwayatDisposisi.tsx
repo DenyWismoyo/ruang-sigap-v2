@@ -80,7 +80,7 @@ export default function RiwayatDisposisi({ disposisiList, suratId, userProfile, 
                const snapshotUser = snapshotList.find((p: any) => p.jabatanId === id);
 
                const cachedUser = userCache?.get(id);
-               const jabatanName = jabatanCache?.get(id);
+               const jabatanName = snapshotUser?.namaJabatan || jabatanCache?.get(id);
                
                if (snapshotUser) return snapshotUser.nama; 
                if (cachedUser) return cachedUser.namaLengkap; 

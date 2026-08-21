@@ -144,7 +144,7 @@ export function DispositionTracker({ disposisiList, userCache, jabatanCache }: D
                                         const snapshotList = (disp as any).penerimaSnapshot || [];
                                         const snapshotUser = snapshotList.find((p: any) => p.jabatanId === jabatanId);
                                         const cachedUser = userCache?.get(jabatanId);
-                                        const jabatanName = jabatanCache?.get(jabatanId) || 'Jabatan Tidak Dikenal';
+                                        const jabatanName = snapshotUser?.namaJabatan || jabatanCache?.get(jabatanId) || 'Jabatan Tidak Dikenal';
 
                                         let displayName: string | React.ReactNode;
                                         let avatarInitial = '?';

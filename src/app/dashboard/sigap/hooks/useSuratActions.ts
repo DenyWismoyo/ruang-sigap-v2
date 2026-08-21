@@ -116,7 +116,8 @@ export const useSuratActions = () => {
           jabatanId: t.jabatanId,
           nama: t.namaLengkap,
           nip: t.nip || '',
-          golongan: t.golongan || ''
+          golongan: t.golongan || '',
+          namaJabatan: t.namaJabatan || ''
       }));
       
       const disposisiData: Partial<Disposisi> = {
@@ -226,7 +227,8 @@ export const useSuratActions = () => {
             jabatanId: atasanTarget.jabatanId,
             nama: atasanTarget.namaLengkap,
             nip: atasanTarget.nip || '',
-            golongan: atasanTarget.golongan || ''
+            golongan: atasanTarget.golongan || '',
+            namaJabatan: atasanTarget.namaJabatan || ''
         }],
         instruksi: catatan, 
         tanggalDisposisi: serverTimestamp() as Timestamp,

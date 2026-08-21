@@ -4,7 +4,7 @@
 
 const firebaseConfig = {
   apiKey: "AIzaSyBzMOkF3FLxNrjSkME74bAvRdX1TxJFz9Q",
-  authDomain: "sigap-opd.firebaseapp.com",
+  authDomain: "sigap-opd.web.app",
   projectId: "wsmy-lab",
   storageBucket: "wsmy-lab.firebasestorage.app",
   messagingSenderId: "346511497826",
