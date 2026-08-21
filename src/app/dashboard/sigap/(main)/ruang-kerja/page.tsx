@@ -387,13 +387,21 @@ export default function RuangKerjaPage() {
     } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
   };
 
-  const handleQuickSelfTindakLanjut = async (surat: Surat) => {
-      const success = await tindakLanjutiSendiri(surat);
-      if (success) {
-          const logbookEntry = { id: `self_tl_${surat.id}_${Date.now()}`, deskripsi: `Menindaklanjuti dan menyelesaikan surat secara mandiri: "${surat.perihal}"`, selesai: true, tugasTerkaitId: surat.id, tugasTerkaitJudul: surat.perihal };
-          await updateLogbook(userProfile?.uid!, userProfile?.opdId!, new Date(), logbookEntry);
-          refreshFeed(); 
-      }
+  const handleQuickSelfTindakLanjut = (surat: Surat) => { setConfirmSelfTindakLanjut(surat); };
+  
+  const executeSelfTindakLanjut = async () => {
+    if (!confirmSelfTindakLanjut || !userProfile || !effectiveJabatan) return;
+    const surat = confirmSelfTindakLanjut;
+    setIsActionLoading(surat.id); setConfirmSelfTindakLanjut(null); 
+    
+    try {
+        const success = await tindakLanjutiSendiri(surat);
+        if (success) {
+            const logbookEntry = { id: `self_tl_${surat.id}_${Date.now()}`, deskripsi: `Menindaklanjuti dan menyelesaikan surat secara mandiri: "${surat.perihal}"`, selesai: true, tugasTerkaitId: surat.id, tugasTerkaitJudul: surat.perihal };
+            await updateLogbook(userProfile?.uid!, userProfile?.opdId!, new Date(), logbookEntry);
+            refreshFeed(); 
+        }
+    } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
   };
 
   const handleQuickDisposisiClick = (surat: Surat, sourceDispo?: Disposisi) => { 
