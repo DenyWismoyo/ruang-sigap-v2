@@ -112,6 +112,12 @@ export const useSuratActions = () => {
 
       const disposisiRef = doc(collection(db, 'disposisi'));
       const targetJabatanIds = targets.map(t => t.jabatanId);
+      const penerimaSnapshot = targets.map(t => ({
+          jabatanId: t.jabatanId,
+          nama: t.namaLengkap,
+          nip: t.nip || '',
+          golongan: t.golongan || ''
+      }));
       
       const disposisiData: Partial<Disposisi> = {
         suratId: surat.id,
@@ -119,6 +125,7 @@ export const useSuratActions = () => {
         dariJabatanNama: effectiveJabatan.namaJabatan,
         opdId: effectiveJabatan.opdId,
         kepadaJabatanId: targetJabatanIds,
+        penerimaSnapshot: penerimaSnapshot,
         instruksi: instruksi,
         tanggalDisposisi: serverTimestamp() as Timestamp,
         penerimaDiterima: [],
@@ -215,6 +222,12 @@ export const useSuratActions = () => {
         dariJabatanNama: effectiveJabatan.namaJabatan,
         opdId: effectiveJabatan.opdId,
         kepadaJabatanId: [atasanTarget.jabatanId],
+        penerimaSnapshot: [{
+            jabatanId: atasanTarget.jabatanId,
+            nama: atasanTarget.namaLengkap,
+            nip: atasanTarget.nip || '',
+            golongan: atasanTarget.golongan || ''
+        }],
         instruksi: catatan, 
         tanggalDisposisi: serverTimestamp() as Timestamp,
         penerimaDiterima: [],

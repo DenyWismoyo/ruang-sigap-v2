@@ -409,7 +409,9 @@ function QuickTrackContent({ surat, userMap, jabatanMap }: { surat: Surat, userM
                                     </p>
                                     <div className="mt-1 flex flex-wrap gap-1">
                                         {d.kepadaJabatanId.map(jId => {
-                                            const jName = jabatanMap.get(jId)?.namaJabatan || 'Pegawai';
+                                            const snapshotList = (d as any).penerimaSnapshot || [];
+                                            const snapshotUser = snapshotList.find((p: any) => p.jabatanId === jId);
+                                            const jName = snapshotUser ? snapshotUser.nama : (jabatanMap.get(jId)?.namaJabatan || 'Pegawai');
                                             const isDone = (d.penerimaSelesai || []).includes(jId);
                                             return (
                                                 <Badge key={jId} variant="secondary" className={`text-[10px] px-1.5 py-0 ${isDone ? 'bg-green-100 text-green-700 border-green-200' : 'bg-muted'}`}>
