@@ -656,6 +656,54 @@ export const useSuratActions = () => {
       }
   };
 
+  const tindakLanjutiSendiri = async (surat: Surat) => {
+      if (!userProfile || !effectiveJabatan) return false;
+      setIsProcessing(true);
+      try {
+          const batch = writeBatch(db);
+          const actorName = getActorName();
+
+          // 1. Buat record TindakLanjut (mandiri, tanpa disposisi parent)
+          const tindakLanjutRef = doc(collection(db, 'tindakLanjut'));
+          const tindakLanjutData: Omit<TindakLanjut, 'id'> = {
+              suratId: surat.id!, 
+              disposisiId: 'mandiri', // Flag penanda mandiri
+              jabatanId: effectiveJabatan.id!, 
+              userId: userProfile.uid, 
+              isiLaporan: "Pimpinan telah menindaklanjuti dan menyelesaikan surat ini secara mandiri.", 
+              judulLaporan: "Tindak Lanjut Mandiri",
+              warnaLabel: "blue",
+              checklist: [],
+              tanggalLaporan: serverTimestamp() as Timestamp,
+              opdId: surat.opdId,
+              terlibatJabatanIds: surat.terlibatJabatanIds || [effectiveJabatan.id!],
+          } as any; 
+          batch.set(tindakLanjutRef, tindakLanjutData as any);
+
+          // 2. Ubah Surat jadi Selesai
+          const suratRef = doc(db, 'surat', surat.id!);
+          batch.update(suratRef, { 
+              statusPenyelesaian: 'Selesai',
+              terlibatJabatanIds: arrayUnion(effectiveJabatan.id!)
+          });
+
+          // 3. Catat Aktivitas
+          await logActivity(surat.id!, actorName, "Menyelesaikan Secara Mandiri (SELESAI)", "Pimpinan telah menindaklanjuti dan menyelesaikan surat secara langsung.");
+
+          await batch.commit();
+
+          addToast("Surat berhasil ditindaklanjuti dan diselesaikan secara mandiri.", "success");
+          refreshData();
+          return true;
+      } catch (err) {
+          console.error("Error tindakLanjutiSendiri:", err);
+          addToast("Gagal menyelesaikan surat secara mandiri.", "error");
+          return false;
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
   const distribusikanArsip = async (surat: Surat, targetUsers: UserProfile[]) => {
       if (!userProfile || !surat.id) return false;
       setIsProcessing(true);
@@ -699,6 +747,7 @@ export const useSuratActions = () => {
     archiveSurat,
     kembalikanDisposisi,
     distribusikanArsip,
+    tindakLanjutiSendiri,
     updateSurat,
     deleteSurat
   };

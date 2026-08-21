@@ -60,7 +60,7 @@ export default function FormDisposisi({
   // --- HOOKS ---
   const { bawahanList, isLoading: isBawahanLoading, error: bawahanError } = useBawahanList(userCache, opdJabatans);
   const { templatList, isLoading: isTemplatLoading } = useInstruksiTemplat();
-  const { kirimDisposisi, isProcessing } = useSuratActions(); 
+  const { kirimDisposisi, tindakLanjutiSendiri, isProcessing } = useSuratActions(); 
   const { isListening, isProcessingAI, audioBlob, startListening, stopListening, resetAudio } = useVoiceAssistant(bawahanList);
 
   const handleVoiceAIResult = (result: any) => {
@@ -248,10 +248,13 @@ export default function FormDisposisi({
       setConfirmModal({
         isOpen: true,
         title: 'Konfirmasi Aksi',
-        message: 'Anda yakin ingin menindaklanjuti surat ini sendiri?',
-        onConfirm: () => {
-            const selfInstruksi = instruksi.trim() || `Akan dihadiri/ditindaklanjuti secara pribadi.`;
-            handleSend([userProfile], selfInstruksi, false);
+        message: 'Anda yakin ingin menyelesaikan surat ini sendiri (Tindak Lanjut Mandiri)? Alur disposisi akan langsung ditutup menjadi Selesai.',
+        onConfirm: async () => {
+            const success = await tindakLanjutiSendiri(surat);
+            if (success) {
+                onDisposisiSuccess();
+                setConfirmModal(prev => ({ ...prev, isOpen: false }));
+            }
         }
     });
   };

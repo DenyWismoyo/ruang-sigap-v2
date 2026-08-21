@@ -40,6 +40,7 @@ import { useTheme } from '@/context/ThemeContext';
 import { useRuangKerjaFeed } from '@/app/dashboard/sigap/hooks/useRuangKerjaFeed'; 
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';         
 import { useInstruksiTemplat } from '@/app/dashboard/sigap/hooks/useInstruksiTemplat'; 
+import { useSuratActions } from '@/app/dashboard/sigap/hooks/useSuratActions'; 
 
 import { db } from '@/lib/firebase';
 import { useQuery } from '@tanstack/react-query'; 
@@ -141,6 +142,7 @@ export default function RuangKerjaPage() {
 
   const { userMap, jabatanMap, isLoading: isMasterLoading } = useMasterData(true);
   const { templatList, isLoading: isTemplatLoading } = useInstruksiTemplat();
+  const { tindakLanjutiSendiri } = useSuratActions();
 
   const [openDisposisiFormId, setOpenDisposisiFormId] = useState<string | null>(null);
   const [isActionLoading, setIsActionLoading] = useState<string | null>(null);
@@ -227,7 +229,7 @@ export default function RuangKerjaPage() {
                       jabatanId: currentJabatanId,
                       userId: userProfile.uid,
                       opdId: surat.opdId,
-                      isiLaporan: "Pimpinan telah menindaklanjuti dan menyelesaikan surat ini secara mandiri (Auto-Cleanup).",
+                      isiLaporan: "Telah ditindaklanjuti dan diselesaikan secara mandiri.",
                       sumber: 'auto_cleanup',
                       tanggalLaporan: serverTimestamp() as Timestamp
                   });
@@ -385,45 +387,13 @@ export default function RuangKerjaPage() {
     } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
   };
 
-  const handleQuickSelfTindakLanjut = (surat: Surat) => { setConfirmSelfTindakLanjut(surat); };
-  
-  const executeSelfTindakLanjut = async () => {
-    if (!confirmSelfTindakLanjut || !userProfile || !effectiveJabatan) return;
-    const surat = confirmSelfTindakLanjut;
-    setIsActionLoading(surat.id); setConfirmSelfTindakLanjut(null); 
-    try {
-      const batch = writeBatch(db);
-      const actorName = `${userProfile.namaLengkap} (${effectiveJabatan.namaJabatan})`;
-      const disposisiRef = doc(collection(db, 'disposisi'));
-      const disposisiData: Partial<Disposisi> = { 
-          suratId: surat.id, 
-          dariJabatanId: effectiveJabatan.id!, 
-          dariJabatanNama: effectiveJabatan.namaJabatan, 
-          opdId: effectiveJabatan.opdId, 
-          kepadaJabatanId: [effectiveJabatan.id!], 
-          instruksi: "Menindaklanjuti sendiri (Self-Action).", 
-          tanggalDisposisi: serverTimestamp() as Timestamp, 
-          penerimaDiterima: [effectiveJabatan.id!], 
-          penerimaSelesai: [effectiveJabatan.id!], 
-          status: 'Terkirim', 
-          isInformational: false, 
-          isSelfAction: true 
-      };
-      batch.set(disposisiRef, disposisiData);
-      
-      const suratRef = doc(db, 'surat', surat.id);
-      batch.update(suratRef, { 
-          statusPenyelesaian: 'Selesai',
-          terlibatJabatanIds: arrayUnion(effectiveJabatan.id!) 
-      });
-      await logActivity(surat.id, actorName, "Menindaklanjuti Sendiri (Selesai)", "Menutup surat secara mandiri.");
-      await batch.commit();
-      
-      const logbookEntry = { id: `self_tl_${surat.id}_${Date.now()}`, deskripsi: `Menindaklanjuti dan menyelesaikan surat: "${surat.perihal}"`, selesai: true, tugasTerkaitId: surat.id, tugasTerkaitJudul: surat.perihal };
-      await updateLogbook(userProfile.uid, userProfile.opdId, new Date(), logbookEntry);
-      addToast("Aksi berhasil dicatat & surat selesai!", "success");
-      refreshFeed(); 
-    } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
+  const handleQuickSelfTindakLanjut = async (surat: Surat) => {
+      const success = await tindakLanjutiSendiri(surat);
+      if (success) {
+          const logbookEntry = { id: `self_tl_${surat.id}_${Date.now()}`, deskripsi: `Menindaklanjuti dan menyelesaikan surat secara mandiri: "${surat.perihal}"`, selesai: true, tugasTerkaitId: surat.id, tugasTerkaitJudul: surat.perihal };
+          await updateLogbook(userProfile?.uid!, userProfile?.opdId!, new Date(), logbookEntry);
+          refreshFeed(); 
+      }
   };
 
   const handleQuickDisposisiClick = (surat: Surat, sourceDispo?: Disposisi) => { 
