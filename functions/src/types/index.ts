@@ -245,4 +245,4 @@ export interface KinerjaPerPenggunaHarian {
   disposisiDikembalikan: number;
 }
 // --- [AKHIR MODIFIKASI BILLING] ---
-
+export interface PelayananTransaksi { id?: string; opdId: string; tanggal: Timestamp; namaPemohon: string; noHp?: string; namaPengambil?: string; alamat?: string; customData?: Record<string, any>; kategori: 'Pengambilan' | 'Layanan Umum'; jenisDokumen?: string; judulLayanan?: string; catatan?: string; status: 'Selesai' | 'Diproses' | 'Menunggu'; fotoBuktiUrl?: string; petugasId: string; petugasNama: string; createdAt: Timestamp; }

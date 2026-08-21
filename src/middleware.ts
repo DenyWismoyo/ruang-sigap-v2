@@ -3,6 +3,17 @@ import type { NextRequest } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 
 export function middleware(request: NextRequest) {
+  const hostname = request.headers.get('host') || request.nextUrl.hostname;
+  
+  // Redirect otomatis jika diakses dari domain hosting lama (Firebase Hosting)
+  if (hostname.includes('sigap-opd.web.app') || hostname.includes('firebaseapp.com')) {
+    const newUrl = new URL(request.url);
+    newUrl.hostname = 'sgp.omnifit.cloud';
+    newUrl.protocol = 'https:';
+    newUrl.port = ''; 
+    return NextResponse.redirect(newUrl);
+  }
+
   const { pathname } = request.nextUrl;
   
   // Hanya berlaku untuk /dashboard
@@ -76,5 +87,14 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: [
+    /*
+     * Match semua request paths kecuali yang diawali dengan:
+     * - api (API routes)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     */
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
+  ],
 };
