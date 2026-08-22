@@ -22,6 +22,7 @@ import BottomNavBar from '@/app/dashboard/sigap/components/BottomNavBar';
 import MobileMenuSheet from '@/app/dashboard/sigap/components/MobileMenuSheet'; 
 import MegaMenuPanel from '@/app/dashboard/sigap/components/MegaMenuPanel';     
 import SigapCopilot from '@/app/dashboard/sigap/components/SigapCopilot'; // [BARU] AI Copilot
+import PortalPintarFab from '@/app/dashboard/sigap/components/PortalPintarFab'; // [BARU] Portal Pintar Global
 import SigapUploadFab from '@/app/dashboard/sigap/components/SigapUploadFab'; 
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
 import DomainBanner from '@/components/DomainBanner';
@@ -277,10 +278,18 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </main>
             </div>
             
-            {/* [BARU] Smart FAB & AI Copilot */}
-            <SigapCopilot />
-            <SigapUploadFab />
-            <GlobalBatchReportWidget />
+            {/* [BARU] Smart FAB Dock (Kanan) */}
+            <div className="fixed bottom-24 right-0 md:right-6 z-[100] flex flex-col-reverse gap-3 md:gap-4 items-end pointer-events-none *:pointer-events-auto">
+                <SigapCopilot />
+                <PortalPintarFab />
+                <GlobalBatchReportWidget />
+            </div>
+
+            {/* [BARU] Smart FAB Dock (Kiri) */}
+            <div className="fixed bottom-24 left-0 md:left-6 z-[100] flex flex-col-reverse gap-3 md:gap-4 items-start pointer-events-none *:pointer-events-auto">
+                <SigapUploadFab />
+            </div>
+
             <GlobalQuickReport />
 
             <BottomNavBar 

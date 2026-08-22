@@ -54,28 +54,24 @@ export default function GlobalBatchReportWidget() {
                         initial={{ scale: 0, opacity: 0, y: 20 }} 
                         animate={{ scale: 1, opacity: 1, y: 0 }}
                         exit={{ scale: 0, opacity: 0, y: 20 }}
-                        // Posisikan di atas tombol Copilot
-                        className={`fixed ${bottomPos} right-0 z-[45] flex items-center transition-all duration-300`}
+                        className="flex items-center transition-all duration-300 relative group"
                     >
-                        <div className="relative group">
+                        <div className="relative">
                             {/* Tooltip Hover */}
                             <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap hidden md:block">
                                 Lapor Masal (Ada {overdueCount} tugas &gt; 2 hari)
                             </div>
                             
-                            {/* Tombol yang menempel di layar kanan */}
                             <div 
                                 onClick={() => setIsOpen(true)}
-                                className="w-14 h-14 md:w-16 md:h-16 bg-amber-500 hover:bg-amber-600 backdrop-blur-xl border-l border-y border-white/20 rounded-l-full flex items-center justify-center cursor-pointer shadow-xl relative transition-all duration-300 hover:pr-2 group-active:scale-95"
+                                className="w-12 h-12 bg-orange-500 hover:bg-orange-600 backdrop-blur-xl rounded-l-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(249,115,22,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y md:border-r border-white/20 hover:pr-2 md:hover:pr-0"
                             >
-                                {/* Efek Ping merah merona di belakang icon */}
-                                <div className="absolute inset-0 rounded-l-full bg-red-500 animate-ping opacity-20 pointer-events-none"></div>
+                                <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20 pointer-events-none"></div>
+                                <Zap className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-transform" />
                                 
-                                <Zap className="w-5 h-5 md:w-6 md:h-6 text-white fill-white" />
-                                
-                                <span className="absolute top-1 md:top-2 right-2 md:right-3 w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full bg-red-600 text-[10px] md:text-xs font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-900 animate-pulse">
-                                    {pendingItems.length}
-                                </span>
+                                <div className="absolute -top-1 -right-1 bg-red-600 border-2 border-background text-white text-[10px] md:text-xs font-bold w-5 h-5 md:w-6 md:h-6 flex items-center justify-center rounded-full shadow-md z-10">
+                                    {overdueCount > 99 ? '99+' : overdueCount}
+                                </div>
                             </div>
                         </div>
                     </motion.div>

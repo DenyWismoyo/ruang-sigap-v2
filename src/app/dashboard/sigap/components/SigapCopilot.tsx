@@ -111,15 +111,15 @@ export default function SigapCopilot() {
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             transition={{ type: "spring", stiffness: 260, damping: 20 }}
-            className={`fixed ${bottomPos} right-0 z-50 flex items-center transition-all duration-300`}
+            className="flex items-center transition-all duration-300 relative group"
           >
             <div
               onClick={() => setIsOpen(true)}
-              className="w-14 h-14 md:w-16 md:h-16 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl border-l border-y border-white/20 rounded-l-full flex items-center justify-center cursor-pointer shadow-xl relative group transition-all duration-300 hover:pr-2"
+              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl rounded-l-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(37,99,235,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y md:border-r border-white/20 hover:pr-2 md:hover:pr-0"
             >
-              <Bot className="w-5 h-5 md:w-6 md:h-6 text-white" />
-              <Sparkles size={12} className="absolute top-2.5 md:top-3 right-3 md:right-4 text-amber-400 animate-pulse" />
-              <span className="absolute top-1 md:top-2 right-1 md:right-2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-500 border border-white z-20" />
+              <Bot className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+              <Sparkles size={12} className="absolute top-2 right-2 text-amber-400 animate-pulse" />
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-emerald-500 border-2 border-background z-20" />
             </div>
           </motion.div>
         )}

@@ -1,7 +1,6 @@
 // Lokasi: functions/src/validasiDisposisi.ts
 // [Fungsi Backend]: Memastikan sinkronisasi status Surat otomatis saat seluruh disposisi multi-penerima sudah diselesaikan.
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
 const db = getFirestore("database-siyap");

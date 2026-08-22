@@ -34,15 +34,15 @@ export default function SigapUploadFab() {
         animate={{ scale: 1, opacity: 1, x: 0 }}
         exit={{ scale: 0, opacity: 0, x: -50 }}
         transition={{ type: "spring", stiffness: 260, damping: 20 }}
-        className={`fixed ${bottomPos} left-0 z-50 flex items-center transition-all duration-300`}
+        className="flex items-center transition-all duration-300 relative group"
       >
         <div
           onClick={() => router.push('/dashboard/surat/upload')}
           title="Upload Surat Baru"
-          className="w-14 h-14 md:w-16 md:h-16 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl border-r border-y border-white/20 rounded-r-full flex items-center justify-center cursor-pointer shadow-xl relative group transition-all duration-300 hover:pl-2"
+          className="w-12 h-12 bg-indigo-600 hover:bg-indigo-700 backdrop-blur-xl rounded-r-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.4)] relative transition-all duration-300 active:scale-95 border-r border-y md:border-l border-white/20 hover:pl-2 md:hover:pl-0"
         >
-          <FilePlus className="w-5 h-5 md:w-6 md:h-6 text-white" />
-          <span className="absolute top-1 md:top-2 left-1 md:left-2 w-2.5 h-2.5 md:w-3 md:h-3 rounded-full bg-emerald-400 border border-white z-20 animate-pulse" />
+          <FilePlus className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
+          <span className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background z-20 animate-pulse" />
         </div>
       </motion.div>
     </AnimatePresence>

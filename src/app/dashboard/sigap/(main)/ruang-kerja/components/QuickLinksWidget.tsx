@@ -24,7 +24,7 @@ const RECOMMENDED_AI_LINKS = [
     { id: 'ai-5', judul: 'DeepL', url: 'https://www.deepl.com/translator', deskripsi: 'Penerjemah Dokumen Akurat', iconUrl: 'https://www.deepl.com/favicon.ico' },
     { id: 'ai-6', judul: 'NotebookLM', url: 'https://notebooklm.google.com/', deskripsi: 'Asisten Riset Dokumen & Catatan', iconUrl: 'https://notebooklm.google.com/favicon.ico' },
     { id: 'ai-7', judul: 'Gamma App', url: 'https://gamma.app/', deskripsi: 'Pembuatan Presentasi Otomatis', iconUrl: 'https://gamma.app/favicon.ico' },
-    { id: 'ai-8', judul: 'Tome', url: 'https://tome.app/', deskripsi: 'Storytelling & Presentasi Interaktif', iconUrl: 'https://tome.app/favicon.ico' },
+    { id: 'ai-8', judul: 'Beautiful.ai', url: 'https://www.beautiful.ai/', deskripsi: 'Desain Presentasi AI Elegan', iconUrl: 'https://www.beautiful.ai/favicon.ico' },
     { id: 'ai-9', judul: 'Canva Magic Studio', url: 'https://www.canva.com/', deskripsi: 'Desain Grafis dengan AI', iconUrl: 'https://www.canva.com/favicon.ico' },
     { id: 'ai-10', judul: 'QuillBot', url: 'https://quillbot.com/', deskripsi: 'Parafrase & Perbaikan Kalimat', iconUrl: 'https://quillbot.com/favicon.ico' },
     { id: 'ai-11', judul: 'Grammarly', url: 'https://www.grammarly.com/', deskripsi: 'Koreksi Tata Bahasa Otomatis', iconUrl: 'https://www.grammarly.com/favicon.ico' },
@@ -34,7 +34,12 @@ const RECOMMENDED_AI_LINKS = [
     { id: 'ai-15', judul: 'Microsoft Copilot', url: 'https://copilot.microsoft.com/', deskripsi: 'AI Terintegrasi Office & Web', iconUrl: 'https://copilot.microsoft.com/favicon.ico' },
 ];
 
-export default function QuickLinksWidget() {
+type QuickLinksWidgetProps = {
+    variant?: 'widget' | 'modal';
+    onClose?: () => void;
+};
+
+export default function QuickLinksWidget({ variant = 'widget', onClose }: QuickLinksWidgetProps) {
     const { userProfile } = useUserAuth();
     const { addToast } = useToast();
     
@@ -103,18 +108,25 @@ export default function QuickLinksWidget() {
         }
     }
 
+    const isModal = variant === 'modal';
+
     return (
-        <Card className="shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border border-border/20 md:border-border flex flex-col bg-transparent md:bg-card rounded-none md:rounded-xl">
-            <CardHeader className="px-4 py-3 md:p-4 md:py-3 md:bg-muted/30 border-b border-border/20 md:border-border flex-shrink-0 flex flex-row items-center justify-between space-y-0">
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                    <Globe size={16} className="text-cyan-600" /> Portal Pintar
+        <Card className={isModal 
+            ? "shadow-2xl border border-white/20 dark:border-white/10 flex flex-col bg-background/70 dark:bg-background/40 backdrop-blur-3xl rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5" 
+            : "shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border border-border/20 md:border-border flex flex-col bg-transparent md:bg-card rounded-none md:rounded-xl"
+        }>
+            <CardHeader className={`px-4 py-3 md:p-4 md:py-3 ${isModal ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-b border-white/10' : 'md:bg-muted/30 border-b border-border/20 md:border-border'} flex-shrink-0 flex flex-row items-center justify-between space-y-0`}>
+                <CardTitle className="text-base font-bold flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
+                    <Sparkles size={18} className="text-amber-500" /> Portal Pintar
                 </CardTitle>
-                <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-                    <DialogTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-6 px-2 text-xs hover:bg-background">
-                            <Plus size={12} className="mr-1" /> Tambah
-                        </Button>
-                    </DialogTrigger>
+                
+                <div className="flex items-center gap-2">
+                    <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+                        <DialogTrigger asChild>
+                            <Button variant={isModal ? "secondary" : "ghost"} size="sm" className={`h-7 px-2.5 text-xs rounded-full ${isModal ? 'bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/40 shadow-sm backdrop-blur-md' : 'hover:bg-background'}`}>
+                                <Plus size={14} className="mr-1" /> Tambah
+                            </Button>
+                        </DialogTrigger>
                     <DialogContent className="sm:max-w-md bg-card border-border">
                         <DialogHeader>
                             <DialogTitle>Tambah Tautan Cepat</DialogTitle>
@@ -149,75 +161,90 @@ export default function QuickLinksWidget() {
                         </form>
                     </DialogContent>
                 </Dialog>
+                
+                {isModal && onClose && (
+                    <Button variant="ghost" size="sm" onClick={onClose} className="h-7 w-7 p-0 rounded-full bg-black/5 hover:bg-black/10 dark:bg-white/10 dark:hover:bg-white/20 transition-colors ml-1">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                    </Button>
+                )}
+                </div>
             </CardHeader>
-            <CardContent className="p-0 overflow-hidden">
-                <Tabs defaultValue="rekomendasi" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 p-1 bg-muted/30 border-b border-border/50 rounded-none h-9">
-                        <TabsTrigger value="rekomendasi" className="text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
-                            <Sparkles size={12} className="mr-1.5 text-amber-500" />
+            <CardContent className="p-0 overflow-hidden flex flex-col">
+                <Tabs defaultValue="rekomendasi" className="w-full flex flex-col">
+                    <TabsList className={`grid w-full grid-cols-2 p-1.5 ${isModal ? 'bg-black/5 dark:bg-white/5 m-3 mb-1 rounded-xl w-[calc(100%-24px)]' : 'bg-muted/40 border-b border-border/30 rounded-none'} h-12 shrink-0`}>
+                        <TabsTrigger value="rekomendasi" className="text-[13px] font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground transition-all">
+                            <Sparkles size={14} className="mr-2 text-amber-500" />
                             Rekomendasi AI
                         </TabsTrigger>
-                        <TabsTrigger value="pribadi" className="text-xs data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                        <TabsTrigger value="pribadi" className="text-[13px] font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm data-[state=active]:text-foreground transition-all">
                             Tautan Pribadi
                         </TabsTrigger>
                     </TabsList>
                     
-                    <TabsContent value="rekomendasi" className="m-0 border-none outline-none">
-                        <ScrollArea className="h-[210px]">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 p-3">
+                    <TabsContent value="rekomendasi" className="m-0 border-none outline-none flex-1">
+                        <ScrollArea className={isModal ? "h-[60vh] md:h-[400px]" : "h-[280px]"}>
+                            <div className="flex flex-col gap-2.5 p-3">
                                 {RECOMMENDED_AI_LINKS.map(link => (
-                                    <div key={link.id} className="group relative flex flex-col p-2.5 rounded-lg border border-border bg-background hover:border-amber-500/30 hover:shadow-sm hover:bg-amber-50/30 dark:hover:bg-amber-950/20 transition-all cursor-pointer" onClick={() => window.open(link.url, '_blank')}>
-                                        <div className="flex items-center gap-2.5 mb-1.5">
-                                            <div className="w-7 h-7 rounded-md bg-amber-100/50 dark:bg-amber-900/20 flex items-center justify-center flex-shrink-0 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-800/50 overflow-hidden">
-                                                <img 
-                                                    src={`https://www.google.com/s2/favicons?domain=${link.url}&sz=64`} 
-                                                    alt="icon" 
-                                                    className="w-4 h-4 object-contain"
-                                                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                                                />
-                                            </div>
-                                            <span className="text-sm font-semibold truncate text-foreground group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors">{link.judul}</span>
+                                    <div 
+                                        key={link.id} 
+                                        onClick={() => window.open(link.url, '_blank')}
+                                        className="group relative flex items-center gap-3.5 p-3 rounded-xl border border-border/60 bg-card hover:border-amber-400/50 hover:shadow-[0_4px_12px_rgba(251,191,36,0.08)] dark:hover:shadow-[0_4px_12px_rgba(251,191,36,0.03)] hover:bg-amber-50/20 dark:hover:bg-amber-950/10 transition-all duration-300 cursor-pointer overflow-hidden"
+                                    >
+                                        <div className="w-10 h-10 rounded-[10px] bg-amber-100/60 dark:bg-amber-900/30 flex items-center justify-center flex-shrink-0 text-amber-600 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/60 shadow-inner">
+                                            <img 
+                                                src={`https://www.google.com/s2/favicons?domain=${link.url}&sz=64`} 
+                                                alt="icon" 
+                                                className="w-5 h-5 object-contain"
+                                                onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                                            />
                                         </div>
-                                        <p className="text-[10px] text-muted-foreground line-clamp-1 leading-tight">{link.deskripsi}</p>
-                                        <ExternalLink size={12} className="absolute right-2.5 top-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                                        <div className="flex flex-col flex-1 min-w-0 justify-center">
+                                            <span className="text-sm font-bold text-foreground group-hover:text-amber-700 dark:group-hover:text-amber-400 transition-colors leading-tight mb-1">{link.judul}</span>
+                                            <span className="text-xs text-muted-foreground truncate leading-tight">{link.deskripsi}</span>
+                                        </div>
+                                        <ExternalLink size={14} className="text-muted-foreground/40 group-hover:text-amber-500 transition-colors shrink-0" />
                                     </div>
                                 ))}
                             </div>
                         </ScrollArea>
                     </TabsContent>
 
-                    <TabsContent value="pribadi" className="m-0 border-none outline-none">
-                        <ScrollArea className="h-[210px]">
+                    <TabsContent value="pribadi" className="m-0 border-none outline-none flex-1">
+                        <ScrollArea className={isModal ? "h-[60vh] md:h-[400px]" : "h-[280px]"}>
                     {loading ? (
                          <div className="flex justify-center items-center h-full p-4"><Loader2 className="animate-spin h-5 w-5 text-muted-foreground"/></div>
                     ) : links.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center h-full py-8 text-muted-foreground text-xs gap-1">
-                            <LinkIcon size={24} className="opacity-20 mb-1" />
-                            <p>Belum ada tautan tersimpan.</p>
+                        <div className="flex flex-col items-center justify-center h-[280px] text-muted-foreground text-xs gap-2">
+                            <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-1">
+                                <LinkIcon size={20} className="text-muted-foreground/50" />
+                            </div>
+                            <p className="font-medium">Belum ada tautan tersimpan.</p>
+                            <p className="text-[10px] opacity-70">Klik "Tambah" untuk menyimpan tautan penting Anda.</p>
                         </div>
                     ) : (
-                        <div className="grid grid-cols-2 gap-2 p-3">
+                        <div className="flex flex-col gap-2.5 p-4">
                             {links.map(link => (
-                                <div key={link.id} className="group relative flex items-center p-2 rounded-md border border-border bg-background hover:border-primary/50 hover:shadow-sm transition-all">
-                                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center min-w-0 gap-2.5" title={link.url}>
-                                        <div className="w-7 h-7 rounded-full bg-cyan-50 dark:bg-cyan-900/20 flex items-center justify-center flex-shrink-0 text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-800 overflow-hidden">
-                                            {/* Menggunakan Google Favicon Service untuk ikon otomatis */}
+                                <div key={link.id} className="group relative flex items-center gap-3.5 p-3 rounded-xl border border-border/60 bg-card hover:border-cyan-400/40 hover:shadow-[0_4px_12px_rgba(6,182,212,0.08)] dark:hover:shadow-[0_4px_12px_rgba(6,182,212,0.04)] hover:bg-cyan-50/20 dark:hover:bg-cyan-950/10 transition-all duration-300">
+                                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="flex-1 flex items-center min-w-0 gap-3.5 outline-none" title={link.url}>
+                                        <div className="w-10 h-10 rounded-[10px] bg-cyan-50 dark:bg-cyan-950/40 flex items-center justify-center flex-shrink-0 text-cyan-600 dark:text-cyan-400 border border-cyan-100 dark:border-cyan-900/60 shadow-inner">
                                             <img 
                                                 src={`https://www.google.com/s2/favicons?domain=${link.url}&sz=64`} 
                                                 alt="icon" 
-                                                className="w-4 h-4 object-contain"
+                                                className="w-5 h-5 object-contain"
                                                 onError={(e) => { e.currentTarget.style.display = 'none'; }}
                                             />
-                                            <ExternalLink size={12} className="absolute opacity-0" /> 
                                         </div>
-                                        <span className="text-xs font-medium truncate text-foreground group-hover:text-primary transition-colors">{link.judul}</span>
+                                        <div className="flex flex-col flex-1 min-w-0 justify-center">
+                                            <span className="text-sm font-bold text-foreground group-hover:text-cyan-700 dark:group-hover:text-cyan-400 transition-colors leading-tight mb-1 truncate">{link.judul}</span>
+                                            <span className="text-xs text-muted-foreground truncate leading-tight opacity-70">{link.url.replace(/^https?:\/\//i, '')}</span>
+                                        </div>
                                     </a>
                                     <button 
                                         onClick={(e) => { e.preventDefault(); handleDelete(link.id!); }}
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 p-1.5 text-muted-foreground hover:text-red-500 transition-all bg-background/90 rounded-md shadow-sm border border-border"
+                                        className="p-2 text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-all opacity-0 group-hover:opacity-100"
                                         title="Hapus Tautan"
                                     >
-                                        <Trash2 size={12} />
+                                        <Trash2 size={16} />
                                     </button>
                                 </div>
                             ))}
