@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Link as LinkIcon, Plus, Trash2, Loader2, Globe, ExternalLink, Sparkles } from 'lucide-react';
+import { Link as LinkIcon, Plus, Trash2, Loader2, Globe, ExternalLink, Sparkles, HelpCircle } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { useToast } from '@/context/ToastContext';
 
@@ -45,6 +45,7 @@ export default function QuickLinksWidget({ variant = 'widget', onClose }: QuickL
     
     
     const [isAddOpen, setIsAddOpen] = useState(false);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [newLink, setNewLink] = useState({ judul: '', url: '' });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -120,7 +121,14 @@ export default function QuickLinksWidget({ variant = 'widget', onClose }: QuickL
                     <Sparkles size={18} className="text-amber-500" /> Portal Pintar
                 </CardTitle>
                 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1.5 md:gap-2">
+                    <button 
+                        onClick={() => setIsHelpOpen(true)}
+                        className={`p-1.5 rounded-full flex items-center justify-center transition-colors ${isModal ? 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400' : 'text-muted-foreground hover:bg-muted'}`}
+                        title="Panduan Penggunaan"
+                    >
+                        <HelpCircle size={16} />
+                    </button>
                     <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
                         <DialogTrigger asChild>
                             <Button variant={isModal ? "secondary" : "ghost"} size="sm" className={`h-7 px-2.5 text-xs rounded-full ${isModal ? 'bg-white/50 hover:bg-white/80 dark:bg-black/20 dark:hover:bg-black/40 shadow-sm backdrop-blur-md' : 'hover:bg-background'}`}>
@@ -159,6 +167,24 @@ export default function QuickLinksWidget({ variant = 'widget', onClose }: QuickL
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+                    <DialogContent className="sm:max-w-md bg-card border-border z-[200]">
+                        <DialogHeader>
+                            <DialogTitle className="flex items-center gap-2"><Sparkles className="text-amber-500" size={18} /> Panduan Portal Pintar</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4 text-sm text-muted-foreground pt-2">
+                            <p><strong className="text-foreground">Portal Pintar</strong> adalah pusat tautan cerdas untuk mempercepat alur kerja harian Anda.</p>
+                            <ul className="list-disc pl-5 space-y-2">
+                                <li><strong className="text-foreground">Rekomendasi AI:</strong> Daftar <i>tools</i> AI pilihan (seperti ChatGPT, Claude, dll) untuk membantu drafting surat, riset referensi, atau analisis data.</li>
+                                <li><strong className="text-foreground">Tautan Pribadi:</strong> Simpan URL website penting, dokumen GDrive, atau sistem internal Anda sendiri di sini dengan menekan tombol <strong>+ Tambah</strong>.</li>
+                            </ul>
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={() => setIsHelpOpen(false)}>Mengerti</Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
                 
