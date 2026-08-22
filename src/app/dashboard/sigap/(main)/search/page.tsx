@@ -20,7 +20,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // [MODIFIKASI] Komponen item hasil pencarian dengan styling shadcn
 const SearchResultItem = ({ href, icon, title, subtitle }: { href: string, icon: React.ReactNode, title: string, subtitle: string }) => (
     <Link href={href} className="block">
-        <div className="flex items-center p-4 bg-card rounded-lg hover:bg-accent border border-border transition-colors">
+        <div className="flex items-center p-4 sg-glass-panel sg-mobile-borderless hover:-translate-y-[1px] hover:shadow-md transition-all duration-200">
             <div className="mr-4 text-primary">{icon}</div>
             <div>
                 <p className="font-semibold text-foreground">{title}</p>
@@ -34,7 +34,7 @@ const SearchResultItem = ({ href, icon, title, subtitle }: { href: string, icon:
 const SearchSkeleton = () => (
     <div className="grid grid-cols-1 gap-4">
         {[...Array(3)].map((_, i) => (
-            <div key={i} className="flex items-center p-4 bg-card rounded-lg border border-border">
+            <div key={i} className="flex items-center p-4 sg-glass-panel sg-mobile-borderless">
                 <Skeleton className="h-10 w-10 rounded-full mr-4" />
                 <div className="space-y-2 flex-1">
                     <Skeleton className="h-4 w-3/4" />
@@ -135,7 +135,7 @@ function SearchComponent() {
                 </div>
             ) : totalResults === 0 ? (
                 // [MODIFIKASI] Styling dark mode
-                <div className="mt-8 text-center text-muted-foreground bg-card p-8 rounded-lg border border-dashed border-border">
+                <div className="mt-8 text-center text-muted-foreground bg-card p-8 rounded-[var(--radius)] border border-dashed border-border/40">
                     <Search size={48} className="mx-auto text-muted-foreground/30 mb-4" />
                     <p>Tidak ada hasil yang ditemukan.</p>
                     <p className="text-sm">Coba gunakan kata kunci yang berbeda.</p>
