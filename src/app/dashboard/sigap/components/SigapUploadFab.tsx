@@ -39,7 +39,7 @@ export default function SigapUploadFab() {
         <div
           onClick={() => router.push('/dashboard/surat/upload')}
           title="Upload Surat Baru"
-          className="w-12 h-12 bg-indigo-600 hover:bg-indigo-700 backdrop-blur-xl rounded-r-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.4)] relative transition-all duration-300 active:scale-95 border-r border-y md:border-l border-white/20 hover:pl-2 md:hover:pl-0"
+          className="w-12 h-12 bg-indigo-600 hover:bg-indigo-700 backdrop-blur-xl rounded-r-[24px] flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(79,70,229,0.4)] relative transition-all duration-300 active:scale-95 border-r border-y border-white/20 hover:pl-2"
         >
           <FilePlus className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
           <span className="absolute -top-1 -left-1 w-3 h-3 rounded-full bg-emerald-400 border-2 border-background z-20 animate-pulse" />

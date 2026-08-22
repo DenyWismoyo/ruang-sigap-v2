@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import SmartGreeting from '@/app/dashboard/sigap/components/home/SmartGreeting';
 import QuickAccessCard from '@/app/dashboard/sigap/components/home/QuickAccessCard';
 import MobileAgendaCarousel from '@/app/dashboard/sigap/components/home/MobileAgendaCarousel';
-import QuickLinksWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickLinksWidget';
+
 
 // --- IMPORT HOOKS SSOT ---
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
@@ -428,12 +428,8 @@ export default function DashboardPage() {
                         </div>
                     ))}
                 </div>
-                
-                {/* [PORTAL PINTAR] */}
-                <div className="sg-animate-in sg-stagger-4">
-                    <QuickLinksWidget />
-                </div>
             </div>
+
         </div>
 
       </div>

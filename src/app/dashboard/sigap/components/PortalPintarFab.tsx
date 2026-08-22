@@ -28,7 +28,7 @@ export default function PortalPintarFab() {
           >
             <div
               onClick={() => setIsOpen(true)}
-              className="w-12 h-12 bg-amber-500 hover:bg-amber-600 backdrop-blur-xl rounded-l-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(245,158,11,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y md:border-r border-white/20 hover:pr-2 md:hover:pr-0"
+              className="w-12 h-12 bg-amber-500 hover:bg-amber-600 backdrop-blur-xl rounded-l-[24px] flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(245,158,11,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y border-white/20 hover:pr-2"
               title="Portal Pintar (Tools AI & Tautan)"
             >
               <Sparkles className="w-5 h-5 text-white group-hover:rotate-12 transition-transform" />

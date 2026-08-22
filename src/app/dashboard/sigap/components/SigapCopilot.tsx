@@ -115,7 +115,7 @@ export default function SigapCopilot() {
           >
             <div
               onClick={() => setIsOpen(true)}
-              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl rounded-l-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(37,99,235,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y md:border-r border-white/20 hover:pr-2 md:hover:pr-0"
+              className="w-12 h-12 bg-blue-600 hover:bg-blue-700 backdrop-blur-xl rounded-l-[24px] flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(37,99,235,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y border-white/20 hover:pr-2"
             >
               <Bot className="w-5 h-5 text-white group-hover:scale-110 transition-transform" />
               <Sparkles size={12} className="absolute top-2 right-2 text-amber-400 animate-pulse" />

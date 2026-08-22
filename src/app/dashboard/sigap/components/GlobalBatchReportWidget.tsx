@@ -65,7 +65,7 @@ export default function GlobalBatchReportWidget() {
                             
                             <div 
                                 onClick={() => setIsOpen(true)}
-                                className="w-12 h-12 bg-orange-500 hover:bg-orange-600 backdrop-blur-xl rounded-l-[24px] md:rounded-full flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(249,115,22,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y md:border-r border-white/20 hover:pr-2 md:hover:pr-0"
+                                className="w-12 h-12 bg-orange-500 hover:bg-orange-600 backdrop-blur-xl rounded-l-[24px] flex items-center justify-center cursor-pointer shadow-[0_8px_30px_rgb(0,0,0,0.12)] hover:shadow-[0_8px_30px_rgb(249,115,22,0.4)] relative transition-all duration-300 active:scale-95 border-l border-y border-white/20 hover:pr-2"
                             >
                                 <div className="absolute inset-0 rounded-full bg-red-500 animate-ping opacity-20 pointer-events-none"></div>
                                 <Zap className="w-5 h-5 text-white fill-white group-hover:scale-110 transition-transform" />
