@@ -30,10 +30,10 @@ export default function SigapUploadFab() {
   return (
     <AnimatePresence>
       <motion.div
-        initial={{ scale: 0, opacity: 0, x: -50 }}
-        animate={{ scale: 1, opacity: 1, x: 0 }}
-        exit={{ scale: 0, opacity: 0, x: -50 }}
-        transition={{ type: "spring", stiffness: 260, damping: 20 }}
+        initial={{ x: -80, opacity: 0 }}
+        animate={{ x: 0, opacity: 1 }}
+        exit={{ x: -80, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 25 }}
         className="flex items-center transition-all duration-300 relative group"
       >
         <div

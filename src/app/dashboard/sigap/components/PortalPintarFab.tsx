@@ -20,10 +20,10 @@ export default function PortalPintarFab() {
       <AnimatePresence>
         {!isOpen && (
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            initial={{ x: 80, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 25 }}
             className="flex items-center transition-all duration-300 relative group"
           >
             <div
@@ -49,9 +49,10 @@ export default function PortalPintarFab() {
               className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[60]"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, x: '100%', scale: 1 }}
+              animate={{ opacity: 1, x: 0, scale: 1 }}
+              exit={{ opacity: 0, x: '100%', scale: 1 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 300 }}
               className="fixed bottom-4 right-4 md:bottom-24 md:right-8 z-[60] w-[calc(100vw-2rem)] md:w-[400px]"
             >
               <div className="w-full">

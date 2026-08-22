@@ -107,10 +107,10 @@ export default function SigapCopilot() {
       <AnimatePresence>
         {!isOpen && (
           <motion.div
-            initial={{ scale: 0, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            exit={{ scale: 0, opacity: 0 }}
-            transition={{ type: "spring", stiffness: 260, damping: 20 }}
+            initial={{ x: 80, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 80, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 260, damping: 25 }}
             className="flex items-center transition-all duration-300 relative group"
           >
             <div
@@ -129,14 +129,14 @@ export default function SigapCopilot() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 50, scale: 0.95 }}
+            initial={{ opacity: 0, x: '100%', scale: 1 }}
             animate={{ 
               opacity: 1, 
-              y: 0, 
+              x: 0, 
               scale: 1,
               height: isMinimized ? '68px' : '85vh',
             }}
-            exit={{ opacity: 0, y: 50, scale: 0.95 }}
+            exit={{ opacity: 0, x: '100%', scale: 1 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
             drag={typeof window !== 'undefined' && window.innerWidth < 768 ? "y" : false}
             dragControls={dragControls}
