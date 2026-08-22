@@ -46,7 +46,7 @@ export const syncDisposisiToSummary = onDocumentWritten({
             };
 
             // Evaluasi penghapusan
-            if (!dataAfter || dataAfter.status === 'Dikembalikan' || (dataAfter.penerimaSelesai || []).includes(jabId)) {
+            if (!dataAfter || dataAfter.status === 'Dikembalikan' || (dataAfter.penerimaSelesai || []).includes(jabId) || (dataAfter.penerimaDikembalikan || []).includes(jabId)) {
                 // [FIX CRITICAL]: Wajib gunakan FieldValue.delete() untuk update Firestore Map dengan merge:true
                 updateData.pendingDisposisi[dispId] = admin.firestore.FieldValue.delete();
                 // Hapus juga dari memori lokal agar hitungan Counter di bawah tetap akurat

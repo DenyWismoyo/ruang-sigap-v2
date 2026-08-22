@@ -11,7 +11,9 @@ import { useTheme } from '@/context/ThemeContext';
 import dynamic from 'next/dynamic'; 
 import ReactMarkdown from 'react-markdown'; 
 import remarkGfm from 'remark-gfm'; 
-
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
+import SigapEmptyState from '@/app/dashboard/sigap/components/SigapEmptyState';
 // --- Impor Komponen Shadcn ---
 import {
   Dialog,
@@ -55,44 +57,29 @@ const MDEditor = dynamic(
 
 // --- Komponen Modal Bantuan (Tidak Berubah) ---
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-2xl bg-card border-border">
-            <DialogHeader>
-                <DialogTitle className="flex items-center">
-                    <HelpCircle className="mr-3 text-blue-600" />
-                    Bantuan: Knowledge Base
-                </DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-              <div className="space-y-4 text-foreground/90">
-                  <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
-                  <p>Menu "Knowledge Base" adalah pusat arsip panduan, SOP (Standar Operasional Prosedur), atau informasi penting lainnya yang berlaku di OPD Anda.</p>
-                  <p className="font-bold">Pembaruan: Halaman ini sekarang berfungsi sebagai CMS (Content Management System) untuk "Asisten SIGAP" (Chatbot). Tutorial yang Anda tulis di sini akan menjadi "otak" bagi AI untuk menjawab pertanyaan pengguna.</p>
-                  
-                  <h3 className="font-semibold text-lg text-foreground">Cara Menggunakan:</h3>
-                  <ol className="list-decimal list-inside space-y-2">
-                      <li><strong>Melihat Artikel:</strong>
-                          <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                              <li>Gunakan bilah pencarian atau filter kategori untuk menemukan artikel.</li>
-                              <li>Klik pada kartu artikel untuk membacanya.</li>
-                          </ul>
-                      </li>
-                      <li><strong>Mengelola Artikel (Admin/Staf TU):</strong>
-                          <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                              <li>Klik tombol "Buat Artikel Baru".</li>
-                              <li>Isi Judul dan Kategori (misal: "Tutorial Aplikasi").</li>
-                              <li>Gunakan **Editor Teks** baru untuk menulis konten panduan (Anda bisa menggunakan Bold, Italic, Lists, dll).</li>
-                              <li>Klik "Simpan Artikel" untuk mempublikasikannya. Artikel ini akan langsung bisa dicari oleh Asisten SIGAP (Chatbot).</li>
-                          </ul>
-                      </li>
-                  </ol>
-              </div>
-            </ScrollArea>
-            <DialogFooter>
-                <Button variant="outline" onClick={onClose}>Saya Mengerti</Button>
-            </DialogFooter>
-        </DialogContent>
-    </Dialog>
+    <SigapHelpModal isOpen={isOpen} onClose={onClose} title="Knowledge Base">
+        <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
+        <p>Menu "Knowledge Base" adalah pusat arsip panduan, SOP (Standar Operasional Prosedur), atau informasi penting lainnya yang berlaku di OPD Anda.</p>
+        <p className="font-bold">Pembaruan: Halaman ini sekarang berfungsi sebagai CMS (Content Management System) untuk "Asisten SIGAP" (Chatbot). Tutorial yang Anda tulis di sini akan menjadi "otak" bagi AI untuk menjawab pertanyaan pengguna.</p>
+        
+        <h3 className="font-semibold text-lg text-foreground mt-4">Cara Menggunakan:</h3>
+        <ol className="list-decimal list-inside space-y-2">
+            <li><strong>Melihat Artikel:</strong>
+                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                    <li>Gunakan bilah pencarian atau filter kategori untuk menemukan artikel.</li>
+                    <li>Klik pada kartu artikel untuk membacanya.</li>
+                </ul>
+            </li>
+            <li><strong>Mengelola Artikel (Admin/Staf TU):</strong>
+                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                    <li>Klik tombol "Buat Artikel Baru".</li>
+                    <li>Isi Judul dan Kategori (misal: "Tutorial Aplikasi").</li>
+                    <li>Gunakan **Editor Teks** baru untuk menulis konten panduan (Anda bisa menggunakan Bold, Italic, Lists, dll).</li>
+                    <li>Klik "Simpan Artikel" untuk mempublikasikannya. Artikel ini akan langsung bisa dicari oleh Asisten SIGAP (Chatbot).</li>
+                </ul>
+            </li>
+        </ol>
+    </SigapHelpModal>
 );
 // --- Akhir Modal Bantuan ---
 
@@ -503,27 +490,27 @@ export default function KnowledgeBasePage() {
     };
     
     return (
-        <div className="animate-fadeInUp">
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
-                <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <HelpCircle size={28} className="mr-3 text-blue-600" />
-                        Pusat Bantuan (Knowledge Base)
-                    </h1>
-                    <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
-                        <HelpCircle size={20} />
-                    </Button>
-                </div>
-                {isAdmin && (
-                    <Button onClick={() => openFormModal(null)}>
-                        <Plus size={18} className="mr-2" /> Buat Artikel Baru
-                    </Button>
-                )}
-            </div>
+        <div className="sg-page animate-fadeInUp">
+            <SigapPageHeader 
+                title="Knowledge Base"
+                icon={HelpCircle}
+                actions={
+                    <>
+                        {isAdmin && (
+                            <Button onClick={() => openFormModal(null)} className="sg-btn sg-btn-primary">
+                                <Plus size={18} className="mr-2" /> Buat Artikel Baru
+                            </Button>
+                        )}
+                        <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
+                            <HelpCircle size={20} />
+                        </Button>
+                    </>
+                }
+            />
 
             {/* --- DIROMBAK: Filter/Search Bar --- */}
-            <Card className="shadow-sm border-border mb-6">
-                <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="sg-card sg-mobile-borderless shadow-sm border-border mb-6">
+                <CardContent className="p-4 grid grid-cols-1 md:grid-cols-3 gap-4 sg-filter-bar border-none shadow-none bg-transparent p-0">
                     <div className="relative md:col-span-2">
                         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
                         <Input type="text" placeholder="Cari berdasarkan judul atau konten..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-10"/>
@@ -550,12 +537,12 @@ export default function KnowledgeBasePage() {
                             <h2 className="text-xl font-bold text-foreground">{kategori}</h2>
                         </div>
                         {/* --- AKHIR DIROMBAK --- */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="flex flex-col md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6">
                             {groupedArticles[kategori].map(article => (
                                 // --- DIROMBAK: Tampilan Kartu Artikel ---
                                 <Card 
                                     key={article.id} 
-                                    className="group flex flex-col justify-between transition-all hover:shadow-lg hover:border-primary cursor-pointer h-full" 
+                                    className="sg-card sg-mobile-borderless group flex flex-col justify-between transition-all hover:shadow-lg hover:border-primary cursor-pointer h-full" 
                                     onClick={() => openViewModal(article)}
                                 >
                                     <CardHeader>
@@ -589,10 +576,11 @@ export default function KnowledgeBasePage() {
                         </div>
                     </section>
                 )) : (
-                    <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
-                        <p className="font-semibold">Tidak ada artikel ditemukan</p>
-                        <p className="text-sm">Tidak ada artikel yang cocok dengan pencarian Anda.</p>
-                    </div>
+                    <SigapEmptyState
+                        icon={BookText}
+                        title="Tidak ada artikel ditemukan"
+                        description="Tidak ada artikel yang cocok dengan pencarian Anda."
+                    />
                 )}
             </div>
           )}

@@ -7,7 +7,7 @@ import React from 'react';
 import { Skeleton } from "@/components/ui/skeleton";
 
 export const SkeletonCard = () => (
-  <div className="bg-card rounded-lg shadow-sm border border-border p-4">
+  <div className="sg-card sg-mobile-borderless shadow-none md:rounded-lg md:shadow-sm md:border p-4 bg-card">
     <div className="flex justify-between items-start">
       <div className="space-y-2 flex-1 pr-4">
         <Skeleton className="h-4 w-3/4" />

@@ -37,7 +37,7 @@ interface RuangKerjaCardProps {
   opdJabatans: Map<string, Jabatan>;
   templatList: InstruksiTemplat[]; 
   onAcknowledge: (disposisiId: string) => void;
-  onPreviewClick: (fileUrl: string, fileName: string) => void;
+  onPreviewClick: (fileUrl: string, fileName: string, suratId?: string) => void;
   
   onInlineFormToggle: (disposisiId: string) => void; 
   openInlineTindakLanjutId: string | null; 
@@ -214,7 +214,7 @@ export default function RuangKerjaCard({
                       </Button>
                   )}
                   <div className="flex gap-2 ml-auto">
-                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onPreviewClick(surat.fileUrl, surat.fileName)} title="Pratinjau PDF"><Eye size={14}/></Button>
+                      <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onPreviewClick(surat.fileUrl, surat.fileName, surat.id)} title="Pratinjau PDF"><Eye size={14}/></Button>
                       <Button size="icon" variant="ghost" className="h-8 w-8" asChild><Link href={`/dashboard/surat/${surat.id}`}><ArrowRight size={14}/></Link></Button>
                   </div>
               </div>
@@ -254,7 +254,7 @@ export default function RuangKerjaCard({
                    </Button>
                    
                    <div className="flex gap-2 ml-auto">
-                        <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onPreviewClick(surat.fileUrl, surat.fileName)}><Eye size={14}/></Button>
+                        <Button size="icon" variant="outline" className="h-8 w-8" onClick={() => onPreviewClick(surat.fileUrl, surat.fileName, surat.id)}><Eye size={14}/></Button>
                         <Button size="icon" variant="ghost" className="h-8 w-8" asChild><Link href={`/dashboard/surat/${surat.id}`}><ArrowRight size={14}/></Link></Button>
                    </div>
               </div>

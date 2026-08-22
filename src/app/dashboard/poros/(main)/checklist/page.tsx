@@ -572,10 +572,10 @@ export default function ChecklistPage() {
     useEffect(() => {
         if (!userProfile || loading) return;
 
-        const createBoard = searchParams.get('createBoard');
-        const boardTitle = searchParams.get('boardTitle');
-        const taskId = searchParams.get('taskId');
-        const boardId = searchParams.get('boardId');
+        const createBoard = searchParams?.get('createBoard');
+        const boardTitle = searchParams?.get('boardTitle');
+        const taskId = searchParams?.get('taskId');
+        const boardId = searchParams?.get('boardId');
 
         if (boardId) {
             console.log("Found boardId in URL:", boardId);

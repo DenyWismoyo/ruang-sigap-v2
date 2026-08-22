@@ -1,15 +1,18 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useAnimation, useMotionValue, useTransform } from 'framer-motion';
 import { RuangKerjaItem, Disposisi, Surat } from '@/types';
 import { 
     X, Check, FastForward, Info, Layers, CheckCircle2, 
-    ArrowRight, ArrowLeft, Loader2 
+    ArrowRight, ArrowLeft, Loader2, CheckCheck, MessageSquare, FileCheck, RefreshCw
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useSuratActions } from '@/app/dashboard/sigap/hooks/useSuratActions';
+import { useUserAuth } from '@/context/AuthContext';
+import { db } from '@/lib/firebase';
+import { doc, getDoc, collection, query, where, getDocs, documentId } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { id } from 'date-fns/locale';
 
@@ -18,17 +21,127 @@ interface BatchQuickReportModalProps {
     onClose: () => void;
 }
 
+type ActionType = 'TERIMA' | 'SELESAI' | 'PROSES' | 'LEWATI';
+
+type PendingSwipeItem = RuangKerjaItem & { type: 'surat_disposisi', surat: Surat, disposisi: Disposisi, needsAcknowledge?: boolean, needsTindakLanjut?: boolean };
+
 export default function BatchQuickReportModal({ items, onClose }: BatchQuickReportModalProps) {
-    // Filter only disposisi that are not finished, then reverse to process oldest first
-    const pendingItems = items
-        .filter(i => i.type === 'surat_disposisi' && (i as any).disposisi?.status !== 'Selesai')
-        .reverse() as (RuangKerjaItem & { type: 'surat_disposisi', surat: Surat, disposisi: Disposisi })[];
+    const { actingJabatanProfile, jabatanProfile } = useUserAuth();
+    const effectiveJabatanId = actingJabatanProfile?.id || jabatanProfile?.id;
+
+    // Helper: ambil timestamp disposisi dalam milidetik
+    const getDisposisiMillis = (item: any): number => {
+        const d = item.disposisi?.tanggalDisposisi;
+        if (!d) return 0;
+        if (typeof d.toMillis === 'function') return d.toMillis();
+        if (d.seconds) return d.seconds * 1000;
+        return 0;
+    };
+
+    // Helper: filter & sort items
+    const buildSortedItems = (rawItems: RuangKerjaItem[]): PendingSwipeItem[] => {
+        return rawItems
+            .filter(i => {
+                if (i.type !== 'surat_disposisi') return false;
+                const item = i as any;
+                if (item.disposisi?.status === 'Selesai') return false;
+                const suratStatus = item.surat?.statusPenyelesaian;
+                if (suratStatus === 'Selesai' || suratStatus === 'Diarsipkan') return false;
+                return true;
+            })
+            // Murni kronologis: TERLAMA DULU (tidak ada priority needsAcknowledge)
+            .sort((a: any, b: any) => getDisposisiMillis(a) - getDisposisiMillis(b)) as PendingSwipeItem[];
+    };
 
     const [currentIndex, setCurrentIndex] = useState(0);
     const [customReport, setCustomReport] = useState("");
-    const [showTutorial, setShowTutorial] = useState(true);
+    const [showTutorial, setShowTutorial] = useState(false);
     const [mounted, setMounted] = useState(false);
-    const { kirimTindakLanjut, isProcessing } = useSuratActions();
+    const [isFallbackLoading, setIsFallbackLoading] = useState(true);
+    const [allItems, setAllItems] = useState<RuangKerjaItem[]>(items);
+    const { kirimTindakLanjut, terimaDisposisi, isProcessing } = useSuratActions();
+
+    // Fallback: Saat modal dibuka, langsung query Firestore untuk memastikan
+    // tidak ada item yang hilang dari cache feed
+    useEffect(() => {
+        const fetchFallback = async () => {
+            if (!effectiveJabatanId) { setIsFallbackLoading(false); return; }
+            try {
+                // Ambil daftar pending disposisi langsung dari userSummaries (source of truth)
+                const summarySnap = await getDoc(doc(db, 'userSummaries', effectiveJabatanId));
+                if (!summarySnap.exists()) { setAllItems(items); return; }
+
+                const pendingMap = summarySnap.data().pendingDisposisi || {};
+                const allDisposisiFromFirestore = Object.values(pendingMap) as (Disposisi & { needsAcknowledge?: boolean })[];
+
+                // Buat map dari items yang sudah ada di feed (berdasarkan disposisi.id)
+                const existingById = new Map<string, RuangKerjaItem>();
+                items.forEach(item => {
+                    const disp = (item as any).disposisi;
+                    if (disp?.id) existingById.set(disp.id, item);
+                });
+
+                // Cari disposisi yang ada di Firestore tapi tidak ada di feed ("lost" items)
+                const lostDisposisi = allDisposisiFromFirestore.filter(d => d.id && !existingById.has(d.id));
+
+                if (lostDisposisi.length === 0) {
+                    setAllItems(items);
+                    return;
+                }
+
+                // Fetch surat untuk item yang hilang
+                const missingSuratIds = [...new Set(lostDisposisi.map(d => d.suratId).filter(Boolean))];
+                const suratMap = new Map<string, Surat>();
+
+                // Batch fetch surat (max 30 per query Firestore)
+                for (let i = 0; i < missingSuratIds.length; i += 30) {
+                    const chunk = missingSuratIds.slice(i, i + 30);
+                    const q = query(collection(db, 'surat'), where(documentId(), 'in', chunk));
+                    const snap = await getDocs(q);
+                    snap.forEach(d => suratMap.set(d.id, { id: d.id, ...d.data() } as Surat));
+                }
+
+                // Bangun RuangKerjaItem baru untuk lost items
+                const recoveredItems: RuangKerjaItem[] = lostDisposisi
+                    .map(disp => {
+                        const surat = suratMap.get(disp.suratId || '');
+                        if (!surat || surat.statusPenyelesaian === 'Selesai' || surat.statusPenyelesaian === 'Diarsipkan') return null;
+                        return {
+                            type: 'surat_disposisi' as const,
+                            surat,
+                            disposisi: disp,
+                            needsAcknowledge: disp.needsAcknowledge,
+                            needsTindakLanjut: !disp.needsAcknowledge,
+                            fromJabatanName: disp.dariJabatanNama || 'Atasan',
+                            isOverdue: false,
+                            isReadOnly: false,
+                        };
+                    })
+                    .filter(Boolean) as RuangKerjaItem[];
+
+                // Gabungkan: existing items + recovered items, deduplicate by disposisi.id
+                const merged = new Map<string, RuangKerjaItem>();
+                [...items, ...recoveredItems].forEach(item => {
+                    const dispId = (item as any).disposisi?.id;
+                    if (dispId) merged.set(dispId, item);
+                    else merged.set(Math.random().toString(), item);
+                });
+
+                setAllItems(Array.from(merged.values()));
+            } catch (err) {
+                console.error('Fallback fetch BatchQuickReport gagal:', err);
+                setAllItems(items); // Fallback ke items dari props
+            } finally {
+                setIsFallbackLoading(false);
+            }
+        };
+
+        fetchFallback();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [effectiveJabatanId]);
+
+    // Derive sorted pending items from allItems
+    const pendingItems = useMemo(() => buildSortedItems(allItems), [allItems]);
 
     const currentItem = pendingItems[currentIndex];
     
@@ -44,25 +157,66 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
 
     useEffect(() => {
         setMounted(true);
-        // Automatically hide tutorial after 3 seconds if not closed
-        const timer = setTimeout(() => setShowTutorial(false), 5000);
-        return () => clearTimeout(timer);
+        
+        // Cek localStorage: munculkan tutorial hanya sekali sehari
+        const today = new Date().toISOString().split('T')[0];
+        const lastSeen = localStorage.getItem('sigap_batch_report_tutorial_date');
+        
+        if (lastSeen !== today) {
+            setShowTutorial(true);
+            localStorage.setItem('sigap_batch_report_tutorial_date', today);
+            const timer = setTimeout(() => setShowTutorial(false), 5000);
+            return () => clearTimeout(timer);
+        }
     }, []);
 
-    const handleAction = async (actionType: 'SELESAI' | 'PROSES' | 'LEWATI') => {
+    // Helper: cek apakah item saat ini masih perlu terimaDisposisi
+    const getItemNeedsAcknowledge = (item: typeof pendingItems[0]) => {
+        if (item.needsAcknowledge !== undefined) return item.needsAcknowledge;
+        // Fallback: cek dari data disposisi langsung
+        return !(item.disposisi?.penerimaDiterima || []).includes('__placeholder__');
+    };
+
+    const handleAction = async (actionType: ActionType) => {
         if (!currentItem || isProcessing) return;
 
         if (actionType === 'LEWATI') {
-            // Animate swipe left
             await controls.start({ x: -500, opacity: 0, transition: { duration: 0.3 } });
             nextCard();
             return;
         }
 
+        const needsAcknowledge = getItemNeedsAcknowledge(currentItem);
+
+        // Jika aksi TERIMA: hanya panggil terimaDisposisi, lanjut ke kartu berikutnya
+        if (actionType === 'TERIMA') {
+            const success = await terimaDisposisi(currentItem.disposisi!, currentItem.surat);
+            if (success) {
+                await controls.start({ x: 500, opacity: 0, transition: { duration: 0.3 } });
+                nextCard();
+            } else {
+                controls.start({ x: 0, opacity: 1 });
+            }
+            return;
+        }
+
+        // Untuk SELESAI dan PROSES: jika belum diterima, panggil terimaDisposisi dulu
+        if (needsAcknowledge) {
+            const acknowledged = await terimaDisposisi(currentItem.disposisi!, currentItem.surat);
+            if (!acknowledged) {
+                controls.start({ x: 0, opacity: 1 });
+                return;
+            }
+        }
+
+        // Kirim laporan tindak lanjut
+        const isFinal = actionType === 'SELESAI';
         const payload = {
-            isiLaporan: customReport.trim() !== '' ? customReport.trim() : (actionType === 'SELESAI' ? 'Tugas telah selesai dilaksanakan.' : 'Sedang dalam proses pengerjaan.'),
-            judulLaporan: actionType === 'SELESAI' ? 'Selesai Dilaksanakan' : 'Proses Pengerjaan',
-            warnaLabel: (actionType === 'SELESAI' ? 'green' : 'yellow') as 'green' | 'yellow',
+            isiLaporan: customReport.trim() !== '' 
+                ? customReport.trim() 
+                : (isFinal ? 'Tugas telah selesai dilaksanakan.' : 'Sedang dalam proses pengerjaan.'),
+            judulLaporan: isFinal ? 'Selesai Dilaksanakan' : 'Proses Pengerjaan',
+            warnaLabel: (isFinal ? 'green' : 'yellow') as 'green' | 'yellow',
             checklist: []
         };
 
@@ -71,15 +225,13 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
             currentItem.disposisi!, 
             payload, 
             undefined, 
-            { isFinalAction: actionType === 'SELESAI' }
+            { isFinalAction: isFinal }
         );
 
         if (success) {
-            // Animate swipe right
             await controls.start({ x: 500, opacity: 0, transition: { duration: 0.3 } });
             nextCard();
         } else {
-            // Reset position on fail
             controls.start({ x: 0, opacity: 1 });
         }
     };
@@ -87,7 +239,9 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
     const handleDragEnd = async (e: any, info: any) => {
         const threshold = 100;
         if (info.offset.x > threshold) {
-            handleAction('SELESAI');
+            // Swipe kanan adaptif: TERIMA jika belum diterima, SELESAI jika sudah
+            const needsAck = currentItem ? getItemNeedsAcknowledge(currentItem) : true;
+            handleAction(needsAck ? 'TERIMA' : 'SELESAI');
         } else if (info.offset.x < -threshold) {
             handleAction('LEWATI');
         } else {
@@ -103,6 +257,22 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
     };
 
     if (!mounted) return null;
+
+    // Tampilkan loading saat fallback Firestore sedang berjalan
+    if (isFallbackLoading) {
+        return createPortal(
+            <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center">
+                <div className="bg-card p-6 rounded-2xl flex flex-col items-center gap-3 shadow-xl">
+                    <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+                    <p className="text-sm font-medium text-muted-foreground">Memuat semua tugas dari server...</p>
+                </div>
+            </div>,
+            document.body
+        );
+    }
+
+    // Status item saat ini untuk UI adaptif
+    const currentNeedsAcknowledge = currentItem ? getItemNeedsAcknowledge(currentItem) : false;
 
     let content;
 
@@ -141,6 +311,16 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
                                 <Layers size={14} />
                                 {pendingItems.length - currentIndex} Tersisa
                             </div>
+                            {/* Badge status adaptif */}
+                            {currentNeedsAcknowledge ? (
+                                <div className="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] font-bold">
+                                    <FileCheck size={11} /> Perlu Diterima
+                                </div>
+                            ) : (
+                                <div className="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-2.5 py-1 rounded-full flex items-center gap-1 text-[10px] font-bold">
+                                    <MessageSquare size={11} /> Perlu Laporan
+                                </div>
+                            )}
                         </div>
                         <div className="flex gap-1">
                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground" onClick={() => setShowTutorial(true)}>
@@ -170,12 +350,12 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
                                     <div className="text-xs space-y-3 opacity-95">
                                         <p className="leading-relaxed">Fitur <strong>Lapor Masal</strong> membantu Anda menindaklanjuti tumpukan tugas atau disposisi secara cepat bagaikan tumpukan kartu.</p>
                                         <ul className="space-y-2 ml-1">
-                                            <li className="flex items-center gap-2"><ArrowRight size={14} className="text-emerald-300"/> <strong>Geser Kanan</strong> (atau tombol Selesai) untuk menyelesaikannya.</li>
-                                            <li className="flex items-center gap-2"><ArrowLeft size={14} className="text-rose-300"/> <strong>Geser Kiri</strong> (atau tombol Lewati) untuk melihat kartu berikutnya.</li>
+                                            <li className="flex items-center gap-2"><ArrowRight size={14} className="text-emerald-300"/> <strong>Geser Kanan</strong>: Terima disposisi (badge merah) / Selesai (badge biru).</li>
+                                            <li className="flex items-center gap-2"><ArrowLeft size={14} className="text-rose-300"/> <strong>Geser Kiri</strong> (atau tombol Lewati) untuk melewati ke kartu berikutnya.</li>
                                         </ul>
                                         <div className="bg-blue-700/50 p-2.5 rounded-lg border border-blue-500/30 flex items-start gap-2 mt-2">
                                             <Info size={14} className="mt-0.5 shrink-0 text-blue-200" />
-                                            <p className="leading-snug text-[11px] text-blue-50">Selain memilih template otomatis, Anda juga dapat <strong>mengetik laporan manual</strong> secara spesifik pada kolom teks di bagian bawah sebelum menggeser kartu.</p>
+                                            <p className="leading-snug text-[11px] text-blue-50">Badge <strong>merah</strong> = perlu diterima dulu. Badge <strong>biru</strong> = sudah diterima, bisa lapor/selesai.</p>
                                         </div>
                                     </div>
                                 </motion.div>
@@ -198,8 +378,8 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
                                 whileDrag={{ scale: 1.02 }}
                             >
                                 {/* Status Indicators appearing when dragging */}
-                                <motion.div style={{ opacity: bgSuccess }} className="absolute top-6 left-6 border-4 border-emerald-500 text-emerald-500 font-bold text-2xl px-3 py-1 rounded-xl rotate-[-15deg] uppercase z-20 pointer-events-none bg-background/80 backdrop-blur-sm">
-                                    Selesai
+                                <motion.div style={{ opacity: bgSuccess }} className="absolute top-6 left-6 border-4 border-emerald-500 text-emerald-500 font-bold text-xl px-3 py-1 rounded-xl rotate-[-15deg] uppercase z-20 pointer-events-none bg-background/80 backdrop-blur-sm">
+                                    {currentNeedsAcknowledge ? 'Terima' : 'Selesai'}
                                 </motion.div>
                                 <motion.div style={{ opacity: bgSkip }} className="absolute top-6 right-6 border-4 border-rose-500 text-rose-500 font-bold text-2xl px-3 py-1 rounded-xl rotate-[15deg] uppercase z-20 pointer-events-none bg-background/80 backdrop-blur-sm">
                                     Lewati
@@ -229,44 +409,67 @@ export default function BatchQuickReportModal({ items, onClose }: BatchQuickRepo
                                     </div>
                                     
                                     <div className="mt-4 flex items-center justify-between text-[11px] text-muted-foreground font-medium">
-                                        <span>Diterima: {format(currentItem.surat.tanggalSurat?.toDate() || new Date(), 'dd MMM yyyy', { locale: id })}</span>
+                                        <span>Disposisi: {(() => {
+                                            const d = currentItem.disposisi?.tanggalDisposisi;
+                                            if (!d) return 'N/A';
+                                            const date = typeof d.toDate === 'function' ? d.toDate() : new Date(d.seconds * 1000);
+                                            return format(date, 'dd MMM yyyy', { locale: id });
+                                        })()}</span>
                                     </div>
                                 </div>
                             </motion.div>
                         </div>
                     </div>
-                    {/* Area Input & Aksi */}
+                    {/* Area Input & Aksi - Adaptif berdasarkan needsAcknowledge */}
                     <div className="p-4 bg-background border-t border-border/30 rounded-b-[2rem]">
-                        <div className="flex items-end gap-2.5 transition-all">
-                            <textarea
-                                className="flex-1 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 rounded-2xl p-3 text-sm focus:outline-none resize-none min-h-[74px] transition-all"
-                                placeholder="Ketik laporan manual..."
-                                value={customReport}
-                                onChange={(e) => setCustomReport(e.target.value)}
-                            />
-                            
-                            <div className="flex flex-col gap-1.5 shrink-0">
-                                <Button 
-                                    size="sm"
-                                    className="h-[34px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm px-4 text-xs font-bold w-[88px]"
-                                    onClick={() => handleAction('SELESAI')}
-                                    disabled={isProcessing}
-                                >
-                                    {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" /> : <><Check className="mr-1 h-3.5 w-3.5" />Selesai</>}
-                                </Button>
-                                <Button 
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-[34px] rounded-xl border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/30 text-[11px] font-semibold px-2 w-[88px]"
-                                    onClick={() => handleAction('PROSES')}
-                                    disabled={isProcessing}
-                                >
-                                    Proses
-                                </Button>
+                        
+                        {/* Jika sudah diterima: tampilkan input laporan + tombol Selesai/Proses */}
+                        {!currentNeedsAcknowledge && (
+                            <div className="flex items-end gap-2.5 transition-all mb-3">
+                                <textarea
+                                    className="flex-1 bg-slate-50 dark:bg-slate-900/30 border border-slate-200 dark:border-slate-800 focus:border-blue-400 focus:ring-4 focus:ring-blue-500/10 rounded-2xl p-3 text-sm focus:outline-none resize-none min-h-[74px] transition-all"
+                                    placeholder="Ketik laporan manual (opsional)..."
+                                    value={customReport}
+                                    onChange={(e) => setCustomReport(e.target.value)}
+                                />
+                                
+                                <div className="flex flex-col gap-1.5 shrink-0">
+                                    <Button 
+                                        size="sm"
+                                        className="h-[34px] rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white shadow-sm px-4 text-xs font-bold w-[88px]"
+                                        onClick={() => handleAction('SELESAI')}
+                                        disabled={isProcessing}
+                                    >
+                                        {isProcessing ? <Loader2 className="h-3.5 w-3.5 animate-spin mx-auto" /> : <><Check className="mr-1 h-3.5 w-3.5" />Selesai</>}
+                                    </Button>
+                                    <Button 
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-[34px] rounded-xl border-amber-200 text-amber-600 hover:bg-amber-50 dark:border-amber-900/50 dark:hover:bg-amber-900/30 text-[11px] font-semibold px-2 w-[88px]"
+                                        onClick={() => handleAction('PROSES')}
+                                        disabled={isProcessing}
+                                    >
+                                        Proses
+                                    </Button>
+                                </div>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="flex justify-center mt-3 mb-1">
+                        {/* Jika belum diterima: tampilkan tombol Terima primer */}
+                        {currentNeedsAcknowledge && (
+                            <Button
+                                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold mb-3 flex items-center justify-center gap-2"
+                                onClick={() => handleAction('TERIMA')}
+                                disabled={isProcessing}
+                            >
+                                {isProcessing 
+                                    ? <Loader2 className="h-4 w-4 animate-spin" /> 
+                                    : <><CheckCheck size={16} /> Terima Disposisi</>
+                                }
+                            </Button>
+                        )}
+
+                        <div className="flex justify-center">
                             <button 
                                 onClick={() => handleAction('LEWATI')}
                                 disabled={isProcessing}

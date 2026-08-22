@@ -44,6 +44,8 @@ import { Card, CardContent } from "@/components/ui/card"; // [PERBAIKAN] Path
 import { Checkbox } from "@/components/ui/checkbox"; // [PERBAIKAN] Path
 import { ScrollArea } from "@/components/ui/scroll-area"; // [PERBAIKAN] Path
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal'; // [PERBAIKAN] Path
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapEmptyState from '@/app/dashboard/sigap/components/SigapEmptyState';
 // --- Akhir Impor Shadcn ---
 
 
@@ -103,7 +105,7 @@ const RepositoryItemRow: React.FC<RepositoryItemRowProps> = ({
   return (
     <div
       key={item.id}
-      className="group flex items-center justify-between p-3 bg-card rounded-lg border border-border hover:border-primary hover:bg-accent"
+      className="group flex items-center justify-between p-3 sg-card sg-mobile-borderless hover:border-primary hover:bg-accent"
       draggable={canManage}
       onDragStart={(e) => onDragStart(e, item)}
       onDragEnd={onDragEnd}
@@ -513,21 +515,22 @@ export default function RepositoryDokumenPage() {
     };
 
     return (
-        <div className="animate-fadeInUp">
-            <h1 className="text-3xl font-bold text-foreground flex items-center mb-6">
-                <FolderArchive size={28} className="mr-3 text-blue-600"/> Repository Dokumen
-            </h1>
+        <div className="sg-page animate-fadeInUp">
+            <SigapPageHeader 
+                title="Repository Dokumen"
+                icon={FolderArchive}
+            />
 
             {/* Header Kontrol (Shadcn) */}
             <Card className="shadow-sm border-border mb-6">
                 <CardContent className="p-4 space-y-4">
-                    <div className="flex flex-col md:flex-row gap-4 justify-between">
+                    <div className="sg-filter-bar justify-between border-none shadow-none bg-transparent p-0">
                         {canCreate && (
                             <div className="flex gap-2">
-                               <Button onClick={() => openModal('folder', null)}>
+                               <Button onClick={() => openModal('folder', null)} className="sg-btn sg-btn-primary">
                                    <Plus size={16} className="mr-2"/> Folder Baru
                                </Button>
-                               <Button onClick={() => openModal('link', null)} variant="secondary">
+                               <Button onClick={() => openModal('link', null)} variant="secondary" className="sg-btn">
                                    <LinkIcon size={16} className="mr-2"/> Tambah Dokumen
                                </Button>
                             </div>
@@ -574,7 +577,7 @@ export default function RepositoryDokumenPage() {
                 </div>
             ) : (
                 <div 
-                    className="space-y-3"
+                    className="space-y-0 md:space-y-3"
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, currentFolderId)}
                 >
@@ -594,10 +597,18 @@ export default function RepositoryDokumenPage() {
                         />
                     ))}
                     {!loading && filteredItems.length === 0 && (
-                        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
-                            <p className="font-semibold">{searchTerm ? 'Tidak ada hasil ditemukan' : 'Folder ini kosong'}</p>
-                            {searchTerm && <p className="text-sm">Coba kata kunci lain.</p>}
-                        </div>
+                        <SigapEmptyState
+                            icon={FolderArchive}
+                            title={searchTerm ? 'Tidak ada hasil ditemukan' : 'Folder ini kosong'}
+                            description={searchTerm ? 'Coba kata kunci lain.' : 'Mulai dengan menambahkan folder atau dokumen baru.'}
+                            action={
+                                canCreate ? (
+                                    <Button onClick={() => openModal('folder', null)} className="mt-4 sg-btn sg-btn-primary">
+                                        <Plus size={16} className="mr-2" /> Buat Folder
+                                    </Button>
+                                ) : undefined
+                            }
+                        />
                     )}
                 </div>
             )}

@@ -23,6 +23,7 @@ import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, Ma
 import JadwalFormModal from './components/JadwalFormModal';
 import JadwalDetailModal from './components/JadwalDetailModal';
 import Link from 'next/link';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
@@ -151,17 +152,19 @@ export default function JadwalInternalPage() {
     }, [jadwalList, currentDate]);
 
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                {/* [PERBAIKAN DARK MODE] */}
-                <h1 className="text-3xl font-bold text-foreground">Jadwal Internal</h1>
-                <Button onClick={() => handleOpenFormModal(new Date())} className="mt-4 md:mt-0">
-                    <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
-                </Button>
-            </div>
+        <div className="sg-page">
+            <SigapPageHeader 
+                title="Jadwal Internal"
+                icon={CalendarDays}
+                actions={
+                    <Button onClick={() => handleOpenFormModal(new Date())} className="sg-btn sg-btn-primary">
+                        <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
+                    </Button>
+                }
+            />
 
             {isAdmin && pendingApprovals.length > 0 && (
-                <Card className="mb-6 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/30">
+                <Card className="sg-card sg-mobile-borderless mb-0 md:mb-6 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/30">
                     <CardHeader className="pb-4">
                         <CardTitle className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center">
                             <AlertTriangle size={18} className="mr-2"/>Menunggu Persetujuan ({pendingApprovals.length})
@@ -186,9 +189,9 @@ export default function JadwalInternalPage() {
                 </Card>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-                <Card className="lg:col-span-2 shadow-md border-border overflow-hidden">
+            <div className="sg-section">
+                <div className="flex flex-col md:grid md:grid-cols-1 lg:grid-cols-3 gap-0 md:gap-6">
+                    <Card className="sg-card sg-mobile-borderless lg:col-span-2 shadow-md border-border overflow-hidden">
                     <CardHeader className="p-4 flex flex-row items-center justify-between border-b border-border">
                         <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)}>
                             <ChevronLeft/>
@@ -245,7 +248,7 @@ export default function JadwalInternalPage() {
                     </CardContent>
                 </Card>
 
-                <Card className="lg:col-span-1 shadow-md border-border flex flex-col">
+                <Card className="sg-card sg-mobile-borderless lg:col-span-1 shadow-md border-border flex flex-col">
                     <CardHeader className="p-4 border-b border-border">
                         <CardTitle className="text-lg font-semibold text-foreground flex items-center justify-between">
                             <div className="flex items-center">
@@ -321,7 +324,7 @@ export default function JadwalInternalPage() {
                         </ScrollArea>
                     </CardContent>
                 </Card>
-
+                </div>
             </div>
 
             <JadwalFormModal

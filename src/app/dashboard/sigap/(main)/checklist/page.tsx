@@ -17,6 +17,8 @@ import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, 
 import Link from 'next/link';
 import FormTugas from '../tugas/components/FormTugas'; // PERBAIKAN PATH (tetap)
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/sigap/hooks/useGoogleDriveUploader'; // PERBAIKAN PATH (tetap)
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -63,55 +65,39 @@ type ItemStatus = 'Todo' | 'In Progress' | 'Done';
 // --- Komponen Modal Bantuan (Refactored) ---
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                        <HelpCircle className="mr-3 text-blue-600" />
-                        Bantuan: Checklist Pribadi Cerdas
-                    </DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                  <div className="space-y-4 text-foreground/90">
-                      {/* ... (Konten bantuan tetap sama) ... */}
-                       <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
-                        <p>Menu "Checklist Pribadi" adalah alat bantu pribadi Anda (seperti Trello atau To-Do List) untuk mengelola pekerjaan sehari-hari. Anda bisa membuat "Papan" (Board) untuk setiap proyek atau topik, lalu mengisinya dengan "Item" (kartu) pekerjaan.</p>
-                        <p>Menu ini bersifat <strong>pribadi</strong> dan tidak dapat dilihat oleh atasan atau rekan kerja, kecuali jika Anda mengubah item menjadi "Tugas" resmi.</p>
-                        
-                        <h3 className="font-semibold text-lg text-foreground">Cara Menggunakan:</h3>
-                        <ol className="list-decimal list-inside space-y-2">
-                            <li><strong>Membuat Papan (Board):</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Ketik nama proyek Anda (misal: "Persiapan Rapat Anggaran") di kotak "Buat Papan Baru", lalu klik tombol "+".</li>
-                                    <li>Papan ini akan menjadi wadah untuk semua item pekerjaan Anda terkait proyek itu.</li>
-                                </ul>
-                            </li>
-                            <li><strong>Menambah Item (Kartu):</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Di kolom "Todo", ketik item pekerjaan (misal: "Siapkan draf undangan") lalu tekan tombol "+".</li>
-                                    <li>Gunakan tombol "AI" di sebelah form "Buat Papan Baru" untuk meminta AI memecah satu tujuan besar (misal: "Mengadakan rapat") menjadi beberapa item pekerjaan kecil secara otomatis.</li>
-                                </ul>
-                            </li>
-                            <li><strong>Memindahkan Item:</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li><strong>Desktop:</strong> Klik dan seret (drag & drop) item dari "Todo" ke "In Progress" (saat dikerjakan), lalu ke "Done" (saat selesai).</li>
-                                    <li><strong>Mobile:</strong> Klik tombol "Pindah" pada kartu item untuk memindahkannya antar kolom.</li>
-                                </ul>
-                            </li>
-                            <li><strong>Integrasi (Paling Penting):</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li><strong>Lapor ke Logbook:</strong> Setelah item ada di kolom "Done", klik tombol "Lapor" (ikon buku). Item ini akan otomatis tercatat di "Logbook Harian" Anda sebagai bukti kinerja.</li>
-                                    <li><strong>Konversi ke Tugas:</strong> Jika item pekerjaan pribadi perlu didelegasikan, klik tombol "Tugas" (ikon kirim). Ini akan membuka form "Tugas Baru" dengan data yang sudah terisi, siap untuk ditugaskan ke staf Anda.</li>
-                                </ul>
-                            </li>
-                        </ol>
-                  </div>
-                </ScrollArea>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Saya Mengerti</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <SigapHelpModal isOpen={isOpen} onClose={onClose} title="Checklist Pribadi Cerdas">
+             <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
+              <p>Menu "Checklist Pribadi" adalah alat bantu pribadi Anda (seperti Trello atau To-Do List) untuk mengelola pekerjaan sehari-hari. Anda bisa membuat "Papan" (Board) untuk setiap proyek atau topik, lalu mengisinya dengan "Item" (kartu) pekerjaan.</p>
+              <p>Menu ini bersifat <strong>pribadi</strong> dan tidak dapat dilihat oleh atasan atau rekan kerja, kecuali jika Anda mengubah item menjadi "Tugas" resmi.</p>
+              
+              <h3 className="font-semibold text-lg text-foreground mt-4">Cara Menggunakan:</h3>
+              <ol className="list-decimal list-inside space-y-2">
+                  <li><strong>Membuat Papan (Board):</strong>
+                      <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                          <li>Ketik nama proyek Anda (misal: "Persiapan Rapat Anggaran") di kotak "Buat Papan Baru", lalu klik tombol "+".</li>
+                          <li>Papan ini akan menjadi wadah untuk semua item pekerjaan Anda terkait proyek itu.</li>
+                      </ul>
+                  </li>
+                  <li><strong>Menambah Item (Kartu):</strong>
+                      <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                          <li>Di kolom "Todo", ketik item pekerjaan (misal: "Siapkan draf undangan") lalu tekan tombol "+".</li>
+                          <li>Gunakan tombol "AI" di sebelah form "Buat Papan Baru" untuk meminta AI memecah satu tujuan besar (misal: "Mengadakan rapat") menjadi beberapa item pekerjaan kecil secara otomatis.</li>
+                      </ul>
+                  </li>
+                  <li><strong>Memindahkan Item:</strong>
+                      <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                          <li><strong>Desktop:</strong> Klik dan seret (drag & drop) item dari "Todo" ke "In Progress" (saat dikerjakan), lalu ke "Done" (saat selesai).</li>
+                          <li><strong>Mobile:</strong> Klik tombol "Pindah" pada kartu item untuk memindahkannya antar kolom.</li>
+                      </ul>
+                  </li>
+                  <li><strong>Integrasi (Paling Penting):</strong>
+                      <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                          <li><strong>Lapor ke Logbook:</strong> Setelah item ada di kolom "Done", klik tombol "Lapor" (ikon buku). Item ini akan otomatis tercatat di "Logbook Harian" Anda sebagai bukti kinerja.</li>
+                          <li><strong>Konversi ke Tugas:</strong> Jika item pekerjaan pribadi perlu didelegasikan, klik tombol "Tugas" (ikon kirim). Ini akan membuka form "Tugas Baru" dengan data yang sudah terisi, siap untuk ditugaskan ke staf Anda.</li>
+                      </ul>
+                  </li>
+              </ol>
+        </SigapHelpModal>
     );
 };
 // --- Akhir Modal Bantuan ---
@@ -312,12 +298,12 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader }: RekapBula
 
 // --- Komponen ShortcutNav (Refactored) ---
 const ShortcutNav = () => (
-    <div className="mb-6 flex items-center gap-2 flex-wrap">
+    <div className="mb-6 flex items-center gap-2 flex-wrap"> 
         <span className="text-sm font-semibold text-muted-foreground shrink-0">Akses Cepat:</span>
-        <Button asChild variant="secondary" size="sm" className="rounded-full">
+        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
           <Link href="/dashboard/tugas"><ClipboardCheck size={14} /> Tugas</Link>
         </Button>
-        <Button asChild variant="secondary" size="sm" className="rounded-full">
+        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
           <Link href="/dashboard/logbook"><BookOpen size={14} /> Logbook</Link>
         </Button>
     </div>
@@ -331,7 +317,7 @@ const MobileItemCard = ({ item, onUpdateStatus, onDelete, onLogbook, onConvertTo
     };
 
     return (
-        <div className="bg-card p-3 rounded-md shadow-sm border border-border group">
+        <div className="sg-card sg-mobile-borderless p-3 group">
             <p className="text-sm text-foreground">{item.teks}</p>
             <div className="flex justify-between items-center mt-2 gap-2">
                 <div className="flex gap-2">
@@ -572,10 +558,10 @@ export default function ChecklistPage() {
     useEffect(() => {
         if (!userProfile || loading) return;
 
-        const createBoard = searchParams.get('createBoard');
-        const boardTitle = searchParams.get('boardTitle');
-        const taskId = searchParams.get('taskId');
-        const boardId = searchParams.get('boardId');
+        const createBoard = searchParams?.get('createBoard');
+        const boardTitle = searchParams?.get('boardTitle');
+        const taskId = searchParams?.get('taskId');
+        const boardId = searchParams?.get('boardId');
 
         if (boardId) {
             console.log("Found boardId in URL:", boardId);
@@ -822,7 +808,7 @@ export default function ChecklistPage() {
                         </Button>
                     )}
                 </h3>
-                <div className="flex-1 overflow-y-auto space-y-2 pr-1 pb-2">
+                <div className="flex-1 overflow-y-auto space-y-0 md:space-y-2 pr-1 pb-2 flex flex-col">
                     {items.map(item => (
                         <div
                             key={item.id}
@@ -830,7 +816,7 @@ export default function ChecklistPage() {
                             onDragStart={(e) => handleDragStart(e, item.id)}
                             onDragEnd={handleDragEnd}
                             onDragEnter={(e) => handleDragEnter(e, item.id, status)}
-                            className="bg-card p-3 rounded-md shadow-sm group cursor-grab active:cursor-grabbing border border-border"
+                            className="sg-card sg-mobile-borderless p-3 group cursor-grab active:cursor-grabbing"
                         >
                              <div className="float-right text-muted-foreground/50 opacity-0 group-hover:opacity-100 cursor-move -mt-1 -mr-1">
                                 <GripVertical size={16} />
@@ -866,18 +852,21 @@ export default function ChecklistPage() {
     }
 
     return (
-        <div className="flex flex-col h-[calc(100vh-64px)] md:h-auto pb-20 md:pb-0">
-            <div className="flex-shrink-0 mb-4 px-4 md:px-0">
-                <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <ClipboardList size={28} className="mr-3 text-purple-600" />Checklist Pribadi Cerdas
-                    </h1>
-                     <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                        <HelpCircle size={20} />
-                    </Button>
-                </div>
-                <ShortcutNav />
-                 <div className="flex flex-col md:flex-row gap-4 justify-between items-stretch md:items-center p-4 bg-card rounded-xl border border-border shadow-sm">
+        <div className="sg-page h-[calc(100vh-64px)] md:h-auto flex flex-col">
+            <div className="flex-shrink-0 px-4 md:px-0">
+                <SigapPageHeader 
+                    title="Checklist"
+                    icon={ClipboardList}
+                    actions={
+                        <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                            <HelpCircle size={20} />
+                        </Button>
+                    }
+                >
+                    <ShortcutNav />
+                </SigapPageHeader>
+                
+                 <div className="sg-filter-bar justify-between">
                      <div className="flex gap-2 items-center w-full md:flex-1">
                         <Select value={activeBoardId || ''} onValueChange={e => setActiveBoardId(e)} disabled={boards.length === 0}>
                            <SelectTrigger className="w-full font-semibold">
@@ -898,10 +887,10 @@ export default function ChecklistPage() {
                         <Button type="submit" disabled={!newBoardTitle.trim()}>+</Button>
                     </form>
                      <div className='flex gap-2 flex-shrink-0'>
-                        <Button onClick={() => setIsAiModalOpen(true)} disabled={!activeBoard} className="bg-purple-600 hover:bg-purple-700">
+                        <Button onClick={() => setIsAiModalOpen(true)} disabled={!activeBoard} className="bg-purple-600 hover:bg-purple-700 sg-btn">
                             <BrainCircuit size={16} className="mr-2"/> AI
                         </Button>
-                        <Button onClick={() => setIsRekapOpen(true)} className="bg-green-600 hover:bg-green-700">
+                        <Button onClick={() => setIsRekapOpen(true)} className="bg-green-600 hover:bg-green-700 sg-btn">
                             <Calendar size={16} className="mr-2"/> Rekap Bulanan
                         </Button>
                     </div>
@@ -929,20 +918,20 @@ export default function ChecklistPage() {
                     </div>
                     <div className="md:hidden flex-1 flex flex-col mt-4">
                         <Tabs value={mobileTab} onValueChange={(v) => setMobileTab(v as ItemStatus)} className="flex-1 flex flex-col">
-                            <div className="mx-4 md:mx-0 sticky top-[64px] bg-card z-10 rounded-t-lg">
+                            <div className="mx-0 sticky top-[64px] bg-card z-10 rounded-none md:rounded-t-lg border-b border-border">
                                 <TabsList className="grid w-full grid-cols-3">
                                     <TabsTrigger value="Todo">Todo ({todoItems.length})</TabsTrigger>
                                     <TabsTrigger value="In Progress">Proses ({inProgressItems.length})</TabsTrigger>
                                     <TabsTrigger value="Done">Selesai ({doneItems.length})</TabsTrigger>
                                 </TabsList>
                             </div>
-                            <TabsContent value="Todo" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
+                            <TabsContent value="Todo" className="flex-1 overflow-y-auto p-0 space-y-0 bg-transparent rounded-none mx-0 mb-4 md:p-2 md:space-y-2 md:bg-muted md:rounded-b-lg flex flex-col">
                                 {todoItems.length > 0 ? todoItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
                             </TabsContent>
-                             <TabsContent value="In Progress" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
+                             <TabsContent value="In Progress" className="flex-1 overflow-y-auto p-0 space-y-0 bg-transparent rounded-none mx-0 mb-4 md:p-2 md:space-y-2 md:bg-muted md:rounded-b-lg flex flex-col">
                                 {inProgressItems.length > 0 ? inProgressItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
                             </TabsContent>
-                             <TabsContent value="Done" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
+                             <TabsContent value="Done" className="flex-1 overflow-y-auto p-0 space-y-0 bg-transparent rounded-none mx-0 mb-4 md:p-2 md:space-y-2 md:bg-muted md:rounded-b-lg flex flex-col">
                                 {doneItems.length > 0 ? doneItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
                             </TabsContent>
                         </Tabs>

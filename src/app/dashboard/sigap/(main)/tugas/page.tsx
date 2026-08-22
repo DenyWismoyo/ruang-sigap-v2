@@ -17,6 +17,8 @@ import { Plus, Filter, HelpCircle, ClipboardCheck, BookOpen, ListChecks } from '
 import TaskList from './components/TaskList';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal'; 
 import { SkeletonCard } from '@/app/dashboard/sigap/components/skeletons/SkeletonCard'; 
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 import Link from 'next/link';
 
 // Hooks SSOT
@@ -41,40 +43,15 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 // --- Komponen Modal Bantuan ---
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                        <HelpCircle className="mr-3 text-blue-600" />
-                        Bantuan: Pusat Komando Tugas
-                    </DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="max-h-[70vh] p-1">
-                    <div className="space-y-4 text-foreground/90 pr-4">
-                        <h3 className="font-semibold text-lg">Apa Kegunaan Menu Ini?</h3>
-                        <p>Pusat Komando Tugas adalah tempat Anda mengelola seluruh pekerjaan, baik yang Anda terima dari atasan maupun yang Anda delegasikan ke tim.</p>
-                        {/* ... Konten bantuan lainnya ... */}
-                    </div>
-                </ScrollArea>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Saya Mengerti</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <SigapHelpModal isOpen={isOpen} onClose={onClose} title="Pusat Komando Tugas">
+            <h3 className="font-semibold text-lg">Apa Kegunaan Menu Ini?</h3>
+            <p>Pusat Komando Tugas adalah tempat Anda mengelola seluruh pekerjaan, baik yang Anda terima dari atasan maupun yang Anda delegasikan ke tim.</p>
+            {/* ... Konten bantuan lainnya ... */}
+        </SigapHelpModal>
     );
 };
 
-const ShortcutNav = () => (
-    <div className="flex items-center gap-2 mb-4">
-        <span className="text-sm font-semibold text-muted-foreground">Akses Cepat:</span>
-        <Button asChild variant="secondary" size="sm" className="rounded-full">
-          <Link href="/dashboard/checklist"><ListChecks size={14} /> Checklist</Link>
-        </Button>
-         <Button asChild variant="secondary" size="sm" className="rounded-full">
-          <Link href="/dashboard/logbook"><BookOpen size={14} /> Logbook</Link>
-        </Button>
-    </div>
-);
+// Removed ShortcutNav
 
 export default function TugasSayaPage() {
   const { userProfile, loading: authLoading } = useUserAuth();
@@ -153,59 +130,80 @@ export default function TugasSayaPage() {
   );
 
   return (
-    <div className="animate-fadeInUp">
+    <div className="sg-page">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-         <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <h1 className="text-3xl font-bold text-foreground">Pusat Komando Tugas</h1>
-              <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
-                  <HelpCircle size={20} />
-              </Button>
-            </div>
-            <div className="mt-4">
-                <ShortcutNav />
-            </div>
-         </div>
-        <div className="flex items-center space-x-2 md:space-x-4 flex-shrink-0">
-           <Button variant="outline" onClick={() => setIsFilterModalOpen(true)} className="md:hidden">
-              <Filter size={16} className="mr-2"/> Filter
-           </Button>
-          <Button onClick={() => setIsFormModalOpen(true)} className="w-full md:w-auto">
-            <Plus size={16} className="mr-2" /> Tugas Baru
-          </Button>
-        </div>
-      </div>
+      <SigapPageHeader 
+          title="Tugas"
+          icon={ClipboardCheck}
+          actions={
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                  <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary hidden md:inline-flex">
+                      <HelpCircle size={20} />
+                  </Button>
+                  <Button onClick={() => setIsFormModalOpen(true)} className="flex-1 md:flex-none md:w-auto sg-btn sg-btn-primary">
+                      <Plus size={16} className="mr-2" /> Tugas Baru
+                  </Button>
+              </div>
+          }
+      />
       
-      {/* Filter Desktop */}
-      <div className="hidden md:flex p-4 bg-card rounded-xl border border-border shadow-sm mb-6 items-center gap-4">
-        <div className="text-sm font-semibold">Tampilkan:</div>
-        <Select value={assignmentFilter} onValueChange={(v) => setAssignmentFilter(v as any)}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Penugasan</SelectItem>
-            <SelectItem value="toMe">Tugas Untuk Saya</SelectItem>
-            <SelectItem value="byMe">Tugas Dari Saya</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-          <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Tipe</SelectItem>
-            <SelectItem value="surat">Terkait Surat</SelectItem>
-            <SelectItem value="internal">Internal</SelectItem>
-          </SelectContent>
-        </Select>
+      {/* Filter Pills (Mobile & Desktop) */}
+      <div className="px-4 md:px-0 mb-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none w-full md:w-auto">
+              <span className="text-sm font-semibold text-muted-foreground mr-2 hidden md:block">Tampilkan:</span>
+              
+              {/* Pills for Assignment Filter */}
+              {['all', 'toMe', 'byMe'].map((val) => (
+                  <button
+                      key={`assign-${val}`}
+                      onClick={() => setAssignmentFilter(val as TaskAssignmentFilter)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition-colors flex-shrink-0 ${
+                          assignmentFilter === val 
+                              ? 'bg-primary text-primary-foreground border-primary' 
+                              : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      }`}
+                  >
+                      {val === 'all' ? 'Semua Penugasan' : val === 'toMe' ? 'Tugas Untuk Saya' : 'Tugas Dari Saya'}
+                  </button>
+              ))}
+
+              <div className="w-px h-5 bg-border mx-1 hidden md:block"></div>
+
+              {/* Pills for Type Filter */}
+              {['all', 'surat', 'internal'].map((val) => (
+                  <button
+                      key={`type-${val}`}
+                      onClick={() => setTypeFilter(val as TaskTypeFilter)}
+                      className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition-colors flex-shrink-0 ${
+                          typeFilter === val 
+                              ? 'bg-primary text-primary-foreground border-primary' 
+                              : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
+                      }`}
+                  >
+                      {val === 'all' ? 'Semua Tipe' : val === 'surat' ? 'Terkait Surat' : 'Internal'}
+                  </button>
+              ))}
+          </div>
       </div>
 
       {/* Tabs Status */}
       <Tabs value={activeStatusTab} onValueChange={(v) => setActiveStatusTab(v as TaskStatusFilter)} className="w-full">
-        <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-muted">
-            <TabsTrigger value="Baru">Baru ({taskCounts['Baru']})</TabsTrigger>
-            <TabsTrigger value="Dikerjakan">Dikerjakan ({taskCounts['Dikerjakan']})</TabsTrigger>
-            <TabsTrigger value="Selesai">Selesai ({taskCounts['Selesai']})</TabsTrigger>
-            <TabsTrigger value="Semua">Semua ({taskCounts['Semua']})</TabsTrigger>
-        </TabsList>
+        <div className="px-4 md:px-0">
+            <TabsList className="w-full md:w-[500px] grid grid-cols-4 h-12 p-1 bg-muted/50 rounded-lg">
+                <TabsTrigger value="Baru" className="flex items-center justify-center gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Baru <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-bold">{taskCounts['Baru']}</span>
+                </TabsTrigger>
+                <TabsTrigger value="Dikerjakan" className="flex items-center justify-center gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Proses <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-bold">{taskCounts['Dikerjakan']}</span>
+                </TabsTrigger>
+                <TabsTrigger value="Selesai" className="flex items-center justify-center gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Selesai <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-bold">{taskCounts['Selesai']}</span>
+                </TabsTrigger>
+                <TabsTrigger value="Semua" className="flex items-center justify-center gap-1.5 rounded-md data-[state=active]:bg-background data-[state=active]:shadow-sm">
+                    Semua <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded-full text-[10px] font-bold">{taskCounts['Semua']}</span>
+                </TabsTrigger>
+            </TabsList>
+        </div>
         
         <div className="mt-6">
             {isLoading ? renderSkeleton() : (
@@ -247,41 +245,7 @@ export default function TugasSayaPage() {
         isProcessing={confirmModal.isProcessing || isActionProcessing}
       />
       
-      {/* Mobile Filter Dialog */}
-      <Dialog open={isFilterModalOpen} onOpenChange={setIsFilterModalOpen}>
-        <DialogContent className="sm:max-w-sm bg-card border-border">
-            <DialogHeader>
-                <DialogTitle>Filter Tugas</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <div>
-                  <Label>Tampilkan</Label>
-                  <Select value={assignmentFilter} onValueChange={(v) => setAssignmentFilter(v as any)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Penugasan</SelectItem>
-                      <SelectItem value="toMe">Tugas Untuk Saya</SelectItem>
-                      <SelectItem value="byMe">Tugas Dari Saya</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Tipe Tugas</Label>
-                  <Select value={typeFilter} onValueChange={(v) => setTypeFilter(v as any)}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Semua Tipe</SelectItem>
-                      <SelectItem value="surat">Terkait Surat</SelectItem>
-                      <SelectItem value="internal">Internal</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-            </div>
-            <DialogFooter>
-                <Button onClick={() => setIsFilterModalOpen(false)} className="w-full">Terapkan</Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
 
       <BantuanHalamanModal isOpen={isBantuanOpen} onClose={() => setIsBantuanOpen(false)} />
     </div>

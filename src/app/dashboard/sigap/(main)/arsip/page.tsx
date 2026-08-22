@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge"; 
 import { SkeletonCard } from '@/app/dashboard/sigap/components/skeletons/SkeletonCard';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapEmptyState from '@/app/dashboard/sigap/components/SigapEmptyState';
 import { Surat } from '@/types';
 
 // Helper Badge
@@ -43,7 +45,7 @@ const getStatusBadgeVariant = (status: string): "default" | "secondary" | "destr
 
 // Mobile Card
 const ArsipCard = ({ surat }: { surat: Surat }) => (
-    <Card className="transition-all hover:shadow-md border-l-4 border-gray-300 dark:border-gray-600">
+    <Card className="sg-list-card sg-mobile-borderless">
         <Link href={`/dashboard/surat/${surat.id}`} className="block">
             <CardHeader className="pb-2">
                 <div className="flex justify-between items-start gap-2">
@@ -68,7 +70,7 @@ const ArsipCard = ({ surat }: { surat: Surat }) => (
 
 // Desktop Row
 const ArsipRow = ({ surat, onClick }: { surat: Surat, onClick: () => void }) => (
-    <TableRow onClick={onClick} className="cursor-pointer hover:bg-muted/50">
+    <TableRow onClick={onClick} className="cursor-pointer sg-table-row">
         <TableCell className="font-semibold text-primary hover:underline cursor-pointer max-w-[300px]">
              <div className="line-clamp-2">{surat.perihal}</div>
         </TableCell>
@@ -129,20 +131,17 @@ export default function ArsipSuratPage() {
     const goToPrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
 
     return (
-        <div className="animate-fadeInUp pb-20">
+        <div className="sg-page">
             {/* Header */}
-            <div className="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <Archive size={28} className="mr-3 text-gray-600 dark:text-gray-400"/> Arsip Surat
-                    </h1>
-                    <p className="text-muted-foreground mt-1">Daftar surat yang telah selesai atau diarsipkan.</p>
-                </div>
-            </div>
+            <SigapPageHeader 
+                title="Arsip Surat" 
+                icon={Archive} 
+                description="Daftar surat yang telah selesai atau diarsipkan." 
+            />
 
             {/* Search & Filter Bar */}
-            <div className="mb-6 flex flex-col sm:flex-row gap-3">
-                <div className="relative flex-1">
+            <div className="sg-filter-bar">
+                <div className="sg-search-input">
                     <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <Input 
                         placeholder="Cari arsip (Perihal, Nomor, Pengirim)..." 
@@ -180,22 +179,22 @@ export default function ArsipSuratPage() {
                      {[...Array(3)].map((_, i) => <SkeletonCard key={i} />)}
                 </div>
             ) : suratList.length === 0 ? (
-                <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border">
-                    <Archive size={48} className="mx-auto text-muted-foreground/50 mb-4" />
-                    <p className="font-semibold">Arsip Kosong</p>
-                    <p className="text-sm">Belum ada surat yang diarsipkan atau sesuai pencarian.</p>
-                </div>
+                <SigapEmptyState 
+                    icon={Archive}
+                    title="Arsip Kosong"
+                    description="Belum ada surat yang diarsipkan atau sesuai pencarian."
+                />
             ) : (
                 <>
                     {/* Mobile List View */}
-                    <div className="md:hidden space-y-4 mb-4">
+                    <div className="md:hidden flex flex-col space-y-0 mb-4">
                         {paginatedData.map(surat => <ArsipCard key={surat.id} surat={surat} />)}
                     </div>
 
                     {/* Desktop Table View */}
-                    <Card className="hidden md:block mb-4 overflow-hidden border-border">
-                        <Table>
-                            <TableHeader>
+                    <div className="hidden md:block sg-table-wrapper mb-4">
+                        <Table className="sg-table">
+                            <TableHeader className="sg-table-head">
                                 <TableRow>
                                     <TableHead>Perihal</TableHead>
                                     <TableHead>Pengirim</TableHead>
@@ -214,7 +213,7 @@ export default function ArsipSuratPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                    </Card>
+                    </div>
 
                     {/* Pagination Controls */}
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2">

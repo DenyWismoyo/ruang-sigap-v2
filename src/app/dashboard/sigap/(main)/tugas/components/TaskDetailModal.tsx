@@ -173,13 +173,13 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
     ? Math.round((tugas.subTugas.filter(s => s.selesai).length / tugas.subTugas.length) * 100) 
     : 0;
 
-  const canManageTeam = userProfile?.jabatanId === tugas.dariJabatanId || userProfile?.jabatanId === tugas.kepadaJabatanId;
+  const canManageTeam = userProfile?.jabatanId === tugas.dariJabatanId || userProfile?.jabatanId === tugas.kepadaJabatanId || userProfile?.role === 'admin_opd';
 
   return (
     <>
       <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="w-full sm:max-w-3xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
-          <DialogHeader className="flex-shrink-0 p-4 border-b border-border">
+        <DialogContent className="w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-3xl bg-card border-border flex flex-col p-0 gap-0">
+          <DialogHeader className="flex-shrink-0 p-4 md:p-6 pb-3 md:pb-4 border-b border-border">
              <div className="flex justify-between items-center">
                  <DialogTitle className="truncate pr-4">{tugas.judulTugas}</DialogTitle>
                  <div className="flex gap-2">
@@ -190,39 +190,62 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
           </DialogHeader>
           
           <ScrollArea className="flex-1">
-            <div className="p-6 space-y-6">
+            <div className="p-4 md:p-6 space-y-6 md:space-y-8">
                {/* Info Dasar */}
-               <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div><Label className="text-muted-foreground">Dari</Label><p className="font-medium">{assigner?.namaLengkap || '...'}</p></div>
-                  <div><Label className="text-muted-foreground">Kepada</Label><p className="font-medium">{assignee?.namaLengkap || '...'}</p></div>
-                  <div className="col-span-2"><Label className="text-muted-foreground">Deskripsi</Label><p className="whitespace-pre-wrap">{tugas.deskripsi}</p></div>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="bg-muted/30 p-3.5 rounded-xl border border-border flex flex-col gap-2">
+                     <Label className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Dari (Pemberi Tugas)</Label>
+                     <div className="flex items-center gap-3">
+                       <div className="w-9 h-9 rounded-full bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center text-blue-700 dark:text-blue-300 font-bold text-sm shadow-sm">{assigner?.namaLengkap?.charAt(0).toUpperCase() || '?'}</div>
+                       <div className="flex-1 min-w-0">
+                         <p className="font-semibold text-sm truncate text-foreground">{assigner?.namaLengkap || '...'}</p>
+                         <p className="text-xs text-muted-foreground truncate">{assigner?.namaJabatan || '...'}</p>
+                       </div>
+                     </div>
+                  </div>
+                  <div className="bg-muted/30 p-3.5 rounded-xl border border-border flex flex-col gap-2">
+                     <Label className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold">Kepada (Penanggung Jawab)</Label>
+                     <div className="flex items-center gap-3">
+                       <div className="w-9 h-9 rounded-full bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center text-emerald-700 dark:text-emerald-300 font-bold text-sm shadow-sm">{assignee?.namaLengkap?.charAt(0).toUpperCase() || '?'}</div>
+                       <div className="flex-1 min-w-0">
+                         <p className="font-semibold text-sm truncate text-foreground">{assignee?.namaLengkap || '...'}</p>
+                         <p className="text-xs text-muted-foreground truncate">{assignee?.namaJabatan || '...'}</p>
+                       </div>
+                     </div>
+                  </div>
+                  <div className="col-span-1 md:col-span-2 mt-1">
+                     <Label className="text-muted-foreground text-[10px] uppercase tracking-wider font-bold mb-2 block">Deskripsi Tugas</Label>
+                     <div className="text-sm leading-relaxed whitespace-pre-wrap p-4 bg-muted/20 border border-border/50 rounded-xl">
+                       {tugas.deskripsi}
+                     </div>
+                  </div>
                </div>
 
                {/* Kolaborator */}
                {canManageTeam && (
                  <div>
-                   <Label className="mb-2 block">Kolaborator</Label>
-                   <div className="flex flex-wrap gap-2 mb-2">
+                   <Label className="mb-2 block text-sm font-semibold">Kolaborator</Label>
+                   <div className="flex flex-wrap gap-2 mb-2 items-center">
                       {tugas.collaboratorIds?.map(id => {
                         const user = userCache.get(id);
                         return user ? (
-                          <Badge key={id} variant="secondary" className="gap-1">
+                          <Badge key={id} variant="secondary" className="gap-1.5 py-1 px-3 rounded-full text-xs font-medium bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800">
                             {user.namaLengkap}
-                            <button onClick={() => handleRemoveCollaborator(id)}><X size={12} /></button>
+                            <button onClick={() => handleRemoveCollaborator(id)} className="hover:bg-blue-200 dark:hover:bg-blue-800 rounded-full p-0.5 transition-colors"><X size={12} /></button>
                           </Badge>
                         ) : null;
                       })}
                       <Popover open={collaboratorPopoverOpen} onOpenChange={setCollaboratorPopoverOpen}>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" size="sm" className="h-6 text-xs"><Plus size={12} className="mr-1" /> Tambah</Button>
+                          <Button variant="outline" size="sm" className="h-7 text-xs rounded-full border-dashed"><Plus size={12} className="mr-1" /> Tambah</Button>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0 w-[250px]">
+                        <PopoverContent className="p-0 w-[250px]" side="bottom" align="start">
                           <Command>
-                            <CommandInput placeholder="Cari bawahan..." value={collaboratorSearch} onValueChange={setCollaboratorSearch} />
+                            <CommandInput placeholder="Cari kolaborator..." value={collaboratorSearch} onValueChange={setCollaboratorSearch} className="h-9 text-xs" />
                             <CommandList>
-                              {collaboratorResults.length === 0 ? <CommandEmpty>Tidak ditemukan</CommandEmpty> : 
+                              {collaboratorResults.length === 0 ? <CommandEmpty className="text-xs py-4 text-center text-muted-foreground">Tidak ditemukan</CommandEmpty> : 
                                 collaboratorResults.map(u => (
-                                  <CommandItem key={u.uid} onSelect={() => { handleAddCollaborator(u.jabatanId); }}>
+                                  <CommandItem key={u.uid} onSelect={() => { handleAddCollaborator(u.jabatanId); }} className="text-xs cursor-pointer">
                                     {u.namaLengkap}
                                   </CommandItem>
                                 ))
@@ -281,19 +304,30 @@ export default function TaskDetailModal({ isOpen, onClose, tugas, userCache }: T
                </div>
 
                {/* Komentar */}
-               <div>
-                   <Label className="mb-2 block">Komentar</Label>
-                   <div className="bg-muted rounded-lg p-3 h-48 overflow-y-auto space-y-3 mb-3">
-                       {daftarKomentar.map(k => (
-                           <div key={k.id} className="text-sm">
-                               <p className="font-bold text-xs">{k.userName} <span className="text-muted-foreground font-normal">{formatDateRelative(k.timestamp)}</span></p>
-                               <p>{k.komentar}</p>
-                           </div>
-                       ))}
+               <div className="border-t border-border pt-6 pb-2">
+                   <Label className="mb-4 text-sm font-semibold flex items-center gap-2"><MessageSquare size={16} className="text-muted-foreground"/> Diskusi & Komentar</Label>
+                   <div className="space-y-4 mb-4 max-h-64 overflow-y-auto pr-2">
+                       {daftarKomentar.length === 0 ? (
+                           <p className="text-center text-xs text-muted-foreground py-4 italic">Belum ada komentar.</p>
+                       ) : daftarKomentar.map(k => {
+                           const isMe = k.userId === userProfile?.uid;
+                           return (
+                             <div key={k.id} className={`flex flex-col gap-1 ${isMe ? 'items-end' : 'items-start'}`}>
+                                 <div className={`px-4 py-2.5 rounded-2xl max-w-[85%] text-sm shadow-sm ${isMe ? 'bg-primary text-primary-foreground rounded-br-sm' : 'bg-muted border border-border rounded-bl-sm'}`}>
+                                     <p>{k.komentar}</p>
+                                 </div>
+                                 <div className="flex items-center gap-2 px-1 text-[10px] text-muted-foreground">
+                                     <span className="font-semibold">{isMe ? 'Anda' : k.userName}</span>
+                                     <span>&bull;</span>
+                                     <span>{formatDateRelative(k.timestamp)}</span>
+                                 </div>
+                             </div>
+                           )
+                       })}
                    </div>
-                   <form onSubmit={handleKomentarSubmit} className="flex gap-2">
-                       <Input value={komentar} onChange={e => setKomentar(e.target.value)} placeholder="Tulis komentar..." className="flex-1"/>
-                       <Button type="submit" size="icon"><Send size={16}/></Button>
+                   <form onSubmit={handleKomentarSubmit} className="flex gap-2 items-center bg-muted/30 p-1.5 rounded-full border border-border focus-within:ring-1 focus-within:ring-primary focus-within:border-primary transition-all">
+                       <Input value={komentar} onChange={e => setKomentar(e.target.value)} placeholder="Tulis komentar diskusi..." className="flex-1 rounded-full border-0 bg-transparent shadow-none focus-visible:ring-0 focus-visible:ring-offset-0 px-4 h-9"/>
+                       <Button type="submit" size="icon" className="rounded-full h-9 w-9 shrink-0 shadow-sm" disabled={!komentar.trim() || isUploading}><Send size={14}/></Button>
                    </form>
                </div>
             </div>

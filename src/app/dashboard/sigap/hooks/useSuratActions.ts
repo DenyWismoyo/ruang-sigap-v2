@@ -60,8 +60,11 @@ export const useSuratActions = () => {
   const refreshData = () => {
       queryClient.invalidateQueries({ queryKey: ['suratList'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] }); 
-      // Cache 'feed' (user_summaries) sudah di-update secara optimistic di masing-masing action
-      // sehingga tidak perlu di-invalidate dengan hardcoded delay yang memicu ghosting.
+      
+      // Delay invalidasi cache feed agar Cloud Function sempat memproses perubahan
+      setTimeout(() => {
+          queryClient.invalidateQueries({ queryKey: ['feed', 'user_summaries'] });
+      }, 3000);
   };
 
   const getActorName = () => {
@@ -380,11 +383,17 @@ export const useSuratActions = () => {
         await logActivity(surat.id!, actorName, actionLogText, logText.substring(0, 100));
 
         const disposisiRef = doc(db, 'disposisi', disposisi.id!);
+        const disposisiUpdates: any = {
+            penerimaBaca: arrayUnion(effectiveJabatan.id!)
+        };
+        
         if (isFinal) {
-            batch.update(disposisiRef, { penerimaSelesai: arrayUnion(effectiveJabatan.id) });
+            disposisiUpdates.penerimaSelesai = arrayUnion(effectiveJabatan.id!);
             // [SINKRONISASI UI INSTAN]
             optimisticRemoveDisposisi(disposisi.id!);
         }
+        
+        batch.update(disposisiRef, disposisiUpdates);
 
         // [NOTIFIKASI PENGIRIM DISPOSISI]
         if (disposisi.dariJabatanId) {
@@ -410,8 +419,10 @@ export const useSuratActions = () => {
         const suratRef = doc(db, 'surat', surat.id!);
         const suratUpdates: any = { terlibatJabatanIds: arrayUnion(effectiveJabatan.id!) };
 
-        if (isFinal) { suratUpdates.statusPenyelesaian = 'Selesai'; } 
-        else { suratUpdates.statusPenyelesaian = 'Proses Tindak Lanjut'; }
+        if (surat.statusPenyelesaian !== 'Proses Tindak Lanjut' && surat.statusPenyelesaian !== 'Selesai') {
+            suratUpdates.statusPenyelesaian = 'Proses Tindak Lanjut';
+        }
+        
         batch.update(suratRef, suratUpdates);
         
         await batch.commit();
@@ -519,14 +530,34 @@ export const useSuratActions = () => {
   };
 
   const kembalikanDisposisi = async (disposisi: Disposisi, alasan: string, senderProfile?: UserProfile) => {
-     if (!userProfile || !disposisi.id) return false;
+     if (!userProfile || !effectiveJabatan || !disposisi.id) return false;
      setIsProcessing(true);
      try {
         const batch = writeBatch(db);
         const disposisiRef = doc(db, 'disposisi', disposisi.id);
-        batch.update(disposisiRef, { status: 'Dikembalikan', alasanPengembalian: alasan, dikembalikanPada: Timestamp.now() });
-        const suratRef = doc(db, 'surat', disposisi.suratId);
-        batch.update(suratRef, { statusPenyelesaian: 'Revisi Disposisi' });
+        
+        // Ambil data disposisi terbaru
+        const { getDoc } = await import('firebase/firestore');
+        const dispSnap = await getDoc(disposisiRef);
+        const dispData = dispSnap.data() as Disposisi;
+        
+        const penerimaDikembalikan = dispData.penerimaDikembalikan || [];
+        const kepada = dispData.kepadaJabatanId || [];
+        
+        const updates: any = {
+            penerimaDikembalikan: arrayUnion(effectiveJabatan.id!),
+            alasanPengembalian: alasan, 
+            dikembalikanPada: Timestamp.now()
+        };
+        
+        // Jika hanya 1 penerima ATAU ini adalah penerima terakhir yang belum mengembalikan
+        if (kepada.length === 1 || (penerimaDikembalikan.length + 1 >= kepada.length)) {
+            updates.status = 'Dikembalikan';
+            const suratRef = doc(db, 'surat', disposisi.suratId);
+            batch.update(suratRef, { statusPenyelesaian: 'Revisi Disposisi' });
+        }
+        
+        batch.update(disposisiRef, updates);
         
         // [SINKRONISASI UI INSTAN dipindah ke setelah commit]
 

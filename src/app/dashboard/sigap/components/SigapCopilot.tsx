@@ -98,7 +98,7 @@ export default function SigapCopilot() {
   );
 
   const pathname = usePathname();
-  const isDetailPage = pathname.match(/\/surat\/[^\/]+$/);
+  const isDetailPage = pathname?.match(/\/surat\/[^\/]+$/);
   const bottomPos = isDetailPage ? 'bottom-[120px]' : 'bottom-20';
 
   return (

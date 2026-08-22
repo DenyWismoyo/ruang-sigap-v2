@@ -19,17 +19,6 @@ export default function SmartFab() {
   
   // Tentukan aksi berdasarkan path
   const getAction = () => {
-    if (pathname === '/dashboard/surat') {
-        // Hanya staf TU/Admin yang butuh upload
-        if (userProfile?.role === 'staf_tu' || userProfile?.role === 'admin_opd') {
-            return {
-                icon: <Upload size={20} />,
-                label: 'Upload Surat',
-                onClick: () => router.push('/dashboard/surat/upload'),
-                color: 'bg-blue-600 hover:bg-blue-700'
-            };
-        }
-    }
     
     if (pathname === '/dashboard/tugas') {
         return {
@@ -60,7 +49,7 @@ export default function SmartFab() {
   if (!action) return null;
 
   // Reposition if on detail page with fixed tab bar
-  const isDetailPage = pathname.match(/\/surat\/[^\/]+$/);
+  const isDetailPage = pathname?.match(/\/surat\/[^\/]+$/);
   const bottomPos = isDetailPage ? 'bottom-[120px]' : 'bottom-20';
 
   return (

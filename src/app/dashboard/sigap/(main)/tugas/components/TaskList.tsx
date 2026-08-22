@@ -47,7 +47,7 @@ export default function TaskList({ tugasList, onOpenDetail, onStatusChange, onDe
 
   if (tugasList.length === 0) {
     return (
-        <div className="text-center py-16 text-muted-foreground bg-card rounded-xl border border-dashed border-border">
+        <div className="text-center py-16 text-muted-foreground">
             <ClipboardList size={48} className="mx-auto text-muted-foreground/30"/>
             <p className="mt-4 font-semibold">Tidak ada tugas untuk ditampilkan.</p>
             <p className="text-sm">Coba ubah filter atau buat tugas baru.</p>
@@ -59,7 +59,7 @@ export default function TaskList({ tugasList, onOpenDetail, onStatusChange, onDe
     // --- MODIFIKASI WRAPPER INI ---
     // Menambahkan divide-y divide-border untuk garis pemisah
     <motion.div 
-      className="space-y-3 divide-y divide-border"
+      className="flex flex-col md:space-y-3 divide-y divide-border md:divide-none"
       variants={containerVariants}
       initial="hidden"
       animate="show" // Animasikan saat komponen dimuat (atau saat tugasList berubah)
@@ -67,9 +67,7 @@ export default function TaskList({ tugasList, onOpenDetail, onStatusChange, onDe
     >
     {/* --- --- */}
       {tugasList.map(tugas => (
-        // --- MODIFIKASI WRAPPER INI ---
-        // Menambahkan pt-3 agar spasi tetap ada di atas garis pemisah
-        <motion.div key={tugas.id} variants={itemVariants} className="pt-3 first:pt-0">
+        <motion.div key={tugas.id} variants={itemVariants}>
           <TaskListItem
             tugas={tugas}
             isExpanded={expandedTaskId === tugas.id}

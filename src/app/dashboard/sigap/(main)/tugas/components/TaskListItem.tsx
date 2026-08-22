@@ -90,9 +90,9 @@ export default function TaskListItem({ tugas, isExpanded, onToggleExpand, onOpen
     };
 
     return (
-        <Card className={`transition-all duration-200 ${tugas.status === 'Selesai' ? 'bg-muted/50' : 'bg-card'}`}>
+        <Card className={`sg-card sg-mobile-borderless md:border transition-all duration-200 ${tugas.status === 'Selesai' ? 'bg-muted/50' : 'bg-card'}`}>
             <CardHeader 
-              className="flex flex-row items-center p-4"
+              className="flex flex-row items-center p-3 md:p-4"
             >
                 {/* --- [MODIFIKASI TUGAS 2] --- */}
                 <div className="flex-shrink-0 pr-3">
@@ -124,10 +124,18 @@ export default function TaskListItem({ tugas, isExpanded, onToggleExpand, onOpen
                         {tugas.collaboratorIds && tugas.collaboratorIds.length > 0 && (<div className="flex items-center"><Users size={14} className="mr-1.5" /><span>+{tugas.collaboratorIds.length} Kolaborator</span></div>)}
                     </CardDescription>
                     {/* Info baris kedua (Mobile) */}
-                    <CardDescription className="md:hidden flex items-center flex-wrap gap-x-3 gap-y-1 text-xs mt-2">
-                         <Badge variant={getPriorityBadgeVariant(tugas.prioritas)}>{tugas.prioritas}</Badge>
-                         {tugas.status !== 'Selesai' && deadlineInfo && <div className={`flex items-center font-medium ${deadlineInfo.color}`}>{deadlineInfo.icon}<span className="ml-1.5">{deadlineInfo.text}</span></div>}
-                    </CardDescription>
+                    <div className="md:hidden mt-2 space-y-2">
+                        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 text-xs">
+                             <Badge variant={getPriorityBadgeVariant(tugas.prioritas)}>{tugas.prioritas}</Badge>
+                             {tugas.status !== 'Selesai' && deadlineInfo && <div className={`flex items-center font-medium ${deadlineInfo.color}`}>{deadlineInfo.icon}<span className="ml-1.5">{deadlineInfo.text}</span></div>}
+                        </div>
+                        {tugas.subTugas && tugas.subTugas.length > 0 && (
+                            <div className="flex items-center gap-2 w-3/4">
+                                <Progress value={progress} className="h-1.5 flex-1 bg-muted/60" />
+                                <span className="text-[10px] text-muted-foreground font-medium w-6 text-right">{progress}%</span>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 <div className="flex items-center space-x-4 ml-4 flex-shrink-0">
                     <div className="hidden md:flex items-center text-sm font-medium">

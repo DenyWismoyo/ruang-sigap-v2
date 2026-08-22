@@ -432,23 +432,23 @@ export default function FormDisposisi({
                     </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row gap-2.5 md:gap-4 pt-3 md:pt-4 border-t border-border">
+                <div className="flex flex-col sm:flex-row gap-3 md:gap-4 pt-4 md:pt-4 border-t border-border">
                     {isPemberitahuanMode ? (
                         <>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm shadow-sm">
-                                <Send size={14} className="md:w-4 md:h-4 mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-11 md:h-12 text-sm md:text-sm font-semibold rounded-xl shadow-sm">
+                                <Send size={16} className="mr-2" /> {isProcessing ? 'Mengirim...' : 'Kirim Pemberitahuan'}
                            </Button>
-                           <Button type="button" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm bg-amber-600 hover:bg-amber-700 text-white shadow-sm">
-                                <Bell size={14} className="md:w-4 md:h-4 mr-2" /> Sebarkan ke OPD
+                           <Button type="button" onClick={handleSebarkanKeSemua} disabled={isProcessing} className="w-full flex-1 h-11 md:h-12 text-sm md:text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-xl shadow-sm">
+                                <Bell size={16} className="mr-2" /> Sebarkan ke OPD
                            </Button>
                         </>
                     ) : (
                         <>
-                           <Button type="button" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm">
-                                <UserCheck size={14} className="md:w-4 md:h-4 mr-2" /> Tindak Lanjuti Sendiri
+                           <Button type="button" onClick={isPimpinanPenerimaAwal ? handleSelfDisposition : handleSelfClickRedirect} disabled={isProcessing} className="w-full flex-1 h-11 md:h-12 text-sm md:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl shadow-sm">
+                                <UserCheck size={16} className="mr-2" /> Tindak Lanjuti Sendiri
                            </Button>
-                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-9 md:h-10 text-xs md:text-sm shadow-sm">
-                                {isProcessing ? <Loader2 className="w-3.5 h-3.5 md:w-4 md:h-4 mr-2 animate-spin" /> : <Send size={14} className="md:w-4 md:h-4 mr-2" />}
+                           <Button type="submit" disabled={isProcessing || selectedPenerima.length === 0} className="w-full flex-1 h-11 md:h-12 text-sm md:text-sm font-semibold rounded-xl shadow-sm bg-blue-600 hover:bg-blue-700 text-white">
+                                {isProcessing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send size={16} className="mr-2" />}
                                 {isProcessing ? 'Memproses...' : (isRevising ? 'Kirim Revisi Ulang' : 'Kirim Disposisi')}
                            </Button>
                         </>

@@ -25,8 +25,10 @@ import QuickAddTask from '@/app/dashboard/sigap/(main)/ruang-kerja/components/Qu
 import StickyNoteWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/components/StickyNoteWidget';
 import QuickLinksWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickLinksWidget'; 
 import EmptyStateWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/components/EmptyStateWidget'; 
+import PemantauanMultiFeed from '@/app/dashboard/sigap/(main)/ruang-kerja/components/PemantauanMultiFeed';
+import { usePemantauanMulti } from '@/app/dashboard/sigap/hooks/usePemantauanMulti';
 
-const QuickPreviewModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickPreviewModal'), { ssr: false });
+const UniversalPreviewModal = dynamic(() => import('@/app/dashboard/sigap/components/UniversalPreviewModal'), { ssr: false });
 const QuickDisposisiModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickDisposisiModal'), { ssr: false });
 const JadwalDetailModal = dynamic(() => import('@/app/dashboard/sigap/(main)/jadwal/components/JadwalDetailModal'), { ssr: false });
 const QuickEditTaskModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickEditTaskModal'), { ssr: false }); 
@@ -120,6 +122,8 @@ export default function RuangKerjaPage() {
   // Tangkap loadMore dan hasMore dari hook useRuangKerjaFeed
   const { feedItems: rawFeedItems, isLoading: isFeedLoading, refreshFeed, loadMore, hasMore } = useRuangKerjaFeed();
   
+  const pemantauanQuery = usePemantauanMulti();
+  
   // --- FIX SCROLL JUMP: Mempertahankan data saat Pagination memuat ---
   const prevFeedItemsRef = useRef<RuangKerjaItem[]>([]);
   const feedItems = useMemo(() => {
@@ -175,7 +179,7 @@ export default function RuangKerjaPage() {
   // [FIX GHOSTING BUG] State baru untuk menampung ID yang disembunyikan sementara
   const [hiddenItemIds, setHiddenItemIds] = useState<Set<string>>(new Set());
 
-  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf' | 'agenda';
+  type RuangKerjaFilter = 'semua' | 'surat' | 'tugas' | 'draf' | 'agenda' | 'pemantauan';
   const [activeFilter, setActiveFilter] = useState<RuangKerjaFilter>('semua');
 
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
@@ -320,12 +324,15 @@ export default function RuangKerjaPage() {
     }
   }, [authLoading]);
 
-  const handlePreviewClick = (fileUrl: string, fileName: string) => {
+  const [previewSuratId, setPreviewSuratId] = useState<string | null>(null);
+
+  const handlePreviewClick = (fileUrl: string, fileName: string, suratId?: string) => {
     setPreviewFileUrl(fileUrl); setPreviewFileName(fileName);
+    if (suratId) setPreviewSuratId(suratId);
     setIsQuickPreviewOpen(true);
   };
   const handleClosePreview = () => {
-    setIsQuickPreviewOpen(false); setPreviewFileUrl(null); setPreviewFileName(null);
+    setIsQuickPreviewOpen(false); setPreviewFileUrl(null); setPreviewFileName(null); setPreviewSuratId(null);
   };
   
   const onQuickAcknowledge = async (disposisiId: string) => {
@@ -526,6 +533,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                 <TabsTrigger value="semua" className="flex-shrink-0">Semua ({itemCounts.semua})</TabsTrigger>
                 <TabsTrigger value="surat" className="flex-shrink-0">{isPimpinan || isAdminOrTU ? 'Surat' : 'Disposisi'} ({itemCounts.surat})</TabsTrigger>
                 <TabsTrigger value="tugas" className="flex-shrink-0">Tugas ({itemCounts.tugas})</TabsTrigger>
+                {isPimpinan && <TabsTrigger value="pemantauan" className="flex-shrink-0">Pantau Multi</TabsTrigger>}
                 {(isPimpinan || isAdminOrTU) && <TabsTrigger value="draf" className="flex-shrink-0 hidden md:block">Draf ({itemCounts.draf})</TabsTrigger>}
                 <TabsTrigger value="agenda" className="flex-shrink-0 lg:hidden">Agenda & Catatan</TabsTrigger>
               </TabsList>
@@ -533,7 +541,10 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
           </div>
 
           {/* Menggunakan finalVisibleFeedItems agar UI Instan merespon */}
-          {activeFilter !== 'agenda' && (
+          {activeFilter === 'pemantauan' && (
+             <PemantauanMultiFeed items={pemantauanQuery.data || []} isLoading={pemantauanQuery.isLoading} />
+          )}
+          {activeFilter !== 'agenda' && activeFilter !== 'pemantauan' && (
             finalVisibleFeedItems.length === 0 ? (
               <EmptyStateWidget filterType={activeFilter} userName={userProfile?.namaLengkap.split(' ')[0]} />
             ) : (
@@ -603,7 +614,14 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
         </div>
       </div>
       
-      {isQuickPreviewOpen && <QuickPreviewModal isOpen={isQuickPreviewOpen} onClose={handleClosePreview} fileUrl={previewFileUrl || ''} fileName={previewFileName || 'Pratinjau Dokumen'} />}
+      {isQuickPreviewOpen && (
+        <UniversalPreviewModal 
+            isOpen={isQuickPreviewOpen} 
+            onClose={handleClosePreview} 
+            suratId={previewSuratId} 
+            onNavigateToDetail={(id) => router.push(`/dashboard/surat/${id}`)}
+        />
+      )}
       {isDetailModalOpen && <JadwalDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} jadwal={selectedJadwal} isAdmin={isAdminOrTU} onApprove={() => {}} onReject={() => {}} onEdit={() => {}} onDelete={() => {}} />}
       
       {quickDisposisiData && <QuickDisposisiModal 

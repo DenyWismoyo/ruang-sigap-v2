@@ -171,12 +171,15 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
       }
       const searchLower = stafSearch.toLowerCase();
       const currentTeamIds = new Set([penanggungJawab?.jabatanId, ...collaborators.map(c => c.jabatanId)].filter(Boolean));
+      const isAdminOpd = userProfile?.role === 'admin_opd';
 
       const results: UserProfile[] = [];
       userCache.forEach(user => {
+          const isBawahan = user.level && actingJabatanProfile.level && user.level > actingJabatanProfile.level;
+          
           if (
               user.opdId === actingJabatanProfile.opdId &&
-              user.level && actingJabatanProfile.level && user.level > actingJabatanProfile.level && // Hanya bawahan
+              (isBawahan || isAdminOpd) && // Admin OPD bisa memilih siapa saja
               user.status === 'aktif' &&
               !currentTeamIds.has(user.jabatanId) &&
               (user.searchKeywords?.some(kw => kw.startsWith(searchLower)) || user.namaLengkap.toLowerCase().includes(searchLower))
@@ -185,7 +188,7 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
           }
       });
       return results.slice(0, 10); // Batasi hasil
-  }, [stafSearch, actingJabatanProfile, userCache, penanggungJawab, collaborators]);
+  }, [stafSearch, actingJabatanProfile, userCache, penanggungJawab, collaborators, userProfile]);
 
 
   // [PERBAIKAN] Ganti `atasanResults` menjadi `useMemo` yang memfilter `userCache`
@@ -243,9 +246,9 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
     if (!judulTugas || !deskripsi || !userProfile || !actingJabatanProfile) {
         setError('Harap lengkapi Judul dan Deskripsi.'); return;
     }
-    const pemberiTugasUser = isMandiri ? laporKepada : userProfile;
+    const pemberiTugasUser = userProfile;
     if (!pemberiTugasUser) {
-        setError(isMandiri ? 'Untuk tugas mandiri, Anda wajib memilih "Laporkan Kepada".' : 'Tidak dapat menentukan pemberi tugas.'); return;
+        setError('Tidak dapat menentukan pemberi tugas.'); return;
     }
     const penanggungJawabFinal = isMandiri ? userProfile : penanggungJawab;
     if (!penanggungJawabFinal) {
@@ -255,13 +258,13 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
     try {
         const batch = writeBatch(db);
         const tugasRef = doc(collection(db, 'tugas'));
-        const pemberiTugasJabatan = isMandiri ? (laporKepada ? laporKepada.jabatanId : null) : actingJabatanProfile.id;
+        const pemberiTugasJabatan = actingJabatanProfile.id;
         if (!pemberiTugasJabatan) { throw new Error("Gagal menentukan Jabatan Pemberi Tugas."); }
 
         const newTugas: Omit<Tugas, 'id'> = {
             opdId: userProfile.opdId, judulTugas, deskripsi,
             dariJabatanId: pemberiTugasJabatan,
-            dariJabatanNama: isMandiri ? laporKepada?.namaLengkap : userProfile.namaLengkap,
+            dariJabatanNama: userProfile.namaLengkap,
             kepadaJabatanId: penanggungJawabFinal.jabatanId,
             kepadaJabatanNama: penanggungJawabFinal.namaLengkap,
             collaboratorIds: isMandiri ? [] : collaborators.map(c => c.jabatanId),
@@ -276,6 +279,9 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
             newTugas.suratPerihal = linkedSurat.perihal;
         }
         batch.set(tugasRef, newTugas);
+        // Fan-out ke pemberi tugas (diri sendiri)
+        batch.set(doc(db, 'tugasPerPengguna', pemberiTugasUser.uid, 'tugas', tugasRef.id), newTugas);
+
         const actorName = `${userProfile.namaLengkap} (${actingJabatanProfile.namaJabatan})`;
         if (linkedSurat) {
             const suratRef = doc(db, 'surat', linkedSurat.id!);
@@ -287,6 +293,11 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
         const uniqueRecipients = Array.from(new Map(allRecipients.map(u => [u.uid, u])).values());
 
         for (const userToNotify of uniqueRecipients) {
+            // Fan-out ke penerima/kolaborator
+            if (userToNotify.uid !== pemberiTugasUser.uid) {
+                batch.set(doc(db, 'tugasPerPengguna', userToNotify.uid, 'tugas', tugasRef.id), newTugas);
+            }
+
             if (userToNotify.uid === pemberiTugasUser.uid) continue;
             if (userToNotify?.uid) {
                 const notifRef = doc(collection(db, 'notifications'));
@@ -310,26 +321,26 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-full sm:max-w-2xl bg-card border-border flex flex-col max-h-[90vh] p-0 gap-0">
-        <DialogHeader className="p-6 pb-4">
+      <DialogContent className="w-full h-[95vh] sm:h-auto sm:max-h-[90vh] sm:max-w-2xl bg-card border-border flex flex-col p-0 gap-0">
+        <DialogHeader className="p-4 md:p-6 pb-3 md:pb-4 border-b border-border">
           <DialogTitle className="text-xl font-semibold">Tugas Baru</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="flex-1 flex flex-col overflow-hidden">
-          <ScrollArea className="flex-1 overflow-y-auto px-6">
-            <div className="space-y-4">
+          <ScrollArea className="flex-1 overflow-y-auto px-4 md:px-6 py-4">
+            <div className="space-y-4 md:space-y-5">
               {error && <p className="p-3 text-sm text-center text-red-700 bg-red-100 dark:bg-red-900/20 dark:text-red-300 rounded-lg border border-red-200 dark:border-red-700">{error}</p>}
 
-              <div className="grid grid-cols-5 gap-4 items-end">
-                <div className="col-span-3">
+              <div className="space-y-4">
+                <div>
                   <Label htmlFor="judulTugas">Judul Tugas</Label>
                   <Input id="judulTugas" type="text" value={judulTugas} onChange={e => setJudulTugas(e.target.value)} required />
                 </div>
                 {!suratTerkait && !initialData && (
-                  <div className="col-span-2 flex items-center justify-start gap-2 p-2.5 h-10 border border-border rounded-md">
+                  <div className="flex items-center space-x-2 bg-muted/30 p-2.5 rounded-lg border border-border w-fit">
                       <Checkbox id="isMandiri" checked={isMandiri} onCheckedChange={(checked) => setIsMandiri(checked as boolean)} />
-                      <Label htmlFor="isMandiri" className="font-medium text-sm cursor-pointer">
-                          Tugas Mandiri
+                      <Label htmlFor="isMandiri" className="font-medium text-sm cursor-pointer select-none">
+                          Tugas Mandiri (Pribadi)
                       </Label>
                   </div>
                 )}
@@ -394,62 +405,8 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
                 </div>
               )}
 
-              {isMandiri && (
-                <div>
-                    <Label htmlFor="atasanSearch">Laporkan Kepada (Atasan)</Label>
-                    {laporKepada ? (
-                        <div className="flex items-center justify-between p-2 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
-                          <p className="text-sm text-blue-800 dark:text-blue-300 font-semibold">{laporKepada.namaLengkap}</p>
-                          <Button type="button" variant="ghost" size="icon" className="h-6 w-6" onClick={() => setLaporKepada(null)}>
-                            <X size={16} className="text-blue-600"/>
-                          </Button>
-                        </div>
-                    ) : (
-                        <Popover open={atasanPopoverOpen} onOpenChange={setAtasanPopoverOpen}>
-                          <PopoverTrigger asChild>
-                            <Input 
-                              id="atasanSearch"
-                              type="text" 
-                              placeholder="Cari nama atau jabatan atasan..." 
-                              value={atasanSearch}
-                              onChange={e => {
-                                setAtasanSearch(e.target.value);
-                                if (e.target.value.length >= 2) setAtasanPopoverOpen(true); else setAtasanPopoverOpen(false);
-                              }}
-                            />
-                          </PopoverTrigger>
-                          <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
-                            <Command>
-                              <CommandList>
-                                {atasanResults.length > 0 ? atasanResults.map(u => (
-                                    <CommandItem
-                                      key={u.uid}
-                                      onSelect={() => {
-                                          setLaporKepada(u);
-                                          // [PERBAIKAN ERROR BUILD] Hapus baris 'setatasanResults'
-                                          // setatasanResults([]);
-                                          setAtasanSearch('');
-                                          setAtasanPopoverOpen(false);
-                                      }}
-                                      className="cursor-pointer"
-                                    >
-                                        <div>
-                                          <p className="font-semibold text-sm">{u.namaLengkap}</p>
-                                          <p className="text-xs text-muted-foreground">{u.namaJabatan}</p>
-                                        </div>
-                                    </CommandItem>
-                                )) : (
-                                  <CommandEmpty>{atasanSearch.length < 2 ? 'Ketik min 2 huruf' : 'Atasan tidak ditemukan.'}</CommandEmpty>
-                                )}
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                    )}
-                </div>
-              )}
 
-              {/* [PERBAIKAN 10/11/2025] Rombak total "Bentuk Tim" */}
+
               {!isMandiri && (
                 <div className="space-y-4">
                   {/* --- Pemilih Penanggung Jawab --- */}
@@ -591,15 +548,13 @@ export default function FormTugas({ isOpen, onClose, onSuccess, userCache, surat
             </div>
           </ScrollArea>
           
-          <DialogFooter className="mt-6 p-4 border-t border-border sticky bottom-0 bg-muted/50">
-              <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
-                Batal
-              </Button>
-              <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+          <div className="p-4 md:p-6 pt-3 md:pt-4 border-t border-border flex justify-end gap-2 bg-muted/30">
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full md:w-auto">Batal</Button>
+            <Button type="submit" disabled={loading || !userProfile || !actingJabatanProfile} className="w-full md:w-auto sg-btn sg-btn-primary">
                 {loading ? <Loader2 size={16} className="animate-spin mr-2"/> : <Send size={16} className="mr-2"/>}
                 {loading ? 'Menyimpan...' : 'Simpan & Tugaskan'}
               </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

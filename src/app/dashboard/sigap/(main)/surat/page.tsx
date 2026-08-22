@@ -29,7 +29,7 @@ import {
   Loader2, Search, ChevronDown, Users as UsersIcon, Activity,
   Clock, CheckCircle, MessageSquare, CornerDownRight,
   MoreVertical, Eye, Copy, Archive, ExternalLink, AlertTriangle,
-  Palette, ListTodo, X, Maximize2, Minimize2, Save
+  Palette, ListTodo, X, Maximize2, Minimize2, Save, Info
 } from 'lucide-react';
 
 // Shadcn UI
@@ -57,12 +57,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 import { SkeletonCard } from '@/app/dashboard/sigap/components/skeletons/SkeletonCard';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import { Surat, Disposisi, Jabatan } from '@/types'; 
 import Avatar from '@/app/dashboard/sigap/components/Avatar';
 import PemantauanTab from './components/PemantauanTab';
 import { getWarnaClass } from './[id]/components/TindakLanjutSection';
+import UniversalPreviewModal from '@/app/dashboard/sigap/components/UniversalPreviewModal';
 
-// Dynamic Import untuk PDF Viewer
+// Dynamic Import untuk PDF Viewer (Lama - Tidak Dipakai Lagi)
 const CachedPdfViewer = dynamic(() => import('@/app/dashboard/sigap/(main)/surat/[id]/components/CachedPdfViewer'), { 
     ssr: false, 
     loading: () => <div className="h-full flex items-center justify-center bg-muted/30 rounded-lg"><Loader2 className="animate-spin text-primary" /></div> 
@@ -104,34 +106,36 @@ const SuratCard = React.memo(({
     onQuickPreview, onQuickArchive, onCopyNomor, canArchive,
     onQuickAccept, onQuickReport, isActionProcessing, onPrefetch 
 }: any) => {
-    const borderColorClass = 
-        surat.statusPenyelesaian === 'Baru' ? 'border-l-red-500' : 
-        surat.statusPenyelesaian === 'Didisposisikan' ? 'border-l-blue-500' :
-        surat.statusPenyelesaian === 'Proses Tindak Lanjut' ? 'border-l-orange-500' :
-        surat.statusPenyelesaian === 'Selesai' ? 'border-l-green-500' : 'border-l-gray-400';
+    const gradientClass = 
+        surat.statusPenyelesaian === 'Baru' ? 'bg-gradient-to-b from-red-500 to-rose-400' : 
+        surat.statusPenyelesaian === 'Didisposisikan' ? 'bg-gradient-to-b from-blue-500 to-cyan-400' :
+        surat.statusPenyelesaian === 'Proses Tindak Lanjut' ? 'bg-gradient-to-b from-orange-500 to-amber-400' :
+        surat.statusPenyelesaian === 'Selesai' ? 'bg-gradient-to-b from-emerald-500 to-teal-400' : 'bg-gradient-to-b from-slate-400 to-gray-300';
 
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s:string) => s.trim()))).join(', ') : null;
 
     const isBaru = surat.statusPenyelesaian === 'Baru';
-    const bgClass = isBaru ? 'bg-card' : 'bg-slate-50/70 dark:bg-muted/20';
+    // Gunakan background transparan di mobile agar benar-benar menyatu dengan background halaman
+    const bgClass = isBaru ? 'bg-background md:bg-card' : 'bg-background md:bg-slate-50/70 dark:md:bg-muted/10';
 
     return (
-        <Card className={`transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 md:border-border/80 md:border-x md:border-t rounded-none shadow-none md:rounded-xl md:shadow-sm md:hover:shadow-md hover:md:-translate-y-[1px] border-l-[3px] md:border-l-4 ${borderColorClass} overflow-hidden ${bgClass} sg-animate-in`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
-            <div className="p-4 md:p-4 cursor-pointer relative" onClick={onNavigate}>
+        <Card className={`transition-all duration-200 shadow-none border-0 rounded-none md:border md:rounded-xl md:shadow-sm md:hover:shadow-md hover:md:-translate-y-[1px] overflow-hidden ${bgClass} sg-animate-in relative border-b border-border/30 md:border-border`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+            {/* Accent Strip Penanda Status (Gradient) */}
+            <div className={`absolute left-0 top-0 bottom-0 w-1.5 md:w-1 ${gradientClass}`} />
+            
+            <div className="p-4 md:p-4 pl-5 md:pl-5 cursor-pointer relative" onClick={onNavigate}>
                 
-                <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
+                <div className="absolute top-2 right-2 flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-full">
                                 <MoreVertical size={16} />
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48">
                             <DropdownMenuLabel className="text-xs text-muted-foreground">Opsi Lainnya</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => onQuickPreview(surat)}>
-                                <Eye className="mr-2 h-4 w-4 text-blue-500" /> Pratinjau Surat
-                            </DropdownMenuItem>
+
                             <DropdownMenuItem onClick={() => onCopyNomor(surat.nomorSurat)}>
                                 <Copy className="mr-2 h-4 w-4 text-muted-foreground" /> Salin Nomor
                             </DropdownMenuItem>
@@ -139,6 +143,17 @@ const SuratCard = React.memo(({
                             <DropdownMenuItem onClick={onNavigate}>
                                 <ExternalLink className="mr-2 h-4 w-4 text-muted-foreground" /> Buka Detail Penuh
                             </DropdownMenuItem>
+                            
+                            {/* Tindak Lanjut Cepat - Tampilkan HANYA jika surat ini didisposisikan KE user ini dan BUKAN Baru/Selesai */}
+                            {surat.statusPenyelesaian === 'Didisposisikan' && actionItem && (
+                                <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={onQuickAccept} className="text-blue-600 focus:text-blue-600 focus:bg-blue-50">
+                                        <CheckCircle className="mr-2 h-4 w-4" /> Terima & Tindak Lanjuti
+                                    </DropdownMenuItem>
+                                </>
+                            )}
+
                             {canArchive && surat.statusPenyelesaian !== 'Diarsipkan' && (
                                 <>
                                     <DropdownMenuSeparator />
@@ -173,24 +188,38 @@ const SuratCard = React.memo(({
                     </span>
                 </div>
 
-                {safeRecipientNames && (
-                    <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2 mt-2 border-t border-border/40">
-                        <span className="flex items-center truncate mr-2">
-                            <UsersIcon size={11} className="mr-1 flex-shrink-0" />
-                            Kpda:&nbsp;<strong className="text-foreground font-medium truncate">{safeRecipientNames}</strong>
-                        </span>
+                <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-2 mt-2 border-t border-border/40">
+                    <span className="flex items-center truncate mr-2">
+                        {safeRecipientNames ? (
+                            <>
+                                <UsersIcon size={11} className="mr-1 flex-shrink-0" />
+                                Kpda:&nbsp;<strong className="text-foreground font-medium truncate">{safeRecipientNames}</strong>
+                            </>
+                        ) : (
+                            <span className="italic opacity-70">Tidak ada penerima khusus</span>
+                        )}
+                    </span>
+                    <div className="flex items-center gap-1 shrink-0">
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                            onClick={(e) => { e.stopPropagation(); onQuickPreview(surat); }}
+                        >
+                            Pratinjau
+                        </Button>
                         {surat.statusPenyelesaian !== 'Baru' && (
                             <Button 
                                 variant="ghost" 
                                 size="sm" 
-                                className="h-6 px-2 text-[10px] shrink-0 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
+                                className="h-6 px-2 text-[10px] text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20"
                                 onClick={(e) => { e.stopPropagation(); onQuickTrack(surat); }}
                             >
                                 <Activity size={12} className="mr-1" /> Pantau
                             </Button>
                         )}
                     </div>
-                )}
+                </div>
             </div>
 
             {/* --- AREA QUICK ACTIONS --- */}
@@ -207,10 +236,9 @@ const SuratCard = React.memo(({
             )}
 
             {actionItem?.needsTindakLanjut && (
-                <div className="bg-blue-50/50 border-t border-blue-200/40 p-2 dark:bg-blue-900/10 dark:border-blue-800/50">
+                <div className="bg-blue-50 border-t border-blue-100 p-2 dark:bg-blue-950/30 dark:border-blue-900/50">
                     <Button 
-                        variant="outline"
-                        className="w-full h-9 text-xs border-blue-300 text-blue-700 hover:bg-blue-100 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/50 bg-white dark:bg-background shadow-sm"
+                        className="w-full bg-blue-600 hover:bg-blue-700 h-9 text-xs text-white shadow-sm"
                         onClick={(e) => { e.stopPropagation(); onQuickReport(surat, actionItem.disposisi); }}
                     >
                         <MessageSquare className="mr-2 h-4 w-4" /> Lapor Tindak Lanjut
@@ -271,8 +299,8 @@ const SuratRow = React.memo(({
                     
                     {actionItem?.needsTindakLanjut && (
                         <Button 
-                            size="sm" variant="outline"
-                            className="h-8 text-xs px-3 border-blue-300 text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/50 bg-white dark:bg-background shadow-sm"
+                            size="sm"
+                            className="h-8 text-xs px-3 bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
                             onClick={(e) => { e.stopPropagation(); onQuickReport(surat, actionItem.disposisi); }}
                             disabled={isActionProcessing}
                         >
@@ -487,10 +515,24 @@ export default function KotakMasukPage() {
     const [quickTrackSurat, setQuickTrackSurat] = useState<Surat | null>(null);
     const [quickPreviewSurat, setQuickPreviewSurat] = useState<Surat | null>(null);
     const [quickArchiveSurat, setQuickArchiveSurat] = useState<Surat | null>(null);
+    const [showTutorial, setShowTutorial] = useState(false);
 
     useEffect(() => {
         setIsNavigating(false);
+        if (typeof window !== 'undefined') {
+            const lastSeen = localStorage.getItem('surat_tutorial_last_seen');
+            const today = new Date().toLocaleDateString('id-ID');
+            if (lastSeen !== today) {
+                setShowTutorial(true);
+            }
+        }
     }, [pathname]);
+
+    const dismissTutorial = useCallback(() => {
+        const today = new Date().toLocaleDateString('id-ID');
+        localStorage.setItem('surat_tutorial_last_seen', today);
+        setShowTutorial(false);
+    }, []);
 
     const canCreate = userProfile?.role === 'staf_tu' || userProfile?.role === 'admin_opd';
     const canArchive = canCreate; 
@@ -545,17 +587,20 @@ export default function KotakMasukPage() {
             )}
 
             {/* Header */}
-            <div className="px-4 md:px-0 flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-4">
-                <h1 className="text-3xl font-bold flex items-center">
-                    <Inbox size={28} className="mr-3 text-blue-600"/> <span className="sg-text-gradient">Kotak Masuk</span>
-                </h1>
-                {canCreate && (
-                  <Link href="/dashboard/surat/upload" className="hidden md:block" onClick={() => setIsNavigating(true)}>
-                    <Button className="w-full md:w-auto sg-btn sg-btn-success text-white">
-                        <Plus size={16} /> Tambah Surat Baru
-                    </Button>
-                  </Link>
-                )}
+            <div className="px-4 md:px-0">
+                <SigapPageHeader 
+                    title="Kotak Masuk"
+                    icon={Inbox}
+                    actions={
+                        canCreate && (
+                            <Link href="/dashboard/surat/upload" className="hidden md:block" onClick={() => setIsNavigating(true)}>
+                                <Button className="w-full md:w-auto sg-btn sg-btn-success text-white">
+                                    <Plus size={16} className="mr-2" /> Tambah Surat Baru
+                                </Button>
+                            </Link>
+                        )
+                    }
+                />
             </div>
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -574,6 +619,35 @@ export default function KotakMasukPage() {
                 {/* --- TAB CONTENT 1: DAFTAR SURAT --- */}
                 <TabsContent value="daftar-surat" className="mt-0 focus-visible:outline-none focus-visible:ring-0">
                     
+                    {/* Tutorial Card */}
+                    {showTutorial && (
+                        <div className="mx-4 md:mx-0 mb-6 p-4 bg-blue-600 text-white rounded-xl shadow-md relative animate-in fade-in zoom-in-95 duration-300">
+                            <button onClick={dismissTutorial} className="absolute top-3 right-3 text-blue-200 hover:text-white transition-colors" title="Tutup">
+                                <X size={16} />
+                            </button>
+                            <h3 className="font-bold mb-3 flex items-center gap-2 text-base">
+                                <Info size={18} /> Cara Penggunaan
+                            </h3>
+                            <p className="text-sm mb-4 text-blue-50">
+                                Fitur <strong>Kotak Masuk</strong> membantu Anda berkolaborasi, menindaklanjuti, dan memantau disposisi surat dengan cepat.
+                            </p>
+                            <div className="bg-blue-700/50 rounded-lg p-3 space-y-3 text-[13px] text-blue-50">
+                                <div className="flex items-start gap-2.5">
+                                    <CornerDownRight size={16} className="mt-0.5 shrink-0 text-amber-300" /> 
+                                    <span><strong>Mendisposisi:</strong> (Khusus Pimpinan) Mengirimkan arahan ke bawahan. Klik <em>Pratinjau</em> lalu <em>Disposisi Sekarang</em>.</span>
+                                </div>
+                                <div className="flex items-start gap-2.5">
+                                    <CheckCircle size={16} className="mt-0.5 shrink-0 text-emerald-300" /> 
+                                    <span><strong>Terima & Tindak Lanjuti:</strong> Konfirmasi bahwa Anda telah membaca instruksi dari atasan Anda.</span>
+                                </div>
+                                <div className="flex items-start gap-2.5">
+                                    <MessageSquare size={16} className="mt-0.5 shrink-0 text-blue-300" /> 
+                                    <span><strong>Lapor Tindak Lanjut:</strong> Kirimkan laporan atau progres dari pekerjaan yang diinstruksikan kepada Anda.</span>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Filters */}
                     <div className="px-4 md:px-0 flex flex-col md:flex-row gap-3 mb-6">
                         <div className="relative flex-1">
@@ -753,40 +827,17 @@ export default function KotakMasukPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* --- MODAL QUICK PREVIEW PDF --- */}
-            <Dialog open={!!quickPreviewSurat} onOpenChange={(open) => !open && setQuickPreviewSurat(null)}>
-                <DialogContent className="sm:max-w-4xl w-[95vw] h-[85vh] md:h-[90vh] bg-card border-border p-0 gap-0 flex flex-col overflow-hidden">
-                    <DialogHeader className="p-4 border-b border-border bg-muted/30 flex-shrink-0">
-                        <DialogTitle className="flex items-start gap-2 text-left pr-6">
-                            <Eye className="h-5 w-5 text-blue-500 shrink-0 mt-0.5" />
-                            <div className="flex flex-col min-w-0">
-                                <span className="line-clamp-1 leading-tight text-base">{quickPreviewSurat?.perihal}</span>
-                                <span className="text-xs text-muted-foreground font-normal mt-1 truncate">{quickPreviewSurat?.nomorSurat}</span>
-                            </div>
-                        </DialogTitle>
-                    </DialogHeader>
-                    
-                    <div className="flex-1 bg-muted/10 relative">
-                        {quickPreviewSurat && (
-                            <CachedPdfViewer 
-                                fileUrl={quickPreviewSurat.fileUrl} 
-                                fileName={quickPreviewSurat.fileName} 
-                            />
-                        )}
-                    </div>
+            {/* --- MODAL QUICK PREVIEW UNIVERSAL --- */}
+            <UniversalPreviewModal 
+                suratId={quickPreviewSurat?.id || null} 
+                isOpen={!!quickPreviewSurat} 
+                onClose={() => setQuickPreviewSurat(null)} 
+                onNavigateToDetail={(id) => { 
+                    setIsNavigating(true); 
+                    router.push(`/dashboard/surat/${id}`); 
+                }} 
+            />
 
-                    <DialogFooter className="p-3 border-t border-border bg-card flex-shrink-0 sm:justify-between flex-row">
-                        <Button variant="ghost" className="text-muted-foreground" onClick={() => setQuickPreviewSurat(null)}>Tutup</Button>
-                        <Button onClick={() => {
-                            setQuickPreviewSurat(null);
-                            setIsNavigating(true);
-                            router.push(`/dashboard/surat/${quickPreviewSurat?.id}`);
-                        }}>
-                            Tindak Lanjuti Surat Ini
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             {/* --- MODAL QUICK ARCHIVE --- */}
             <Dialog open={!!quickArchiveSurat} onOpenChange={(open) => !open && setQuickArchiveSurat(null)}>

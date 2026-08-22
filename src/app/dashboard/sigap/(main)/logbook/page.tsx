@@ -18,6 +18,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
 import { SmartAddKegiatanModal } from '@/app/dashboard/poros/(main)/logbook/components/SmartAddKegiatanModal';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -46,45 +48,30 @@ const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                        <HelpCircle className="mr-3 text-blue-600" />
-                        Bantuan: Logbook Harian
-                    </DialogTitle>
-                </DialogHeader>
-                 <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                    <div className="space-y-4 text-foreground/90">
-                        <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
-                        <p>Menu "Logbook Harian" adalah buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari.</p>
-                        
-                        <h3 className="font-semibold text-lg text-foreground">Cara Menggunakan:</h3>
-                        <ol className="list-decimal list-inside space-y-2">
-                            <li><strong>Membuat Kegiatan Baru:</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Klik tombol "Tambah Kegiatan".</li>
-                                    <li>Tulis deskripsi pekerjaan Anda.</li>
-                                    <li>Klik Simpan.</li>
-                                </ul>
-                            </li>
-                            <li><strong>Rekapitulasi Bulanan (E-Kinerja):</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Klik tombol "Rekap Bulanan".</li>
-                                    <li>Pilih Bulan dan Tahun.</li>
-                                    <li>Klik "Generate Rekap" untuk melihat preview.</li>
-                                    <li>Klik "Upload ke Bukti Kinerja" untuk mengirim laporan langsung ke folder Google Drive E-Kinerja Anda (Folder Bulanan).</li>
-                                    <li>Anda juga bisa mengunduh versi PDF untuk dicetak.</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-                </ScrollArea>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Saya Mengerti</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+        <SigapHelpModal isOpen={isOpen} onClose={onClose} title="Logbook Harian">
+            <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
+            <p>Menu "Logbook Harian" adalah buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari.</p>
+            
+            <h3 className="font-semibold text-lg text-foreground mt-4">Cara Menggunakan:</h3>
+            <ol className="list-decimal list-inside space-y-2">
+                <li><strong>Membuat Kegiatan Baru:</strong>
+                    <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                        <li>Klik tombol "Tambah Kegiatan".</li>
+                        <li>Tulis deskripsi pekerjaan Anda.</li>
+                        <li>Klik Simpan.</li>
+                    </ul>
+                </li>
+                <li><strong>Rekapitulasi Bulanan (E-Kinerja):</strong>
+                    <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
+                        <li>Klik tombol "Rekap Bulanan".</li>
+                        <li>Pilih Bulan dan Tahun.</li>
+                        <li>Klik "Generate Rekap" untuk melihat preview.</li>
+                        <li>Klik "Upload ke Bukti Kinerja" untuk mengirim laporan langsung ke folder Google Drive E-Kinerja Anda (Folder Bulanan).</li>
+                        <li>Anda juga bisa mengunduh versi PDF untuk dicetak.</li>
+                    </ul>
+                </li>
+            </ol>
+        </SigapHelpModal>
     );
 };
 
@@ -354,10 +341,10 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
 const ShortcutNav = () => (
     <div className="mb-6 flex items-center gap-2 flex-wrap"> 
         <span className="text-sm font-semibold text-muted-foreground shrink-0">Akses Cepat:</span>
-        <Button asChild variant="secondary" size="sm" className="rounded-full">
+        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
           <Link href="/dashboard/tugas"><ClipboardCheck size={14} /> Tugas</Link>
         </Button>
-        <Button asChild variant="secondary" size="sm" className="rounded-full">
+        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
           <Link href="/dashboard/checklist"><ListChecks size={14} /> Checklist</Link>
         </Button>
     </div>
@@ -386,7 +373,7 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
 
 const LogbookItem = ({ k, onToggle, onEdit, onDelete }: { k: LogbookKegiatan, onToggle: (id: string) => void, onEdit: (entry: LogbookKegiatan) => void, onDelete: (id: string) => void }) => {
     return (
-        <div className="p-3 bg-card rounded-lg border border-border shadow-sm flex items-start gap-3 group">
+        <div className="sg-card sg-mobile-borderless p-3 flex items-start gap-3 group">
             <Button variant="ghost" size="icon" onClick={() => onToggle(k.id)} title="Tandai selesai / belum selesai" className="mt-1 shrink-0 h-auto w-auto p-0">
                 {k.selesai ? <CheckSquare size={20} className="text-green-600"/> : <Square size={20} className="text-muted-foreground"/>}
             </Button>
@@ -563,14 +550,18 @@ export default function LogbookPage() {
     }
 
     return (
-        <div className="pb-20 animate-fadeInUp">
-            <div className="flex items-center gap-3 mb-2">
-                <h1 className="text-3xl font-bold text-foreground">Laporan Kegiatan Harian</h1>
-                 <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                    <HelpCircle size={20} />
-                </Button>
-            </div>
-            <ShortcutNav />
+        <div className="sg-page">
+            <SigapPageHeader 
+                title="Logbook"
+                icon={BookOpen}
+                actions={
+                    <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
+                        <HelpCircle size={20} />
+                    </Button>
+                }
+            >
+                <ShortcutNav />
+            </SigapPageHeader>
 
             <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">
                 <div className="flex items-center space-x-2">
@@ -582,19 +573,19 @@ export default function LogbookPage() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto">
+                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto sg-btn sg-btn-primary">
                         <Plus size={16} className="mr-2"/> Tambah Kegiatan
                     </Button>
                      <Button
                         onClick={() => setIsRekapOpen(true)}
-                        className="w-full md:w-auto bg-green-600 hover:bg-green-700"
+                        className="w-full md:w-auto bg-green-600 hover:bg-green-700 sg-btn"
                     >
                         <Calendar size={16} className="mr-2"/> Rekap Bulanan
                     </Button>
                 </div>
             </div>
 
-            <div className="mt-8">
+            <div className="sg-section">
                  {loading ? <p className="text-center p-8 text-muted-foreground">Memuat data logbook...</p> : (
                     <>
                         {logbookData && logbookData.kegiatan.length > 0 ? (
@@ -606,7 +597,7 @@ export default function LogbookPage() {
                                 
                                 <div 
                                     ref={parentRef} 
-                                    className="h-[600px] overflow-y-auto rounded-lg border border-border bg-muted/10 p-2"
+                                    className="h-[600px] overflow-y-auto rounded-none border-x-0 border-t-0 border-b border-border bg-transparent p-0 md:rounded-lg md:border md:bg-muted/10 md:p-2"
                                     style={{ contain: 'strict' }}
                                 >
                                     <div
@@ -629,8 +620,8 @@ export default function LogbookPage() {
                                                         left: 0,
                                                         width: '100%',
                                                         transform: `translateY(${virtualRow.start}px)`,
-                                                        paddingBottom: '0.75rem'
                                                     }}
+                                                    className="pb-0 md:pb-3"
                                                 >
                                                     <LogbookItem 
                                                         k={k} 

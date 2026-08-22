@@ -7,23 +7,23 @@
 
 import React, { useState, useEffect, useMemo } from 'react'; 
 import { useUserAuth } from '@/context/AuthContext';
-import { useTheme } from '@/context/ThemeContext';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { useToast } from '@/context/ToastContext';
 import { db, auth } from '@/lib/firebase';
 import { doc, updateDoc, collection, query, where, getDocs } from 'firebase/firestore'; 
 import { updatePassword, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
 import { UserProfile } from '@/types'; 
-import { UserCircle, ShieldCheck, Save, KeyRound, Palette, Users, Mail, Link as LinkIcon, CheckCircle, AlertTriangle, Loader2, HelpCircle, AlertOctagon, ArrowRight, Bell } from 'lucide-react';
+import { UserCircle, ShieldCheck, Save, KeyRound, Palette, Users, Mail, Link as LinkIcon, CheckCircle, AlertTriangle, Loader2, HelpCircle, AlertOctagon, ArrowRight, Bell, Settings } from 'lucide-react';
 import DelegasiWidget from '@/app/dashboard/sigap/components/DelegasiWidget';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
 import { Checkbox } from "@/components/ui/checkbox"; 
 import {
   Dialog,
@@ -37,7 +37,6 @@ import {
 
 export default function ProfilPage() {
     const { user, userProfile, jabatanProfile, loading: authLoading } = useUserAuth();
-    const { fontSize, setFontSize } = useTheme();
     const { addToast } = useToast();
 
     // State for profile form
@@ -232,12 +231,15 @@ export default function ProfilPage() {
     }
 
     return (
-        <div className="animate-fadeInUp space-y-6">
-            <h1 className="text-3xl font-bold text-foreground">Profil & Pengaturan</h1>
+        <div className="sg-page animate-fadeInUp space-y-6">
+            <SigapPageHeader 
+                title="Profil & Pengaturan"
+                icon={Settings}
+            />
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-0 lg:gap-6">
                 
-                <Card className="lg:col-span-2 shadow-md">
+                <Card className="sg-card sg-mobile-borderless lg:col-span-2 shadow-none md:shadow-md">
                     <CardHeader>
                         <CardTitle className="flex items-center">
                             <UserCircle size={22} className="mr-3 text-primary" />
@@ -350,30 +352,10 @@ export default function ProfilPage() {
                     </CardContent>
                 </Card>
 
-                <div className="lg:col-span-1 space-y-6">
-                    <Card className="shadow-md">
-                        <CardHeader>
-                            <CardTitle className="flex items-center">
-                                <Palette size={22} className="mr-3 text-purple-600" />
-                                Pengaturan Tampilan
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <Label>Ukuran Teks Aplikasi</Label>
-                            <ToggleGroup
-                                type="single"
-                                value={fontSize}
-                                onValueChange={(value) => { if (value) setFontSize(value as 'small' | 'normal' | 'large'); }}
-                                className="mt-2 grid grid-cols-3 gap-2"
-                            >
-                                <ToggleGroupItem value="small" aria-label="Kecil">Kecil</ToggleGroupItem>
-                                <ToggleGroupItem value="normal" aria-label="Normal">Normal</ToggleGroupItem>
-                                <ToggleGroupItem value="large" aria-label="Besar">Besar</ToggleGroupItem>
-                            </ToggleGroup>
-                        </CardContent>
-                    </Card>
+                <div className="lg:col-span-1 space-y-0 lg:space-y-6">
 
-                    <Card className="shadow-md">
+
+                    <Card className="sg-card sg-mobile-borderless shadow-none md:shadow-md">
                         <CardHeader>
                             <CardTitle className="flex items-center">
                                 <Bell size={22} className="mr-3 text-orange-500" />
@@ -422,7 +404,7 @@ export default function ProfilPage() {
                     </Card>
 
                     {isPimpinan && (
-                        <Card className="shadow-md">
+                        <Card className="sg-card sg-mobile-borderless shadow-none md:shadow-md">
                             <CardHeader>
                                 <CardTitle className="flex items-center">
                                     <Users size={22} className="mr-3 text-cyan-600" />
@@ -435,7 +417,7 @@ export default function ProfilPage() {
                         </Card>
                     )}
 
-                    <Card className="shadow-md">
+                    <Card className="sg-card sg-mobile-borderless shadow-none md:shadow-md">
                         <CardHeader>
                             <CardTitle className="flex items-center">
                                 <ShieldCheck size={22} className="mr-3 text-green-600" />

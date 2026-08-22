@@ -42,7 +42,8 @@ export default function GlobalBatchReportWidget() {
     }).length;
 
     const pathname = usePathname();
-    const isDetailPage = pathname.match(/\/surat\/[^\/]+$/);
+    // Sama dengan posisi Copilot
+    const isDetailPage = pathname?.match(/\/surat\/[^\/]+$/);
     const bottomPos = isDetailPage ? 'bottom-[190px]' : 'bottom-40'; // Posisi tepat di atas Copilot
 
     return (

@@ -21,8 +21,8 @@ import Sidebar, { navItems, sections } from '@/app/dashboard/sigap/components/Si
 import BottomNavBar from '@/app/dashboard/sigap/components/BottomNavBar';       
 import MobileMenuSheet from '@/app/dashboard/sigap/components/MobileMenuSheet'; 
 import MegaMenuPanel from '@/app/dashboard/sigap/components/MegaMenuPanel';     
-import SmartFab from '@/app/dashboard/sigap/components/SmartFab'; // [BARU] Import SmartFab
 import SigapCopilot from '@/app/dashboard/sigap/components/SigapCopilot'; // [BARU] AI Copilot
+import SigapUploadFab from '@/app/dashboard/sigap/components/SigapUploadFab'; 
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
 import DomainBanner from '@/components/DomainBanner';
 import { QuickReportProvider } from '@/context/QuickReportContext'; // [BARU] Global Quick Report
@@ -185,7 +185,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                       jabatanProfile={jabatanProfile}
                       opdConfig={opdConfig} 
                       welcomeSummary={welcomeSummary} 
-                      pathname={pathname}
+                      pathname={pathname || ''}
                       resetNotificationCount={resetNotificationCount}
                   />
                 </motion.div>
@@ -278,21 +278,21 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
             </div>
             
             {/* [BARU] Smart FAB & AI Copilot */}
-            <SmartFab />
             <SigapCopilot />
+            <SigapUploadFab />
             <GlobalBatchReportWidget />
             <GlobalQuickReport />
 
             <BottomNavBar 
-                pathname={pathname} 
+                pathname={pathname || ''} 
                 onLinkClick={handleBottomNavClick as any} 
                 welcomeSummary={welcomeSummary} 
             />
 
             <DrawerContent className="md:hidden h-[85vh]">
-                <DrawerHeader className="text-left px-6 border-b border-border pb-4">
-                    <DrawerTitle className="text-xl font-bold">Menu Utama</DrawerTitle>
-                    <DrawerDescription>Akses cepat ke seluruh modul SIGAP.</DrawerDescription>
+                <DrawerHeader className="text-center px-6 pt-2 pb-1 border-0">
+                    <DrawerTitle className="text-sm font-semibold tracking-wide text-foreground">Menu Utama</DrawerTitle>
+                    <DrawerDescription className="sr-only">Navigasi Utama</DrawerDescription>
                 </DrawerHeader>
                 <MobileMenuSheet 
                     userProfile={userProfile} 
