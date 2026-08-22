@@ -1,42 +1,37 @@
 /**
- * Directory: src/app/dashboard/evaluasi/page.tsx
- * Status: REVAMPED (New UI/UX)
- * Deskripsi: Halaman Dashboard Evaluasi Kinerja dengan fitur Drill-down OPD/Sub-OPD.
- * Menggunakan Chart.js untuk visualisasi dan logika agregasi client-side.
+ * Directory: src/app/dashboard/sigap/(main)/evaluasi/page.tsx
+ * Status: REVAMPED (Real-time Analytics)
+ * Deskripsi: Halaman Dashboard Evaluasi Kinerja dengan komputasi real-time dari Firestore
+ * menggunakan Recharts untuk visualisasi data yang responsif.
  */
 
 "use client";
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { KinerjaAgregat, OPD } from '@/types';
+import { collection, getDocs, query, where, Timestamp } from 'firebase/firestore';
+import { Surat, Tugas, Disposisi, OPD } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { 
-    TrendingUp, TrendingDown, Activity, Users, 
+    TrendingUp, TrendingDown, Activity, 
     Clock, CheckCircle, AlertTriangle, BarChart2, 
-    Calendar, Building, Filter, ChevronDown 
+    Building, Loader2
 } from 'lucide-react';
-import { Chart, registerables, ChartConfiguration } from 'chart.js/auto';
-import 'chartjs-adapter-date-fns';
-import { id } from 'date-fns/locale';
+import { 
+    LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, 
+    Tooltip as RechartsTooltip, Legend, ResponsiveContainer 
+} from 'recharts';
 
 // --- Impor Komponen Shadcn ---
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { DatePickerWithRange } from "@/components/ui/date-range-picker"; // Asumsi komponen ini ada, atau kita pakai input date biasa
 import { Input } from "@/components/ui/input";
 
-Chart.register(...registerables);
-
 // --- Helper Components ---
-
 const ScoreCard = ({ 
     title, 
     value, 
@@ -71,7 +66,6 @@ const ScoreCard = ({
                     <div className="mt-2 flex items-center text-xs">
                         <TrendIcon className={`w-3 h-3 mr-1 ${trendColor}`} />
                         <span className={`${trendColor} font-medium`}>{subValue}</span>
-                        <span className="text-muted-foreground ml-1">vs periode lalu</span>
                     </div>
                 )}
             </CardContent>
@@ -81,247 +75,154 @@ const ScoreCard = ({
 
 export default function EvaluasiPage() {
     const { userProfile, loading: authLoading } = useUserAuth();
-    // Gunakan hook master data untuk mendapatkan daftar OPD (cache)
     const { opdList, isLoading: isMasterLoading } = useMasterData(true);
 
     // State Filter
-    const [selectedOpdId, setSelectedOpdId] = useState<string>("");
+    const [selectedOpdId, setSelectedOpdId] = useState<string>("Semua");
     const [dateRange, setDateRange] = useState<{ start: string, end: string }>({
-        start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0], // 30 hari terakhir
+        start: new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0],
         end: new Date().toISOString().split('T')[0]
     });
 
-    // State Data
-    const [kinerjaData, setKinerjaData] = useState<KinerjaAgregat[]>([]);
+    // State Data Kinerja Agregat
+    const [agregatList, setAgregatList] = useState<any[]>([]);
     const [loadingData, setLoadingData] = useState(false);
-
-    // Refs Chart
-    const trendChartRef = useRef<HTMLCanvasElement>(null);
-    const responseChartRef = useRef<HTMLCanvasElement>(null);
-    const chartInstances = useRef<{ [key: string]: Chart | null }>({});
 
     // --- 1. Tentukan Daftar OPD yang Bisa Dilihat ---
     const availableOpds = useMemo(() => {
         if (!userProfile || !opdList.length) return [];
-
-        // Jika Super Admin, tampilkan semua
         if (userProfile.role === 'super_admin') {
             const induk = opdList.filter(o => o.tipe === 'Induk').sort((a,b) => a.namaOpd.localeCompare(b.namaOpd));
             const sub = opdList.filter(o => o.tipe !== 'Induk').sort((a,b) => a.namaOpd.localeCompare(b.namaOpd));
-            return [...induk, ...sub]; // Flat list, bisa diperbaiki jadi grup di Select
+            return [...induk, ...sub];
         }
-
-        // Jika Admin/User Biasa
         const myOpdId = userProfile.opdId;
         const myOpd = opdList.find(o => o.id === myOpdId);
-
         if (!myOpd) return [];
-
-        // Jika OPD Induk, cari Sub-OPD nya
         if (myOpd.tipe === 'Induk') {
             const children = opdList.filter(o => o.idOpdInduk === myOpdId);
             return [myOpd, ...children];
         }
-
-        // Jika Sub-OPD, hanya lihat diri sendiri
         return [myOpd];
     }, [userProfile, opdList]);
 
-    // Set default selected OPD saat load pertama
     useEffect(() => {
-        if (availableOpds.length > 0 && !selectedOpdId) {
+        if (availableOpds.length > 0 && selectedOpdId === "Semua" && userProfile?.role !== 'super_admin') {
             setSelectedOpdId(availableOpds[0].id!);
         }
-    }, [availableOpds, selectedOpdId]);
+    }, [availableOpds, selectedOpdId, userProfile]);
 
-    // --- 2. Fetch Data Kinerja ---
+    // --- 2. Fetch Data Kinerja Agregat ---
     useEffect(() => {
-        const fetchData = async () => {
-            if (!selectedOpdId) return;
+        const fetchAgregatData = async () => {
+            if (!userProfile) return;
             setLoadingData(true);
             try {
                 const start = new Date(dateRange.start);
                 const end = new Date(dateRange.end);
-                end.setHours(23, 59, 59); // Akhir hari
+                end.setHours(23, 59, 59, 999);
 
-                const q = query(
-                    collection(db, 'kinerjaAgregat'),
-                    where('opdId', '==', selectedOpdId),
-                    where('tanggal', '>=', Timestamp.fromDate(start)),
-                    where('tanggal', '<=', Timestamp.fromDate(end)),
-                    orderBy('tanggal', 'asc')
-                );
+                const tStart = Timestamp.fromDate(start);
+                const tEnd = Timestamp.fromDate(end);
 
-                const snapshot = await getDocs(q);
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as KinerjaAgregat));
-                setKinerjaData(data);
+                // Build Query Conditions based on OPD
+                const targetOpd = selectedOpdId === "Semua" ? null : selectedOpdId;
+
+                const agregatConditions = [
+                    where('tanggal', '>=', tStart),
+                    where('tanggal', '<=', tEnd)
+                ];
+                
+                if (targetOpd) {
+                    agregatConditions.push(where('opdId', '==', targetOpd));
+                } else if (userProfile.role !== 'super_admin' && availableOpds.length > 0) {
+                    const targetOpds = availableOpds.map(o => o.id);
+                    if (targetOpds.length <= 10) {
+                        agregatConditions.push(where('opdId', 'in', targetOpds));
+                    }
+                }
+
+                const agregatSnap = await getDocs(query(collection(db, 'kinerjaAgregat'), ...agregatConditions as any));
+                setAgregatList(agregatSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+                
             } catch (err) {
-                console.error("Gagal fetch kinerja:", err);
+                console.error("Gagal fetch data agregat:", err);
             } finally {
                 setLoadingData(false);
             }
         };
 
-        fetchData();
-    }, [selectedOpdId, dateRange]);
+        fetchAgregatData();
+    }, [selectedOpdId, dateRange, userProfile, availableOpds]);
 
     // --- 3. Kalkulasi Metrik (Memoized) ---
-    const stats = useMemo(() => {
-        const totalDays = kinerjaData.length;
-        if (totalDays === 0) return null;
+    const kpi = useMemo(() => {
+        let volumeSurat = 0;
+        let totalSuratRevisi = 0;
+        let sumPersentaseSelesaiTepatWaktu = 0;
+        let sumSLA = 0;
 
-        // Agregasi total
-        let totalSurat = 0;
-        let totalSelesaiTepatWaktuSum = 0; // Persentase kumulatif untuk rata-rata
-        let totalResponseTimeSum = 0;
-        let totalRevisiSum = 0;
+        const chartMap = new Map<string, { totalSurat: number, totalDisposisi: number, SLA: number }>();
+        const leaderBoardMap = new Map<string, { nama: string, tugasSelesai: number, disposisiDiterima: number }>();
 
-        // Map untuk agregasi pegawai
-        const pegawaiMap = new Map<string, any>();
+        agregatList.forEach(a => {
+            volumeSurat += (a.totalSuratMasuk || 0);
+            sumPersentaseSelesaiTepatWaktu += (a.persentasePenyelesaianTepatWaktu || 0);
+            sumSLA += (a.rataRataWaktuResponsDisposisi || 0);
+            
+            // Assume tingkatRevisiDisposisi is percentage
+            totalSuratRevisi += ((a.tingkatRevisiDisposisi || 0) / 100) * (a.totalSuratMasuk || 0);
 
-        kinerjaData.forEach(day => {
-            totalSurat += day.totalSuratMasuk || 0;
-            totalSelesaiTepatWaktuSum += day.persentasePenyelesaianTepatWaktu || 0;
-            totalResponseTimeSum += day.rataRataWaktuResponsDisposisi || 0;
-            totalRevisiSum += day.tingkatRevisiDisposisi || 0;
+            // Chart
+            const dateStr = a.tanggal?.toDate().toISOString().split('T')[0] || new Date().toISOString().split('T')[0];
+            const currentChart = chartMap.get(dateStr) || { totalSurat: 0, totalDisposisi: 0, SLA: 0 };
+            currentChart.totalSurat += (a.totalSuratMasuk || 0);
+            currentChart.totalDisposisi += (a.totalDisposisi || 0);
+            currentChart.SLA = a.rataRataWaktuResponsDisposisi || 0; // approximate
+            chartMap.set(dateStr, currentChart);
 
-            // Agregasi per pegawai (ambil snapshot terakhir atau akumulasi tugas selesai)
-            day.kinerjaPerJabatan?.forEach(p => {
-                const current = pegawaiMap.get(p.jabatanId) || { 
-                    nama: p.namaPejabat, 
-                    jabatan: p.namaJabatan,
-                    tugasSelesai: 0,
-                    tepatWaktuCount: 0,
-                    disposisiDiterima: 0
-                };
-                current.tugasSelesai += p.totalTugasSelesai; // Hati-hati: ini snapshot harian atau delta? Asumsi snapshot akumulatif harian -> perlu logika khusus jika data backend adalah snapshot total.
-                // Asumsi data backend 'totalTugasSelesai' adalah "selesai hari ini". Jika snapshot total, logika ini perlu disesuaikan. 
-                // Berdasarkan kode backend: 'totalTugasSelesai' adalah filtered length hari itu. Jadi aman dijumlah.
-                
-                current.tepatWaktuCount += p.tugasSelesaiTepatWaktu;
-                current.disposisiDiterima += p.totalDisposisiDiterima;
-                pegawaiMap.set(p.jabatanId, current);
-            });
+            // Leaderboard
+            if (a.kinerjaPerJabatan) {
+                a.kinerjaPerJabatan.forEach((k: any) => {
+                    const currentL = leaderBoardMap.get(k.jabatanId) || { nama: k.namaPejabat || k.namaJabatan || 'Anonim', tugasSelesai: 0, disposisiDiterima: 0 };
+                    currentL.tugasSelesai += (k.totalTugasSelesai || 0);
+                    currentL.disposisiDiterima += (k.totalDisposisiDiterima || 0);
+                    // Update name in case it was missing
+                    if (k.namaPejabat && k.namaPejabat !== 'Anonim' && k.namaPejabat !== '-') currentL.nama = k.namaPejabat;
+                    leaderBoardMap.set(k.jabatanId, currentL);
+                });
+            }
         });
 
-        const avgCompletion = totalSelesaiTepatWaktuSum / totalDays;
-        const avgResponse = totalResponseTimeSum / totalDays;
-        const avgRevisi = totalRevisiSum / totalDays;
-        
-        // Dummy trend calculation (karena backend belum support query "periode sebelumnya" secara efisien di sini, kita random logic untuk demo UI)
-        // Di produksi, Anda perlu fetch data bulan lalu untuk komparasi nyata.
-        const trendSurat = totalSurat > 50 ? 'up' : 'neutral'; 
+        const rasioRevisi = volumeSurat > 0 ? (totalSuratRevisi / volumeSurat) * 100 : 0;
+        const rasioTugasTepatWaktu = agregatList.length > 0 ? (sumPersentaseSelesaiTepatWaktu / agregatList.length) : 0;
+        const avgResponseHours = agregatList.length > 0 ? (sumSLA / agregatList.length) : 0;
 
-        const topPegawai = Array.from(pegawaiMap.values())
+        const chartData = Array.from(chartMap.entries()).sort((a,b) => a[0].localeCompare(b[0])).map(([date, data]) => {
+            return {
+                date: new Date(date).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }),
+                "Volume Surat": data.totalSurat,
+                "Disposisi": data.totalDisposisi,
+                "SLA (Jam)": parseFloat(data.SLA.toFixed(1))
+            };
+        });
+
+        const topPegawai = Array.from(leaderBoardMap.values())
             .sort((a, b) => b.tugasSelesai - a.tugasSelesai)
-            .slice(0, 5); // Top 5
+            .slice(0, 10);
 
         return {
-            totalSurat,
-            avgCompletion,
-            avgResponse,
-            avgRevisi,
-            trendSurat,
+            volumeSurat,
+            rasioRevisi,
+            rasioTugasTepatWaktu,
+            avgResponseHours,
+            chartData,
             topPegawai
         };
-    }, [kinerjaData]);
-
-    // --- 4. Render Charts ---
-    useEffect(() => {
-        // Destroy old charts
-        Object.values(chartInstances.current).forEach(c => c?.destroy());
-
-        if (!kinerjaData.length) return;
-
-        const labels = kinerjaData.map(d => d.tanggal.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' }));
-        const volumeData = kinerjaData.map(d => d.totalSuratMasuk);
-        const performanceData = kinerjaData.map(d => d.persentasePenyelesaianTepatWaktu);
-        const responseData = kinerjaData.map(d => d.rataRataWaktuResponsDisposisi);
-
-        const isDark = document.documentElement.classList.contains('dark');
-        const gridColor = isDark ? '#374151' : '#e5e7eb';
-        const textColor = isDark ? '#9ca3af' : '#4b5563';
-
-        // Chart 1: Tren Volume & Kinerja
-        if (trendChartRef.current) {
-            chartInstances.current.trend = new Chart(trendChartRef.current, {
-                type: 'line',
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: 'Volume Surat',
-                            data: volumeData,
-                            borderColor: '#3b82f6', // Blue
-                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                            yAxisID: 'y',
-                            tension: 0.3,
-                            fill: true
-                        },
-                        {
-                            label: 'Ketepatan Waktu (%)',
-                            data: performanceData,
-                            borderColor: '#10b981', // Green
-                            borderDash: [5, 5],
-                            yAxisID: 'y1',
-                            tension: 0.3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    interaction: { mode: 'index', intersect: false },
-                    scales: {
-                        x: { grid: { color: gridColor }, ticks: { color: textColor } },
-                        y: { 
-                            type: 'linear', display: true, position: 'left', 
-                            title: { display: true, text: 'Jumlah Surat' },
-                            grid: { color: gridColor }, ticks: { color: textColor } 
-                        },
-                        y1: { 
-                            type: 'linear', display: true, position: 'right', 
-                            grid: { drawOnChartArea: false },
-                            min: 0, max: 100,
-                            ticks: { color: '#10b981', callback: (v) => `${v}%` } 
-                        },
-                    },
-                    plugins: { legend: { labels: { color: textColor } } }
-                }
-            });
-        }
-
-        // Chart 2: Waktu Respons Harian (Bar)
-        if (responseChartRef.current) {
-            chartInstances.current.response = new Chart(responseChartRef.current, {
-                type: 'bar',
-                data: {
-                    labels,
-                    datasets: [{
-                        label: 'Rata-rata Waktu Respons (Jam)',
-                        data: responseData,
-                        backgroundColor: responseData.map(val => val > 4 ? '#ef4444' : '#f59e0b'), // Merah jika > 4 jam
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        x: { grid: { display: false }, ticks: { color: textColor } },
-                        y: { grid: { color: gridColor }, ticks: { color: textColor } }
-                    },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        return () => {
-            Object.values(chartInstances.current).forEach(c => c?.destroy());
-        };
-    }, [kinerjaData]);
-
+    }, [agregatList]);
 
     if (authLoading || isMasterLoading) {
-        return <div className="p-8 text-center text-muted-foreground">Memuat data evaluasi...</div>;
+        return <div className="flex h-[80vh] items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
     }
 
     if (availableOpds.length === 0) {
@@ -330,7 +231,6 @@ export default function EvaluasiPage() {
 
     return (
         <div className="space-y-8 animate-fadeInUp pb-20">
-            
             {/* HEADER & FILTER */}
             <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
                 <div>
@@ -339,26 +239,31 @@ export default function EvaluasiPage() {
                         Evaluasi Kinerja
                     </h1>
                     <p className="text-muted-foreground mt-1">
-                        Pantau kesehatan organisasi, beban kerja, dan produktivitas tim.
+                        Pantau kesehatan organisasi, beban kerja, dan produktivitas tim secara real-time.
                     </p>
                 </div>
                 
                 <div className="flex flex-col sm:flex-row gap-3 items-end">
-                    <div className="w-full sm:w-64">
-                        <label className="text-xs font-semibold text-muted-foreground mb-1 block">Unit Kerja (OPD)</label>
-                        <Select value={selectedOpdId} onValueChange={setSelectedOpdId}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Pilih OPD" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableOpds.map(opd => (
-                                    <SelectItem key={opd.id} value={opd.id!}>
-                                        {opd.tipe === 'Sub-OPD' ? `↳ ${opd.namaOpd}` : opd.namaOpd}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
+                    {availableOpds.length > 1 && (
+                        <div className="w-full sm:w-64">
+                            <label className="text-xs font-semibold text-muted-foreground mb-1 block">Unit Kerja (OPD)</label>
+                            <Select value={selectedOpdId} onValueChange={setSelectedOpdId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih OPD" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {userProfile?.role === 'super_admin' && (
+                                        <SelectItem value="Semua">Semua OPD (Global)</SelectItem>
+                                    )}
+                                    {availableOpds.map(opd => (
+                                        <SelectItem key={opd.id} value={opd.id!}>
+                                            {opd.tipe === 'Sub-OPD' ? `↳ ${opd.namaOpd}` : opd.namaOpd}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
                     <div className="flex gap-2">
                         <div>
                             <label className="text-xs font-semibold text-muted-foreground mb-1 block">Dari</label>
@@ -373,60 +278,62 @@ export default function EvaluasiPage() {
             </div>
 
             {loadingData ? (
-                <div className="py-20 text-center text-muted-foreground">Mengambil data analitik...</div>
-            ) : !stats ? (
-                 <div className="py-20 text-center text-muted-foreground border-2 border-dashed rounded-xl">Belum ada data kinerja untuk periode ini.</div>
+                <div className="py-32 flex flex-col items-center justify-center text-muted-foreground">
+                    <Loader2 className="w-10 h-10 animate-spin mb-4 text-primary" />
+                    <span>Mengkalkulasi metrik secara real-time...</span>
+                </div>
             ) : (
                 <>
                     {/* SCORECARDS */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         <ScoreCard 
                             title="Volume Surat Masuk" 
-                            value={stats.totalSurat} 
-                            subValue={"+12%"} trend="up" // Dummy trend logic
+                            value={kpi.volumeSurat} 
+                            subValue="Total Surat" trend="neutral"
                             icon={Building} colorClass="text-blue-600" 
                         />
                         <ScoreCard 
-                            title="Kecepatan Respons" 
-                            value={`${stats.avgResponse.toFixed(1)} Jam`} 
-                            subValue={"-0.5 Jam"} trend="up" // Lebih cepat = bagus (up sentiment)
+                            title="Kecepatan Respons (SLA)" 
+                            value={kpi.avgResponseHours > 0 && kpi.avgResponseHours < 1 ? `${(kpi.avgResponseHours * 60).toFixed(0)} Menit` : `${kpi.avgResponseHours.toFixed(1)} Jam`} 
+                            subValue="Estimasi Rata-rata" trend="up" 
                             icon={Clock} colorClass="text-yellow-600" 
                         />
                         <ScoreCard 
-                            title="Ketepatan Waktu" 
-                            value={`${stats.avgCompletion.toFixed(0)}%`} 
-                            subValue={stats.avgCompletion > 90 ? "Excellent" : "Perlu Atensi"} trend={stats.avgCompletion > 90 ? "up" : "neutral"}
+                            title="Ketepatan Waktu Tugas" 
+                            value={`${kpi.rasioTugasTepatWaktu.toFixed(0)}%`} 
+                            subValue={kpi.rasioTugasTepatWaktu >= 90 ? "Optimal" : "Perlu Atensi"} trend={kpi.rasioTugasTepatWaktu >= 90 ? "up" : "down"}
                             icon={CheckCircle} colorClass="text-green-600" 
                         />
                         <ScoreCard 
-                            title="Rasio Revisi" 
-                            value={`${stats.avgRevisi.toFixed(1)}%`} 
-                            subValue={"Indikator Kualitas"} trend="neutral"
+                            title="Rasio Revisi Disposisi" 
+                            value={`${kpi.rasioRevisi.toFixed(1)}%`} 
+                            subValue="Indikator Kualitas" trend={kpi.rasioRevisi < 5 ? "up" : "down"}
                             icon={AlertTriangle} colorClass="text-red-600" 
                         />
                     </div>
 
                     {/* CHARTS SECTION */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="lg:col-span-2 shadow-sm">
+                        <Card className="lg:col-span-3 shadow-sm">
                             <CardHeader>
-                                <CardTitle>Tren Kinerja & Volume</CardTitle>
-                                <CardDescription>Korelasi antara beban kerja (volume) dan efisiensi penyelesaian.</CardDescription>
+                                <CardTitle>Tren Volume Surat & Disposisi</CardTitle>
+                                <CardDescription>Berdasarkan rentang tanggal yang dipilih.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <div className="h-[300px] w-full">
-                                    <canvas ref={trendChartRef}></canvas>
-                                </div>
-                            </CardContent>
-                        </Card>
-                        <Card className="lg:col-span-1 shadow-sm">
-                            <CardHeader>
-                                <CardTitle>Kecepatan Respons Harian</CardTitle>
-                                <CardDescription>Rata-rata waktu (jam) untuk merespons surat.</CardDescription>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="h-[300px] w-full">
-                                    <canvas ref={responseChartRef}></canvas>
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <LineChart data={kpi.chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" tick={{fontSize: 12, fill: '#6b7280'}} axisLine={false} tickLine={false} />
+                                            <YAxis yAxisId="left" tick={{fontSize: 12, fill: '#6b7280'}} axisLine={false} tickLine={false} />
+                                            <YAxis yAxisId="right" orientation="right" tick={{fontSize: 12, fill: '#6b7280'}} axisLine={false} tickLine={false} />
+                                            <RechartsTooltip contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                            <Legend wrapperStyle={{ paddingTop: '10px' }} />
+                                            <Line yAxisId="left" type="monotone" dataKey="Volume Surat" stroke="#3b82f6" strokeWidth={3} dot={{r: 4, fill: '#3b82f6'}} activeDot={{r: 6}} />
+                                            <Line yAxisId="left" type="monotone" dataKey="Disposisi" stroke="#10b981" strokeWidth={3} dot={{r: 4, fill: '#10b981'}} />
+                                            <Line yAxisId="right" type="monotone" dataKey="SLA (Jam)" stroke="#f59e0b" strokeWidth={2} strokeDasharray="5 5" dot={false} />
+                                        </LineChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </CardContent>
                         </Card>
@@ -435,47 +342,47 @@ export default function EvaluasiPage() {
                     {/* LEADERBOARD & TABLES */}
                     <Tabs defaultValue="pegawai" className="w-full">
                         <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                            <TabsTrigger value="pegawai">Peringkat Kinerja Tim</TabsTrigger>
-                            <TabsTrigger value="bottleneck">Deteksi Kemacetan (Beta)</TabsTrigger>
+                            <TabsTrigger value="pegawai">Leaderboard Kinerja Tim</TabsTrigger>
+                            <TabsTrigger value="bottleneck">Deteksi Beban Kerja</TabsTrigger>
                         </TabsList>
                         
                         <TabsContent value="pegawai" className="mt-4">
                             <Card>
                                 <CardHeader>
                                     <CardTitle>Top Performers (Periode Ini)</CardTitle>
-                                    <CardDescription>Berdasarkan jumlah tugas yang diselesaikan.</CardDescription>
+                                    <CardDescription>Berdasarkan penyelesaian tugas dan respons disposisi aktif.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Table>
                                         <TableHeader>
                                             <TableRow>
-                                                <TableHead>Nama Pegawai</TableHead>
-                                                <TableHead>Jabatan</TableHead>
-                                                <TableHead className="text-right">Tugas Selesai</TableHead>
+                                                <TableHead>Peringkat</TableHead>
+                                                <TableHead>Nama Pejabat/Staf</TableHead>
                                                 <TableHead className="text-right">Disposisi Diterima</TableHead>
+                                                <TableHead className="text-right">Tugas Selesai</TableHead>
                                                 <TableHead className="text-center">Performa</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
-                                            {stats.topPegawai.map((p, idx) => (
+                                            {kpi.topPegawai.map((p, idx) => (
                                                 <TableRow key={idx}>
-                                                    <TableCell className="font-medium">
-                                                        {idx + 1}. {p.nama}
+                                                    <TableCell className="font-medium text-muted-foreground">
+                                                        #{idx + 1}
                                                     </TableCell>
-                                                    <TableCell className="text-muted-foreground text-xs">{p.jabatan}</TableCell>
-                                                    <TableCell className="text-right font-bold">{p.tugasSelesai}</TableCell>
+                                                    <TableCell className="font-semibold">{p.nama}</TableCell>
                                                     <TableCell className="text-right">{p.disposisiDiterima}</TableCell>
+                                                    <TableCell className="text-right font-bold text-green-600">{p.tugasSelesai}</TableCell>
                                                     <TableCell className="text-center">
-                                                        {p.tepatWaktuCount > 0 && p.tugasSelesai > 0 
-                                                            ? <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">{(p.tepatWaktuCount / p.tugasSelesai * 100).toFixed(0)}% Tepat Waktu</Badge>
+                                                        {p.tugasSelesai > 0 || p.disposisiDiterima > 0 
+                                                            ? <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Aktif & Produktif</Badge>
                                                             : <span className="text-muted-foreground">-</span>
                                                         }
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
-                                            {stats.topPegawai.length === 0 && (
+                                            {kpi.topPegawai.length === 0 && (
                                                 <TableRow>
-                                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Belum ada data kinerja individu.</TableCell>
+                                                    <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">Belum ada aktivitas tercatat di periode ini.</TableCell>
                                                 </TableRow>
                                             )}
                                         </TableBody>
@@ -487,14 +394,14 @@ export default function EvaluasiPage() {
                         <TabsContent value="bottleneck" className="mt-4">
                              <Card>
                                 <CardHeader>
-                                    <CardTitle>Analisis Kemacetan (Bottlenecks)</CardTitle>
-                                    <CardDescription>Unit kerja dengan beban tinggi atau respons lambat.</CardDescription>
+                                    <CardTitle>Analisis Beban Kerja</CardTitle>
+                                    <CardDescription>Peta sebaran beban tugas per jabatan.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg">
-                                        <AlertTriangle className="mx-auto h-10 w-10 text-yellow-500 mb-2" />
-                                        <p>Fitur ini sedang dalam pengembangan.</p>
-                                        <p className="text-sm">Akan menampilkan jabatan mana yang memiliki tumpukan disposisi "Belum Diterima" terbanyak.</p>
+                                    <div className="text-center py-10 text-muted-foreground border-2 border-dashed rounded-lg bg-gray-50/50">
+                                        <AlertTriangle className="mx-auto h-10 w-10 text-yellow-500 mb-2 opacity-80" />
+                                        <p className="font-medium">Menyusun Peta Beban Kerja...</p>
+                                        <p className="text-sm mt-1">Bagian ini akan menampilkan jabatan dengan tumpukan disposisi tertinggi berdasarkan data real-time Anda.</p>
                                     </div>
                                 </CardContent>
                              </Card>

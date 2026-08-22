@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore';
 import { callCloudFunction } from "@/lib/firebase";
 import { useQueryClient } from '@tanstack/react-query';
+import * as Sentry from "@sentry/nextjs";
 
 import { 
   UserProfile, Jabatan, OpdConfig
@@ -109,6 +110,71 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   // Ref untuk menyimpan instance logOut agar bisa dipanggil di dalam useEffect
   // tanpa menjadikannya dependency (yang bisa menyebabkan re-subscribe listener).
   const logOutRef = useRef<() => Promise<void>>(async () => {});
+  
+  // Ref untuk memastikan pencatatan sesi hanya terjadi sekali per hari per user.
+  // Memantau aktivitas agar tab yang dibiarkan terbuka berhari-hari tetap tercatat di hari baru.
+  const lastRecordedSessionRef = useRef<string | null>(null);
+
+  const checkAndRecordSession = useCallback((uid: string) => {
+    // Gunakan tanggal WIB untuk penentuan hari
+    const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
+    const today = new Date(nowStr).toLocaleDateString("en-US");
+    const sessionKey = `${uid}_${today}`;
+
+    if (lastRecordedSessionRef.current !== sessionKey) {
+      lastRecordedSessionRef.current = sessionKey;
+      const recordSession = callCloudFunction('recordUserSession');
+      recordSession({}).catch(err => {
+        console.warn('[AuthContext] Gagal mencatat sesi user (non-critical):', err?.message);
+        // Reset agar bisa dicoba lagi jika gagal
+        if (lastRecordedSessionRef.current === sessionKey) {
+          lastRecordedSessionRef.current = null;
+        }
+      });
+    }
+  }, []);
+
+  // Memantau aktivitas pengguna untuk mencatat sesi (terutama untuk sesi persistent)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handleActivity = () => {
+      // Hanya catat jika user sudah aktif
+      if (user?.uid && userProfile?.status === 'aktif') {
+        checkAndRecordSession(user.uid);
+      }
+    };
+
+    // Panggil saat mount/user berubah
+    handleActivity();
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') handleActivity();
+    };
+
+    let lastClickCheck = 0;
+    const onClick = () => {
+      const now = Date.now();
+      if (now - lastClickCheck > 60000) { // Throttle cek tiap 1 menit
+        lastClickCheck = now;
+        handleActivity();
+      }
+    };
+
+    window.addEventListener('visibilitychange', onVisibilityChange);
+    window.addEventListener('focus', handleActivity);
+    window.addEventListener('click', onClick, { passive: true });
+    
+    // Cek periodik tiap 1 jam untuk antisipasi tab terbuka terus tanpa aktivitas
+    const interval = setInterval(handleActivity, 60 * 60 * 1000);
+
+    return () => {
+      window.removeEventListener('visibilitychange', onVisibilityChange);
+      window.removeEventListener('focus', handleActivity);
+      window.removeEventListener('click', onClick);
+      clearInterval(interval);
+    };
+  }, [user, userProfile, checkAndRecordSession]);
 
   const defaultFeatures: OpdConfig['features'] = {
     aiSuratReader: false, aiNotulensi: false, analitika: false,
@@ -245,6 +311,9 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
             }
         }
     }
+    
+    // Clear Sentry identity on logout
+    Sentry.setUser(null);
 
     // Reset State
     setUser(null);
@@ -256,6 +325,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     setIsImpersonating(false);
     setOriginalUserUid(null);
     lastFetchedUidRef.current = null;
+    sessionRecordedForUidRef.current = null;
     
     // Hapus semua cookie sesi
     clearSessionCookies();
@@ -360,6 +430,14 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
           }
           setUserProfile(profile);
 
+          // Set user identity to Sentry
+          Sentry.setUser({
+            id: profile.id, // NIP is the ID
+            email: currentUser.email || undefined,
+            opdId: profile.opdId,
+            role: profile.role
+          });
+
           // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
           const configRef = doc(db, 'opdConfigs', profile.opdId);
           const configSnap = await getDoc(configRef);
@@ -407,6 +485,10 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
             .map(d => ({ id: d.id, ...d.data() } as Jabatan))
             .filter(j => j.pltSelesaiTanggal && j.pltSelesaiTanggal.toMillis() >= now.toMillis());
           setPltJabatanList(activePltRoles);
+
+          // ── Catat sesi user untuk metrik adopsi & retensi OPD ────────────
+          // (Telah dipindahkan ke event listener `handleActivity` di atas agar
+          // tab yang terbuka lama tetap mencatat sesi setiap pergantian hari)
 
         } catch (error: any) {
           console.error("Error fetching user data:", error);

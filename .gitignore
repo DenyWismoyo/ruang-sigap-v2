@@ -51,3 +51,6 @@ public/firebase-config.js
 # firebase functions
 functions/node_modules/
 functions/lib/
+
+# Sentry Config File
+.env.sentry-build-plugin

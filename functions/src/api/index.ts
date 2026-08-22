@@ -92,7 +92,14 @@ export const setNipClaim = onCall({ region: REGION }, async (request: CallableRe
         const jabatanDoc = await db.collection("jabatan").doc(userData.jabatanId).get();
         const level = jabatanDoc.exists ? jabatanDoc.data()?.level : 9;
 
-        const opdDocSnap = await db.collection("opd_config").doc(userData.opdId).get();
+        let opdDocSnap = await db.collection("opdConfigs").doc(userData.opdId).get();
+        if (!opdDocSnap.exists) {
+            // Fallback & soft-migration
+            opdDocSnap = await db.collection("opd_config").doc(userData.opdId).get();
+            if (opdDocSnap.exists) {
+                await db.collection("opdConfigs").doc(userData.opdId).set(opdDocSnap.data()!);
+            }
+        }
         const opdData = opdDocSnap.exists ? opdDocSnap.data() : null;
         const appTheme = userData.app_theme || opdData?.default_theme || "sigap";
 

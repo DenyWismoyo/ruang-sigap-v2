@@ -130,8 +130,57 @@ export interface ServiceTemplate {
   isActive: boolean;
 }
 
-export interface Jabatan { id?: string; namaJabatan: string; level: number; opdId: string; idAtasan: string | null; pltUserId?: string | null; pltMulaiTanggal?: Timestamp | null; pltSelesaiTanggal?: Timestamp | null; status?: 'aktif' | 'nonaktif'; delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; }
-export interface OpdConfig { id?: string; packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; langgananAktifHingga: Timestamp; paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; kuotaPengguna: number; penggunaAktifSaatIni: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; default_theme?: AppTheme; }
+export interface Jabatan { 
+  id?: string; 
+  namaJabatan: string; 
+  level: number; 
+  opdId: string; 
+  idAtasan: string | null; 
+  pltUserId?: string | null; 
+  pltMulaiTanggal?: Timestamp | null; 
+  pltSelesaiTanggal?: Timestamp | null; 
+  status?: 'aktif' | 'nonaktif'; 
+  delegasiSementara?: { delegatedToJabatanId: string; berlakuHingga: Timestamp; alasan: string; } | null; 
+  tipeJabatan?: 'struktural' | 'fungsional' | 'pelaksana';
+  eselon?: 'I/a' | 'I/b' | 'II/a' | 'II/b' | 'III/a' | 'III/b' | 'IV/a' | 'IV/b' | null;
+  jenjangFungsional?: 'Utama' | 'Madya' | 'Muda' | 'Pertama' | 'Penyelia' | 'Mahir' | 'Terampil' | 'Pemula' | null;
+}
+export interface OpdConfig { 
+  id?: string; 
+  packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; 
+  langgananAktifHingga: Timestamp; 
+  paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; 
+  kuotaPengguna: number; 
+  penggunaAktifSaatIni: number; 
+  features: { 
+    aiSuratReader: boolean; 
+    aiNotulensi: boolean; 
+    analitika: boolean; 
+    manajemenAset: boolean; 
+    persetujuanDraf: boolean; 
+    formBuilder: boolean; 
+    // NEW: Feature Flags
+    enableSiasnIntegration?: boolean;
+    enableEkinerja?: boolean;
+    enableAgenda?: boolean;
+    enableBulkImport?: boolean;
+    maxSuratPerHari?: number;
+  }; 
+  default_theme?: AppTheme; 
+  // NEW: Branding per instansi
+  branding?: {
+    namaAplikasi?: string;
+    logoUrl?: string;
+    primaryColor?: string;
+    faviconUrl?: string;
+  };
+  // NEW: Jam Kerja
+  jamKerja?: {
+    mulai: string;
+    selesai: string;
+    hariKerja: number[];
+  };
+}
 export interface WelcomeSummary { disposisiBaru: number; tindakLanjutMenunggu: number; tugasAktif: number; tugasLewatBatasWaktu: number; suratMenungguDisposisi: number; suratBaruCount?: number; tugasBaruCount?: number; }
 
 export interface Surat { 
@@ -180,8 +229,16 @@ export interface Tugas { id?: string; opdId: string; judulTugas: string; deskrip
 export interface TugasLampiran { name: string; url: string; uploadedAt: Timestamp; type: 'file' | 'link'; }
 export interface TugasKomentar { id?: string; tugasId: string; userId: string; userName: string; userJabatan: string; komentar: string; timestamp: Timestamp; }
 export interface SubTugas { id: string; teks: string; selesai: boolean; }
-export interface OPD {
-    nama: string; id?: string; namaOpd: string; alamat: string; tipe: "Induk" | "Sub-OPD"; idOpdInduk: string | null; status?: 'aktif' | 'nonaktif'; 
+export interface OPD { 
+  id?: string; 
+  nama?: string;
+  namaOpd: string; 
+  alamat?: string;
+  idOpdInduk: string | null; 
+  tipe: "Induk" | "Sub-OPD"; 
+  status?: 'aktif' | 'nonaktif'; 
+  currentHealthScore?: number;
+  healthCategory?: string;
 }
 export interface Notification { id?: string; userId: string; userNip: string; message: string; link: string; isRead: boolean; timestamp: Timestamp; }
 export interface InstruksiTemplat { isiInstruksi: ReactNode; id?: string; opdId: string; teksInstruksi: string; createdBy: string; sharedWithOpdIds?: string[]; }
@@ -214,7 +271,7 @@ export interface KinerjaAgregat { id?: string; tanggal: Timestamp; opdId: string
 export interface ChecklistItem { id: string; teks: string; status: 'Todo' | 'In Progress' | 'Done'; }
 export interface ChecklistBoard { id?: string; userId: string; judul: string; items: ChecklistItem[]; createdAt: Timestamp; tugasTerkaitId?: string; }
 export interface PaymentHistory { id?: string; opdId: string; tanggalBayar: Timestamp; jumlah: number; paket: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; periodeBulan: number; dicatatOleh: string; catatan?: string; }
-export interface PricingPackage { id?: string; hargaBulanan: number; batasPengguna: number; batasSuratBulanan: number; features: { aiSuratReader: boolean; aiNotulensi: boolean; analitika: boolean; manajemenAset: boolean; persetujuanDraf: boolean; formBuilder: boolean; }; }
+export interface PricingPackage { id?: string; hargaBulanan: number; batasPengguna: number; batasSuratBulanan: number; features: OpdConfig['features']; }
 export interface Tagihan { id?: string; opdId: string; namaOpd: string; bulanTagihan: number; tahunTagihan: number; packageName: string; jumlahPenggunaAktif: number; hargaBulanan: number; totalTagihan: number; status: 'Belum Dibayar' | 'Lunas' | 'Kedaluwarsa'; tanggalDibuat: Timestamp; tanggalDibayar: Timestamp | null; catatan?: string; dokumenKelengkapan?: { spk: boolean; bast: boolean; invoice: boolean; kwitansi: boolean; fakturPajak: boolean; }; }
 export type KepuasanType = "Sangat Puas" | "Puas" | "Cukup" | "Kurang Puas" | "Sangat Tidak Puas";
 export type KemudahanType = "Sangat Mudah" | "Mudah" | "Cukup" | "Sulit" | "Sangat Sulit";

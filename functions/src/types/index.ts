@@ -129,7 +129,15 @@ export interface Jabatan {
     alasan: string; 
   } | null; 
 }
-export interface OPD { id?: string; namaOpd: string; idOpdInduk: string | null; tipe: "Induk" | "Sub-OPD"; } // [MODIFIKASI] Tambah 'tipe'
+export interface OPD { 
+  id?: string; 
+  namaOpd: string; 
+  idOpdInduk: string | null; 
+  tipe: "Induk" | "Sub-OPD"; 
+  status?: 'aktif' | 'nonaktif'; 
+  currentHealthScore?: number;
+  healthCategory?: string;
+} // [MODIFIKASI] Tambah 'tipe'
 export interface Pengumuman {
   attachmentFileName?: string | null;
 }

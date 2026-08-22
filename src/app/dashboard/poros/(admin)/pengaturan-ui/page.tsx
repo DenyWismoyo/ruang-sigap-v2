@@ -9,6 +9,7 @@ import { OPD, UserProfile, OpdConfig } from '@/types';
 import { Palette, Loader2, Save, User as UserIcon, Building, RotateCcw } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
 import { callCloudFunction } from "@/lib/firebase";
+import { BrandingModal } from './components/BrandingModal';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +50,10 @@ export default function PengaturanUIPage() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Modal State
+  const [isBrandingModalOpen, setIsBrandingModalOpen] = useState(false);
+  const [selectedOpdForBranding, setSelectedOpdForBranding] = useState<{id: string, name: string} | null>(null);
   
   // Ambil Data OPD Configs secara realtime
   useEffect(() => {
@@ -203,6 +208,7 @@ export default function PengaturanUIPage() {
                       <TableHead>Nama OPD</TableHead>
                       <TableHead className="w-[200px]">Tema Aktif</TableHead>
                       <TableHead className="w-[250px]">Aksi Ubah Tema</TableHead>
+                      <TableHead className="w-[150px]">Branding</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -234,6 +240,19 @@ export default function PengaturanUIPage() {
                                 <SelectItem value="poros">Poros</SelectItem>
                               </SelectContent>
                             </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => {
+                                setSelectedOpdForBranding({ id: opd.id!, name: opd.namaOpd });
+                                setIsBrandingModalOpen(true);
+                              }}
+                            >
+                              <Palette className="w-4 h-4 mr-2" />
+                              Branding
+                            </Button>
                           </TableCell>
                         </TableRow>
                       );
@@ -351,6 +370,21 @@ export default function PengaturanUIPage() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* MODALS */}
+      {selectedOpdForBranding && (
+        <BrandingModal
+          isOpen={isBrandingModalOpen}
+          onClose={() => setIsBrandingModalOpen(false)}
+          opdId={selectedOpdForBranding.id}
+          opdName={selectedOpdForBranding.name}
+          config={opdConfigs.get(selectedOpdForBranding.id)}
+          onSuccess={(newConfig) => {
+             // onSnapshot will handle the state update automatically
+          }}
+        />
+      )}
+
     </div>
   );
 }

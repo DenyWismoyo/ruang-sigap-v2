@@ -8,6 +8,7 @@ const DB_TARGET = process.env.FIRESTORE_DATABASE || "database-siyap";
 
 export * from "./doubleWrite";
 export * from "./logbookTriggers";
+export * from "./sessionTriggers";
 
 import { 
   getUserNameFromJabatanId, getUserNameFromUid, 

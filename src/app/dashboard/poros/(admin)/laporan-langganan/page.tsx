@@ -233,7 +233,7 @@ const KonfigurasiOpdModal = ({ isOpen, onClose, opd, currentConfig, pricingPacka
                                     <div key={key} className="flex items-center gap-3 p-2">
                                         <Checkbox 
                                             id={`feat-${key}`}
-                                            checked={(formData.features || defaultFeatures)[key as keyof typeof defaultFeatures] || false} 
+                                            checked={!!(formData.features || defaultFeatures)[key as keyof typeof defaultFeatures]} 
                                             onCheckedChange={() => handleFeatureToggle(key as any)} 
                                         /> 
                                         <Label htmlFor={`feat-${key}`} className="cursor-pointer">
@@ -550,7 +550,7 @@ const PaketModal = ({ isOpen, onClose, onSave, onDelete, packageData, setPackage
                                     <div key={key} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-slate-700 rounded-md">
                                         <Checkbox 
                                             id={`pkg-feat-${key}`}
-                                            checked={packageData.features?.[key as keyof typeof defaultFeatures] || false} 
+                                            checked={!!(packageData.features?.[key as keyof OpdConfig['features']])} 
                                             onCheckedChange={() => handleFeatureToggle(key as any)}
                                         /> 
                                         <Label htmlFor={`pkg-feat-${key}`} className="cursor-pointer">
@@ -628,7 +628,12 @@ const LaporanLanggananPage = () => {
         analitika: true,
         manajemenAset: true,
         persetujuanDraf: true,
-        formBuilder: true
+        formBuilder: true,
+        enableSiasnIntegration: false,
+        enableEkinerja: false,
+        enableAgenda: false,
+        enableBulkImport: false,
+        maxSuratPerHari: 0
     };
 
     useEffect(() => {
@@ -756,7 +761,9 @@ const LaporanLanggananPage = () => {
         let totalPendapatan = paymentHistory.reduce((sum, p) => sum + p.jumlah, 0);
         let langgananAktif = 0;
         let segeraKedaluwarsa = 0;
+        let peringatanH7 = 0;
         let sudahKedaluwarsa = 0;
+        let mrr = 0;
 
         opdList.forEach(opd => {
             const config = opdConfigs.get(opd.id!);
@@ -764,8 +771,19 @@ const LaporanLanggananPage = () => {
                 const expiryDate = config.langgananAktifHingga.toDate();
                 if (expiryDate >= now) {
                     langgananAktif++;
-                    if (expiryDate < thirtyDaysFromNow) {
+                    
+                    const diffTime = expiryDate.getTime() - now.getTime();
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    if (diffDays <= 7 && diffDays >= 0) {
+                        peringatanH7++;
+                    } else if (expiryDate < thirtyDaysFromNow) {
                         segeraKedaluwarsa++;
+                    }
+                    
+                    const pkg = pricingPackages.find(p => p.id === config.packageName);
+                    if (pkg && pkg.hargaBulanan) {
+                        mrr += pkg.hargaBulanan;
                     }
                 } else {
                     sudahKedaluwarsa++;
@@ -775,8 +793,10 @@ const LaporanLanggananPage = () => {
             }
         });
 
-        return { totalPendapatan, langgananAktif, segeraKedaluwarsa, sudahKedaluwarsa };
-    }, [paymentHistory, opdConfigs, opdList]);
+        const arr = mrr * 12;
+
+        return { totalPendapatan, langgananAktif, segeraKedaluwarsa, peringatanH7, sudahKedaluwarsa, mrr, arr };
+    }, [paymentHistory, opdConfigs, opdList, pricingPackages]);
 
     const openProyeksiModal = async (opd: OPD) => {
         setSelectedOpdForProyeksi(opd);
@@ -1109,11 +1129,24 @@ const LaporanLanggananPage = () => {
                 </Button>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
-                <StatCard title="Total Pendapatan" value={`Rp ${summaryStats.totalPendapatan.toLocaleString('id-ID')}`} icon={<DollarSign/>} colorClass="text-green-600" />
-                <StatCard title="Langganan Aktif" value={summaryStats.langgananAktif} icon={<CheckCircle/>} colorClass="text-blue-600" />
-                <StatCard title="Segera Kedaluwarsa" value={summaryStats.segeraKedaluwarsa} icon={<Clock/>} colorClass="text-yellow-600" />
-                <StatCard title="Sudah Kedaluwarsa" value={summaryStats.sudahKedaluwarsa} icon={<FileWarning/>} colorClass="text-red-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mt-8">
+                <StatCard title="Total Pendapatan" value={`Rp ${(summaryStats.totalPendapatan / 1000000).toFixed(1)}Jt`} icon={<DollarSign/>} colorClass="text-green-600" />
+                <StatCard title="MRR (Bulanan)" value={`Rp ${(summaryStats.mrr / 1000000).toFixed(1)}Jt`} icon={<BarChart/>} colorClass="text-emerald-600" />
+                <StatCard title="ARR (Tahunan)" value={`Rp ${(summaryStats.arr / 1000000).toFixed(1)}Jt`} icon={<BarChart/>} colorClass="text-blue-600" />
+                
+                <StatCard title="Aktif" value={summaryStats.langgananAktif} icon={<CheckCircle/>} colorClass="text-indigo-600" />
+                
+                {summaryStats.peringatanH7 > 0 ? (
+                    <div className="relative group cursor-help" title={`${summaryStats.peringatanH7} instansi akan kedaluwarsa dalam 7 hari!`}>
+                        <div className="absolute -top-2 -right-2 z-10 w-4 h-4 bg-red-500 rounded-full animate-ping"></div>
+                        <div className="absolute -top-2 -right-2 z-10 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold">{summaryStats.peringatanH7}</div>
+                        <StatCard title="H-7 (Kritis)" value={summaryStats.peringatanH7} icon={<AlertTriangle/>} colorClass="text-orange-600" />
+                    </div>
+                ) : (
+                    <StatCard title="Segera Kedaluwarsa" value={summaryStats.segeraKedaluwarsa} icon={<Clock/>} colorClass="text-yellow-600" />
+                )}
+
+                <StatCard title="Kedaluwarsa" value={summaryStats.sudahKedaluwarsa} icon={<FileWarning/>} colorClass="text-red-600" />
             </div>
 
             {/* [REFACTOR] Ganti <button> tab dengan <Tabs> */}

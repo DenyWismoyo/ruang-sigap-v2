@@ -1,6 +1,122 @@
 {
   "indexes": [
     {
+      "collectionGroup": "tindakLanjut",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalLaporan",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "laporanTindakLanjut",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "logbookHarian",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "surat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalDiterima",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "disposisi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalDisposisi",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalSelesai",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalDibuat",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "disposisi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalDisposisi",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "jabatan",
       "queryScope": "COLLECTION",
       "fields": [
@@ -804,6 +920,70 @@
         },
         {
           "fieldPath": "updatedAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "tugas",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalSelesai",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "userSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "yearMonth",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "userSessions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "yearMonth",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "opdHealthScores",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateString",
           "order": "DESCENDING"
         }
       ]

@@ -12,7 +12,7 @@ export default function AppSettingsPage() {
 
   useEffect(() => {
     const fetchOpd = async () => {
-      const snap = await getDocs(collection(db, 'opd_config'));
+      const snap = await getDocs(collection(db, 'opdConfigs'));
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       setOpdList(list);
     };
@@ -21,7 +21,7 @@ export default function AppSettingsPage() {
 
   const updateOpdTheme = async (opdId: string, theme: string) => {
     try {
-      await updateDoc(doc(db, 'opd_config', opdId), { default_theme: theme });
+      await updateDoc(doc(db, 'opdConfigs', opdId), { default_theme: theme });
       addToast('Tema OPD berhasil diperbarui. Pengguna perlu login ulang agar efek terlihat.', 'success');
       setOpdList(prev => prev.map(o => o.id === opdId ? { ...o, default_theme: theme } : o));
     } catch (e: any) {

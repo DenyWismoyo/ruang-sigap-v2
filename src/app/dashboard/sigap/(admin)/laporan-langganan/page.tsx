@@ -232,7 +232,7 @@ const KonfigurasiOpdModal = ({ isOpen, onClose, opd, currentConfig, pricingPacka
                                     <div key={key} className="flex items-center gap-3 p-2">
                                         <Checkbox 
                                             id={`feat-${key}`}
-                                            checked={(formData.features || defaultFeatures)[key as keyof typeof defaultFeatures] || false} 
+                                            checked={!!(formData.features || defaultFeatures)[key as keyof typeof defaultFeatures]} 
                                             onCheckedChange={() => handleFeatureToggle(key as any)} 
                                         /> 
                                         <Label htmlFor={`feat-${key}`} className="cursor-pointer">
@@ -534,7 +534,7 @@ const PaketModal = ({ isOpen, onClose, onSave, onDelete, packageData, setPackage
                                     <div key={key} className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-slate-700 rounded-md">
                                         <Checkbox 
                                             id={`pkg-feat-${key}`}
-                                            checked={packageData.features?.[key as keyof typeof defaultFeatures] || false} 
+                                            checked={!!(packageData.features?.[key as keyof OpdConfig['features']])} 
                                             onCheckedChange={() => handleFeatureToggle(key as any)}
                                         /> 
                                         <Label htmlFor={`pkg-feat-${key}`} className="cursor-pointer">
@@ -611,7 +611,12 @@ const LaporanLanggananPage = () => {
         analitika: false,
         manajemenAset: false,
         persetujuanDraf: false,
-        formBuilder: false
+        formBuilder: false,
+        enableSiasnIntegration: false,
+        enableEkinerja: false,
+        enableAgenda: false,
+        enableBulkImport: false,
+        maxSuratPerHari: 0
     };
 
     useEffect(() => {

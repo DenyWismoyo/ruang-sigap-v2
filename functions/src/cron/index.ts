@@ -7,6 +7,8 @@ import {
   UserProfile, Jabatan, Surat, Disposisi, Tugas, OPD, KinerjaPerPenggunaHarian, Tagihan, PricingPackage, OpdConfig 
 } from "../types";
 
+export * from "./dailyKinerjaAggregator";
+export * from "./aggregateHealthScore";
 
 
 export const sendAgendaReminders = onSchedule(

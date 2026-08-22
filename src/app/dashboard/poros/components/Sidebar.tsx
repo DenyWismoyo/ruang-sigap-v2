@@ -427,6 +427,14 @@ export const navItems: NavItem[] = [
     section: "analitika",
     colorClass: "text-blue-600",
   },
+  {
+    href: "/dashboard/poros/kesehatan-opd",
+    label: "Kesehatan OPD",
+    icon: Activity,
+    allowedRoles: ["super_admin"],
+    section: "analitika",
+    colorClass: "text-green-600",
+  },
 
   // --- ADMINISTRASI ---
   {

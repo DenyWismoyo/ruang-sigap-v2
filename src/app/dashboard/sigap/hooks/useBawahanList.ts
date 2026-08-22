@@ -91,6 +91,38 @@ export const useBawahanList = (
       staleTime: 1000 * 60 * 60, // Cache 1 jam (Struktur OPD jarang berubah)
   });
 
+  // Helper untuk mendapatkan skor birokrasi (Semakin besar = semakin tinggi kelasnya)
+  const getBirokrasiScore = (jabatan: Jabatan) => {
+      if (jabatan.tipeJabatan === 'struktural') {
+          if (jabatan.eselon?.startsWith('I/')) return 50;
+          if (jabatan.eselon?.startsWith('II/')) return 40;
+          if (jabatan.eselon?.startsWith('III/')) return 30;
+          if (jabatan.eselon?.startsWith('IV/')) return 20;
+          return 10;
+      } else if (jabatan.tipeJabatan === 'fungsional') {
+          if (jabatan.jenjangFungsional === 'Utama') return 40; // Setara Eselon II
+          if (jabatan.jenjangFungsional === 'Madya') return 30; // Setara Eselon III
+          if (jabatan.jenjangFungsional === 'Muda') return 20;  // Setara Eselon IV
+          if (jabatan.jenjangFungsional === 'Pertama' || jabatan.jenjangFungsional === 'Penyelia') return 10;
+          return 5;
+      }
+      return 0; // Pelaksana / Default
+  };
+
+  // Helper untuk mengecek relasi idAtasan (langsung atau tidak langsung)
+  const isTransitiveBawahan = (targetJabatanId: string, managerJabatanId: string, jabatanMap: Map<string, Jabatan>): boolean => {
+      let currentId = targetJabatanId;
+      let maxDepth = 20; // Mencegah infinite loop jika ada siklus
+      while (currentId && maxDepth > 0) {
+          const currentJab = jabatanMap.get(currentId);
+          if (!currentJab || !currentJab.idAtasan) return false;
+          if (currentJab.idAtasan === managerJabatanId) return true;
+          currentId = currentJab.idAtasan;
+          maxDepth--;
+      }
+      return false;
+  };
+
   // MEMOIZED LIST (Gabungan)
   const bawahanList = useMemo(() => {
     if (!effectiveJabatan) return [];
@@ -99,11 +131,36 @@ export const useBawahanList = (
     const bawahanDiOpdSendiri = Array.from(userCache.values()).filter(user => {
         const userJabatan = opdJabatans.get(user.jabatanId);
         if (!userJabatan) return false;
-        const isLowerLevel = userJabatan.level > effectiveJabatan.level;
+        
         const isActive = user.status === 'aktif';
         const notSelf = user.jabatanId !== effectiveJabatan.id; 
         const notAdmin = !user.role?.includes('admin');
-        return isLowerLevel && isActive && notSelf && notAdmin;
+        
+        if (!isActive || !notSelf || !notAdmin) return false;
+
+        // 1. Jalur Eksplisit (idAtasan) - Prioritas Tertinggi
+        if (effectiveJabatan.id && isTransitiveBawahan(user.jabatanId, effectiveJabatan.id, opdJabatans)) {
+            return true;
+        }
+
+        // 2. Jalur Heuristik Administratif (Level)
+        const isLowerLevel = userJabatan.level > effectiveJabatan.level;
+        
+        if (isLowerLevel) {
+             // 3. Filter Birokrasi (Pangkat/Kesetaraan)
+             if (effectiveJabatan.tipeJabatan && userJabatan.tipeJabatan) {
+                 const myScore = getBirokrasiScore(effectiveJabatan);
+                 const theirScore = getBirokrasiScore(userJabatan);
+                 
+                 // Aturan Ketat: Struktural tidak boleh mendisposisi ke Fungsional yang setara/lebih tinggi
+                 if (effectiveJabatan.tipeJabatan === 'struktural' && userJabatan.tipeJabatan === 'fungsional') {
+                     return theirScore < myScore; 
+                 }
+             }
+             return true; 
+        }
+        
+        return false;
     });
 
     // B. Gabungkan dengan Pimpinan Sub-OPD

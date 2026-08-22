@@ -40,7 +40,7 @@ export default function RekapSuratPage() {
   const [isExporting, setIsExporting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
 
-  
+  const [opdList, setOpdList] = useState<OPD[]>([]);
   const [selectedOpdId, setSelectedOpdId] = useState<string>("Semua");
 
   const [startDate, setStartDate] = useState(() => {

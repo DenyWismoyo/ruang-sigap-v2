@@ -1,3 +1,18 @@
+import * as Sentry from "@sentry/node";
+import { nodeProfilingIntegration } from "@sentry/profiling-node";
+
+// Inisialisasi Sentry seawal mungkin
+Sentry.init({
+  dsn: process.env.SENTRY_DSN,
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  // Tracing
+  tracesSampleRate: 1.0, 
+  // Profiling
+  profilesSampleRate: 1.0,
+});
+
 import * as api from "./api";
 import * as triggers from "./triggers";
 import * as cron from "./cron";
@@ -35,3 +50,15 @@ const allModules = {
 for (const [key, value] of Object.entries(allModules)) {
     exports[key] = value;
 }
+
+import { dailyKinerjaAggregator } from "./cron/dailyKinerjaAggregator";
+exports.dailyKinerjaAggregator = dailyKinerjaAggregator;
+
+import { backfillKinerjaAgregat } from "./backfillKinerjaAgregat";
+exports.backfillKinerjaAgregat = backfillKinerjaAgregat;
+
+import { recordUserSession } from "./triggers/sessionTriggers";
+exports.recordUserSession = recordUserSession;
+
+import { aggregateHealthScore } from "./cron/aggregateHealthScore";
+exports.aggregateHealthScore = aggregateHealthScore;

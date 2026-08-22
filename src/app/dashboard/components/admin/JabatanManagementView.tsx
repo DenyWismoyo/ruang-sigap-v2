@@ -14,13 +14,14 @@ import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData'; 
 import { useQueryClient } from '@tanstack/react-query'; // <-- Import React Query Client
-import { Upload, Download, Save, Archive, ArchiveRestore, Users, Edit, Loader2, FileSpreadsheet, CheckCircle, X, Trash2, PencilLine } from 'lucide-react'; 
+import { Upload, Download, Save, Archive, ArchiveRestore, Users, Edit, Loader2, FileSpreadsheet, CheckCircle, X, Trash2, PencilLine, Network, ChevronRight, ChevronDown, GripVertical, User } from 'lucide-react'; 
 import Papa from 'papaparse'; 
 
 // --- Impor Komponen Shadcn ---
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
 } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,6 +37,136 @@ import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
 interface JabatanManagementViewProps {
   tenant: 'sigap' | 'poros';
 }
+
+const PohonJabatanItem = ({ 
+    jabatan, 
+    allJabatans, 
+    levelMap, 
+    onEdit,
+    userList,
+    isEditMode,
+    onDropJabatan
+}: { 
+    jabatan: Jabatan, 
+    allJabatans: Jabatan[], 
+    levelMap: Record<string, Jabatan[]>, 
+    onEdit: (j: Jabatan) => void,
+    userList: any[],
+    isEditMode: boolean,
+    onDropJabatan: (draggedId: string, targetId: string) => void
+}) => {
+    const [isExpanded, setIsExpanded] = useState(true);
+    const [isDragOver, setIsDragOver] = useState(false);
+    const children = levelMap[jabatan.id!] || [];
+    const pengisiJabatan = userList.filter(u => u.jabatanId === jabatan.id);
+
+    const handleDragStart = (e: React.DragEvent) => {
+        if (!isEditMode) return;
+        e.dataTransfer.setData('text/plain', jabatan.id!);
+        e.stopPropagation();
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+        if (!isEditMode) return;
+        e.preventDefault();
+        setIsDragOver(true);
+        e.stopPropagation();
+    };
+
+    const handleDragLeave = () => {
+        setIsDragOver(false);
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+        if (!isEditMode) return;
+        e.preventDefault();
+        setIsDragOver(false);
+        e.stopPropagation();
+        const draggedId = e.dataTransfer.getData('text/plain');
+        if (draggedId && draggedId !== jabatan.id) {
+            onDropJabatan(draggedId, jabatan.id!);
+        }
+    };
+
+    return (
+        <div className="flex flex-col mb-2">
+            <div 
+                draggable={isEditMode}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                className={`flex items-center gap-2 py-2 px-3 rounded-md group transition-all ${isEditMode ? 'cursor-grab active:cursor-grabbing hover:bg-muted/80' : 'hover:bg-muted/50'} ${isDragOver ? 'bg-primary/10 border-2 border-primary border-dashed' : 'border-2 border-transparent'}`}
+            >
+                <button 
+                    onClick={() => setIsExpanded(!isExpanded)} 
+                    className={`p-1 rounded hover:bg-muted ${children.length === 0 ? 'invisible' : ''}`}
+                >
+                    {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                </button>
+                <div className="flex flex-col flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        {isEditMode && <GripVertical size={14} className="text-muted-foreground mr-1" />}
+                        <span className="font-semibold text-foreground">{jabatan.namaJabatan}</span>
+                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full dark:bg-blue-900/50 dark:text-blue-300">
+                            Lv. {jabatan.level}
+                        </span>
+                        {jabatan.tipeJabatan && (
+                            <span className="text-xs bg-gray-100 text-gray-800 px-2 py-0.5 rounded-full dark:bg-gray-800 dark:text-gray-300">
+                                {jabatan.tipeJabatan === 'struktural' ? jabatan.eselon : jabatan.jenjangFungsional}
+                            </span>
+                        )}
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${jabatan.status === 'aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'}`}>
+                            {jabatan.status}
+                        </span>
+                        
+                        {/* PENGISI JABATAN */}
+                        {pengisiJabatan.length > 0 && (
+                            <div className="flex items-center gap-1 ml-2">
+                                {pengisiJabatan.map(u => (
+                                    <span key={u.uid} className="inline-flex items-center gap-1 text-[11px] bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700">
+                                        <User size={10} />
+                                        {u.namaLengkap}
+                                    </span>
+                                ))}
+                            </div>
+                        )}
+                        {/* PLT */}
+                        {jabatan.pltUserId && (
+                            <span className="inline-flex items-center gap-1 text-[11px] bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300 px-1.5 py-0.5 rounded border border-amber-200 dark:border-amber-800">
+                                <Users size={10} />
+                                Plt/Plh
+                            </span>
+                        )}
+                    </div>
+                </div>
+                {!isEditMode && (
+                    <div className="ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button variant="ghost" size="sm" onClick={() => onEdit(jabatan)} className="h-7 px-2 text-yellow-600">
+                            <Edit size={14} className="mr-1"/> Edit
+                        </Button>
+                    </div>
+                )}
+            </div>
+            {isExpanded && children.length > 0 && (
+                <div className="ml-6 pl-4 border-l-2 border-border/50">
+                    {children.map(child => (
+                        <PohonJabatanItem 
+                            key={child.id} 
+                            jabatan={child} 
+                            allJabatans={allJabatans} 
+                            levelMap={levelMap} 
+                            onEdit={onEdit} 
+                            userList={userList}
+                            isEditMode={isEditMode}
+                            onDropJabatan={onDropJabatan}
+                        />
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
 
 export default function JabatanManagementView({ tenant }: JabatanManagementViewProps) {
     const { userProfile } = useUserAuth();
@@ -99,6 +230,9 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
     const [namaJabatan, setNamaJabatan] = useState('');
     const [level, setLevel] = useState<number>(9);
     const [idAtasan, setIdAtasan] = useState<string | null>(null);
+    const [tipeJabatan, setTipeJabatan] = useState<'struktural' | 'fungsional' | 'pelaksana' | ''>('');
+    const [eselon, setEselon] = useState<string>('');
+    const [jenjangFungsional, setJenjangFungsional] = useState<string>('');
     const [error, setError] = useState('');
     
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -110,6 +244,57 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
     const [pltStartDate, setPltStartDate] = useState('');
     const [pltEndDate, setPltEndDate] = useState('');
     const [isPltProcessing, setIsPltProcessing] = useState(false); 
+
+    // --- STATE DRAG & DROP POHON ---
+    const [isTreeEditMode, setIsTreeEditMode] = useState(false);
+    const handleDropJabatan = async (draggedId: string, targetId: string) => {
+        if (draggedId === targetId) return;
+
+        let isCycle = false;
+        let currentParentId = targetId;
+        const visited = new Set<string>();
+
+        while (currentParentId && currentParentId !== 'none') {
+            if (currentParentId === draggedId) {
+                isCycle = true;
+                break;
+            }
+            if (visited.has(currentParentId)) break;
+            visited.add(currentParentId);
+
+            const parentJabatan = jabatanList.find(j => j.id === currentParentId);
+            if (!parentJabatan || !parentJabatan.idAtasan) break;
+            currentParentId = parentJabatan.idAtasan;
+        }
+
+        if (isCycle) {
+            addToast("Gagal: Anda tidak bisa memindahkan atasan ke bawah bawahannya sendiri.", "error");
+            return;
+        }
+
+        const draggedJabatan = jabatanList.find(j => j.id === draggedId);
+        if (!draggedJabatan) return;
+
+        try {
+            await updateDoc(doc(db, "jabatan", draggedId), {
+                idAtasan: targetId
+            });
+
+            queryClient.setQueryData(['master', 'opdData', draggedJabatan.opdId], (oldData: any) => {
+                if (!oldData) return oldData;
+                return {
+                    ...oldData,
+                    jabatans: oldData.jabatans.map((j: any) => j.id === draggedId ? { ...j, idAtasan: targetId } : j)
+                };
+            });
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: ['master', 'opdData', draggedJabatan.opdId] }), 3000);
+
+            addToast("Hierarki jabatan berhasil diperbarui.", "success");
+        } catch (error) {
+            console.error(error);
+            addToast("Gagal memperbarui hierarki jabatan.", "error");
+        }
+    };
 
     // --- STATE IMPORT CSV ---
     const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -150,6 +335,18 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
         return jabatanList.sort((a, b) => a.level - b.level);
     }, [jabatanList, tableOpdFilter, userProfile]);
     
+    const hierarchyMap = useMemo(() => {
+        const map: Record<string, Jabatan[]> = {};
+        filteredJabatanForTable.forEach(j => {
+            const parentId = j.idAtasan || 'root';
+            if (!map[parentId]) map[parentId] = [];
+            map[parentId].push(j);
+        });
+        return map;
+    }, [filteredJabatanForTable]);
+
+    const rootJabatans = hierarchyMap['root'] || [];
+
     const potentialAtasanList = useMemo(() => {
         if (!selectedOpdInForm) return [];
         return jabatanList.filter(j => j.level < level);
@@ -182,22 +379,22 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
             setError("Nama Jabatan dan OPD wajib diisi."); return;
         }
         try {
-            const docRef = await addDoc(collection(db, 'jabatan'), {
+            const newJabatanData: any = {
                 namaJabatan,
                 level: Number(level),
                 opdId: selectedOpdInForm,
                 idAtasan: idAtasan || null,
-                status: 'aktif'
-            });
+                status: 'aktif',
+                tipeJabatan: tipeJabatan || null,
+                eselon: tipeJabatan === 'struktural' ? eselon : null,
+                jenjangFungsional: tipeJabatan === 'fungsional' ? jenjangFungsional : null
+            };
+            const docRef = await addDoc(collection(db, 'jabatan'), newJabatanData);
 
             // --- [OPTIMISTIC UPDATE] ---
             const newJabatan = {
                 id: docRef.id,
-                namaJabatan,
-                level: Number(level),
-                opdId: selectedOpdInForm,
-                idAtasan: idAtasan || null,
-                status: 'aktif' as 'aktif'
+                ...newJabatanData
             };
 
             queryClient.setQueryData(['master', 'opdData', selectedOpdInForm], (oldData: any) => {
@@ -228,6 +425,9 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                 level: Number(currentJabatan.level),
                 opdId: currentJabatan.opdId,
                 idAtasan: currentJabatan.idAtasan || null,
+                tipeJabatan: currentJabatan.tipeJabatan || null,
+                eselon: currentJabatan.tipeJabatan === 'struktural' ? currentJabatan.eselon : null,
+                jenjangFungsional: currentJabatan.tipeJabatan === 'fungsional' ? currentJabatan.jenjangFungsional : null
             });
 
             // --- [OPTIMISTIC UPDATE] ---
@@ -541,7 +741,7 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                         </Select>
                     </div>
                     {/* Dropdown Atasan */}
-                    <div className="md:col-span-2 lg:col-span-2">
+                    <div>
                         <Label>Atasan Langsung (Opsional)</Label>
                         <Select value={idAtasan || "none"} onValueChange={(val) => setIdAtasan(val === "none" ? null : val)}>
                              <SelectTrigger><SelectValue placeholder="Pilih Atasan..." /></SelectTrigger>
@@ -551,17 +751,67 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                              </SelectContent>
                         </Select>
                     </div>
-                    <div><Button type="submit" className="w-full"><Save size={16} className="mr-2" /> Simpan</Button></div>
+                    {/* Birokrasi Fields */}
+                    <div>
+                        <Label>Tipe Jabatan (Opsional)</Label>
+                        <Select value={tipeJabatan} onValueChange={(val: any) => setTipeJabatan(val)}>
+                            <SelectTrigger><SelectValue placeholder="Pilih Tipe Jabatan" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">-- Tidak Diatur --</SelectItem>
+                                <SelectItem value="struktural">Struktural (Pejabat)</SelectItem>
+                                <SelectItem value="fungsional">Fungsional (JFT)</SelectItem>
+                                <SelectItem value="pelaksana">Pelaksana (Staf JFU)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {tipeJabatan === 'struktural' && (
+                        <div>
+                            <Label>Eselon</Label>
+                            <Select value={eselon} onValueChange={setEselon}>
+                                <SelectTrigger><SelectValue placeholder="Pilih Eselon" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="I/a">I/a</SelectItem><SelectItem value="I/b">I/b</SelectItem>
+                                    <SelectItem value="II/a">II/a</SelectItem><SelectItem value="II/b">II/b</SelectItem>
+                                    <SelectItem value="III/a">III/a</SelectItem><SelectItem value="III/b">III/b</SelectItem>
+                                    <SelectItem value="IV/a">IV/a</SelectItem><SelectItem value="IV/b">IV/b</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    {tipeJabatan === 'fungsional' && (
+                        <div>
+                            <Label>Jenjang Fungsional</Label>
+                            <Select value={jenjangFungsional} onValueChange={setJenjangFungsional}>
+                                <SelectTrigger><SelectValue placeholder="Pilih Jenjang" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Utama">Utama</SelectItem>
+                                    <SelectItem value="Madya">Madya</SelectItem>
+                                    <SelectItem value="Muda">Muda</SelectItem>
+                                    <SelectItem value="Pertama">Pertama</SelectItem>
+                                    <SelectItem value="Penyelia">Penyelia</SelectItem>
+                                    <SelectItem value="Mahir">Mahir</SelectItem>
+                                    <SelectItem value="Terampil">Terampil</SelectItem>
+                                    <SelectItem value="Pemula">Pemula</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    )}
+                    <div className="md:col-span-2 lg:col-span-3 mt-2"><Button type="submit" className="w-full"><Save size={16} className="mr-2" /> Simpan</Button></div>
                 </form>
             </div>
             
             {/* Tabel Jabatan */}
             <div className={cardClass.replace('p-6', 'p-0 mt-8')}>
-                <div className="p-6 border-b border-border flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-muted/20">
-                    <div>
-                        <h2 className="text-xl font-semibold text-foreground">Daftar Jabatan</h2>
-                        <p className="text-sm text-muted-foreground mt-1">Total: {filteredJabatanForTable.length} Jabatan</p>
-                    </div>
+                <Tabs defaultValue="tabel" className="w-full">
+                    <div className="p-6 border-b border-border flex flex-col md:flex-row md:justify-between md:items-end gap-4 bg-muted/20">
+                        <div>
+                            <h2 className="text-xl font-semibold text-foreground">Daftar Jabatan</h2>
+                            <p className="text-sm text-muted-foreground mt-1">Total: {filteredJabatanForTable.length} Jabatan</p>
+                            <TabsList className="mt-4">
+                                <TabsTrigger value="tabel">Mode Tabel</TabsTrigger>
+                                <TabsTrigger value="pohon">Mode Pohon <Network size={14} className="ml-2"/></TabsTrigger>
+                            </TabsList>
+                        </div>
                     
                     <div className="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
                         <div className="flex items-center space-x-2">
@@ -586,78 +836,112 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                 </div>
 
                 <div className="p-4 bg-background">
-                    {selectedJabatanIds.length > 0 && (
-                        <div className="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
-                            <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
-                                Terpilih: {selectedJabatanIds.length} Jabatan
-                            </span>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" size="sm" onClick={() => setIsBulkEditModalOpen(true)} className="bg-white hover:bg-gray-50 border-blue-200 text-blue-700">
-                                    <PencilLine size={14} className="mr-2" /> Edit Massal
-                                </Button>
-                                {userProfile?.role === 'super_admin' && (
-                                    <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
-                                        <Trash2 size={14} className="mr-2" /> Hapus Massal
+                    <TabsContent value="tabel" className="m-0 space-y-4">
+                        {selectedJabatanIds.length > 0 && (
+                            <div className="mb-4 p-3 bg-blue-50/50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg flex items-center justify-between">
+                                <span className="text-sm font-medium text-blue-800 dark:text-blue-300">
+                                    Terpilih: {selectedJabatanIds.length} Jabatan
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <Button variant="outline" size="sm" onClick={() => setIsBulkEditModalOpen(true)} className="bg-white hover:bg-gray-50 border-blue-200 text-blue-700">
+                                        <PencilLine size={14} className="mr-2" /> Edit Massal
                                     </Button>
-                                )}
+                                    {userProfile?.role === 'super_admin' && (
+                                        <Button variant="destructive" size="sm" onClick={handleBulkDelete}>
+                                            <Trash2 size={14} className="mr-2" /> Hapus Massal
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
+                        <div className={tableWrapperClass}>
+                            <table className="w-full text-left">
+                                <thead className="bg-muted/50">
+                                    <tr className="border-b border-border">
+                                        {userProfile?.role === 'super_admin' && (
+                                            <th className="p-3 w-10 text-center">
+                                                <input 
+                                                    type="checkbox" 
+                                                    className="w-4 h-4 cursor-pointer rounded border-gray-300"
+                                                    checked={selectedJabatanIds.length === filteredJabatanForTable.length && filteredJabatanForTable.length > 0}
+                                                    onChange={(e) => handleSelectAll(e.target.checked)}
+                                                />
+                                            </th>
+                                        )}
+                                        <th className="p-3 font-medium text-muted-foreground">Nama Jabatan</th>
+                                        <th className="p-3 font-medium text-muted-foreground">Level</th>
+                                        <th className="p-3 font-medium text-muted-foreground">Atasan</th>
+                                        <th className="p-3 font-medium text-muted-foreground">Plt./Plh.</th>
+                                        <th className="p-3 font-medium text-muted-foreground">Status</th>
+                                        <th className="p-3 font-medium text-muted-foreground text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {filteredJabatanForTable.map(jabatan => (
+                                        <tr key={jabatan.id} className="border-b border-border hover:bg-muted/50 transition-colors">
+                                            {userProfile?.role === 'super_admin' && (
+                                                <td className="p-3 text-center">
+                                                    <input 
+                                                        type="checkbox"
+                                                        className="w-4 h-4 cursor-pointer rounded border-gray-300"
+                                                        checked={selectedJabatanIds.includes(jabatan.id!)}
+                                                        onChange={(e) => handleSelectOne(jabatan.id!, e.target.checked)}
+                                                    />
+                                                </td>
+                                            )}
+                                            <td className="p-3 font-medium">{jabatan.namaJabatan}</td>
+                                            <td className="p-3">{jabatan.level}</td>
+                                            <td className="p-3 text-muted-foreground">{jabatanMap.get(jabatan.idAtasan || '')?.namaJabatan || '-'}</td>
+                                            <td className="p-3 text-muted-foreground">{getPltUserName(jabatan)}</td>
+                                            <td className="p-3"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${jabatan.status === 'aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-gray-100 text-gray-800'}`}>{jabatan.status}</span></td>
+                                            <td className="flex items-center justify-center p-3 space-x-2">
+                                                <Button variant="ghost" size="icon" onClick={() => openPltModal(jabatan)} title="Tunjuk Plt"><Users size={18} className="text-teal-600"/></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => openEditModal(jabatan)} title="Edit"><Edit size={18} className="text-yellow-600"/></Button>
+                                                <Button variant="ghost" size="icon" onClick={() => handleArchive(jabatan.id!, jabatan.status)} title="Arsipkan">{jabatan.status === 'aktif' ? <Archive size={18} className="text-red-600"/> : <ArchiveRestore size={18} className="text-green-600"/>}</Button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </TabsContent>
+                    
+                    <TabsContent value="pohon" className="m-0 mt-4 p-4 border rounded-lg bg-card min-h-[400px]">
+                        <div className="flex justify-end mb-4">
+                            <div className="flex items-center space-x-2 bg-muted/50 p-2 rounded-lg border">
+                                <Checkbox id="dndMode" checked={isTreeEditMode} onCheckedChange={(v) => setIsTreeEditMode(!!v)} />
+                                <Label htmlFor="dndMode" className="cursor-pointer font-medium text-sm">Aktifkan Edit Drag & Drop</Label>
                             </div>
                         </div>
-                    )}
-
-                    <div className={tableWrapperClass}>
-                        <table className="w-full text-left">
-                            <thead className="bg-muted/50">
-                                <tr className="border-b border-border">
-                                    {userProfile?.role === 'super_admin' && (
-                                        <th className="p-3 w-10 text-center">
-                                            <input 
-                                                type="checkbox" 
-                                                className="w-4 h-4 cursor-pointer rounded border-gray-300"
-                                                checked={selectedJabatanIds.length === filteredJabatanForTable.length && filteredJabatanForTable.length > 0}
-                                                onChange={(e) => handleSelectAll(e.target.checked)}
-                                            />
-                                        </th>
-                                    )}
-                                    <th className="p-3 font-medium text-muted-foreground">Nama Jabatan</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Level</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Atasan</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Plt./Plh.</th>
-                                    <th className="p-3 font-medium text-muted-foreground">Status</th>
-                                    <th className="p-3 font-medium text-muted-foreground text-center">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredJabatanForTable.map(jabatan => (
-                                    <tr key={jabatan.id} className="border-b border-border hover:bg-muted/50 transition-colors">
-                                        {userProfile?.role === 'super_admin' && (
-                                            <td className="p-3 text-center">
-                                                <input 
-                                                    type="checkbox"
-                                                    className="w-4 h-4 cursor-pointer rounded border-gray-300"
-                                                    checked={selectedJabatanIds.includes(jabatan.id!)}
-                                                    onChange={(e) => handleSelectOne(jabatan.id!, e.target.checked)}
-                                                />
-                                            </td>
-                                        )}
-                                        <td className="p-3 font-medium">{jabatan.namaJabatan}</td>
-                                        <td className="p-3">{jabatan.level}</td>
-                                        <td className="p-3 text-muted-foreground">{jabatanMap.get(jabatan.idAtasan || '')?.namaJabatan || '-'}</td>
-                                        <td className="p-3 text-muted-foreground">{getPltUserName(jabatan)}</td>
-                                        <td className="p-3"><span className={`px-2 py-1 text-xs font-semibold rounded-full ${jabatan.status === 'aktif' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : 'bg-gray-100 text-gray-800'}`}>{jabatan.status}</span></td>
-                                        <td className="flex items-center justify-center p-3 space-x-2">
-                                            <Button variant="ghost" size="icon" onClick={() => openPltModal(jabatan)} title="Tunjuk Plt"><Users size={18} className="text-teal-600"/></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => openEditModal(jabatan)} title="Edit"><Edit size={18} className="text-yellow-600"/></Button>
-                                            <Button variant="ghost" size="icon" onClick={() => handleArchive(jabatan.id!, jabatan.status)} title="Arsipkan">{jabatan.status === 'aktif' ? <Archive size={18} className="text-red-600"/> : <ArchiveRestore size={18} className="text-green-600"/>}</Button>
-                                        </td>
-                                    </tr>
+                        {rootJabatans.length === 0 ? (
+                            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+                                <Network size={48} className="mb-4 opacity-20" />
+                                <p>Belum ada hierarki jabatan yang terbentuk.</p>
+                                <p className="text-sm">Silakan edit jabatan dan atur <strong>Atasan Langsung</strong>.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {rootJabatans.map(j => (
+                                    <PohonJabatanItem 
+                                        key={j.id} 
+                                        jabatan={j} 
+                                        allJabatans={filteredJabatanForTable} 
+                                        levelMap={hierarchyMap} 
+                                        onEdit={openEditModal} 
+                                        userList={userList}
+                                        isEditMode={isTreeEditMode}
+                                        onDropJabatan={handleDropJabatan}
+                                    />
                                 ))}
-                            </tbody>
-                        </table>
-                    </div>
+                            </div>
+                        )}
+                    </TabsContent>
                 </div>
-            </div>
+            </Tabs>
+        </div>
 
-            {/* Modal Bulk Edit */}
+        {/* Modal Bulk Edit */}
             <Dialog open={isBulkEditModalOpen} onOpenChange={setIsBulkEditModalOpen}>
                 <DialogContent className="sm:max-w-xl bg-card border-border">
                     <DialogHeader>
@@ -766,6 +1050,53 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                     </SelectContent>
                                 </Select>
                             </div>
+                            
+                            {/* Birokrasi Fields */}
+                            <div>
+                                <Label>Tipe Jabatan</Label>
+                                <Select value={currentJabatan.tipeJabatan || "none"} onValueChange={(val: any) => setCurrentJabatan({ ...currentJabatan, tipeJabatan: val === "none" ? undefined : val })}>
+                                    <SelectTrigger><SelectValue placeholder="Pilih Tipe Jabatan" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="none">-- Tidak Diatur --</SelectItem>
+                                        <SelectItem value="struktural">Struktural (Pejabat)</SelectItem>
+                                        <SelectItem value="fungsional">Fungsional (JFT)</SelectItem>
+                                        <SelectItem value="pelaksana">Pelaksana (Staf JFU)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            {currentJabatan.tipeJabatan === 'struktural' && (
+                                <div>
+                                    <Label>Eselon</Label>
+                                    <Select value={currentJabatan.eselon || ""} onValueChange={(val: any) => setCurrentJabatan({ ...currentJabatan, eselon: val })}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Eselon" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="I/a">I/a</SelectItem><SelectItem value="I/b">I/b</SelectItem>
+                                            <SelectItem value="II/a">II/a</SelectItem><SelectItem value="II/b">II/b</SelectItem>
+                                            <SelectItem value="III/a">III/a</SelectItem><SelectItem value="III/b">III/b</SelectItem>
+                                            <SelectItem value="IV/a">IV/a</SelectItem><SelectItem value="IV/b">IV/b</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+                            {currentJabatan.tipeJabatan === 'fungsional' && (
+                                <div>
+                                    <Label>Jenjang Fungsional</Label>
+                                    <Select value={currentJabatan.jenjangFungsional || ""} onValueChange={(val: any) => setCurrentJabatan({ ...currentJabatan, jenjangFungsional: val })}>
+                                        <SelectTrigger><SelectValue placeholder="Pilih Jenjang" /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="Utama">Utama</SelectItem>
+                                            <SelectItem value="Madya">Madya</SelectItem>
+                                            <SelectItem value="Muda">Muda</SelectItem>
+                                            <SelectItem value="Pertama">Pertama</SelectItem>
+                                            <SelectItem value="Penyelia">Penyelia</SelectItem>
+                                            <SelectItem value="Mahir">Mahir</SelectItem>
+                                            <SelectItem value="Terampil">Terampil</SelectItem>
+                                            <SelectItem value="Pemula">Pemula</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            )}
+
                             <DialogFooter><Button type="submit">Simpan Perubahan</Button></DialogFooter>
                         </form>
                     )}

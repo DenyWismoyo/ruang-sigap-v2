@@ -1,4 +1,8 @@
+import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
+
+// Meningkatkan limit max listeners untuk menghindari warning MaxListenersExceededWarning di dev server
+require('events').EventEmitter.defaultMaxListeners = 20;
 
 // [SETUP PWA] Menggunakan @ducanh2912/next-pwa
 // Plugin ini bekerja lebih stabil dengan Next.js 15 dibandingkan 16
@@ -83,9 +87,8 @@ const nextConfig: NextConfig = {
   // Matikan kompresi build (Firebase Hosting sudah melakukan gzip otomatis)
   compress: false,
 
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
+
+
   
   typescript: {
     ignoreBuildErrors: true,
@@ -119,4 +122,16 @@ const nextConfig: NextConfig = {
   }
 };
 
-export default withPWA(nextConfig);
+export default withSentryConfig(withPWA(nextConfig), {
+  org: "soso-creative",
+  project: "javascript-nextjs",
+  silent: !process.env.CI,
+  widenClientFileUpload: true,
+  tunnelRoute: "/monitoring",
+  webpack: {
+    automaticVercelMonitors: true,
+    treeshake: {
+      removeDebugLogging: true,
+    },
+  }
+});
