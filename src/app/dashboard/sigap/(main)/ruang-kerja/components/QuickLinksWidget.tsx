@@ -114,9 +114,9 @@ export default function QuickLinksWidget({ variant = 'widget', onClose }: QuickL
     return (
         <Card className={isModal 
             ? "shadow-2xl border border-white/20 dark:border-white/10 flex flex-col bg-background/70 dark:bg-background/40 backdrop-blur-3xl rounded-2xl overflow-hidden ring-1 ring-black/5 dark:ring-white/5" 
-            : "shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border border-border/20 md:border-border flex flex-col bg-transparent md:bg-card rounded-none md:rounded-xl"
+            : "sg-glass-panel sg-mobile-borderless flex flex-col overflow-hidden"
         }>
-            <CardHeader className={`px-4 py-3 md:p-4 md:py-3 ${isModal ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-b border-white/10' : 'md:bg-muted/30 border-b border-border/20 md:border-border'} flex-shrink-0 flex flex-row items-center justify-between space-y-0`}>
+            <CardHeader className={`px-4 py-3 md:p-4 md:py-3 ${isModal ? 'bg-gradient-to-r from-amber-500/10 to-orange-500/10 border-b border-white/10' : 'md:bg-muted/30 border-b border-border/30'} flex-shrink-0 flex flex-row items-center justify-between space-y-0`}>
                 <CardTitle className="text-base font-bold flex items-center gap-2 bg-gradient-to-r from-amber-600 to-orange-500 bg-clip-text text-transparent">
                     <Sparkles size={18} className="text-amber-500" /> Portal Pintar
                 </CardTitle>

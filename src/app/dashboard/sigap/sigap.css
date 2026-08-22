@@ -33,7 +33,7 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 222.2 84% 4.9%;
     
-    --radius: 0.5rem;
+    --radius: 0.15rem; /* Bentuk yang lebih solid kotak & minimalis */
 
     /* --- SIGAP SIGNATURE TOKENS --- */
     --sg-surface-1: 220 14% 96%;   /* Page background */
@@ -121,7 +121,7 @@
   
   /* Mobile Borderless Card Utility */
   .sg-mobile-borderless {
-    @apply border-x-0 border-t-0 rounded-none shadow-none md:border md:rounded-lg md:shadow-sm;
+    @apply border-x-0 border-t-0 rounded-none shadow-none md:border md:border-border/40 md:rounded-[var(--radius)] md:shadow-sm;
   }
 
   /* Utility classes */
@@ -352,7 +352,7 @@
 
   /* === TABLE === */
   [data-tenant="sigap"] .sg-table-wrapper {
-    @apply overflow-hidden rounded-xl border border-border bg-card shadow-sm;
+    @apply overflow-hidden rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
   }
   
   [data-tenant="sigap"] .sg-table {
@@ -396,7 +396,7 @@
 
   /* === CARDS === */
   [data-tenant="sigap"] .sg-list-card {
-    @apply transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 md:border-border md:border md:rounded-lg md:shadow-sm hover:md:shadow-md hover:md:-translate-y-[1px] overflow-hidden bg-background/90 dark:bg-background/50 backdrop-blur-xl border-l-[3px] md:border-l-4 border-l-gray-400 dark:border-l-gray-600;
+    @apply transition-all duration-200 border-x-0 border-b border-t-0 border-border/30 md:border-border/40 md:border md:rounded-[var(--radius)] md:shadow-sm hover:md:shadow-md hover:md:-translate-y-[1px] overflow-hidden bg-background/90 dark:bg-background/50 backdrop-blur-xl border-l-[3px] md:border-l-[3px] border-l-gray-400 dark:border-l-gray-600;
   }
   
   [data-tenant="sigap"] .sg-list-card-active {
@@ -407,12 +407,12 @@
   
   /* Glass Panel Premium */
   [data-tenant="sigap"] .sg-glass-panel {
-    @apply bg-background/80 dark:bg-background/40 backdrop-blur-2xl border border-border/40 shadow-sm md:shadow-md;
+    @apply rounded-[var(--radius)] bg-background/80 dark:bg-background/40 backdrop-blur-2xl border border-border/30 shadow-sm md:shadow-md;
   }
 
   /* Tables */
   [data-tenant="sigap"] .sg-table-container {
-    @apply w-full overflow-x-auto rounded-lg md:rounded-xl border border-border bg-card shadow-sm;
+    @apply w-full overflow-x-auto rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
   }
   
   [data-tenant="sigap"] .sg-table {

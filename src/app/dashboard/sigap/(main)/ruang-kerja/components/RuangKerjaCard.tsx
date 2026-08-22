@@ -278,7 +278,7 @@ export default function RuangKerjaCard({
 
   return (
     <div className="w-full mb-0 md:mb-3">
-      <Card className={`shadow-none md:shadow-sm border-x-0 border-t-0 border-b border-border/40 md:border-border md:border-x md:border-t rounded-none md:rounded-xl transition-all duration-200 md:hover:-translate-y-[1px] md:hover:shadow-md bg-background md:bg-card overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-0 md:ring-1 md:ring-red-500/20' : ''}`}>
+      <Card className={`sg-glass-panel sg-mobile-borderless transition-all duration-200 md:hover:-translate-y-[1px] md:hover:shadow-md overflow-hidden ${isCardOverdue ? 'border-red-500/50 dark:border-red-500/30 ring-0 md:ring-1 md:ring-red-500/20' : ''}`}>
         
         {/* OVERDUE BANNER */}
         {isCardOverdue && (
@@ -326,7 +326,7 @@ export default function RuangKerjaCard({
         </div>
 
         {/* FOOTER */}
-        <div className="px-4 py-3 md:bg-muted/30 border-t border-border/10 md:border-border rounded-b-none md:rounded-b-lg">
+        <div className="px-4 py-3 md:bg-muted/30 border-t border-border/30 rounded-b-none">
             <ActionButtons />
             
             <AnimatePresence>

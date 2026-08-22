@@ -649,7 +649,7 @@ export default function KotakMasukPage() {
                     )}
 
                     {/* Filters */}
-                    <div className="px-4 md:px-0 flex flex-col md:flex-row gap-3 mb-6">
+                    <div className="sg-filter-bar sg-mobile-borderless mb-6">
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <Input 
@@ -686,7 +686,7 @@ export default function KotakMasukPage() {
                                 <button
                                     key={status}
                                     onClick={() => setStatusFilter(status)}
-                                    className={`px-3 py-1.5 rounded-full text-[11px] font-medium whitespace-nowrap border transition-colors ${
+                                    className={`px-3 py-1.5 rounded-sm text-[11px] font-medium whitespace-nowrap border transition-colors ${
                                         statusFilter === status 
                                             ? 'bg-primary text-primary-foreground border-primary' 
                                             : 'bg-muted/50 text-muted-foreground border-border hover:bg-muted'
@@ -736,8 +736,8 @@ export default function KotakMasukPage() {
                             </div>
 
                             {/* Desktop Table */}
-                            <div className="hidden md:block sg-table-container">
-                                <Table className="sg-table">
+                            <div className="hidden md:block w-full">
+                                <Table className="sg-table border-none shadow-none">
                                     <TableHeader className="sg-table-header">
                                         <TableRow>
                                             <TableHead className="font-bold">Perihal / Nomor</TableHead>
