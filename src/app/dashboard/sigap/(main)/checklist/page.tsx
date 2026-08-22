@@ -816,7 +816,7 @@ export default function ChecklistPage() {
                             onDragStart={(e) => handleDragStart(e, item.id)}
                             onDragEnd={handleDragEnd}
                             onDragEnter={(e) => handleDragEnter(e, item.id, status)}
-                            className="sg-card sg-mobile-borderless p-3 group cursor-grab active:cursor-grabbing"
+                            className="sg-glass-panel sg-mobile-borderless p-3 group cursor-grab active:cursor-grabbing md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200"
                         >
                              <div className="float-right text-muted-foreground/50 opacity-0 group-hover:opacity-100 cursor-move -mt-1 -mr-1">
                                 <GripVertical size={16} />

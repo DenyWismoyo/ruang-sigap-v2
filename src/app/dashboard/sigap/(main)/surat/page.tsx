@@ -119,7 +119,7 @@ const SuratCard = React.memo(({
     const bgClass = isBaru ? 'bg-background md:bg-card' : 'bg-background md:bg-slate-50/70 dark:md:bg-muted/10';
 
     return (
-        <Card className={`transition-all duration-200 shadow-none border-0 rounded-none md:border md:rounded-xl md:shadow-sm md:hover:shadow-md hover:md:-translate-y-[1px] overflow-hidden ${bgClass} sg-animate-in relative border-b border-border/30 md:border-border`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+        <Card className={`sg-glass-panel sg-mobile-borderless md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200 overflow-hidden sg-animate-in relative border-b border-border/30`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
             {/* Accent Strip Penanda Status (Gradient) */}
             <div className={`absolute left-0 top-0 bottom-0 w-1.5 md:w-1 ${gradientClass}`} />
             
@@ -259,7 +259,7 @@ const SuratRow = React.memo(({
     const safeRecipientNames = recipientNames ? Array.from(new Set(recipientNames.split(', ').map((s: string) => s.trim()))).join(', ') : null;
 
     return (
-        <TableRow className="hover:bg-muted/50 transition-colors group" onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+        <TableRow className="sg-table-row group cursor-pointer" onClick={onClick} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
             <TableCell className="font-semibold cursor-pointer" onClick={() => { onNavigate(); onClick(); }}>
                 <div className="text-primary hover:underline line-clamp-2">{surat.perihal}</div>
                 <p className="text-xs text-muted-foreground font-normal truncate">{surat.nomorSurat}</p>
@@ -736,9 +736,9 @@ export default function KotakMasukPage() {
                             </div>
 
                             {/* Desktop Table */}
-                            <div className="hidden md:block overflow-hidden rounded-xl border border-border/40 bg-background">
-                                <Table>
-                                    <TableHeader className="bg-muted/50">
+                            <div className="hidden md:block sg-table-container">
+                                <Table className="sg-table">
+                                    <TableHeader className="sg-table-header">
                                         <TableRow>
                                             <TableHead className="font-bold">Perihal / Nomor</TableHead>
                                             <TableHead className="font-bold">Pengirim</TableHead>

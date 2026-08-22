@@ -373,7 +373,7 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
 
 const LogbookItem = ({ k, onToggle, onEdit, onDelete }: { k: LogbookKegiatan, onToggle: (id: string) => void, onEdit: (entry: LogbookKegiatan) => void, onDelete: (id: string) => void }) => {
     return (
-        <div className="sg-card sg-mobile-borderless p-3 flex items-start gap-3 group">
+        <div className="sg-glass-panel sg-mobile-borderless p-3 flex items-start gap-3 group md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200">
             <Button variant="ghost" size="icon" onClick={() => onToggle(k.id)} title="Tandai selesai / belum selesai" className="mt-1 shrink-0 h-auto w-auto p-0">
                 {k.selesai ? <CheckSquare size={20} className="text-green-600"/> : <Square size={20} className="text-muted-foreground"/>}
             </Button>
@@ -597,7 +597,7 @@ export default function LogbookPage() {
                                 
                                 <div 
                                     ref={parentRef} 
-                                    className="h-[600px] overflow-y-auto rounded-none border-x-0 border-t-0 border-b border-border bg-transparent p-0 md:rounded-lg md:border md:bg-muted/10 md:p-2"
+                                    className="h-[600px] overflow-y-auto rounded-none border-x-0 border-t-0 border-b border-border bg-transparent p-0 md:rounded-lg md:border sg-glass-panel md:p-2"
                                     style={{ contain: 'strict' }}
                                 >
                                     <div

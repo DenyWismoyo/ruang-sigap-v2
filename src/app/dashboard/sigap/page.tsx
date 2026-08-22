@@ -57,9 +57,9 @@ const AgendaItem = ({ surat }: { surat: EnrichedSuratAgenda }) => (
 );
 
 const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
-    <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-            <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+    <div className="sg-table-container border-x-0 rounded-none md:border-x md:rounded-lg">
+        <table className="sg-table">
+            <thead className="sg-table-header">
                 <tr>
                     <th scope="col" className="px-4 py-3 font-semibold">Waktu</th>
                     <th scope="col" className="px-4 py-3 font-semibold">Perihal & Pengirim</th>
@@ -67,9 +67,9 @@ const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
                     <th scope="col" className="px-4 py-3 font-semibold">Disposisi Kepada</th>
                 </tr>
             </thead>
-            <tbody className="divide-y divide-border">
+            <tbody className="divide-y divide-border/50">
                 {agendas.map(surat => (
-                    <tr key={surat.id} className="bg-card hover:bg-muted/30 transition-colors">
+                    <tr key={surat.id} className="sg-table-row">
                         <td className="px-4 py-3 text-foreground whitespace-nowrap align-top w-32">
                             <div className="flex flex-col">
                                 <span className="font-bold text-base">{surat.detailAgenda?.tanggal?.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}</span>
@@ -104,9 +104,9 @@ const AgendaTable = ({ agendas }: { agendas: EnrichedSuratAgenda[] }) => (
 );
 
 const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[], onRowClick: (jadwal: JadwalTempat) => void }) => (
-  <div className="overflow-x-auto">
-    <table className="w-full text-left text-sm">
-      <thead className="text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border">
+  <div className="sg-table-container border-x-0 rounded-none md:border-x md:rounded-lg">
+    <table className="sg-table">
+      <thead className="sg-table-header">
         <tr>
             <th scope="col" className="px-4 py-3 font-semibold">Tanggal & Jam</th>
             <th scope="col" className="px-4 py-3 font-semibold">Kegiatan</th>
@@ -114,9 +114,9 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
             <th scope="col" className="px-4 py-3 font-semibold">Status</th>
         </tr>
       </thead>
-      <tbody className="divide-y divide-border">
+      <tbody className="divide-y divide-border/50">
         {agendas.map(jadwal => (
-          <tr key={jadwal.id} onClick={() => onRowClick(jadwal)} className="bg-card hover:bg-muted/30 cursor-pointer transition-colors">
+          <tr key={jadwal.id} onClick={() => onRowClick(jadwal)} className="sg-table-row cursor-pointer">
             <td className="px-4 py-3 font-medium text-foreground whitespace-nowrap align-top w-40">
                 <div className="flex flex-col">
                     <span>{jadwal.tanggalMulai?.toDate().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' })}</span>
@@ -345,7 +345,7 @@ export default function DashboardPage() {
              <div className="lg:col-span-9 space-y-6">
                 
                 {/* CARD 1: Agenda Undangan OPD */}
-                <div ref={agendaRef} className="sg-card sg-animate-in sg-stagger-1 overflow-hidden">
+                <div ref={agendaRef} className="sg-glass-panel sg-mobile-borderless sg-animate-in sg-stagger-1 overflow-hidden">
                     <div className="sg-section-header">
                         <div className="flex items-center gap-2">
                             <CalendarClock className="w-5 h-5 text-sg-blue"/>
@@ -382,7 +382,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* CARD 2: Agenda Internal Bulan Ini */}
-                <div className="sg-card flex flex-col sg-animate-in sg-stagger-2 overflow-hidden">
+                <div className="sg-glass-panel sg-mobile-borderless flex flex-col sg-animate-in sg-stagger-2 overflow-hidden">
                     <div className="sg-section-header flex-col sm:flex-row gap-3">
                         <h3 className="sg-editorial-title flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-sg-blue"/> Agenda Internal Bulan Ini</h3>
                         <div className="flex bg-muted rounded-lg p-1">

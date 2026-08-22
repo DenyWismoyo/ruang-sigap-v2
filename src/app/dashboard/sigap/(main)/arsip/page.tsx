@@ -192,9 +192,9 @@ export default function ArsipSuratPage() {
                     </div>
 
                     {/* Desktop Table View */}
-                    <div className="hidden md:block sg-table-wrapper mb-4">
+                    <div className="hidden md:block sg-table-container mb-4">
                         <Table className="sg-table">
-                            <TableHeader className="sg-table-head">
+                            <TableHeader className="sg-table-header">
                                 <TableRow>
                                     <TableHead>Perihal</TableHead>
                                     <TableHead>Pengirim</TableHead>

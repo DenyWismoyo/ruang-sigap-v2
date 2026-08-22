@@ -591,7 +591,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
 
         <div className={`space-y-6 flex-col ${activeFilter === 'agenda' ? 'flex' : 'hidden lg:flex'}`}>
           <QuickLinksWidget />
-          <Card className="h-[400px] flex flex-col overflow-hidden border-x-0 border-t-0 border-b md:border md:border-border shadow-none md:shadow-sm bg-transparent md:bg-card rounded-none md:rounded-xl">
+          <Card className="h-[400px] flex flex-col overflow-hidden sg-glass-panel sg-mobile-borderless">
               <CardHeader className="px-4 py-3 md:p-4 md:py-3 md:bg-muted/30 border-b border-border/20 md:border-border flex-shrink-0 mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                     <StickyNote size={16} className="text-yellow-500"/> Sticky Note
@@ -601,7 +601,7 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                   <StickyNoteWidget />
               </CardContent>
           </Card>
-          <Card className="shadow-none md:shadow-sm border-x-0 border-t-0 border-b md:border md:border-border bg-transparent md:bg-card rounded-none md:rounded-xl">
+          <Card className="sg-glass-panel sg-mobile-borderless">
               <CardHeader className="px-4 py-3 md:p-4 md:py-3 border-b border-border/20 md:border-border mb-2 md:mb-0">
                   <CardTitle className="text-sm font-semibold flex items-center gap-2">
                      <CalendarDays size={16} className="text-blue-500"/> Agenda 7 Hari Kedepan

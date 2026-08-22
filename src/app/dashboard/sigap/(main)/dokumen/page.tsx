@@ -105,7 +105,7 @@ const RepositoryItemRow: React.FC<RepositoryItemRowProps> = ({
   return (
     <div
       key={item.id}
-      className="group flex items-center justify-between p-3 sg-card sg-mobile-borderless hover:border-primary hover:bg-accent"
+      className="group flex items-center justify-between p-3 sg-glass-panel sg-mobile-borderless hover:border-primary/50 hover:bg-accent/50 md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200"
       draggable={canManage}
       onDragStart={(e) => onDragStart(e, item)}
       onDragEnd={onDragEnd}
@@ -522,7 +522,7 @@ export default function RepositoryDokumenPage() {
             />
 
             {/* Header Kontrol (Shadcn) */}
-            <Card className="shadow-sm border-border mb-6">
+            <Card className="sg-glass-panel sg-mobile-borderless mb-6">
                 <CardContent className="p-4 space-y-4">
                     <div className="sg-filter-bar justify-between border-none shadow-none bg-transparent p-0">
                         {canCreate && (
