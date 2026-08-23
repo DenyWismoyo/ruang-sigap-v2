@@ -2,7 +2,7 @@
 // [REFACTOR] Menggunakan AppProviders untuk struktur provider yang bersih.
 // [INTEGRASI] Menambahkan ServiceWorkerReset untuk membersihkan cache PWA yang bermasalah.
 
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Sora, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -38,6 +38,15 @@ export const metadata: Metadata = {
     "administrasi persuratan",
     "birokrasi modern",
   ],
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0284c7",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1, // Disable pinch-zoom for native app feel
+  userScalable: false,
+  viewportFit: "cover", // Essential for Notch/Home Bar Safe Areas
 };
 
 export default function RootLayout({
