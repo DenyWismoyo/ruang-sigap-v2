@@ -21,7 +21,7 @@ import Sidebar, { navItems, sections } from '@/app/dashboard/poros/components/Si
 import BottomNavBar from '@/app/dashboard/poros/components/BottomNavBar';       
 import MobileMenuSheet from '@/app/dashboard/poros/components/MobileMenuSheet'; 
 import MegaMenuPanel from '@/app/dashboard/poros/components/MegaMenuPanel';     
-import PorosMegaMenuPanel from '@/app/dashboard/poros/components/PorosMegaMenuPanel'; // [BARU] Import MegaMenuPanel Poros
+// import PorosMegaMenuPanel from '@/app/dashboard/poros/components/PorosMegaMenuPanel'; // [BARU] Import MegaMenuPanel Poros
 import SmartFab from '@/app/dashboard/poros/components/SmartFab'; // [BARU] Import SmartFab
 import PorosCopilot from '@/app/dashboard/poros/components/PorosCopilot'; // [BARU] AI Copilot
 import InstallPwaButton from '@/components/InstallPwaButton'; // [BARU] Tombol PWA
@@ -185,7 +185,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                       jabatanProfile={jabatanProfile}
                       opdConfig={opdConfig} 
                       welcomeSummary={welcomeSummary} 
-                      pathname={pathname}
+                      pathname={pathname || ''}
                       resetNotificationCount={resetNotificationCount}
                   />
                 </motion.div>
@@ -299,7 +299,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
             <GlobalQuickReport />
 
             <BottomNavBar 
-                pathname={pathname} 
+                pathname={pathname || ''} 
                 onLinkClick={handleBottomNavClick as any} 
                 welcomeSummary={welcomeSummary} 
             />

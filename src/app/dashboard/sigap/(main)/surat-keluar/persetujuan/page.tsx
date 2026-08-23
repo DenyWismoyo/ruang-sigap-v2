@@ -281,7 +281,7 @@ const FormPersetujuanModal = ({ isOpen, onClose, onSave, onCheckLink, userProfil
     };
 
     const handleSelectTemplate = (template: BankTemplate) => {
-        setGoogleDocUrl(template.googleDriveUrl);
+        setGoogleDocUrl(template.googleDriveUrl || '');
         setIsBankTemplateModalOpen(false);
     };
 
@@ -442,7 +442,7 @@ const DrafCard = ({ draf, userCache }: { draf: DrafPersetujuan, userCache: Map<s
     const statusInfo = getStatusInfo();
 
     return (
-        <Link href={`/dashboard/persetujuan-draf/${draf.id}`}>
+        <Link href={`/dashboard/sigap/surat-keluar/persetujuan/${draf.id}`}>
             {/* [PERBAIKAN DARK MODE] */}
             <div className="p-4 bg-card rounded-lg border border-border shadow-sm hover:shadow-md transition-all">
                 <div className="flex justify-between items-start">

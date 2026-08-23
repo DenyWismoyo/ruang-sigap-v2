@@ -66,10 +66,8 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/checklist', label: 'Checklist Pribadi', icon: ClipboardList, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' }, 
   { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
   { href: '/dashboard/kompetensi', label: 'Portofolio Kompetensi', icon: GraduationCap, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-purple-600' },
-  { href: '/dashboard/surat-keluar/buat', label: 'Buat Surat Keluar', icon: FilePlus, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' }, 
+  { href: '/dashboard/surat-keluar', label: 'Surat Keluar', icon: FileSignature, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin', 'user'], section: 'produktivitas', colorClass: 'text-green-600' },
   { href: '/dashboard/tugas/delegasi', label: 'Delegasi Tugas', icon: Users, allowedRoles: ['admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
-  { href: '/dashboard/bank-templat', label: 'Bank Template', icon: Files, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
-  { href: '/dashboard/persetujuan-draf', label: 'Persetujuan Draf', icon: FileSignature, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', featureFlag: 'persetujuanDraf', colorClass: 'text-green-600' },
   { href: '/dashboard/formulir', label: 'Isi Formulir', icon: Edit, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' }, 
   { href: '/dashboard/feedback', label: 'Survei & Feedback', icon: MessageSquare, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
   
@@ -109,6 +107,7 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/opd', label: 'Master OPD', icon: Building, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
   { href: '/dashboard/jabatan', label: 'Master Jabatan', icon: Briefcase, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
   { href: '/dashboard/templat', label: 'Templat Disposisi', icon: FileSignature, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
+
   { href: '/dashboard/form-builder', label: 'Kelola Formulir', icon: ClipboardEdit, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', featureFlag: 'formBuilder', colorClass: 'text-red-600' },
   { href: '/dashboard/feedback-admin', label: 'Dashboard Feedback', icon: Inbox, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
 ];

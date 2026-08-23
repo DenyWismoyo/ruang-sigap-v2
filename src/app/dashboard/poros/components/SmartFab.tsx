@@ -59,7 +59,7 @@ export default function SmartFab() {
 
   // Reposition if on detail page with fixed tab bar
   // Reposition to sit EXACTLY below the Copilot button
-  const isDetailPage = pathname.match(/\/surat\/[^\/]+$/);
+  const isDetailPage = pathname?.match(/\/surat\/[^\/]+$/);
   const bottomPos = isDetailPage ? 'bottom-[120px]' : 'bottom-20';
 
   return (

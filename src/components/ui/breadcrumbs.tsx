@@ -34,7 +34,7 @@ const routeMapping: Record<string, string> = {
 
 export default function Breadcrumbs() {
   const pathname = usePathname();
-  const pathNames = pathname.split('/').filter((path) => path);
+  const pathNames = pathname?.split('/').filter((path) => path) || [];
 
   // Jangan tampilkan di halaman dashboard utama (home)
   if (pathname === '/dashboard') return null;

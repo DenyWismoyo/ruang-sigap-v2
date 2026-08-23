@@ -1,4 +1,4 @@
-// Lokasi: src/app/dashboard/persetujuan-draf/[id]/page.tsx
+// Lokasi: src/app/dashboard/surat-keluar/persetujuan/[id]/page.tsx
 // [UPDATE LOGBOOK OTOMATIS]
 // - Menambahkan pencatatan logbook otomatis saat Menyetujui atau Merevisi draf.
 // - Mengimpor updateLogbook dari lib/logbookUtils.
@@ -8,6 +8,9 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { marked } from 'marked';
+
 import { db } from '@/lib/firebase';
 import {
   doc,
@@ -38,7 +41,8 @@ import {
   Send,
   Loader2,
   ListOrdered,
-  History
+  History,
+  Eye
 } from 'lucide-react';
 import Avatar from '@/app/dashboard/sigap/components/Avatar';
 import { formatDateRelative } from '@/lib/utils';
@@ -74,14 +78,16 @@ const InfoDrafCard = ({ draf, pembuatNama }: { draf: DrafPersetujuan, pembuatNam
           </p>
         </div>
       </div>
-      <a
-        href={draf.googleDocUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors"
-      >
-        <ExternalLink size={14} /> Buka Google Doc
-      </a>
+      {draf.googleDocUrl && !draf.content && (
+        <a
+          href={draf.googleDocUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-2 inline-flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-white bg-blue-600 rounded-full hover:bg-blue-700 transition-colors"
+        >
+          <ExternalLink size={14} /> Buka Google Doc
+        </a>
+      )}
     </div>
   </div>
 );
@@ -244,13 +250,72 @@ const FormRevisi = ({ onResubmit, isProcessing }: { onResubmit: () => void, isPr
   </div>
 );
 
+// Komponen Preview Inline Markdown
+const InlineDocumentPreview = ({ draf, opdConfig }: { draf: DrafPersetujuan, opdConfig: any }) => {
+  if (!draf.content) {
+    return (
+      <div className="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border p-10 text-center text-gray-500">
+        <FileSignature size={32} className="mx-auto mb-3 opacity-30" />
+        <p>Dokumen ini masih menggunakan format Google Doc lama.</p>
+        {draf.googleDocUrl && (
+           <a
+             href={draf.googleDocUrl}
+             target="_blank"
+             rel="noopener noreferrer"
+             className="mt-4 inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
+           >
+             <ExternalLink size={16} /> Buka Google Doc
+           </a>
+        )}
+      </div>
+    );
+  }
+
+  // Inject Kop Surat if any
+  let displayContent = draf.content;
+  if (displayContent && !displayContent.trim().startsWith('<')) {
+      displayContent = marked.parse(displayContent) as string;
+  }
+  
+  if (draf.kopSuratId && opdConfig?.kopSuratConfigs) {
+      const kopData = opdConfig.kopSuratConfigs.find((k: any) => k.id === draf.kopSuratId);
+      if (kopData) {
+          const kopHtml = `<div style="text-align:center; border-bottom:3px double black; margin-bottom:20px; padding-bottom:10px;">
+              <h2 style="margin:0; font-size:18px;">${kopData.headerUtama}</h2>
+              <h1 style="margin:0; font-size:22px;">${kopData.subHeader}</h1>
+              <p style="margin:5px 0 0; font-size:12px;">${kopData.alamat}</p>
+              <p style="margin:0; font-size:12px;">${kopData.kontak}</p>
+          </div>\n\n`;
+          displayContent = kopHtml + displayContent;
+      }
+  }
+
+  return (
+    <div className="bg-white dark:bg-dark-card rounded-xl shadow-sm border border-gray-200 dark:border-dark-border overflow-hidden flex flex-col h-[800px]">
+      <div className="p-3 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-slate-800 flex justify-between items-center shrink-0">
+        <h3 className="font-semibold text-sm flex items-center text-gray-800 dark:text-dark-text-primary">
+          <Eye className="w-4 h-4 mr-2 text-blue-600" /> Pratinjau Dokumen
+        </h3>
+      </div>
+      <div className="p-8 overflow-y-auto flex-1 bg-gray-100 dark:bg-slate-900 custom-scrollbar" data-color-mode="light">
+          <div className="bg-white text-black p-8 shadow-sm border border-gray-200 max-w-[800px] mx-auto min-h-full">
+               <div 
+                   className="prose max-w-none text-black quill-print-content"
+                   dangerouslySetInnerHTML={{ __html: displayContent }} 
+               />
+          </div>
+      </div>
+    </div>
+  );
+};
+
 // --- Komponen Utama Halaman ---
 export default function PersetujuanDrafPage() {
   const params = useParams();
   const router = useRouter(); 
-  const drafId = params.id as string;
+  const drafId = params?.id as string;
 
-  const { userProfile, actingJabatanProfile, loading: authLoading } = useUserAuth();
+  const { userProfile, actingJabatanProfile, loading: authLoading, opdConfig } = useUserAuth();
 
   const [draf, setDraf] = useState<DrafPersetujuan | null>(null);
   const [riwayatList, setRiwayatList] = useState<RiwayatPersetujuan[]>([]);
@@ -423,12 +488,60 @@ export default function PersetujuanDrafPage() {
                         });
                     } else {
                         // Ini adalah persetujuan terakhir
+                        let finalNomor = draf.nomorSurat || '';
+                        let newContent = draf.content || '';
+                        
+                        if (draf.penomoranConfigId) {
+                            try {
+                                const res = await fetch('/api/surat/generate-nomor', {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        opdId: draf.opdId,
+                                        formatConfigId: draf.penomoranConfigId,
+                                        kodeKlasifikasi: draf.nomorSurat?.split('/')[0] || ''
+                                    })
+                                });
+                                const data = await res.json();
+                                if (res.ok && data.generatedNumber) {
+                                    finalNomor = data.generatedNumber;
+                                    // Ganti teks nomor draf sebelumnya dengan nomor resmi di konten
+                                    if (draf.nomorSurat && draf.nomorSurat !== 'Draft') {
+                                        newContent = newContent.replace(new RegExp(draf.nomorSurat, 'g'), finalNomor);
+                                    } else {
+                                        newContent = newContent.replace(/Draft/g, finalNomor);
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Gagal auto-generate nomor saat disetujui', e);
+                            }
+                        }
+
                         batch.update(drafRef, {
                             status: 'Selesai',
                             penerimaTugasJabatanId: null,
-                            approvalChain: newApprovalChain
+                            approvalChain: newApprovalChain,
+                            nomorSurat: finalNomor,
+                            generatedNomorSurat: finalNomor,
+                            content: newContent
                         });
                         newRiwayat.action = "Menyetujui (Selesai)";
+                        
+                        // --- [ARSIP OTOMATIS] ---
+                        const suratKeluarRef = doc(db, 'suratKeluar', draf.id!);
+                        batch.set(suratKeluarRef, {
+                            judul: draf.judul,
+                            nomorSurat: finalNomor,
+                            opdId: draf.opdId,
+                            createdBy: draf.createdBy,
+                            pembuatNama: pembuatNama || draf.pembuatNama || 'Sistem',
+                            createdAt: draf.createdAt,
+                            disetujuiAt: Timestamp.now(),
+                            content: newContent,
+                            kopSuratId: draf.kopSuratId || '',
+                            drafPersetujuanId: draf.id
+                        });
+                        // --- [AKHIR ARSIP OTOMATIS] ---
                     }
                 } else {
                     // Kembalikan ke pembuat
@@ -568,9 +681,14 @@ export default function PersetujuanDrafPage() {
       
       <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text-primary">{draf.judul}</h1>
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-        {/* Kolom Kiri (Info & Aksi) */}
-        <div className="md:col-span-1 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 mt-6">
+        {/* Kolom Kiri: Pratinjau Dokumen */}
+        <div className="lg:col-span-7 space-y-6">
+            <InlineDocumentPreview draf={draf} opdConfig={opdConfig} />
+        </div>
+
+        {/* Kolom Kanan: Aksi & Info */}
+        <div className="lg:col-span-5 space-y-6">
           <InfoDrafCard draf={draf} pembuatNama={pembuatNama} />
           
           {isMyTurn && (
@@ -580,10 +698,7 @@ export default function PersetujuanDrafPage() {
           {canResubmit && (
             <FormRevisi onResubmit={handleResubmit} isProcessing={isProcessing} />
           )}
-        </div>
-        
-        {/* Kolom Kanan (Alur & Riwayat) */}
-        <div className="md:col-span-2 space-y-6">
+          
           <AlurPersetujuan 
             draf={draf} 
             userCache={localUserCache} 

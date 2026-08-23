@@ -9,13 +9,11 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-// [MODIFIKASI] Hapus import RepositoryItem, gunakan tipe gabungan
-import { DokumenFolder, DokumenLink } from "@/types";
-// [MODIFIKASI] Impor ikon baru
 import { Pencil, Trash2, Move, ExternalLink, Copy, Share2 } from "lucide-react";
+import { RepositoryItem as RepoItemType } from "@/types";
 
 // Tipe gabungan dari page.tsx
-type RepositoryItemCombined = (DokumenFolder & { type: 'folder' }) | (DokumenLink & { type: 'link' });
+type RepositoryItemCombined = RepoItemType;
 
 interface ContextMenuProps {
   x: number;
@@ -69,10 +67,10 @@ const RepositoryContextMenu: React.FC<ContextMenuProps> = ({
     >
       <div className="py-1">
         {/* Opsi khusus Link */}
-        {item.type === "link" && (
+        {item.tipe === "link" && (
           <>
             <a
-              href={(item as DokumenLink).url}
+              href={item.url}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center w-full px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -93,7 +91,7 @@ const RepositoryContextMenu: React.FC<ContextMenuProps> = ({
         )}
 
         {/* [MODIFIKASI] Pemisah */}
-        {item.type === "link" && <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>}
+        {item.tipe === "link" && <div className="border-t border-gray-100 dark:border-gray-700 my-1"></div>}
 
         {/* Opsi Manajemen (jika diizinkan) */}
         {canUpdate && (

@@ -409,6 +409,7 @@ export default function RuangKerjaPage() {
           penerimaSelesai: [effectiveJabatan.id!], 
           status: 'Terkirim', 
           isInformational: false, 
+          // @ts-ignore
           isSelfAction: true 
       };
       batch.set(disposisiRef, disposisiData);

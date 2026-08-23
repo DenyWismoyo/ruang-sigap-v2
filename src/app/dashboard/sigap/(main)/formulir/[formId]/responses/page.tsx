@@ -33,7 +33,7 @@ export default function FormResponsesPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const formId = params.formId as string;
+    const formId = params?.formId as string;
     const isAdmin = userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu' || userProfile?.role === 'super_admin';
 
     useEffect(() => {

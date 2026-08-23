@@ -361,8 +361,8 @@ export default function NotulensiPage() {
     
     // --- URL Init Effect ---
     useEffect(() => {
-        const buatBaru = searchParams.get('buat_baru');
-        const data = searchParams.get('data');
+        const buatBaru = searchParams?.get('buat_baru');
+        const data = searchParams?.get('data');
         
         if (buatBaru === 'true' && data && userProfile) {
             try {

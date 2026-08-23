@@ -86,13 +86,13 @@ function LoginComponent() {
     // Jika sudah ada sesi aktif, langsung ke dashboard (persistent login).
     if (user) {
       setIsSuccessRedirecting(true);
-      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      const redirectUrl = searchParams?.get("redirect") || "/dashboard";
       router.push(redirectUrl);
     }
   }, [user, initializing, router]);
 
   useEffect(() => {
-    const impersonateToken = searchParams.get("impersonate_token");
+    const impersonateToken = searchParams?.get("impersonate_token");
     if (impersonateToken) {
       setLoading(true);
       signInWithCustomToken(auth, impersonateToken)
@@ -108,14 +108,14 @@ function LoginComponent() {
         });
     }
 
-    const errorParam = searchParams.get("error");
+    const errorParam = searchParams?.get("error");
     if (errorParam === "account_deactivated") {
       setError(
         "Akun Anda telah dinonaktifkan. Silakan hubungi Administrator OPD Anda (Mungkin batas kuota pengguna telah tercapai).",
       );
     }
 
-    const sessionParam = searchParams.get("session");
+    const sessionParam = searchParams?.get("session");
     if (sessionParam === "expired") {
       setError(
         "Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.",
@@ -134,7 +134,7 @@ function LoginComponent() {
         await logIn(identifier, password);
       }
       setIsSuccessRedirecting(true);
-      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      const redirectUrl = searchParams?.get("redirect") || "/dashboard";
       router.push(redirectUrl);
     } catch (err: any) {
       setError(
@@ -162,7 +162,7 @@ function LoginComponent() {
       // Jika sudah memiliki NIP claim, berarti sudah tertaut
       if (idTokenResult.claims.nip) {
         setIsSuccessRedirecting(true);
-        const redirectUrl = searchParams.get("redirect") || "/dashboard";
+        const redirectUrl = searchParams?.get("redirect") || "/dashboard";
         router.push(redirectUrl);
         return;
       }
@@ -176,7 +176,7 @@ function LoginComponent() {
 
       if (!snapshot.empty) {
         setIsSuccessRedirecting(true);
-        const redirectUrl = searchParams.get("redirect") || "/dashboard";
+        const redirectUrl = searchParams?.get("redirect") || "/dashboard";
         router.push(redirectUrl);
         return;
       }
@@ -238,7 +238,7 @@ function LoginComponent() {
         pendingUser,
       );
       setIsSuccessRedirecting(true);
-      const redirectUrl = searchParams.get("redirect") || "/dashboard";
+      const redirectUrl = searchParams?.get("redirect") || "/dashboard";
       router.push(redirectUrl);
     } catch (err: any) {
       setError(err.message || "Gagal menautkan akun. Pastikan password benar.");
@@ -247,7 +247,7 @@ function LoginComponent() {
     }
   };
 
-  if (searchParams.get("impersonate_token")) {
+  if (searchParams?.get("impersonate_token")) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background p-4">
         <div className="text-center flex flex-col items-center gap-4">

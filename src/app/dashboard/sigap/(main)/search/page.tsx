@@ -54,7 +54,7 @@ function SearchComponent() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
-    const searchTerm = searchParams.get('q') || '';
+    const searchTerm = searchParams?.get('q') || '';
 
     useEffect(() => {
         if (!searchTerm || !userProfile) {

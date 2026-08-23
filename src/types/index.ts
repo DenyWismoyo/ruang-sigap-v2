@@ -145,6 +145,29 @@ export interface Jabatan {
   eselon?: 'I/a' | 'I/b' | 'II/a' | 'II/b' | 'III/a' | 'III/b' | 'IV/a' | 'IV/b' | null;
   jenjangFungsional?: 'Utama' | 'Madya' | 'Muda' | 'Pertama' | 'Penyelia' | 'Mahir' | 'Terampil' | 'Pemula' | null;
 }
+export interface KopSuratConfig {
+  id: string; // Misal 'default', 'bupati', 'sekda'
+  nama: string; // "Kop Surat Standar OPD", "Kop Bupati"
+  logoKiriUrl?: string;
+  logoKananUrl?: string;
+  headerUtama: string; // e.g. "PEMERINTAH KABUPATEN XYZ"
+  subHeader: string; // e.g. "DINAS KOMUNIKASI DAN INFORMATIKA"
+  alamat: string;
+  kontak: string; // e.g. "Telp: (021) 123456 | Email: info@dinas.go.id"
+  website?: string;
+  kodePos?: string;
+  garisBawah: 'tebal' | 'tipis' | 'ganda' | 'tidak_ada';
+  isDefault?: boolean;
+}
+
+export interface FormatPenomoranConfig {
+  id: string; // e.g. 'surat_tugas', 'surat_edaran', 'surat_biasa'
+  nama: string; // "Surat Dinas Biasa"
+  format: string; // e.g. "{kode_klasifikasi}/{no_urut}/{kode_opd}/{tahun}"
+  kodeKlasifikasiLainnya?: string; // Fallback jika tidak ada klasifikasi
+  isDefault?: boolean;
+}
+
 export interface OpdConfig { 
   id?: string; 
   packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; 
@@ -180,6 +203,10 @@ export interface OpdConfig {
     selesai: string;
     hariKerja: number[];
   };
+  // NEW: Pengaturan Kop Surat (Dukung multi-kop)
+  kopSuratConfigs?: KopSuratConfig[];
+  // NEW: Pengaturan Penomoran Surat
+  penomoranConfigs?: FormatPenomoranConfig[];
 }
 export interface WelcomeSummary { disposisiBaru: number; tindakLanjutMenunggu: number; tugasAktif: number; tugasLewatBatasWaktu: number; suratMenungguDisposisi: number; suratBaruCount?: number; tugasBaruCount?: number; }
 
@@ -239,19 +266,44 @@ export interface OPD {
   status?: 'aktif' | 'nonaktif'; 
   currentHealthScore?: number;
   healthCategory?: string;
+  daftarRuangan?: string[];
 }
 export interface Notification { id?: string; userId: string; userNip: string; message: string; link: string; isRead: boolean; timestamp: Timestamp; }
 export interface InstruksiTemplat { isiInstruksi: ReactNode; id?: string; opdId: string; teksInstruksi: string; createdBy: string; sharedWithOpdIds?: string[]; }
 export interface ActivityLog { id?: string; suratId: string; timestamp: Timestamp; actorName: string; action: string; details?: string; }
-export interface JadwalTempat { id?: string; opdId: string; namaTempat: string; kegiatan: string; penanggungJawab: string; tanggalMulai: Timestamp; jamMulai: string; jamSelesai: string; createdBy: string; createdAt: Timestamp; status: 'Menunggu Persetujuan' | 'Disetujui' | 'Ditolak'; ditinjauOleh?: string; tanggalDitinjau?: Timestamp; alasanDitolak?: string; jenis?: 'Fisik' | 'Virtual'; tautanRapat?: string; peserta?: string[]; jumlahPersonil?: number; }
+export interface JadwalTempat { id?: string; opdId: string; namaTempat: string; kegiatan: string; penanggungJawab: string; tanggalMulai: Timestamp; jamMulai: string; jamSelesai: string; createdBy: string; createdAt: Timestamp; status: 'Menunggu Persetujuan' | 'Disetujui' | 'Ditolak'; ditinjauOleh?: string; tanggalDitinjau?: Timestamp; alasanDitolak?: string; jenis?: string; tautanRapat?: string; peserta?: string[]; jumlahPersonil?: number; }
 export interface AsetInventaris { id?: string; opdId: string; namaAset: string; kodeAset: string; kategori: string; kondisi: 'Baik' | 'Perlu Perbaikan' | 'Rusak Berat'; status: 'Tersedia' | 'Dipinjam' | 'Digunakan' | 'Dalam Perbaikan'; pemegangAsetId?: string | null; lokasi: string; tanggalMasuk: Timestamp; tahunPengadaan?: number; nilaiPerolehan?: number; spesifikasi?: string; fotoUrl?: string; fotoFileName?: string; jadwalMaintenanceBerikutnya?: Timestamp | null; intervalMaintenance?: number; }
 export interface AsetMaintenance { id?: string; asetId: string; namaAset: string; opdId: string; tanggal: Timestamp; jenis: 'Rutin' | 'Perbaikan' | 'Kerusakan'; deskripsi: string; biaya: number; pelaksana: string; buktiUrl?: string; dicatatOleh: string; createdAt: Timestamp; }
 export interface PeminjamanAset { id?: string; asetId: string; namaAset: string; opdId: string; peminjamEksternal: boolean; peminjamInfo: string; tanggalPinjam: Timestamp; tanggalKembali: Timestamp | null; keperluan: string; kondisiSaatPinjam: string; kondisiSaatKembali?: string; dicatatOleh: string; createdAt: Timestamp; status: 'Dipinjam' | 'Dikembalikan'; }
-export interface DokumenFolder { id?: string; opdId: string; namaFolder: string; parentId: string | null; createdBy: string; createdAt: Timestamp; sharedWithOpdIds?: string[]; }
-export interface DokumenLink { id?: string; opdId: string; folderId: string | null; namaDokumen: string; deskripsi: string; url: string; createdBy: string; createdAt: Timestamp; sharedWithOpdIds?: string[]; tipeDokumen?: DocumentIconType; }
-export type RepositoryItemType = "folder" | "link";
+export type RepositoryItemType = "folder" | "link" | "file";
 export type DocumentIconType = "sheet" | "doc" | "pdf" | "video" | "image" | "zip" | "lainnya";
-export interface RepositoryItem { id: string; nama: string; tipe: RepositoryItemType; parentId: string | null; folderId?: string | null; opdId: string; ownerId: string; path: { id: string | null; nama: string }[]; url?: string; tipeDokumen?: DocumentIconType; createdAt: any; updatedAt: any; }
+export type RepositoryVisibility = "private" | "opd" | "shared";
+
+export interface RepositoryItem { 
+  id?: string; 
+  nama: string; 
+  tipe: RepositoryItemType; 
+  parentId: string | null; 
+  opdId: string; 
+  createdBy: string; 
+  createdAt: any; 
+  
+  // Untuk Link / File
+  url?: string; 
+  tipeDokumen?: DocumentIconType; 
+  deskripsi?: string;
+  
+  // Metadata File Baru
+  fileSize?: number; // dalam bytes, maks 10MB
+  mimeType?: string;
+  storagePath?: string;
+  
+  // Sistem Tag & Visibilitas
+  tags?: string[];
+  visibility: RepositoryVisibility;
+  sharedWithOpdIds?: string[];
+  isFavorite?: boolean;
+}
 export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
 export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; createdAt: Timestamp; }
@@ -259,10 +311,25 @@ export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string
 export interface KnowledgeArticle { id?: string; opdId: string; judul: string; kategori: string; konten: string; attachmentUrl?: string; createdBy: string; createdAt: Timestamp; lastUpdatedAt: Timestamp; sharedWithOpdIds?: string[]; }
 export interface PengumumanAttachment { url: string; fileName: string; type: string; }
 export interface Pengumuman { id?: string; opdId: string; judul: string; isi: string; penulis: string; createdAt: Timestamp; target: 'Semua OPD' | string; penting: boolean; tanggalMulai: Timestamp; tanggalSelesai: Timestamp; attachmentUrl?: string | null; attachmentFileName?: string | null; attachmentType?: string | null; attachments?: PengumumanAttachment[]; sharedWithOpdIds?: string[]; readBy?: string[]; }
-export interface BankTemplate { id?: string; judul: string; deskripsi: string; googleDriveUrl: string; googleDriveId?: string; kategori: string; opdId: string; createdBy: string; createdAt: Timestamp; sharedWithOpdIds?: string[]; }
+export interface BankTemplate { 
+  id?: string; 
+  judul: string; 
+  deskripsi: string; 
+  googleDriveUrl?: string; 
+  googleDriveId?: string; 
+  content?: string; 
+  kategori: string; 
+  opdId: string; 
+  createdBy: string; 
+  createdAt: Timestamp; 
+  sharedWithOpdIds?: string[]; 
+  isGlobal?: boolean; 
+  useKopSuratOpd?: boolean; // NEW
+  variables?: string[]; // FITUR BARU: Menyimpan daftar variabel secara otomatis dari markdown content
+}
 export interface ApprovalStep { jabatanId: string; namaJabatan: string; status: 'Menunggu' | 'Disetujui' | 'Revisi'; timestamp?: Timestamp; comments?: string; }
 export interface RiwayatPersetujuan { timestamp: Timestamp; actorName: string; action: string; comments: string; }
-export interface DrafPersetujuan { id?: string; judul: string; googleDocUrl: string; opdId: string; createdBy: string; pembuatNama?: string; createdAt: Timestamp; status: 'Draf' | 'Proses Review' | 'Revisi' | 'Selesai' | 'Ditolak'; currentStep: number; penerimaTugasJabatanId: string | null; approvalChain: ApprovalStep[]; approvalJabatanIds: string[]; riwayat: RiwayatPersetujuan[]; }
+export interface DrafPersetujuan { id?: string; judul: string; googleDocUrl: string; opdId: string; createdBy: string; pembuatNama?: string; createdAt: Timestamp; status: 'Draf' | 'Proses Review' | 'Revisi' | 'Selesai' | 'Ditolak'; currentStep: number; penerimaTugasJabatanId: string | null; approvalChain: ApprovalStep[]; approvalJabatanIds: string[]; riwayat: RiwayatPersetujuan[]; kopSuratId?: string; penomoranConfigId?: string; generatedNomorSurat?: string; nomorSurat?: string; content?: string; }
 export type FormulirFieldType = 'Teks Singkat' | 'Teks Panjang' | 'Pilihan Ganda' | 'Checkbox' | 'Tanggal' | 'Upload File';
 export interface FormulirField { id: string; label: string; tipe: FormulirFieldType; required: boolean; options?: string[]; }
 export interface Formulir { id?: string; opdId: string; createdBy: string; createdAt: Timestamp; judul: string; deskripsi?: string; googleDriveFolderId?: string; fields: FormulirField[]; isPublished: boolean; assignmentType?: 'all_opd' | 'specific_jabatan'; assignedToJabatanIds?: string[]; }

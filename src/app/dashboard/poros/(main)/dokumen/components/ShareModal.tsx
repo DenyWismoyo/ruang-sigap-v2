@@ -8,7 +8,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { DokumenFolder, DokumenLink, OPD } from '@/types'; // path @
+import { RepositoryItem as RepoItemType, OPD } from '@/types'; // path @
 import { X, Building, Loader2, Save } from 'lucide-react';
 
 // --- Impor Komponen Shadcn ---
@@ -27,7 +27,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"; // path @
 
 
 // Tipe gabungan dari page.tsx
-type RepositoryItemCombined = (DokumenFolder & { type: 'folder' }) | (DokumenLink & { type: 'link' });
+type RepositoryItemCombined = RepoItemType;
 
 interface ShareModalProps {
   isOpen: boolean;
@@ -96,7 +96,7 @@ const ShareModal: React.FC<ShareModalProps> = ({
     onSubmit(selectedOpds);
   };
   
-  const namaItem = item.type === 'folder' ? item.namaFolder : item.namaDokumen;
+  const namaItem = item.nama;
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -110,6 +110,10 @@ const ShareModal: React.FC<ShareModalProps> = ({
               <p className="text-sm text-gray-600 dark:text-dark-text-secondary">
                   Pilih OPD mana saja yang dapat melihat dan mengakses item ini. Fitur ini hanya untuk Super Admin.
               </p>
+              <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded border dark:border-gray-700 text-sm">
+                  <span>{item.tipe === 'folder' ? '📁 Folder: ' : '🔗 Tautan: '}</span>
+                  <span className="font-semibold">{item.nama}</span>
+              </div>
               <div>
                   <Label className="font-bold text-sm flex items-center gap-2">
                       <Building size={16} /> Bagikan ke OPD

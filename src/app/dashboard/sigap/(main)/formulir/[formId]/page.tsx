@@ -136,7 +136,7 @@ export default function FillFormPage() {
     const [formData, setFormData] = useState<{ [fieldId: string]: any }>({});
     const [fileData, setFileData] = useState<{ [fieldId: string]: File | null }>({});
 
-    const formId = params.formId as string;
+    const formId = params?.formId as string;
 
     useEffect(() => {
         if (!formId) return;

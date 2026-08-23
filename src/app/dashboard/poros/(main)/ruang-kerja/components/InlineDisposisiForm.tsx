@@ -184,7 +184,7 @@ export default function InlineDisposisiForm({
             <div className="flex justify-between items-center mb-1.5">
                 <Label className="text-xs text-muted-foreground">Instruksi Disposisi</Label>
                 <div className="flex items-center gap-1">
-                    <HelpCircle size={14} className="text-muted-foreground cursor-help ml-1 mr-1" title="Klik tombol Suara lalu bicarakan instruksi dan nama penerima. Contoh: 'Tolong tindak lanjuti surat ini, teruskan ke Budi'" />
+                    <HelpCircle size={14} className="text-muted-foreground cursor-help ml-1 mr-1" />
                     <Button 
                         type="button" 
                         variant="outline" 

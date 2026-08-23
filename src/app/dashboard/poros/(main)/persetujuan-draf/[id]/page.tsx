@@ -248,7 +248,7 @@ const FormRevisi = ({ onResubmit, isProcessing }: { onResubmit: () => void, isPr
 export default function PersetujuanDrafPage() {
   const params = useParams();
   const router = useRouter(); 
-  const drafId = params.id as string;
+  const drafId = params?.id as string;
 
   const { userProfile, actingJabatanProfile, loading: authLoading } = useUserAuth();
 

@@ -9,11 +9,14 @@ import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
     Download, Briefcase, ClipboardCheck, ListChecks, 
-    FolderArchive, BookOpen, Archive, FileText, Megaphone, User
+    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Plus
 } from 'lucide-react';
 import JadwalDetailModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalDetailModal'; 
+import JadwalFormModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalFormModal'; 
 import RuangKerjaSkeleton from '@/app/dashboard/sigap/components/skeletons/RuangKerjaSkeleton';
 import { Button } from '@/components/ui/button';
+import { db } from '@/lib/firebase';
+import { doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 
 // --- IMPORT KOMPONEN BARU ---
 import SmartGreeting from '@/app/dashboard/sigap/components/home/SmartGreeting';
@@ -151,6 +154,12 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
 export default function DashboardPage() {
   const { userProfile, loading: authLoading } = useUserAuth();
   
+  // --- States Modals Agenda ---
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [isJadwalFormOpen, setIsJadwalFormOpen] = useState(false);
+  const [jadwalToEdit, setJadwalToEdit] = useState<JadwalTempat | null>(null);
+  const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
+  
   const [currentDay] = useState(() => {
     const now = new Date();
     now.setHours(now.getHours() - 3); // Pergantian hari (Hari Ini) di jam 3 pagi lokal
@@ -248,6 +257,29 @@ export default function DashboardPage() {
       });
   }, [jadwalInternalList]);
   
+  // --- Handlers Agenda Internal ---
+  const handleApprove = async (id: string) => {
+      await updateDoc(doc(db, 'jadwalTempat', id), { status: 'Disetujui', ditinjauOleh: userProfile?.uid, tanggalDitinjau: Timestamp.now() });
+      setIsDetailModalOpen(false);
+  };
+
+  const handleReject = async (id: string, alasan: string) => {
+      await updateDoc(doc(db, 'jadwalTempat', id), { status: 'Ditolak', alasanDitolak: alasan, ditinjauOleh: userProfile?.uid, tanggalDitinjau: Timestamp.now() });
+      setIsDetailModalOpen(false);
+  };
+
+  const handleDelete = async (id: string) => {
+      if (window.confirm("Yakin ingin membatalkan dan menghapus jadwal ini?")) {
+          await deleteDoc(doc(db, 'jadwalTempat', id));
+          setIsDetailModalOpen(false);
+      }
+  };
+  
+  const handleOpenFormModal = (jadwal?: JadwalTempat) => {
+      setJadwalToEdit(jadwal || null);
+      setIsJadwalFormOpen(true);
+  };
+  
   const groupedUpcomingAgendas = useMemo(() => {
     return upcomingAgendas.reduce((acc, agenda) => {
         if (!agenda.detailAgenda?.tanggal?.toDate) return acc;
@@ -291,11 +323,8 @@ export default function DashboardPage() {
 
   // --- State UI Lokal ---
   const [agendaFilter, setAgendaFilter] = useState<'hariIni' | 'akanDatang'>('hariIni');
-  const [agendaInternalView, setAgendaInternalView] = useState<'table' | 'card'>('card');
-  const [agendaUndanganView, setAgendaUndanganView] = useState<'table' | 'card'>('table');
-  
-  const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
-  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  const [agendaUndanganView, setAgendaUndanganView] = useState<'card' | 'table'>('table');
+  const [agendaInternalView, setAgendaInternalView] = useState<'card' | 'table'>('table');
   
   // Ref untuk export
   const agendaRef = useRef<HTMLDivElement>(null);
@@ -385,9 +414,14 @@ export default function DashboardPage() {
                 <div className="sg-glass-panel sg-mobile-borderless flex flex-col sg-animate-in sg-stagger-2 overflow-hidden">
                     <div className="sg-section-header flex-col sm:flex-row gap-3">
                         <h3 className="sg-editorial-title flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-sg-blue"/> Agenda Internal Bulan Ini</h3>
-                        <div className="flex bg-muted rounded-lg p-1">
-                            <button onClick={() => setAgendaInternalView('table')} className={`p-1.5 rounded ${agendaInternalView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><List size={14}/></button>
-                            <button onClick={() => setAgendaInternalView('card')} className={`p-1.5 rounded ${agendaInternalView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={14}/></button>
+                        <div className="flex gap-2">
+                            <Button onClick={() => handleOpenFormModal()} size="sm" className="sg-btn-primary h-8 px-3 text-xs">
+                                <Plus size={14} className="mr-1" /> Booking
+                            </Button>
+                            <div className="flex bg-muted rounded-lg p-1">
+                                <button onClick={() => setAgendaInternalView('table')} className={`p-1.5 rounded ${agendaInternalView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><List size={14}/></button>
+                                <button onClick={() => setAgendaInternalView('card')} className={`p-1.5 rounded ${agendaInternalView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={14}/></button>
+                            </div>
                         </div>
                     </div>
                     <div className="p-0 flex-1">
@@ -448,15 +482,24 @@ export default function DashboardPage() {
       </div>
 
        {/* Modal Global */}
+       <JadwalFormModal 
+            isOpen={isJadwalFormOpen}
+            onClose={() => setIsJadwalFormOpen(false)}
+            onSuccess={() => { setIsJadwalFormOpen(false); }} 
+            jadwalToEdit={jadwalToEdit}
+            selectedDate={new Date()}
+            initialData={undefined}
+       />
+
        <JadwalDetailModal
             isOpen={isDetailModalOpen}
             onClose={() => setIsDetailModalOpen(false)}
             jadwal={selectedJadwal}
             isAdmin={isAdminOrTU} 
-            onApprove={() => {}} 
-            onReject={() => {}}
-            onEdit={() => {}}
-            onDelete={() => {}}
+            onApprove={handleApprove} 
+            onReject={handleReject}
+            onEdit={(j) => { setIsDetailModalOpen(false); handleOpenFormModal(j); }}
+            onDelete={handleDelete}
         />
     </div>
   );

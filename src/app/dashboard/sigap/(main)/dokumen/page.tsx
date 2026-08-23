@@ -1,764 +1,557 @@
-// Lokasi: src/app/dashboard/dokumen/page.tsx
-// VERSI FINAL:
-// - Menggunakan layout list sederhana (sesuai permintaan user).
-// - Menggunakan struktur data tunggal 'repositoryItems' (Fase 1 - perbaikan bug).
-// - Menggunakan izin 'canCreate' & 'canManageItem' (Tugas 2 - perbaikan izin).
-// - DIrombak total menggunakan komponen Shadcn UI & Dark Mode.
-// - [PERBAIKAN] Menambahkan 'limit' ke import firestore (memperbaiki bug hapus).
-// - [PERBAIKAN] Mengganti window.confirm dengan Shadcn 'ConfirmModal'.
-// - [PERBAIKAN 10/11/2025] Memperbaiki path import 'ConfirmModal'.
-// - [PERBAIKAN BUILD 11/11/2025] Mengganti tipe DragEvent ke HTMLElement
-// - [PERBAIKAN BUILD 11/11/2025 v2] Memperbaiki semua path impor
-
 "use client";
 
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
-import { db } from '@/lib/firebase'; // [PERBAIKAN] Path
-import {
-  collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, Timestamp, orderBy,
-  limit 
-} from 'firebase/firestore';
-import { useUserAuth } from '@/context/AuthContext'; // [PERBAIKAN] Path
-import { useToast } from '@/context/ToastContext'; // [PERBAIKAN] Path
-import { UserProfile, OPD, DocumentIconType } from '@/types'; // [PERBAIKAN] Path
-import {
-  Folder, FileText, Plus, X, Link as LinkIcon, Home, FolderArchive, Search,
-  FileSpreadsheet, FileVideo, FileImage, FileArchive, MoreVertical, Edit, Trash2, Loader2,
-  Save, Building
+import React, { useState, useEffect, useMemo } from 'react';
+import { useUserAuth } from '@/context/AuthContext';
+import { useRepository } from './hooks/useRepository';
+import { RepositoryItem } from '@/types';
+import DocumentPreviewModal from './components/DocumentPreviewModal';
+import { 
+    Folder, FileText, Plus, Search, UploadCloud, Star,
+    FileSpreadsheet, FileVideo, FileImage, FileArchive, 
+    MoreVertical, Edit, Trash2, Link as LinkIcon, Download,
+    LayoutGrid, List as ListIcon, Lock, Eye, Share2, FolderArchive
 } from 'lucide-react';
 
-// --- Impor Komponen Shadcn ---
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from "@/components/ui/dialog"; // [PERBAIKAN] Path
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator
+} from "@/components/ui/dropdown-menu";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"; // [PERBAIKAN] Path
-import { Button } from "@/components/ui/button"; // [PERBAIKAN] Path
-import { Input } from "@/components/ui/input"; // [PERBAIKAN] Path
-import { Label } from "@/components/ui/label"; // [PERBAIKAN] Path
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select"; // [PERBAIKAN] Path
-import { Card, CardContent } from "@/components/ui/card"; // [PERBAIKAN] Path
-import { Checkbox } from "@/components/ui/checkbox"; // [PERBAIKAN] Path
-import { ScrollArea } from "@/components/ui/scroll-area"; // [PERBAIKAN] Path
-import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal'; // [PERBAIKAN] Path
+    Select, SelectContent, SelectItem, SelectTrigger, SelectValue
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import SigapEmptyState from '@/app/dashboard/sigap/components/SigapEmptyState';
-// --- Akhir Impor Shadcn ---
+import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
+import RepositoryBreadcrumbs from './components/RepositoryBreadcrumbs';
+import RepositoryItemModal from './components/RepositoryItemModal';
 
-
-// --- Tipe Data Lokal (Sesuai Fase 1) ---
-interface RepositoryItem {
-  id: string;
-  opdId: string;
-  parentId: string | null;
-  type: 'folder' | 'link';
-  nama: string; // Nama folder atau nama link
-  url?: string;
-  deskripsi?: string;
-  tipeDokumen?: DocumentIconType;
-  createdBy: string;
-  createdAt: Timestamp;
-  sharedWithOpdIds?: string[];
-}
-// --- Akhir Tipe Data Lokal ---
-
-
-// Helper untuk ikon
+// Helper icon
 const getItemIcon = (item: RepositoryItem) => {
-  if (item.type === "folder") {
-    return <Folder size={24} className="text-yellow-500 flex-shrink-0"/>;
-  }
-  switch (item.tipeDokumen) {
-    case "sheet": return <FileSpreadsheet size={24} className="text-green-500 flex-shrink-0" />;
-    case "doc": return <FileText size={24} className="text-blue-500 flex-shrink-0" />;
-    case "pdf": return <FileText size={24} className="text-red-500 flex-shrink-0" />;
-    case "video": return <FileVideo size={24} className="text-purple-500 flex-shrink-0" />;
-    case "image": return <FileImage size={24} className="text-indigo-500 flex-shrink-0" />;
-    case "zip": return <FileArchive size={24} className="text-yellow-600 flex-shrink-0" />;
-    default: return <LinkIcon size={24} className="text-gray-500 flex-shrink-0" />;
-  }
-};
-
-
-// --- Komponen Baris Item (Menggunakan Shadcn Dropdown) ---
-interface RepositoryItemRowProps {
-  item: RepositoryItem;
-  users: Map<string, string>;
-  canManage: boolean;
-  onItemClick: (item: RepositoryItem) => void;
-  onEdit: (item: RepositoryItem) => void;
-  onDelete: (item: RepositoryItem) => void;
-  // [PERBAIKAN BUILD] Ganti HTMLDivElement -> HTMLElement
-  onDragStart: (e: React.DragEvent<HTMLElement>, item: RepositoryItem) => void;
-  onDragEnd: (e: React.DragEvent<HTMLElement>) => void;
-  onDrop: (e: React.DragEvent<HTMLElement>, targetFolderId: string | null) => void;
-  onDragOver: (e: React.DragEvent<HTMLElement>) => void;
-}
-
-const RepositoryItemRow: React.FC<RepositoryItemRowProps> = ({
-  item, users, canManage, onItemClick, onEdit, onDelete,
-  onDragStart, onDragEnd, onDrop, onDragOver
-}) => {
-  return (
-    <div
-      key={item.id}
-      className="group flex items-center justify-between p-3 sg-glass-panel sg-mobile-borderless hover:border-primary/50 hover:bg-accent/50 md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200"
-      draggable={canManage}
-      onDragStart={(e) => onDragStart(e, item)}
-      onDragEnd={onDragEnd}
-      onDragOver={onDragOver}
-      onDrop={(e) => {
-        if (item.type === 'folder') {
-          onDrop(e, item.id);
-        } else {
-          onDrop(e, item.parentId);
+    if (item.tipe === "folder") return <Folder size={32} className="text-yellow-500 flex-shrink-0" fill="currentColor" fillOpacity={0.2}/>;
+    if (item.tipe === "file") {
+        switch (item.tipeDokumen) {
+            case "sheet": return <FileSpreadsheet size={32} className="text-green-500 flex-shrink-0" />;
+            case "doc": return <FileText size={32} className="text-blue-500 flex-shrink-0" />;
+            case "pdf": return <FileText size={32} className="text-red-500 flex-shrink-0" />;
+            case "video": return <FileVideo size={32} className="text-purple-500 flex-shrink-0" />;
+            case "image": return <FileImage size={32} className="text-indigo-500 flex-shrink-0" />;
+            case "zip": return <FileArchive size={32} className="text-yellow-600 flex-shrink-0" />;
+            default: return <FileText size={32} className="text-gray-500 flex-shrink-0" />;
         }
-      }}
-    >
-      <button
-        onClick={() => onItemClick(item)}
-        className="flex items-center gap-3 text-left flex-1 min-w-0"
-      >
-        {getItemIcon(item)}
-        <div className="min-w-0">
-          <p className={`font-semibold ${item.type === 'link' ? 'text-primary' : 'text-foreground'} truncate`}>
-            {item.nama}
-          </p>
-          {item.type === 'link' && (
-            <p className="text-sm text-muted-foreground truncate">{item.deskripsi}</p>
-          )}
-          <p className="text-xs text-muted-foreground mt-1">
-            Dibuat oleh: {users.get(item.createdBy) || '...'}
-          </p>
-        </div>
-      </button>
-      
-      {canManage && (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="opacity-0 group-hover:opacity-100 flex-shrink-0 h-8 w-8">
-              <MoreVertical size={16} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => onEdit(item)}>
-              <Edit size={14} className="mr-2" /> Ganti Nama
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete(item)} className="text-destructive focus:text-destructive">
-              <Trash2 size={14} className="mr-2" /> Hapus
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )}
-    </div>
-  );
+    }
+    return <LinkIcon size={32} className="text-emerald-500 flex-shrink-0" />;
 };
-// --- Akhir Komponen Baris Item ---
 
+const getVisibilityIcon = (visibility: string) => {
+    if (visibility === 'private') return <span title="Privat"><Lock size={12} className="text-red-400" /></span>;
+    if (visibility === 'shared') return <span title="Dibagikan"><Share2 size={12} className="text-green-500" /></span>;
+    return <span title="Internal OPD"><Eye size={12} className="text-blue-400" /></span>;
+};
 
-// --- Komponen Utama Halaman ---
 export default function RepositoryDokumenPage() {
     const { userProfile } = useUserAuth();
-    const { addToast } = useToast();
     
-    // State Data
-    const [items, setItems] = useState<RepositoryItem[]>([]);
-    const [users, setUsers] = useState<Map<string, string>>(new Map());
-    const [localOpdList, setLocalOpdList] = useState<OPD[]>([]);
+    // Gunakan Custom Hook
+    const repo = useRepository(userProfile);
     
-    // State UI
+    // UI States
     const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
     const [folderPath, setFolderPath] = useState<{ id: string | null; nama: string }[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [isProcessing, setIsProcessing] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
-    
-    // State Modal
-    const [isFolderModalOpen, setIsFolderModalOpen] = useState(false);
-    const [isLinkModalOpen, setIsLinkModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<RepositoryItem | null>(null);
-    const [selectedOpds, setSelectedOpds] = useState<string[]>([]);
-    
-    // State Form Modal
-    const [modalNama, setModalNama] = useState('');
-    const [modalDeskripsi, setModalDeskripsi] = useState('');
-    const [modalUrl, setModalUrl] = useState('');
-    const [modalTipeDokumen, setModalTipeDokumen] = useState<DocumentIconType>('lainnya');
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list');
 
-    // State Drag & Drop
-    const [draggedItem, setDraggedItem] = useState<RepositoryItem | null>(null);
-
-    // State untuk modal konfirmasi hapus
-    const [confirmModal, setConfirmModal] = useState({
-        isOpen: false,
-        title: '',
-        message: '',
-        onConfirm: () => {},
-        isProcessing: false
+    // Modal States
+    const [modalState, setModalState] = useState<{ isOpen: boolean; mode: 'folder' | 'link' | 'file'; item: RepositoryItem | null }>({
+        isOpen: false, mode: 'folder', item: null
     });
     
-    // Izin untuk MEMBUAT: Semua pengguna yang login bisa membuat.
-    const canCreate = useMemo(() => !!userProfile, [userProfile]);
-    
-    // Izin untuk MENGELOLA (Edit/Hapus/Pindah): Admin/TU, atau pembuat asli item tersebut.
-    const canManageItem = useCallback((item: RepositoryItem) => {
-        if (!userProfile) return false;
-        if (userProfile.role === 'super_admin') return true;
-        if ((userProfile.role === 'admin_opd' || userProfile.role === 'staf_tu') && item.opdId === userProfile.opdId) return true;
-        return userProfile.uid === item.createdBy;
-    }, [userProfile]);
-    
-    // Fungsi Fetch Data Tunggal
-    const fetchData = useCallback(async () => {
-        if (!userProfile?.opdId) return;
-        setLoading(true);
-        try {
-            const qOpd = query(collection(db, 'repositoryItems'), where('opdId', '==', userProfile.opdId));
-            const qShared = query(collection(db, 'repositoryItems'), where('sharedWithOpdIds', 'array-contains', userProfile.opdId));
-            const qUsers = query(collection(db, 'users'), where('opdId', '==', userProfile.opdId));
-            
-            const [opdSnapshot, sharedSnapshot, usersSnapshot] = await Promise.all([
-                getDocs(qOpd),
-                getDocs(qShared),
-                getDocs(qUsers)
-            ]);
+    // Confirm Modal
+    const [confirmModal, setConfirmModal] = useState({
+        isOpen: false, title: '', message: '', onConfirm: () => {}, isProcessing: false
+    });
 
-            const userMap = new Map<string, string>();
-            usersSnapshot.forEach(doc => { const data = doc.data() as UserProfile; userMap.set(data.uid, data.namaLengkap); });
-            setUsers(userMap);
+    // Drag & Drop States
+    const [isDraggingOverFile, setIsDraggingOverFile] = useState(false);
+    const [draggedItem, setDraggedItem] = useState<RepositoryItem | null>(null);
+    const [dragOverTargetFolderId, setDragOverTargetFolderId] = useState<string | null>(null);
 
-            const allItems = new Map<string, RepositoryItem>();
-            opdSnapshot.docs.forEach(doc => allItems.set(doc.id, { id: doc.id, ...doc.data() } as RepositoryItem));
-            sharedSnapshot.docs.forEach(doc => allItems.set(doc.id, { id: doc.id, ...doc.data() } as RepositoryItem));
-            
-            setItems(Array.from(allItems.values()));
+    // Preview State
+    const [previewItem, setPreviewItem] = useState<RepositoryItem | null>(null);
 
-            if (userProfile.role === 'super_admin') {
-                const opdSnapshot = await getDocs(collection(db, 'opd'));
-                setLocalOpdList(opdSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OPD)));
-            }
+    // Multi-Select State
+    const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
 
-        } catch (error) {
-            console.error("Error fetching repository data:", error);
-            addToast("Gagal memuat data repository.", "error");
-        } finally {
-            setLoading(false);
-        }
-    }, [userProfile?.opdId, userProfile?.role, addToast]);
+    // Filter States
+    const [filterTipe, setFilterTipe] = useState<'all' | 'folder' | 'file' | 'link'>('all');
+    const [filterAkses, setFilterAkses] = useState<'all' | 'private' | 'shared' | 'opd'>('all');
 
     useEffect(() => {
-        fetchData();
-    }, [fetchData]);
-    
-    // Breadcrumbs (folderPath)
-    useEffect(() => {
-        const path: { id: string | null; nama: string }[] = [{ id: null, nama: 'Home' }];
-        let currentId: string | null = currentFolderId;
-        while (currentId) {
-            const folder = items.find(f => f.id === currentId && f.type === 'folder');
-            if (folder) {
-                path.splice(1, 0, { id: folder.id, nama: folder.nama });
-                currentId = folder.parentId;
-            } else { break; }
-        }
-        setFolderPath(path);
-    }, [currentFolderId, items]);
+        repo.fetchRepository();
+    }, [repo.fetchRepository]);
 
-    // Filter Item
-    const filteredItems = useMemo(() => {
-        return items
-            .filter(f => f.parentId === currentFolderId && f.nama.toLowerCase().includes(searchTerm.toLowerCase()))
-            .sort((a, b) => {
-                if (a.type === 'folder' && b.type !== 'folder') return -1;
-                if (a.type !== 'folder' && b.type === 'folder') return 1;
-                return a.nama.localeCompare(b.nama);
-            });
-    }, [items, currentFolderId, searchTerm]);
-    
-    // Memoize daftar OPD yang di-indent
-    const sortedOpdList = useMemo(() => {
-        const indukOpds = localOpdList.filter(opd => opd.tipe === 'Induk').sort((a, b) => a.namaOpd.localeCompare(b.namaOpd));
-        const sortedList: (OPD & { indent?: boolean })[] = [];
-        indukOpds.forEach(induk => {
-            sortedList.push(induk);
-            const subOpds = localOpdList.filter(opd => opd.idOpdInduk === induk.id).sort((a, b) => a.namaOpd.localeCompare(b.namaOpd));
-            subOpds.forEach(sub => sortedList.push({ ...sub, indent: true }));
+    // Navigasi & Filter Data
+    const currentItems = useMemo(() => {
+        return repo.items.filter(item => {
+            // Filter parentId (pastikan menampilkan root atau folder saat ini)
+            if (searchTerm || filterTipe !== 'all' || filterAkses !== 'all') return true; // Jika ada pencarian/filter aktif, abaikan hirarki (flat view)
+            return item.parentId === currentFolderId;
+        }).filter(item => {
+            // Filter nama item berdasarkan search bar
+            const matchName = item.nama.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchTipe = filterTipe === 'all' || item.tipe === filterTipe;
+            const matchAkses = filterAkses === 'all' || item.visibility === filterAkses;
+            return matchName && matchTipe && matchAkses;
+        }).sort((a, b) => {
+            // Sort: Favorites first, then Folders first, then by name
+            if (a.isFavorite && !b.isFavorite) return -1;
+            if (!a.isFavorite && b.isFavorite) return 1;
+            
+            if (a.tipe === 'folder' && b.tipe !== 'folder') return -1;
+            if (a.tipe !== 'folder' && b.tipe === 'folder') return 1;
+            
+            return a.nama.localeCompare(b.nama);
         });
-        return sortedList;
-    }, [localOpdList]);
+    }, [repo.items, currentFolderId, searchTerm]);
 
-    // --- Logika Modal dan CRUD ---
-    
-    const openModal = (type: 'folder' | 'link', item: RepositoryItem | null) => {
-        setEditingItem(item);
-        if (type === 'folder') {
-            setModalNama(item?.nama || '');
-            setIsFolderModalOpen(true);
+    const handleNavigate = (folderId: string | null, folderName: string) => {
+        if (folderId === currentFolderId) return;
+        
+        setCurrentFolderId(folderId);
+        setSearchTerm('');
+        
+        if (!folderId) {
+            setFolderPath([]);
         } else {
-            setModalNama(item?.nama || '');
-            setModalDeskripsi(item?.deskripsi || '');
-            setModalUrl(item?.url || '');
-            setModalTipeDokumen(item?.tipeDokumen || 'lainnya');
-            setIsLinkModalOpen(true);
-        }
-        setSelectedOpds(item?.sharedWithOpdIds || []);
-    };
-
-    const closeModals = () => {
-        setIsFolderModalOpen(false); 
-        setIsLinkModalOpen(false);
-        setEditingItem(null);
-        setModalNama('');
-        setModalDeskripsi('');
-        setModalUrl('');
-        setModalTipeDokumen('lainnya');
-        setSelectedOpds([]);
-        setConfirmModal({ isOpen: false, title: '', message: '', onConfirm: () => {}, isProcessing: false });
-    };
-
-    const handleSaveFolder = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userProfile || !modalNama) return;
-        setIsProcessing(true);
-
-        try {
-            const superAdminPayload = userProfile.role === 'super_admin' ? { sharedWithOpdIds: selectedOpds } : {};
-
-            if (editingItem) {
-                await updateDoc(doc(db, 'repositoryItems', editingItem.id!), { 
-                    nama: modalNama,
-                    ...superAdminPayload 
-                });
-                addToast('Folder berhasil diperbarui.', 'success');
+            const index = folderPath.findIndex(p => p.id === folderId);
+            if (index !== -1) {
+                setFolderPath(prev => prev.slice(0, index + 1));
             } else {
-                const payload: Omit<RepositoryItem, 'id'> = { 
-                    nama: modalNama, 
-                    opdId: userProfile.opdId, 
-                    parentId: currentFolderId, 
-                    createdBy: userProfile.uid, 
-                    createdAt: Timestamp.now(),
-                    type: 'folder',
-                    ...superAdminPayload
-                };
-                await addDoc(collection(db, 'repositoryItems'), payload);
-                addToast('Folder baru berhasil dibuat.', 'success');
+                setFolderPath(prev => [...prev, { id: folderId, nama: folderName }]);
             }
-            closeModals();
-            fetchData();
-        } catch (error) {
-            console.error("Gagal menyimpan folder:", error);
-            addToast("Gagal menyimpan folder.", "error");
-        } finally {
-            setIsProcessing(false);
         }
     };
 
-    const handleSaveLink = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!userProfile || !modalNama || !modalUrl) return;
-        setIsProcessing(true);
-
-        const linkData = {
-            nama: modalNama,
-            deskripsi: modalDeskripsi,
-            url: modalUrl,
-            tipeDokumen: modalTipeDokumen
-        };
-        const superAdminPayload = userProfile.role === 'super_admin' ? { sharedWithOpdIds: selectedOpds } : {};
-
-        try {
-            if (editingItem) {
-                await updateDoc(doc(db, 'repositoryItems', editingItem.id!), {
-                    ...linkData,
-                    ...superAdminPayload
-                });
-                addToast('Dokumen berhasil diperbarui.', 'success');
-            } else {
-                const payload: Omit<RepositoryItem, 'id'> = { 
-                    ...linkData, 
-                    opdId: userProfile.opdId, 
-                    parentId: currentFolderId, 
-                    createdBy: userProfile.uid, 
-                    createdAt: Timestamp.now(),
-                    type: 'link',
-                    ...superAdminPayload
-                };
-                await addDoc(collection(db, 'repositoryItems'), payload);
-                addToast('Dokumen baru berhasil ditambahkan.', 'success');
+    const handleItemClick = (item: RepositoryItem) => {
+        if (item.tipe === 'folder') {
+            handleNavigate(item.id!, item.nama);
+        } else if (item.tipe === 'file' || item.tipe === 'link') {
+            if (item.url) {
+                // Untuk file biasa, buka preview modal
+                if (item.tipe === 'file') {
+                    setPreviewItem(item);
+                } else {
+                    // Untuk tautan luar, langsung buka tab baru
+                    window.open(item.url, '_blank', 'noopener,noreferrer');
+                }
             }
-            closeModals();
-            fetchData();
-        } catch (error) {
-            console.error("Gagal menyimpan link:", error);
-            addToast("Gagal menyimpan dokumen.", "error");
-        } finally {
-            setIsProcessing(false);
         }
     };
 
     const handleDelete = (item: RepositoryItem) => {
-        if (!canManageItem(item)) {
-            addToast("Anda tidak memiliki izin untuk menghapus item ini.", "error");
-            return;
-        }
         setConfirmModal({
             isOpen: true,
-            title: `Hapus ${item.type === 'folder' ? 'Folder' : 'Dokumen'}`,
-            message: `Apakah Anda yakin ingin menghapus "${item.nama}"? Tindakan ini tidak dapat diurungkan.`,
+            title: `Hapus ${item.tipe === 'folder' ? 'Folder' : item.tipe === 'file' ? 'File' : 'Tautan'}`,
+            message: `Apakah Anda yakin ingin menghapus "${item.nama}"? ${item.tipe === 'folder' ? 'Folder harus kosong sebelum dihapus.' : 'Tindakan ini tidak dapat dibatalkan.'}`,
             isProcessing: false,
-            onConfirm: () => executeDelete(item)
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isProcessing: true }));
+                const success = await repo.deleteItem(item);
+                if (success) {
+                    setConfirmModal(prev => ({ ...prev, isOpen: false }));
+                }
+                setConfirmModal(prev => ({ ...prev, isProcessing: false }));
+            }
         });
     };
 
-    const executeDelete = async (item: RepositoryItem) => {
-        setConfirmModal(prev => ({ ...prev, isProcessing: true }));
-        try {
-            if (item.type === 'folder') {
-                const q = query(collection(db, 'repositoryItems'), where('parentId', '==', item.id), limit(1));
-                const subItemsSnap = await getDocs(q);
-                if (!subItemsSnap.empty) {
-                    addToast('Gagal: Folder harus kosong sebelum dihapus. Pindahkan semua item di dalamnya terlebih dahulu.', 'error');
-                    closeModals();
-                    return;
+    // --- MULTI-SELECT HANDLERS ---
+    const toggleSelection = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation();
+        setSelectedItemIds(prev => 
+            prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+        );
+    };
+
+    const toggleSelectAll = () => {
+        if (selectedItemIds.length === currentItems.length) {
+            setSelectedItemIds([]);
+        } else {
+            setSelectedItemIds(currentItems.map(item => item.id!));
+        }
+    };
+
+    const handleBulkDelete = () => {
+        const itemsToDelete = currentItems.filter(item => selectedItemIds.includes(item.id!));
+        if (itemsToDelete.length === 0) return;
+
+        setConfirmModal({
+            isOpen: true,
+            title: `Hapus ${itemsToDelete.length} Item`,
+            message: `Apakah Anda yakin ingin menghapus ${itemsToDelete.length} item yang dipilih? Folder yang ikut terhapus harus dalam keadaan kosong. Tindakan ini tidak dapat dibatalkan.`,
+            isProcessing: false,
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isProcessing: true }));
+                let successCount = 0;
+                for (const item of itemsToDelete) {
+                    const success = await repo.deleteItem(item);
+                    if (success) successCount++;
                 }
+                setConfirmModal(prev => ({ ...prev, isOpen: false, isProcessing: false }));
+                setSelectedItemIds([]);
             }
-            await deleteDoc(doc(db, 'repositoryItems', item.id!));
-            addToast('Item berhasil dihapus.', 'success');
-            fetchData();
-        } catch (error) {
-            console.error("Gagal menghapus:", error);
-            addToast("Gagal menghapus item.", "error");
-        } finally {
-            closeModals();
-        }
-    };
-    
-    // Handler Checkbox OPD
-    const handleOpdCheckChange = (opd: OPD) => {
-        const opdId = opd.id!;
-        const isSelecting = !selectedOpds.includes(opdId);
-        let newSelectedOpds: string[];
-
-        if (isSelecting) { newSelectedOpds = [...selectedOpds, opdId]; } 
-        else { newSelectedOpds = selectedOpds.filter(id => id !== opdId); }
-
-        if (opd.tipe === 'Induk') {
-            const subOpdIds = localOpdList.filter(sub => sub.idOpdInduk === opdId).map(sub => sub.id!);
-            if (isSelecting) { newSelectedOpds = [...newSelectedOpds, ...subOpdIds]; } 
-            else { newSelectedOpds = newSelectedOpds.filter(id => !subOpdIds.includes(id)); }
-        }
-        setSelectedOpds(Array.from(new Set(newSelectedOpds)));
-    };
-    const toggleSelectAll = (select: boolean) => {
-        if (select) { setSelectedOpds(localOpdList.map(opd => opd.id!)); } 
-        else { setSelectedOpds([]); }
-    };
-    
-    // --- Logika Drag & Drop ---
-    // [PERBAIKAN BUILD] Ganti HTMLDivElement -> HTMLElement
-    const handleDragStart = (e: React.DragEvent<HTMLElement>, item: RepositoryItem) => {
-        if (!canManageItem(item)) { 
-            e.preventDefault(); 
-            return; 
-        }
-        setDraggedItem(item);
-        e.dataTransfer.setData("text/plain", item.id);
-        e.currentTarget.style.opacity = '0.4';
+        });
     };
 
-    const handleDragOver = (e: React.DragEvent<HTMLElement>) => { // [PERBAIKAN BUILD] Ganti HTMLDivElement -> HTMLElement
+    // --- DRAG & DROP HANDLERS (Desktop Upload) ---
+    const handleDragOverFile = (e: React.DragEvent) => {
         e.preventDefault();
+        e.stopPropagation();
+        
+        // Cek apakah yang didrag adalah file eksternal (bukan item HTML internal)
+        if (e.dataTransfer.types.includes('Files') && repo.canCreate) {
+            setIsDraggingOverFile(true);
+        }
+    };
+    
+    const handleDragLeaveFile = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOverFile(false);
+    };
+    
+    const handleDropFile = async (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDraggingOverFile(false);
+        
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0 && repo.canCreate) {
+            const files = Array.from(e.dataTransfer.files);
+            // Upload semua file yang di-drop ke folder saat ini
+            for (const file of files) {
+                await repo.uploadFile(file, currentFolderId, { visibility: 'opd' });
+            }
+        }
     };
 
-    const handleDragEnd = (e: React.DragEvent<HTMLElement>) => { // [PERBAIKAN BUILD] Ganti HTMLDivElement -> HTMLElement
-        if (e.currentTarget.style) {
-            e.currentTarget.style.opacity = '1';
+    // --- DRAG & DROP HANDLERS (Move Item Internal) ---
+    const handleDragStartInternal = (e: React.DragEvent, item: RepositoryItem) => {
+        setDraggedItem(item);
+        e.dataTransfer.effectAllowed = "move";
+        // Ghost image setting if needed
+    };
+
+    const handleDragOverInternal = (e: React.DragEvent, targetFolderId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (draggedItem && draggedItem.id !== targetFolderId && repo.canManageItem(draggedItem)) {
+            setDragOverTargetFolderId(targetFolderId);
+            e.dataTransfer.dropEffect = "move";
+        }
+    };
+
+    const handleDragLeaveInternal = (e: React.DragEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverTargetFolderId(null);
+    };
+
+    const handleDropInternal = async (e: React.DragEvent, targetFolderId: string) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverTargetFolderId(null);
+        
+        if (draggedItem && draggedItem.id !== targetFolderId && repo.canManageItem(draggedItem)) {
+            // Pindahkan ke targetFolderId
+            await repo.moveItem(draggedItem.id!, targetFolderId);
         }
         setDraggedItem(null);
     };
 
-    const handleDrop = async (e: React.DragEvent<HTMLElement>, targetFolderId: string | null) => { // [PERBAIKAN BUILD] Ganti HTMLDivElement -> HTMLElement
-        e.preventDefault();
-        e.stopPropagation(); 
-        
-        if (!draggedItem) return;
-        if (!canManageItem(draggedItem)) return; 
-        if (draggedItem.parentId === targetFolderId) return;
-        if (draggedItem.id === targetFolderId) return;
-
-        let checkParentId = targetFolderId;
-        while (checkParentId) {
-            if (checkParentId === draggedItem.id) {
-                addToast("Tidak dapat memindahkan folder ke dalam dirinya sendiri.", "error");
-                setDraggedItem(null);
-                return;
-            }
-            const parentFolder = items.find(f => f.id === checkParentId);
-            checkParentId = parentFolder ? parentFolder.parentId : null;
-        }
-        
-        try {
-            await updateDoc(doc(db, 'repositoryItems', draggedItem.id), { 
-                parentId: targetFolderId 
-            });
-            fetchData();
-            addToast(`Item "${draggedItem.nama}" berhasil dipindahkan.`, 'success');
-        } catch (err) {
-            console.error("Gagal memindahkan item:", err);
-            addToast("Gagal memindahkan item.", "error");
-        } finally {
-            setDraggedItem(null);
-        }
-    };
-
     return (
-        <div className="sg-page animate-fadeInUp">
+        <div 
+            className="flex flex-col h-full bg-background relative overflow-hidden"
+            onDragOver={handleDragOverFile}
+            onDragLeave={handleDragLeaveFile}
+            onDrop={handleDropFile}
+        >
+            {isDraggingOverFile && (
+                <div className="absolute inset-0 z-[100] bg-background/80 backdrop-blur-sm flex items-center justify-center border-4 border-dashed border-primary m-4 rounded-3xl">
+                    <div className="text-center">
+                        <UploadCloud className="w-24 h-24 mx-auto text-primary animate-bounce mb-4" />
+                        <h2 className="text-3xl font-bold text-primary">Lepaskan File di Sini</h2>
+                        <p className="text-muted-foreground mt-2">File akan diunggah ke folder saat ini.</p>
+                    </div>
+                </div>
+            )}
+
             <SigapPageHeader 
-                title="Repository Dokumen"
+                title="Repository Dokumen" 
+                description="Pusat penyimpanan dan pengelolaan dokumen, file, dan tautan penting OPD."
                 icon={FolderArchive}
             />
 
-            {/* Header Kontrol (Shadcn) */}
-            <Card className="sg-glass-panel sg-mobile-borderless mb-6">
-                <CardContent className="p-4 space-y-4">
-                    <div className="sg-filter-bar justify-between border-none shadow-none bg-transparent p-0">
-                        {canCreate && (
-                            <div className="flex gap-2">
-                               <Button onClick={() => openModal('folder', null)} className="sg-btn sg-btn-primary">
-                                   <Plus size={16} className="mr-2"/> Folder Baru
-                               </Button>
-                               <Button onClick={() => openModal('link', null)} variant="secondary" className="sg-btn">
-                                   <LinkIcon size={16} className="mr-2"/> Tambah Dokumen
-                               </Button>
-                            </div>
-                        )}
-                        <div className="relative flex-1 md:max-w-xs">
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"/>
+            <div className="flex-1 overflow-auto p-4 md:p-6 pb-24 space-y-6">
+                
+                {/* --- CONTROLS --- */}
+                <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
+                    
+                    <div className="w-full md:w-1/2 relative flex gap-2">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                             <Input 
-                                type="text" 
-                                placeholder="Cari di folder ini..." 
+                                placeholder="Cari dokumen, folder, atau tautan..." 
                                 value={searchTerm} 
-                                onChange={e => setSearchTerm(e.target.value)} 
-                                className="pl-10"
+                                onChange={(e) => setSearchTerm(e.target.value)} 
+                                className="pl-9 bg-background/50 border-border"
                             />
                         </div>
+                        {/* Filter Dropdowns */}
+                        <Select value={filterTipe} onValueChange={(val: any) => setFilterTipe(val)}>
+                            <SelectTrigger className="w-32 bg-background/50">
+                                <SelectValue placeholder="Tipe" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Tipe</SelectItem>
+                                <SelectItem value="folder">Folder</SelectItem>
+                                <SelectItem value="file">File</SelectItem>
+                                <SelectItem value="link">Tautan</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={filterAkses} onValueChange={(val: any) => setFilterAkses(val)}>
+                            <SelectTrigger className="w-32 bg-background/50">
+                                <SelectValue placeholder="Akses" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Semua Akses</SelectItem>
+                                <SelectItem value="private">Privat</SelectItem>
+                                <SelectItem value="opd">Internal OPD</SelectItem>
+                                <SelectItem value="shared">Publik</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                     <div 
-                        className="flex items-center gap-2 text-sm text-muted-foreground overflow-x-auto whitespace-nowrap py-2 rounded-lg"
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, null)} // Drop ke root (Home)
-                     >
-                        {folderPath.map((p, i) => (
-                            <React.Fragment key={p.id || 'home'}>
+                    
+                    <div className="flex w-full md:w-auto items-center gap-2 justify-between md:justify-end">
+                        <div className="flex bg-muted rounded-lg p-1 mr-2">
+                            <button onClick={() => setViewMode('list')} className={`p-1.5 rounded ${viewMode === 'list' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><ListIcon size={16}/></button>
+                            <button onClick={() => setViewMode('grid')} className={`p-1.5 rounded ${viewMode === 'grid' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={16}/></button>
+                        </div>
+                        
+                        {repo.canCreate && (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button className="sg-btn-primary shadow-sm"><Plus className="w-4 h-4 mr-2" /> Tambah Baru</Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-48">
+                                    <DropdownMenuItem onClick={() => setModalState({ isOpen: true, mode: 'folder', item: null })}>
+                                        <Folder className="mr-2 h-4 w-4 text-yellow-500" /> Buat Folder
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => setModalState({ isOpen: true, mode: 'file', item: null })}>
+                                        <FileText className="mr-2 h-4 w-4 text-blue-500" /> Unggah File Baru
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setModalState({ isOpen: true, mode: 'link', item: null })}>
+                                        <LinkIcon className="mr-2 h-4 w-4 text-emerald-500" /> Tambah Tautan Luar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </div>
+                </div>
+
+                {/* --- SELECTION BANNER --- */}
+                {selectedItemIds.length > 0 && (
+                    <div className="bg-primary/10 border border-primary/20 rounded-xl p-3 flex items-center justify-between animate-in fade-in slide-in-from-top-4">
+                        <div className="flex items-center gap-3">
+                            <span className="text-primary font-medium">{selectedItemIds.length} item dipilih</span>
+                            <Button variant="ghost" size="sm" onClick={toggleSelectAll} className="h-8 text-xs">Pilih Semua</Button>
+                            <Button variant="ghost" size="sm" onClick={() => setSelectedItemIds([])} className="h-8 text-xs text-muted-foreground">Batal</Button>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button variant="destructive" size="sm" onClick={handleBulkDelete} className="h-8">
+                                <Trash2 className="w-4 h-4 mr-2" /> Hapus Massal
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- BREADCRUMBS --- */}
+                {!searchTerm && (
+                    <div className="px-1">
+                        <RepositoryBreadcrumbs 
+                            path={folderPath} 
+                            onNavigate={(index) => {
+                                if (index === -1) handleNavigate(null, '');
+                                else handleNavigate(folderPath[index].id, folderPath[index].nama);
+                            }} 
+                        />
+                    </div>
+                )}
+
+                {/* --- CONTENT AREA --- */}
+                {repo.loading ? (
+                    <div className="flex justify-center items-center h-48">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                ) : currentItems.length === 0 ? (
+                    <SigapEmptyState 
+                        icon={FolderArchive}
+                        title={searchTerm ? "Pencarian Tidak Ditemukan" : "Folder Kosong"}
+                        description={searchTerm ? "Coba gunakan kata kunci lain." : "Belum ada dokumen atau folder di sini."}
+                        action={repo.canCreate && !searchTerm ? (
+                            <Button className="sg-btn-primary" onClick={() => setModalState({ isOpen: true, mode: 'folder', item: null })}>
+                                Buat Folder Pertama
+                            </Button>
+                        ) : undefined}
+                    />
+                ) : (
+                    <div className={viewMode === 'grid' ? "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4" : "space-y-2"}>
+                        {currentItems.map((item) => (
+                            <div 
+                                key={item.id}
+                                draggable={repo.canManageItem(item)}
+                                onDragStart={(e) => handleDragStartInternal(e, item)}
+                                onDragEnd={() => setDraggedItem(null)}
+                                onDragOver={(e) => item.tipe === 'folder' && handleDragOverInternal(e, item.id!)}
+                                onDragLeave={(e) => item.tipe === 'folder' && handleDragLeaveInternal(e)}
+                                onDrop={(e) => item.tipe === 'folder' && handleDropInternal(e, item.id!)}
+                                className={`group relative sg-glass-panel sg-mobile-borderless hover:border-primary/50 hover:bg-accent/30 transition-all duration-200 ${
+                                    viewMode === 'grid' ? 'flex flex-col items-center p-4 text-center h-40 justify-center' : 'flex items-center justify-between p-3'
+                                } ${dragOverTargetFolderId === item.id ? 'border-primary ring-2 ring-primary/50 bg-primary/10' : ''} ${selectedItemIds.includes(item.id!) ? 'border-primary bg-primary/5 ring-1 ring-primary/50' : ''}`}
+                            >
+                                {/* Checkbox Overlay */}
+                                <div className={`absolute top-2 left-2 z-10 transition-opacity ${selectedItemIds.includes(item.id!) ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
+                                    <div 
+                                        className={`w-5 h-5 rounded border flex items-center justify-center cursor-pointer transition-colors ${selectedItemIds.includes(item.id!) ? 'bg-primary border-primary' : 'bg-background/80 border-muted-foreground hover:border-primary'}`}
+                                        onClick={(e) => toggleSelection(e, item.id!)}
+                                    >
+                                        {selectedItemIds.includes(item.id!) && <div className="w-2.5 h-2.5 bg-primary-foreground rounded-sm" />}
+                                    </div>
+                                </div>
+
                                 <button 
-                                    onClick={() => setCurrentFolderId(p.id)} 
-                                    className="hover:underline flex items-center gap-1 p-1 hover:text-primary disabled:hover:no-underline disabled:text-foreground disabled:cursor-default"
-                                    disabled={i === folderPath.length - 1}
-                                    onDragOver={handleDragOver} // [PERBAIKAN BUILD] Tambah handler
-                                    onDrop={(e) => handleDrop(e, p.id)} // [PERBAIKAN BUILD] Tambah handler
+                                    onClick={() => handleItemClick(item)} 
+                                    className={`flex focus:outline-none ${viewMode === 'grid' ? 'flex-col items-center gap-3 w-full' : 'items-center gap-4 flex-1 min-w-0 text-left pl-6'}`}
                                 >
-                                    {p.id === null ? <Home size={14}/> : <Folder size={14}/>} {p.nama}
+                                    <div className="relative">
+                                        <div className={`p-3 rounded-xl shadow-sm ${item.tipe === 'folder' ? 'bg-yellow-100 dark:bg-yellow-900/30' : 'bg-primary/10'}`}>
+                                            {getItemIcon(item)}
+                                        </div>
+                                        {item.isFavorite && (
+                                            <div className={`absolute ${viewMode === 'grid' ? '-top-1 -right-1' : '-top-2 -right-2'} text-yellow-400 bg-background rounded-full p-0.5 shadow-sm`}>
+                                                <Star className="w-4 h-4 fill-yellow-400" />
+                                            </div>
+                                        )}
+                                        {/* Status Icon */}
+                                        <div className="absolute -bottom-1 -right-1 bg-background rounded-full p-0.5 shadow-sm border border-border">
+                                            {getVisibilityIcon(item.visibility)}
+                                        </div>
+                                    </div>
+                                    <div className={`flex-1 min-w-0 ${viewMode === 'grid' ? 'w-full px-2' : ''}`}>
+                                        <p className={`font-semibold text-sm ${item.tipe !== 'folder' ? 'text-primary' : 'text-foreground'} truncate w-full`} title={item.nama}>
+                                            {item.nama}
+                                        </p>
+                                        <p className={`text-xs text-muted-foreground truncate w-full ${viewMode === 'grid' ? 'mt-1' : ''}`}>
+                                            {item.tipe === 'folder' 
+                                                ? `${repo.items.filter(i => i.parentId === item.id).length} item` 
+                                                : item.deskripsi || (item.tipe === 'link' ? item.url : 'File Dokumen')}
+                                        </p>
+                                        {item.tags && item.tags.length > 0 && (
+                                            <div className={`flex flex-wrap gap-1 mt-1.5 ${viewMode === 'grid' ? 'justify-center' : ''}`}>
+                                                {item.tags.map((tag, idx) => (
+                                                    <span key={idx} className="text-[10px] px-1.5 py-0.5 rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                                        {tag}
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        )}
+                                        {viewMode === 'list' && (
+                                            <div className="flex items-center gap-3 mt-1">
+                                                {item.deskripsi && <span className="text-xs text-muted-foreground truncate max-w-[200px]">{item.deskripsi}</span>}
+                                                <span className="text-[10px] text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">
+                                                    Oleh: {repo.users.get(item.createdBy) || 'Unknown'}
+                                                </span>
+                                                {item.fileSize && <span className="text-[10px] text-muted-foreground/70 bg-muted px-1.5 py-0.5 rounded">{(item.fileSize / 1024 / 1024).toFixed(1)} MB</span>}
+                                            </div>
+                                        )}
+                                    </div>
                                 </button>
-                                {i < folderPath.length - 1 && <span className="text-muted-foreground">/</span>}
-                            </React.Fragment>
+                                
+                                <div className={`${viewMode === 'grid' ? 'absolute top-2 right-2' : ''}`}>
+                                    {repo.canManageItem(item) ? (
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                                                    <MoreVertical size={16} />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); repo.toggleFavorite(item.id!, !!item.isFavorite); }}>
+                                                    <Star className={`mr-2 h-4 w-4 ${item.isFavorite ? 'fill-yellow-400 text-yellow-400' : ''}`} /> {item.isFavorite ? 'Hapus dari Favorit' : 'Jadikan Favorit'}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setModalState({ isOpen: true, mode: item.tipe as any, item }); }}>
+                                                    <Edit className="mr-2 h-4 w-4" /> Edit
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleDelete(item); }} className="text-red-600 focus:bg-red-50 dark:focus:bg-red-950">
+                                                    <Trash2 className="mr-2 h-4 w-4" /> Hapus
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    ) : (
+                                        item.tipe !== 'folder' && item.url && (
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 opacity-50 group-hover:opacity-100" onClick={() => window.open(item.url, '_blank')}>
+                                                <Download size={16} />
+                                            </Button>
+                                        )
+                                    )}
+                                </div>
+                            </div>
                         ))}
                     </div>
-                </CardContent>
-            </Card>
+                )}
+            </div>
 
-            {/* Daftar Item */}
-            {loading ? (
-                <div className="text-center p-8 text-muted-foreground">
-                    <Loader2 className="animate-spin h-8 w-8 mx-auto" />
-                    <p>Memuat item...</p>
-                </div>
-            ) : (
-                <div 
-                    className="space-y-0 md:space-y-3"
-                    onDragOver={handleDragOver}
-                    onDrop={(e) => handleDrop(e, currentFolderId)}
-                >
-                    {filteredItems.map(item => (
-                        <RepositoryItemRow
-                            key={item.id}
-                            item={item}
-                            users={users}
-                            canManage={canManageItem(item)}
-                            onItemClick={(item) => item.type === 'folder' ? setCurrentFolderId(item.id) : window.open(item.url, '_blank')}
-                            onEdit={(item) => openModal(item.type, item)}
-                            onDelete={handleDelete}
-                            onDragStart={handleDragStart}
-                            onDragEnd={handleDragEnd}
-                            onDrop={handleDrop}
-                            onDragOver={handleDragOver}
-                        />
-                    ))}
-                    {!loading && filteredItems.length === 0 && (
-                        <SigapEmptyState
-                            icon={FolderArchive}
-                            title={searchTerm ? 'Tidak ada hasil ditemukan' : 'Folder ini kosong'}
-                            description={searchTerm ? 'Coba kata kunci lain.' : 'Mulai dengan menambahkan folder atau dokumen baru.'}
-                            action={
-                                canCreate ? (
-                                    <Button onClick={() => openModal('folder', null)} className="mt-4 sg-btn sg-btn-primary">
-                                        <Plus size={16} className="mr-2" /> Buat Folder
-                                    </Button>
-                                ) : undefined
-                            }
-                        />
-                    )}
-                </div>
-            )}
-            
-            {/* Modal Folder (Shadcn) */}
-            <Dialog open={isFolderModalOpen} onOpenChange={closeModals}>
-                <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0">
-                    <DialogHeader className="p-6 pb-4">
-                        <DialogTitle>{editingItem ? 'Edit Folder' : 'Folder Baru'}</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSaveFolder} className="flex flex-col max-h-[80vh]">
-                        <ScrollArea className="flex-1 px-6">
-                            <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="namaFolder">Nama Folder</Label>
-                                    <Input 
-                                        id="namaFolder" 
-                                        name="namaFolder" 
-                                        type="text" 
-                                        value={modalNama}
-                                        onChange={(e) => setModalNama(e.target.value)}
-                                        className="mt-1" 
-                                        required autoFocus
-                                    />
-                                </div>
-                                
-                                {userProfile?.role === 'super_admin' && (
-                                    <div>
-                                        <Label className="font-bold text-sm flex items-center gap-2 mb-2">
-                                            <Building size={16} /> Bagikan ke OPD (Opsional)
-                                        </Label>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(true)}>Pilih Semua</Button>
-                                            <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(false)}>Kosongkan</Button>
-                                        </div>
-                                        <ScrollArea className="h-40 rounded-md border p-3">
-                                            {sortedOpdList.map(opd => (
-                                                <div key={opd.id} className="flex items-center gap-2 p-1.5">
-                                                    <Checkbox
-                                                        id={`cb-folder-${opd.id}`}
-                                                        checked={selectedOpds.includes(opd.id!)}
-                                                        onCheckedChange={() => handleOpdCheckChange(opd)}
-                                                    />
-                                                    <Label htmlFor={`cb-folder-${opd.id}`} className="cursor-pointer text-sm">
-                                                        {opd.indent ? '↳ ' : ''}{opd.namaOpd}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </ScrollArea>
-                                    </div>
-                                )}
-                            </div>
-                        </ScrollArea>
-                        <DialogFooter className="p-6 pt-4 mt-4 border-t border-border flex-shrink-0">
-                            <Button type="button" variant="outline" onClick={closeModals} disabled={isProcessing}>Batal</Button>
-                            <Button type="submit" disabled={isProcessing}>
-                                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Simpan
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-            
-            {/* Modal Link (Shadcn) */}
-            <Dialog open={isLinkModalOpen} onOpenChange={closeModals}>
-                <DialogContent className="sm:max-w-lg bg-card border-border p-0 gap-0">
-                    <DialogHeader className="p-6 pb-4">
-                        <DialogTitle>{editingItem ? 'Edit Dokumen' : 'Tambah Dokumen Baru'}</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSaveLink} className="flex flex-col max-h-[80vh]">
-                        <ScrollArea className="flex-1 px-6">
-                            <div className="space-y-4">
-                                <div>
-                                    <Label htmlFor="namaDokumen">Nama Dokumen</Label>
-                                    <Input id="namaDokumen" name="namaDokumen" type="text" value={modalNama} onChange={(e) => setModalNama(e.target.value)} required autoFocus />
-                                </div>
-                                <div>
-                                    <Label htmlFor="deskripsi">Deskripsi</Label>
-                                    <Input id="deskripsi" name="deskripsi" type="text" value={modalDeskripsi} onChange={(e) => setModalDeskripsi(e.target.value)} />
-                                </div>
-                                <div>
-                                    <Label htmlFor="url">URL/Tautan</Label>
-                                    <Input id="url" name="url" type="url" value={modalUrl} onChange={(e) => setModalUrl(e.target.value)} required />
-                                </div>
-                                <div>
-                                    <Label htmlFor="tipeDokumen">Tipe Ikon</Label>
-                                    <Select name="tipeDokumen" value={modalTipeDokumen} onValueChange={(v) => setModalTipeDokumen(v as DocumentIconType)}>
-                                        <SelectTrigger id="tipeDokumen">
-                                            <SelectValue placeholder="Pilih tipe ikon" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="doc">Dokumen (doc, pages)</SelectItem>
-                                            <SelectItem value="sheet">Spreadsheet (xls, numbers)</SelectItem>
-                                            <SelectItem value="pdf">PDF</SelectItem>
-                                            <SelectItem value="image">Gambar</SelectItem>
-                                            <SelectItem value="video">Video</SelectItem>
-                                            <SelectItem value="zip">Arsip (zip, rar)</SelectItem>
-                                            <SelectItem value="lainnya">Lainnya (Link)</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                
-                                {userProfile?.role === 'super_admin' && (
-                                    <div>
-                                        <Label className="font-bold text-sm flex items-center gap-2 mb-2">
-                                            <Building size={16} /> Bagikan ke OPD (Opsional)
-                                        </Label>
-                                        <div className="flex justify-between items-center mb-1">
-                                            <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(true)}>Pilih Semua</Button>
-                                            <Button type="button" variant="link" className="h-auto p-0 text-xs" onClick={() => toggleSelectAll(false)}>Kosongkan</Button>
-                                        </div>
-                                        <ScrollArea className="h-40 rounded-md border p-3">
-                                            {sortedOpdList.map(opd => (
-                                                <div key={opd.id} className="flex items-center gap-2 p-1.5">
-                                                    <Checkbox
-                                                        id={`cb-link-${opd.id}`}
-                                                        checked={selectedOpds.includes(opd.id!)}
-                                                        onCheckedChange={() => handleOpdCheckChange(opd)}
-                                                    />
-                                                    <Label htmlFor={`cb-link-${opd.id}`} className="cursor-pointer text-sm">
-                                                        {opd.indent ? '↳ ' : ''}{opd.namaOpd}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </ScrollArea>
-                                    </div>
-                                )}
-                            </div>
-                        </ScrollArea>
-                        <DialogFooter className="p-6 pt-4 mt-4 border-t border-border flex-shrink-0">
-                            <Button type="button" variant="outline" onClick={closeModals} disabled={isProcessing}>Batal</Button>
-                            <Button type="submit" disabled={isProcessing}>
-                                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Simpan
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
-            
-            {/* [PERBAIKAN] Render Modal Konfirmasi Hapus */}
-            <ConfirmModal
+            {/* --- MODALS --- */}
+            <DocumentPreviewModal
+                isOpen={!!previewItem}
+                onClose={() => setPreviewItem(null)}
+                item={previewItem}
+            />
+
+            <RepositoryItemModal 
+                isOpen={modalState.isOpen}
+                mode={modalState.mode}
+                itemToEdit={modalState.item}
+                onClose={() => setModalState({ isOpen: false, mode: 'folder', item: null })}
+                onSubmitFolder={async (nama, visibility) => {
+                    if (modalState.item) {
+                        await repo.updateItem(modalState.item.id!, { nama, visibility });
+                    } else {
+                        await repo.createFolder(nama, currentFolderId, visibility);
+                    }
+                }}
+                onSubmitLink={async (payload) => {
+                    if (modalState.item) {
+                        await repo.updateItem(modalState.item.id!, payload);
+                    } else {
+                        await repo.createLink({ ...payload, parentId: currentFolderId });
+                    }
+                }}
+                onSubmitFile={async (file, metadata) => {
+                    if (!modalState.item) {
+                        await repo.uploadFile(file, currentFolderId, metadata);
+                    }
+                }}
+            />
+
+            <ConfirmModal 
                 isOpen={confirmModal.isOpen}
-                onClose={closeModals} // Gunakan closeModals untuk mereset state
-                onConfirm={confirmModal.onConfirm}
                 title={confirmModal.title}
                 message={confirmModal.message}
+                onClose={() => !confirmModal.isProcessing && setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+                onConfirm={confirmModal.onConfirm}
                 isProcessing={confirmModal.isProcessing}
-                confirmText="Ya, Hapus"
             />
 
         </div>

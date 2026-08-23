@@ -9,10 +9,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase';
-import { addDoc, collection, Timestamp, updateDoc, doc } from 'firebase/firestore'; 
+import { addDoc, collection, Timestamp, updateDoc, doc, getDoc } from 'firebase/firestore'; 
 import { useUserAuth } from '@/context/AuthContext';
 import { X, Send, Loader2 } from 'lucide-react'; 
-import { JadwalTempat } from '@/types'; 
+import { JadwalTempat, OPD } from '@/types'; 
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -50,7 +50,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
   // Definisi tipe state secara eksplisit agar aman
   type FormData = {
     kegiatan: string;
-    jenis: 'Fisik' | 'Virtual';
+    jenis: string;
     namaTempat: string;
     tautanRapat: string;
     tanggalMulai: string;
@@ -73,6 +73,18 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [daftarRuangan, setDaftarRuangan] = useState<string[]>([]);
+
+  useEffect(() => {
+      if (isOpen && userProfile?.opdId) {
+          getDoc(doc(db, 'opd', userProfile.opdId)).then((snap) => {
+              if (snap.exists()) {
+                  const opdData = snap.data() as OPD;
+                  if (opdData.daftarRuangan) setDaftarRuangan(opdData.daftarRuangan);
+              }
+          });
+      }
+  }, [isOpen, userProfile]);
 
   useEffect(() => {
       if (isOpen) {
@@ -94,7 +106,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
              data = {
                 kegiatan: initialData.kegiatan || '',
                 // [PERBAIKAN] Tambahkan casting 'as ...' di sini juga
-                jenis: (initialData.jenis as 'Fisik' | 'Virtual') || 'Fisik',
+                jenis: initialData.jenis || 'Fisik',
                 namaTempat: initialData.namaTempat || '',
                 tautanRapat: initialData.tautanRapat || '',
                 tanggalMulai: initialData.tanggalMulai ? (initialData.tanggalMulai as Timestamp).toDate().toISOString().split('T')[0] : selectedDate.toISOString().split('T')[0],
@@ -127,8 +139,8 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
   };
   
   // Handler terpisah untuk <Select>
-  const handleSelectChange = (value: 'Fisik' | 'Virtual') => {
-      setFormData(prev => ({ ...prev, jenis: value }));
+  const handleSelectChange = (value: string) => {
+    setFormData(prev => ({ ...prev, jenis: value }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,7 +165,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
         const payload = {
             kegiatan: formData.kegiatan,
             jenis: formData.jenis,
-            namaTempat: formData.jenis === 'Fisik' ? formData.namaTempat : '',
+            namaTempat: formData.jenis === 'Virtual' ? '' : formData.namaTempat,
             tautanRapat: formData.jenis === 'Virtual' ? formData.tautanRapat : '',
             opdId: userProfile!.opdId,
             penanggungJawab: formData.penanggungJawab || userProfile!.namaLengkap,
@@ -210,14 +222,18 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
             </div>
 
             <div>
-              <Label htmlFor="jenis">Jenis Rapat</Label>
+              <Label htmlFor="jenis">Jenis Kegiatan</Label>
               <Select name="jenis" value={formData.jenis} onValueChange={handleSelectChange}>
-                  <SelectTrigger id="jenis">
-                      <SelectValue placeholder="Pilih jenis rapat" />
+                  <SelectTrigger id="jenis" className="w-full rounded-md">
+                      <SelectValue placeholder="Pilih jenis kegiatan" />
                   </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="Fisik">Offline (Fisik)</SelectItem>
-                      <SelectItem value="Virtual">Online (Virtual)</SelectItem>
+                  <SelectContent className="z-[999]">
+                      <SelectItem value="Fisik">Rapat (Offline/Fisik)</SelectItem>
+                      <SelectItem value="Virtual">Rapat (Online/Virtual)</SelectItem>
+                      <SelectItem value="Kunjungan">Kunjungan Kerja / Lapangan</SelectItem>
+                      <SelectItem value="Sosialisasi">Sosialisasi / Bimtek</SelectItem>
+                      <SelectItem value="Dinas Luar">Dinas Luar / Perjalanan Dinas</SelectItem>
+                      <SelectItem value="Lainnya">Lainnya</SelectItem>
                   </SelectContent>
               </Select>
             </div>
@@ -229,8 +245,13 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
                 </div>
             ) : (
                 <div>
-                    <Label htmlFor="namaTempat">Lokasi / Ruang Rapat</Label>
-                    <Input id="namaTempat" type="text" name="namaTempat" value={formData.namaTempat} onChange={handleChange} required />
+                    <Label htmlFor="namaTempat">Lokasi / Tempat Kegiatan</Label>
+                    <Input id="namaTempat" type="text" name="namaTempat" value={formData.namaTempat} onChange={handleChange} required list="ruangan-list" placeholder="Ketik atau pilih dari daftar..." />
+                    <datalist id="ruangan-list">
+                        {daftarRuangan.map((ruangan, idx) => (
+                            <option key={idx} value={ruangan} />
+                        ))}
+                    </datalist>
                 </div>
             )}
             

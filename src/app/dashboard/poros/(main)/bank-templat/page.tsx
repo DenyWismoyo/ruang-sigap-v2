@@ -13,6 +13,7 @@ import { useUserAuth } from '@/context/AuthContext';
 import { BankTemplate, OPD } from '@/types';
 import { Plus, Search, Edit, Trash2, Save, Building, FileText, ExternalLink, Files, HelpCircle, Loader2, CheckSquare, Square, BookOpen, Copy, Check, AlertTriangle } from 'lucide-react';
 import ConfirmModal from '@/app/dashboard/poros/components/ConfirmModal'; 
+import { useRouter } from 'next/navigation';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -148,6 +149,7 @@ const TemplateGuideModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () 
 // --- Komponen Utama ---
 export default function BankTemplatePage() {
     const { userProfile } = useUserAuth();
+    const router = useRouter();
     
     // ... (State dan Fetch Logic sama seperti file sebelumnya) ...
     const [localOpdList, setLocalOpdList] = useState<OPD[]>([]);
@@ -214,7 +216,7 @@ export default function BankTemplatePage() {
 
     const openModal = (template: BankTemplate | null) => {
         setTemplateToEdit(template);
-        setFormState(template ? { judul: template.judul, url: template.googleDriveUrl, deskripsi: template.deskripsi || '', kategori: template.kategori } : { judul: '', url: '', deskripsi: '', kategori: 'Surat Keluar' });
+        setFormState(template ? { judul: template.judul, url: template.googleDriveUrl || '', deskripsi: template.deskripsi || '', kategori: template.kategori } : { judul: '', url: '', deskripsi: '', kategori: 'Surat Keluar' });
         setSelectedOpds(template?.sharedWithOpdIds || []);
         setIsGlobalTemplate(false); 
         setIsModalOpen(true);
@@ -318,7 +320,7 @@ export default function BankTemplatePage() {
                         <BookOpen size={18} className="mr-2"/> Panduan & Variabel
                     </Button>
                     {isAdmin && (
-                        <Button onClick={() => openModal(null)} className="bg-green-600 hover:bg-green-700">
+                        <Button className="bg-green-600 hover:bg-green-700" onClick={() => router.push('/dashboard/poros/bank-templat/editor')}>
                             <Plus size={18} className="mr-2"/> Tambah Template
                         </Button>
                     )}
@@ -340,7 +342,7 @@ export default function BankTemplatePage() {
                             </Button>
                             {(userProfile?.role === 'super_admin' || userProfile?.opdId === template.opdId) && (
                                 <div className="flex gap-1">
-                                    <Button variant="ghost" size="icon" onClick={() => openModal(template)}>
+                                    <Button variant="ghost" size="icon" onClick={() => router.push(`/dashboard/poros/bank-templat/editor?id=${template.id}`)}>
                                         <Edit size={16} className="text-yellow-600"/>
                                     </Button>
                                     <Button variant="ghost" size="icon" onClick={() => handleDelete(template.id!)}>
@@ -353,76 +355,6 @@ export default function BankTemplatePage() {
                 ))}
             </div>
 
-            {/* Modal Form */}
-            <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogContent className="sm:max-w-lg bg-card border-border flex flex-col max-h-[90vh]">
-                    <DialogHeader>
-                        <DialogTitle>{templateToEdit ? 'Edit Template' : 'Template Baru'}</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleSave} className="flex-1 flex flex-col overflow-hidden">
-                        <ScrollArea className="flex-1 overflow-y-auto px-6 -mx-6">
-                            <div className="space-y-4 p-1">
-                                <Alert variant="default" className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-                                    <HelpCircle className="h-4 w-4" />
-                                    <AlertDescription className="text-xs">
-                                        Pastikan dokumen Google Doc memiliki akses <strong>"Anyone with link can VIEW"</strong>. <br/>
-                                        Klik tombol <strong>"Panduan & Variabel"</strong> di halaman utama untuk melihat kode yang bisa digunakan.
-                                    </AlertDescription>
-                                </Alert>
-
-                                <div>
-                                    <Label htmlFor="judul">Judul Template</Label>
-                                    <Input id="judul" value={formState.judul} onChange={e => setFormState({...formState, judul: e.target.value})} placeholder="Contoh: Master Kop Surat Dinas Kesehatan" required/>
-                                </div>
-                                <div>
-                                    <Label htmlFor="kategori">Kategori</Label>
-                                    <Input id="kategori" value={formState.kategori} onChange={e => setFormState({...formState, kategori: e.target.value})} placeholder="Surat Keluar / SK / Nota Dinas" required/>
-                                </div>
-                                <div>
-                                    <Label htmlFor="url">Link Google Doc</Label>
-                                    <Input id="url" value={formState.url} onChange={e => setFormState({...formState, url: e.target.value})} placeholder="https://docs.google.com/document/d/..." required/>
-                                </div>
-                                <div>
-                                    <Label htmlFor="deskripsi">Deskripsi (Opsional)</Label>
-                                    <Input id="deskripsi" value={formState.deskripsi} onChange={e => setFormState({...formState, deskripsi: e.target.value})} placeholder="Contoh: Digunakan untuk perjalanan dinas luar kota"/>
-                                </div>
-                                
-                                {userProfile?.role === 'super_admin' && (
-                                    <div className="p-4 border rounded-lg bg-muted/30 space-y-3">
-                                        <Label className="font-bold flex items-center gap-2">
-                                            <Building size={16}/> Distribusi Template (Injeksi)
-                                        </Label>
-                                        
-                                        <div className="flex items-center space-x-2 border-b pb-3 mb-2">
-                                            <Checkbox id="global-check" checked={isGlobalTemplate} onCheckedChange={handleToggleGlobal} />
-                                            <Label htmlFor="global-check" className="cursor-pointer font-semibold">Bagikan ke SEMUA OPD (Global)</Label>
-                                        </div>
-                                        
-                                        <div className="space-y-2 max-h-40 overflow-y-auto">
-                                            {localOpdList.map(opd => (
-                                                <div key={opd.id} className="flex items-center gap-2">
-                                                    <Checkbox 
-                                                        id={opd.id} 
-                                                        checked={selectedOpds.includes(opd.id!)} 
-                                                        onCheckedChange={() => handleOpdCheckChange(opd.id!)}
-                                                    />
-                                                    <Label htmlFor={opd.id} className="text-sm font-normal cursor-pointer">{opd.namaOpd}</Label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        </ScrollArea>
-                        <DialogFooter className="mt-6 pt-4 border-t">
-                            <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>Batal</Button>
-                            <Button type="submit" disabled={isProcessing}>
-                                {isProcessing ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <Save className="mr-2 h-4 w-4"/>} Simpan
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
             
             <TemplateGuideModal isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 

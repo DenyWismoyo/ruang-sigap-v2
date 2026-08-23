@@ -3,15 +3,15 @@
 
 import React from "react";
 // [PERBAIKAN] Impor tipe DokumenFolder dan DokumenLink
-import { DocumentIconType, DokumenFolder, DokumenLink } from "@/types"; 
-import RepositoryItem from "./RepositoryItem";
+import { DocumentIconType, RepositoryItem as RepoItemType } from "@/types"; 
+import RepositoryItemComponent from "./RepositoryItem";
 import { FolderSearch } from "lucide-react";
 
 // [PERBAIKAN] Hapus 'interface Item' lokal yang lama dan salah.
 // ... interface Item lama dihapus ...
 
 // [PERBAIKAN] Buat tipe gabungan yang benar
-type RepositoryItemCombined = (DokumenFolder & { type: 'folder' }) | (DokumenLink & { type: 'link' });
+type RepositoryItemCombined = RepoItemType;
 
 interface RepositoryViewProps {
   items: RepositoryItemCombined[]; // [PERBAIKAN] Gunakan tipe yang benar
@@ -58,37 +58,21 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({
 
   if (viewMode === "grid") {
     return (
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 p-4">
         {items.map((item) => (
-          <button
-            key={item.id}
+          <div 
+            key={item.id} 
             onClick={() => onItemClick(item)}
-            // [PERBAIKAN] Hapus onContextMenu (sudah ditangani di RepositoryItem)
-            // onContextMenu={(e) => onItemRightClick(e, item)}
-            className="flex flex-col items-center justify-center p-4 rounded-lg bg-white dark:bg-gray-800 shadow-sm hover:shadow-md dark:hover:bg-gray-700 transition-all cursor-pointer text-center"
+            className="flex flex-col items-center justify-center p-4 border rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 cursor-pointer"
           >
-            <RepositoryItem
-              item={item}
-              // [PERBAIKAN] Hapus viewMode dari sini
-              // viewMode={viewMode}
-              onClick={() => onItemClick(item)}
-              // [PERBAIKAN] Hapus onRightClick
-              // onRightClick={(e) => onItemRightClick(e, item)}
-              
-              // [PERBAIKAN] Tambahkan prop dummy karena RepositoryItem mengharapkannya
-              // Seharusnya RepositoryView tidak lagi digunakan, tapi kita perbaiki agar bisa build
-              user={undefined}
-              canManage={false}
-              canShare={false}
-              onRename={() => {}}
-              onShare={() => {}}
-              onDelete={() => {}}
-              onCopyLink={() => {}}
-              onDragStart={() => {}}
-              onDragEnd={() => {}}
-              onDropOnFolder={() => {}}
-            />
-          </button>
+            {/* Simplified icon for grid view */}
+            <div className="text-4xl mb-2">
+              {item.tipe === 'folder' ? '📁' : '🔗'}
+            </div>
+            <div className="text-xs text-center break-all line-clamp-2">
+              {item.nama}
+            </div>
+          </div>
         ))}
       </div>
     );
@@ -101,22 +85,17 @@ const RepositoryView: React.FC<RepositoryViewProps> = ({
           <button
             key={item.id}
             onClick={() => onItemClick(item)}
-            // [PERBAIKAN] Hapus onContextMenu
-            // onContextMenu={(e) => onItemRightClick(e, item)}
             className="flex items-center w-full p-3 rounded-md bg-white dark:bg-gray-800 shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-all cursor-pointer text-left"
           >
-            <RepositoryItem
+            {/* Perlu dicatat, RepositoryView versi ini HANYA menampilkan data (Read-only view). 
+                Untuk aksi penuh (Rename, Delete, Drag&Drop) di mode list, 
+                seharusnya menggunakan komponen RepositoryList.tsx 
+            */}
+            <RepositoryItemComponent
               item={item}
-              // [PERBAIKAN] Hapus viewMode dari sini
-              // viewMode={viewMode}
-              onClick={() => onItemClick(item)}
-              // [PERBAIKAN] Hapus onRightClick
-              // onRightClick={(e) => onItemRightClick(e, item)}
-              
-              // [PERBAIKAN] Tambahkan prop dummy
-              user={undefined}
-              canManage={false}
+              canManage={false} // Di view sederhana ini, tidak bisa manage
               canShare={false}
+              onClick={() => onItemClick(item)}
               onRename={() => {}}
               onShare={() => {}}
               onDelete={() => {}}

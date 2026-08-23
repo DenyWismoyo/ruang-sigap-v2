@@ -6,12 +6,12 @@
 "use client";
 
 import React, { useRef } from 'react';
-import { DokumenFolder, DokumenLink } from '@/types';
+import { RepositoryItem as RepoItemType } from '@/types';
 import { FolderSearch, Loader2 } from 'lucide-react';
-import RepositoryItem from './RepositoryItem';
+import RepositoryItemComponent from './RepositoryItem';
 import { useVirtualizer } from '@tanstack/react-virtual';
 
-type RepositoryItemCombined = (DokumenFolder & { type: 'folder' }) | (DokumenLink & { type: 'link' });
+type RepositoryItemCombined = RepoItemType;
 
 interface RepositoryListProps {
   items: RepositoryItemCombined[];
@@ -79,7 +79,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
         ref={parentRef} 
         className="flex-1 overflow-y-auto"
         // Handler drop di area kosong untuk pindah ke root folder saat ini
-        onDragOver={(e) => e.preventDefault()} 
+        onDragOver={(e: any) => e.preventDefault()} 
         onDrop={(e) => onDropOnFolder(e as any, null)}
       >
         <div
@@ -104,7 +104,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                 }}
                 className="border-b border-border last:border-0"
               >
-                <RepositoryItem
+                <RepositoryItemComponent
                   item={item}
                   user={users.get(item.createdBy)}
                   canManage={canManageItem(item)}
@@ -116,7 +116,7 @@ const RepositoryList: React.FC<RepositoryListProps> = ({
                   onCopyLink={(url: string) => onCopyLink(url)}
                   onDragStart={(e) => onDragStart(e, item)}
                   onDragEnd={onDragEnd}
-                  onDropOnFolder={(e) => onDropOnFolder(e, item.type === 'folder' ? item.id! : null)}
+                  onDropOnFolder={(e) => onDropOnFolder(e, item.tipe === 'folder' ? item.id! : null)}
                 />
               </div>
             );

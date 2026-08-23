@@ -281,7 +281,7 @@ const FormPersetujuanModal = ({ isOpen, onClose, onSave, onCheckLink, userProfil
     };
 
     const handleSelectTemplate = (template: BankTemplate) => {
-        setGoogleDocUrl(template.googleDriveUrl);
+        setGoogleDocUrl(template.googleDriveUrl || '');
         setIsBankTemplateModalOpen(false);
     };
 

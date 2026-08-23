@@ -6,7 +6,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { DokumenFolder, DokumenLink, DocumentIconType } from "@/types";
+import { RepositoryItem as RepoItemType, DocumentIconType, RepositoryItemType } from "@/types";
 import {
   Folder,
   FileText,
@@ -36,7 +36,7 @@ import { Button } from '@/components/ui/button';
 // --- Akhir Impor Shadcn ---
 
 // Tipe gabungan dari page.tsx
-type RepositoryItemCombined = (DokumenFolder & { type: 'folder' }) | (DokumenLink & { type: 'link' });
+type RepositoryItemCombined = RepoItemType;
 
 interface RepositoryItemProps {
   item: RepositoryItemCombined;
@@ -58,7 +58,7 @@ interface RepositoryItemProps {
 
 // Helper untuk mendapatkan ikon berdasarkan tipe
 const getItemIcon = (
-  tipe: 'folder' | 'link',
+  tipe: RepositoryItemType,
   tipeDokumen?: DocumentIconType
 ) => {
   if (tipe === "folder") {
@@ -93,8 +93,8 @@ const RepositoryItem: React.FC<RepositoryItemProps> = ({
   const [isDragged, setIsDragged] = useState(false);
   const [isDropTarget, setIsDropTarget] = useState(false);
 
-  const icon = getItemIcon(item.type, (item as DokumenLink).tipeDokumen);
-  const nama = item.type === 'folder' ? item.namaFolder : item.namaDokumen;
+  const icon = getItemIcon(item.tipe, item.tipeDokumen);
+  const nama = item.nama;
 
   // [PERBAIKAN] Gunakan HTMLElement
   const handleDragStart = (e: React.DragEvent<HTMLElement>) => {
@@ -112,7 +112,7 @@ const RepositoryItem: React.FC<RepositoryItemProps> = ({
   const handleDragOver = (e: React.DragEvent<HTMLElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    if (item.type === 'folder') {
+    if (item.tipe === 'folder') {
       setIsDropTarget(true);
     }
   };
@@ -181,12 +181,12 @@ const RepositoryItem: React.FC<RepositoryItemProps> = ({
       </DropdownMenuTrigger>
       
       <DropdownMenuContent>
-          {item.type === "link" && (
+          {item.tipe === "link" && (
             <>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open((item as DokumenLink).url, '_blank'); }}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); window.open(item.url, '_blank'); }}>
                 <ExternalLink className="mr-2 h-4 w-4" /> Buka di Tab Baru
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onCopyLink((item as DokumenLink).url); }}>
+              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onCopyLink(item.url || ''); }}>
                 <Copy className="mr-2 h-4 w-4" /> Salin Tautan
               </DropdownMenuItem>
               <DropdownMenuSeparator />

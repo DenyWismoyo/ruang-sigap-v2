@@ -325,7 +325,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     setIsImpersonating(false);
     setOriginalUserUid(null);
     lastFetchedUidRef.current = null;
-    sessionRecordedForUidRef.current = null;
+    lastRecordedSessionRef.current = null;
     
     // Hapus semua cookie sesi
     clearSessionCookies();

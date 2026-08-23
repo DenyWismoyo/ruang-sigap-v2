@@ -22,6 +22,7 @@ import { JadwalTempat } from '@/types';
 import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, MapPin, Video, ExternalLink, Users, List, LayoutGrid } from 'lucide-react';
 import JadwalFormModal from './components/JadwalFormModal';
 import JadwalDetailModal from './components/JadwalDetailModal';
+import ManageRuanganModal from './components/ManageRuanganModal';
 import Link from 'next/link';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
@@ -44,6 +45,7 @@ export default function JadwalInternalPage() {
 
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isManageRuanganModalOpen, setIsManageRuanganModalOpen] = useState(false);
 
     const [jadwalToEdit, setJadwalToEdit] = useState<JadwalTempat | null>(null);
     const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
@@ -157,9 +159,16 @@ export default function JadwalInternalPage() {
                 title="Jadwal Internal"
                 icon={CalendarDays}
                 actions={
-                    <Button onClick={() => handleOpenFormModal(new Date())} className="sg-btn sg-btn-primary">
-                        <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
-                    </Button>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        {isAdmin && (
+                            <Button onClick={() => setIsManageRuanganModalOpen(true)} variant="outline" className="sg-btn bg-background text-foreground hover:bg-accent/50 border-border/40">
+                                Kelola Ruangan
+                            </Button>
+                        )}
+                        <Button onClick={() => handleOpenFormModal(new Date())} className="sg-btn sg-btn-primary">
+                            <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
+                        </Button>
+                    </div>
                 }
             />
 
@@ -191,29 +200,29 @@ export default function JadwalInternalPage() {
 
             <div className="sg-section">
                 <div className="flex flex-col md:grid md:grid-cols-1 lg:grid-cols-3 gap-0 md:gap-6">
-                    <Card className="sg-card sg-mobile-borderless lg:col-span-2 shadow-md border-border overflow-hidden">
-                    <CardHeader className="p-4 flex flex-row items-center justify-between border-b border-border">
+                    <div className="sg-glass-panel sg-mobile-borderless lg:col-span-2 overflow-hidden flex flex-col p-0">
+                    <div className="p-4 flex flex-row items-center justify-between border-b border-border/30">
                         <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)}>
                             <ChevronLeft/>
                         </Button>
-                        <h2 className="text-xl font-semibold">{currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</h2>
+                        <h2 className="text-lg font-semibold text-foreground">{currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}</h2>
                         <Button variant="ghost" size="icon" onClick={() => changeMonth(1)}>
                             <ChevronRight/>
                         </Button>
-                    </CardHeader>
-                    <CardContent className="p-0">
+                    </div>
+                    <div className="p-0">
                         {/* [PERBAIKAN DARK MODE] */}
-                        <div className="grid grid-cols-7 border-t border-border">
+                        <div className="grid grid-cols-7 border-t border-border/30 bg-card/30">
                             {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
-                                <div key={day} className="text-center font-bold text-sm py-2 border-b border-r border-border text-muted-foreground">{day}</div>
+                                <div key={day} className="text-center font-bold text-xs py-2.5 border-b border-r border-border/30 text-muted-foreground uppercase tracking-wider">{day}</div>
                             ))}
-                            {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} className="border-r border-b border-border min-h-[8rem]"></div>)}
+                            {Array.from({ length: firstDayOfMonth }).map((_, i) => <div key={`empty-${i}`} className="border-r border-b border-border/30 min-h-[8rem] bg-accent/5"></div>)}
                             {daysInMonth.map(date => {
                                 const jadwalForDate = getJadwalForDate(date);
                                 const isToday = date.toDateString() === new Date().toDateString();
                                 return (
-                                    <div key={date.toString()} className={`relative p-2 border-r border-b border-border min-h-[8rem] overflow-hidden group`}>
-                                        <div className={`absolute top-1 right-1 text-xs md:text-sm font-bold ${isToday ? 'bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center' : 'text-muted-foreground'}`}>{date.getDate()}</div>
+                                    <div key={date.toString()} className={`relative p-2 border-r border-b border-border/30 min-h-[8rem] overflow-hidden group hover:bg-accent/5 transition-colors`}>
+                                        <div className={`absolute top-2 right-2 text-xs md:text-sm font-bold ${isToday ? 'bg-primary text-primary-foreground rounded-full w-6 h-6 flex items-center justify-center shadow-sm' : 'text-muted-foreground'}`}>{date.getDate()}</div>
                                         {jadwalForDate.length === 0 && (
                                             <Button
                                                 onClick={() => handleOpenFormModal(date)}
@@ -243,29 +252,27 @@ export default function JadwalInternalPage() {
                                     </div>
                                 )
                             })}
-                            {Array.from({ length: (7 - (firstDayOfMonth + daysInMonth.length) % 7) % 7 }).map((_, i) => <div key={`empty-end-${i}`} className="border-r border-b border-border min-h-[8rem]"></div>)}
+                            {Array.from({ length: (7 - (firstDayOfMonth + daysInMonth.length) % 7) % 7 }).map((_, i) => <div key={`empty-end-${i}`} className="border-r border-b border-border/30 min-h-[8rem] bg-accent/5"></div>)}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
+                    </div>
 
-                <Card className="sg-card sg-mobile-borderless lg:col-span-1 shadow-md border-border flex flex-col">
-                    <CardHeader className="p-4 border-b border-border">
-                        <CardTitle className="text-lg font-semibold text-foreground flex items-center justify-between">
-                            <div className="flex items-center">
-                                <CalendarDays size={18} className="mr-3 text-muted-foreground" />
-                                Agenda Bulan Ini
-                            </div>
-                            <div className="flex items-center bg-muted rounded-lg p-1">
-                                <Button onClick={() => setAgendaInternalView('card')} variant={agendaInternalView === 'card' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7">
-                                    <LayoutGrid size={16} />
-                                </Button>
-                                <Button onClick={() => setAgendaInternalView('table')} variant={agendaInternalView === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7">
-                                    <List size={16} />
-                                </Button>
-                            </div>
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 flex-1">
+                    <div className="sg-glass-panel sg-mobile-borderless lg:col-span-1 flex flex-col p-0 overflow-hidden">
+                    <div className="p-4 border-b border-border/30 flex items-center justify-between bg-card/30">
+                        <div className="text-base font-semibold text-foreground flex items-center">
+                            <CalendarDays size={18} className="mr-3 text-sg-blue" />
+                            Agenda Bulan Ini
+                        </div>
+                        <div className="flex items-center bg-muted rounded-lg p-1">
+                            <Button onClick={() => setAgendaInternalView('card')} variant={agendaInternalView === 'card' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7 rounded">
+                                <LayoutGrid size={16} />
+                            </Button>
+                            <Button onClick={() => setAgendaInternalView('table')} variant={agendaInternalView === 'table' ? 'secondary' : 'ghost'} size="icon" className="h-7 w-7 rounded">
+                                <List size={16} />
+                            </Button>
+                        </div>
+                    </div>
+                    <div className="p-0 flex-1 bg-card/30">
                         <ScrollArea className="h-[calc(100vh-280px)]">
                             <div className="p-4 space-y-3">
                                 {loading && <p className="text-center text-muted-foreground py-4">Memuat agenda...</p>}
@@ -275,7 +282,7 @@ export default function JadwalInternalPage() {
                                 
                                 {!loading && agendaBulanIni.length > 0 && agendaInternalView === 'card' && agendaBulanIni.map(jadwal => (
                                     // [PERBAIKAN DARK MODE]
-                                    <div key={jadwal.id} onClick={() => handleOpenDetailModal(jadwal)} className="p-3 bg-background rounded-lg border border-border hover:bg-muted cursor-pointer">
+                                    <div key={jadwal.id} onClick={() => handleOpenDetailModal(jadwal)} className="p-3 bg-background rounded-[var(--radius)] border border-border/40 hover:bg-accent/50 hover:shadow-sm cursor-pointer transition-all duration-200">
                                         <p className="font-semibold text-foreground text-sm line-clamp-2">{jadwal.kegiatan}</p>
                                         <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
                                             <p className="flex items-center"><CalendarDays size={12} className="mr-2"/> {jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'long' }) : 'N/A'}</p>
@@ -322,12 +329,12 @@ export default function JadwalInternalPage() {
                                 )}
                             </div>
                         </ScrollArea>
-                    </CardContent>
-                </Card>
+                    </div>
+                    </div>
                 </div>
             </div>
 
-            <JadwalFormModal
+            <JadwalFormModal 
                 isOpen={isFormModalOpen}
                 onClose={() => setIsFormModalOpen(false)}
                 onSuccess={() => { setIsFormModalOpen(false); fetchData(); }} 
@@ -343,6 +350,11 @@ export default function JadwalInternalPage() {
                 onReject={handleReject}
                 onEdit={(j) => { setIsDetailModalOpen(false); handleOpenFormModal(j.tanggalMulai.toDate(), j); }}
                 onDelete={handleDelete}
+            />
+
+            <ManageRuanganModal 
+                isOpen={isManageRuanganModalOpen}
+                onClose={() => setIsManageRuanganModalOpen(false)}
             />
         </div>
     );

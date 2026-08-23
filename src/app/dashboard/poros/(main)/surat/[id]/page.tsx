@@ -322,7 +322,7 @@ const EditSuratModal = ({
 export default function DetailSuratPage() {
   const params = useParams();
   const router = useRouter(); 
-  const suratId = params.id as string;
+  const suratId = params?.id as string;
 
   const { user, userProfile, jabatanProfile, actingJabatanProfile, loading: authLoading } = useUserAuth();
   

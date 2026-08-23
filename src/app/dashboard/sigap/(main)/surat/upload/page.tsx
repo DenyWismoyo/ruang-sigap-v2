@@ -132,8 +132,8 @@ function UploadSuratComponent() {
 
   useEffect(() => {
     if (isCheckingShare) {
-       const sharedTitle = searchParams.get('perihal');
-       const sharedText = searchParams.get('tambahan_perihal');
+       const sharedTitle = searchParams?.get('perihal');
+       const sharedText = searchParams?.get('tambahan_perihal');
        let combinedText = '';
        if (sharedTitle) combinedText += sharedTitle;
        if (sharedText) combinedText += `\n${sharedText}`;

@@ -8,11 +8,13 @@ import React, { useState, useEffect } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase';
-import { collection, query, where, getDocs, orderBy } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, addDoc, Timestamp } from 'firebase/firestore';
 import { BankTemplate } from '@/types';
 import { Loader2, FileText, Wand2, ArrowLeft, CheckCircle, AlertTriangle, Plus, Trash2, RefreshCw, ChevronsUpDown, Check } from 'lucide-react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
+import { KODE_KLASIFIKASI_SURAT } from '@/data/kode-surat';
+import { DATA_PEGAWAI } from '@/data/pegawai';
 
 // Komponen UI
 import { Button } from "@/components/ui/button";
@@ -46,7 +48,7 @@ import {
 } from "@/components/ui/command";
 
 // Daftar variabel standar yang kita kenali (untuk pengelompokan UI yang lebih rapi)
-const STANDARD_VARS = ['no_surat', 'sifat', 'lampiran', 'perihal', 'kepada', 'di_tempat', 'tanggal', 'nama_pengirim', 'nip_pengirim', 'jabatan_pengirim'];
+const STANDARD_VARS = ['no_surat', 'sifat', 'lampiran', 'perihal', 'kepada', 'di_tempat', 'tanggal', 'nama_pengirim', 'nip_pengirim', 'jabatan_pengirim', 'nama_pegawai', 'nip_pegawai', 'jabatan_pegawai', 'pangkat_pegawai', 'golongan_pegawai'];
 
 // --- DAFTAR VARIABEL UMUM (SUGGESTION) ---
 const SUGGESTED_VARIABLES = [
@@ -194,6 +196,10 @@ export default function BuatSuratKeluarPage() {
   // [FITUR BARU] Variabel Kustom Dinamis (Manual Add)
   const [customVariables, setCustomVariables] = useState<{key: string, value: string}[]>([]);
 
+  // [FITUR BARU] AI Auto-Drafter
+  const [aiPrompt, setAiPrompt] = useState('');
+  const [isDraftingAI, setIsDraftingAI] = useState(false);
+
   // Ambil Template
   useEffect(() => {
     const fetchTemplates = async () => {
@@ -208,8 +214,8 @@ export default function BuatSuratKeluarPage() {
         const snapShared = await getDocs(qShared);
         const sharedTpls = snapShared.docs.map(d => ({ id: d.id, ...d.data() } as BankTemplate));
 
-        setOpdTemplates(myTpls.filter(t => t.googleDriveUrl.includes('docs.google.com/document')));
-        setSharedTemplates(sharedTpls.filter(t => t.googleDriveUrl.includes('docs.google.com/document')));
+        setOpdTemplates(myTpls.filter(t => t.googleDriveUrl || t.content));
+        setSharedTemplates(sharedTpls.filter(t => t.googleDriveUrl || t.content));
       } catch (error) {
         console.error(error);
         addToast("Gagal memuat template", "error");
@@ -242,11 +248,33 @@ export default function BuatSuratKeluarPage() {
 
         const allTpls = [...opdTemplates, ...sharedTemplates];
         const templateObj = allTpls.find(t => t.id === selectedTemplateId);
-        const match = templateObj?.googleDriveUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+
+        // JIKA INTERNAL MARKDOWN TEMPLATE
+        if (templateObj?.content) {
+            const regex = /\{\{([^}]+)\}\}/g;
+            const matches = [];
+            let match;
+            while ((match = regex.exec(templateObj.content)) !== null) {
+                matches.push(match[1].trim());
+            }
+            const cleanVars = Array.from(new Set(matches)); // Unique vars
+            setDetectedVariables(cleanVars);
+            
+            if (cleanVars.length === 0) {
+                addToast("Tidak ditemukan variabel {{...}} di dalam template ini.", "info");
+            } else {
+                addToast(`Berhasil mendeteksi ${cleanVars.length} variabel otomatis dari Markdown!`, "success");
+            }
+            setIsReadingTemplate(false);
+            return;
+        }
+
+        // JIKA GOOGLE DOCS TEMPLATE
+        const match = templateObj?.googleDriveUrl?.match(/\/d\/([a-zA-Z0-9-_]+)/);
         const fileId = match ? match[1] : null;
 
         if (!fileId) {
-            addToast("Link template tidak valid.", "error");
+            addToast("Gagal membaca template: tidak ada konten markdown atau link GDocs tidak valid.", "error");
             setIsReadingTemplate(false);
             return;
         }
@@ -313,14 +341,16 @@ export default function BuatSuratKeluarPage() {
         return;
     }
     
-    // Cari File ID
+    // Cari File
     const allTpls = [...opdTemplates, ...sharedTemplates];
     const templateObj = allTpls.find(t => t.id === selectedTemplateId);
-    const match = templateObj?.googleDriveUrl.match(/\/d\/([a-zA-Z0-9-_]+)/);
+
+    const isMarkdown = !!templateObj?.content;
+    const match = templateObj?.googleDriveUrl?.match(/\/d\/([a-zA-Z0-9-_]+)/);
     const googleFileId = match ? match[1] : null;
 
-    if (!googleFileId || !userProfile?.googleDriveReportLink) {
-        addToast("Konfigurasi GDrive tidak lengkap.", "error");
+    if (!isMarkdown && (!googleFileId || !userProfile?.googleDriveReportLink)) {
+        addToast("Konfigurasi GDrive tidak lengkap untuk template ini.", "error");
         return;
     }
 
@@ -344,13 +374,40 @@ export default function BuatSuratKeluarPage() {
           }
       });
 
+      // JIKA MARKDOWN TEMPLATE
+      if (isMarkdown && templateObj.content) {
+          let finalMarkdown = templateObj.content;
+          Object.keys(replaceData).forEach(key => {
+              finalMarkdown = finalMarkdown.replace(new RegExp(key, 'g'), replaceData[key]);
+          });
+          
+          try {
+              const docRef = await addDoc(collection(db, 'drafSuratInternal'), {
+                  opdId: userProfile?.opdId || '',
+                  createdBy: userProfile?.uid || '',
+                  createdAt: Timestamp.now(),
+                  content: finalMarkdown,
+                  nomorSurat: variableValues['no_surat'] || 'Draft',
+                  perihal: variableValues['perihal'] || 'Draft Surat'
+              });
+              addToast("Draft surat berhasil dibuat!", "success");
+              router.push(`/dashboard/poros/surat-keluar/preview?id=${docRef.id}`);
+          } catch(err) {
+              console.error(err);
+              addToast("Gagal menyimpan draft surat.", "error");
+          }
+          setIsGenerating(false);
+          return;
+      }
+
+      // JIKA GOOGLE DOCS TEMPLATE
       const response = await fetch('/api/google/generate-surat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nip: userProfile.nip,
+          nip: userProfile?.nip || '',
           templateId: googleFileId,
-          folderId: userProfile.googleDriveReportLink, 
+          folderId: userProfile?.googleDriveReportLink || '', 
           data: replaceData
         })
       });
@@ -370,6 +427,30 @@ export default function BuatSuratKeluarPage() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleDraftAI = async () => {
+      if (!aiPrompt) return;
+      setIsDraftingAI(true);
+      try {
+          const res = await fetch('/api/ai/draft-form', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: aiPrompt, variables: detectedVariables })
+          });
+          const data = await res.json();
+          if (res.ok && data.data) {
+              setVariableValues(prev => ({ ...prev, ...data.data }));
+              addToast("Form berhasil diisi oleh AI!", "success");
+          } else {
+              addToast(data.error || "Gagal memproses AI", "error");
+          }
+      } catch (err) {
+          console.error(err);
+          addToast("Kesalahan server AI", "error");
+      } finally {
+          setIsDraftingAI(false);
+      }
   };
 
   // Pisahkan variabel untuk render UI
@@ -481,7 +562,34 @@ export default function BuatSuratKeluarPage() {
                 </div>
             )}
 
-            {/* 1. Data Pokok (Standard Vars) */}
+            {/* 1. AI Drafter */}
+            {detectedVariables.length > 0 && (
+                <Card className="border-indigo-200 dark:border-indigo-900 bg-indigo-50/30 dark:bg-indigo-900/10">
+                    <CardHeader>
+                        <CardTitle className="text-indigo-800 dark:text-indigo-400 flex items-center">
+                            <Wand2 className="mr-2 h-5 w-5" /> AI Auto-Drafter
+                        </CardTitle>
+                        <CardDescription>
+                            Ceritakan saja surat yang ingin Anda buat, AI akan mengisi form di bawah secara otomatis!
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                        <Textarea
+                            placeholder="Contoh: Tolong buatkan surat undangan rapat koordinasi teknis untuk tanggal 20 Mei besok jam 9 pagi di Ruang Rapat Utama, ditujukan untuk Para Kepala Bidang."
+                            value={aiPrompt}
+                            onChange={e => setAiPrompt(e.target.value)}
+                            rows={3}
+                            className="bg-white dark:bg-slate-950 border-indigo-200"
+                        />
+                        <Button onClick={handleDraftAI} disabled={isDraftingAI || !aiPrompt} className="bg-indigo-600 hover:bg-indigo-700 text-white w-full sm:w-auto">
+                            {isDraftingAI ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <Wand2 className="mr-2 h-4 w-4"/>}
+                            Isi Form Otomatis
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* 2. Data Pokok (Standard Vars) */}
             {standardVarsFound.length > 0 && (
                 <Card>
                     <CardHeader>
@@ -489,25 +597,126 @@ export default function BuatSuratKeluarPage() {
                         <CardDescription>Isian standar yang ditemukan di template.</CardDescription>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {standardVarsFound.map(key => (
-                            <div key={key} className={key === 'perihal' || key === 'kepada' || key === 'isi_surat' || key === 'penutup' ? 'md:col-span-2' : ''}>
-                                <Label className="mb-1.5 block capitalize">{getLabel(key)}</Label>
-                                {key === 'isi_surat' || key === 'penutup' ? (
-                                    <Textarea
-                                        value={variableValues[key] || ''}
-                                        onChange={e => handleInputChange(key, e.target.value)}
-                                        placeholder={`Isi ${getLabel(key)}...`}
-                                        rows={key === 'isi_surat' ? 6 : 3}
-                                    />
-                                ) : (
-                                    <Input 
-                                        value={variableValues[key] || ''} 
-                                        onChange={e => handleInputChange(key, e.target.value)}
-                                        placeholder={`Isi ${getLabel(key)}...`}
-                                    />
-                                )}
-                            </div>
-                        ))}
+                        {standardVarsFound.map(key => {
+                            if (key === 'no_surat') {
+                                return (
+                                    <div key={key} className="md:col-span-2">
+                                        <Label className="mb-1.5 block capitalize">Nomor Surat</Label>
+                                        <div className="flex gap-2">
+                                            <Select 
+                                                onValueChange={(val) => {
+                                                    const existing = variableValues[key] || '';
+                                                    let cleanExisting = existing.replace(/^\d+/, '');
+                                                    if (!cleanExisting.startsWith('/')) cleanExisting = '/' + cleanExisting;
+                                                    handleInputChange(key, val + (cleanExisting === '/' ? '' : cleanExisting)); 
+                                                }}
+                                            >
+                                                <SelectTrigger className="w-[180px] shrink-0 bg-white dark:bg-slate-950">
+                                                    <SelectValue placeholder="Kode Klasifikasi" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    {KODE_KLASIFIKASI_SURAT.map(k => (
+                                                        <SelectItem key={k.kode} value={k.kode}>
+                                                            <span className="font-mono">{k.kode}</span> - {k.deskripsi}
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                            <Input 
+                                                value={variableValues[key] || ''} 
+                                                onChange={e => handleInputChange(key, e.target.value)}
+                                                placeholder="Contoh: 005/123/456/2026"
+                                                className="flex-1"
+                                            />
+                                        </div>
+                                    </div>
+                                );
+                            }
+
+                            if (key === 'nama_pegawai') {
+                                return (
+                                    <div key={key} className="md:col-span-2 p-4 border rounded-lg bg-blue-50/50 dark:bg-blue-900/10">
+                                        <Label className="mb-1.5 block capitalize font-bold text-blue-700 dark:text-blue-400">Pegawai Tersorot (Auto-Fill)</Label>
+                                        <Select 
+                                            onValueChange={(val) => {
+                                                const peg = DATA_PEGAWAI.find(p => p.nip === val);
+                                                if (peg) {
+                                                    setVariableValues(prev => ({
+                                                        ...prev,
+                                                        nama_pegawai: peg.nama,
+                                                        nip_pegawai: peg.nip,
+                                                        jabatan_pegawai: peg.jabatan,
+                                                        pangkat_pegawai: peg.pangkat,
+                                                        golongan_pegawai: peg.golongan
+                                                    }));
+                                                    addToast(`Data ${peg.nama} otomatis diisi.`, 'success');
+                                                } else {
+                                                    handleInputChange(key, val);
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="w-full bg-white dark:bg-slate-950 border-blue-300">
+                                                <SelectValue placeholder="-- Cari / Pilih Data Pegawai --" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {DATA_PEGAWAI.map(p => (
+                                                    <SelectItem key={p.nip} value={p.nip}>
+                                                        <div className="flex flex-col">
+                                                            <span className="font-semibold">{p.nama}</span>
+                                                            <span className="text-xs text-muted-foreground">{p.nip} - {p.jabatan}</span>
+                                                        </div>
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                        <Input 
+                                            className="mt-3 bg-white"
+                                            value={variableValues[key] || ''} 
+                                            onChange={e => handleInputChange(key, e.target.value)}
+                                            placeholder={`Atau ketik manual ${getLabel(key)}...`}
+                                        />
+                                        <p className="text-xs text-muted-foreground mt-2">NIP, Jabatan, Pangkat otomatis tersinkronisasi jika tersedia di template.</p>
+                                    </div>
+                                );
+                            }
+
+                            if (['nip_pegawai', 'jabatan_pegawai', 'pangkat_pegawai', 'golongan_pegawai'].includes(key)) {
+                                return (
+                                    <div key={key}>
+                                        <Label className="mb-1.5 block capitalize flex justify-between">
+                                            {getLabel(key)}
+                                            {variableValues[key] && <span className="text-[10px] text-green-600 font-bold bg-green-100 px-1 rounded">Auto</span>}
+                                        </Label>
+                                        <Input 
+                                            value={variableValues[key] || ''} 
+                                            onChange={e => handleInputChange(key, e.target.value)}
+                                            placeholder={`Isi ${getLabel(key)}...`}
+                                            className={variableValues[key] ? "bg-green-50/50 border-green-200" : ""}
+                                        />
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <div key={key} className={key === 'perihal' || key === 'kepada' || key === 'isi_surat' || key === 'penutup' ? 'md:col-span-2' : ''}>
+                                    <Label className="mb-1.5 block capitalize">{getLabel(key)}</Label>
+                                    {key === 'isi_surat' || key === 'penutup' ? (
+                                        <Textarea
+                                            value={variableValues[key] || ''}
+                                            onChange={e => handleInputChange(key, e.target.value)}
+                                            placeholder={`Isi ${getLabel(key)}...`}
+                                            rows={key === 'isi_surat' ? 6 : 3}
+                                        />
+                                    ) : (
+                                        <Input 
+                                            value={variableValues[key] || ''} 
+                                            onChange={e => handleInputChange(key, e.target.value)}
+                                            placeholder={`Isi ${getLabel(key)}...`}
+                                        />
+                                    )}
+                                </div>
+                            );
+                        })}
                     </CardContent>
                 </Card>
             )}
