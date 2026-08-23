@@ -37,20 +37,20 @@ export function MockDashboardStats() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 overflow-y-auto custom-scrollbar p-6 sm:p-10">
+    <div className="w-full h-full flex flex-col bg-transparent text-foreground overflow-y-auto custom-scrollbar p-4 sm:p-6">
       
       {/* Greeting Header */}
       <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="mb-8 flex items-start gap-4"
+        className="mb-6 flex items-start gap-3"
       >
-        <Sun className="w-8 h-8 text-orange-500 shrink-0 mt-2" />
+        <Sun className="w-6 h-6 text-orange-500 shrink-0 mt-1" />
         <div>
-          <h1 className="text-4xl sm:text-[42px] font-bold text-[#1a56db] dark:text-[#3b82f6] tracking-tight mb-2">
+          <h1 className="text-xl sm:text-2xl font-bold text-primary tracking-tight mb-1">
             Selamat Siang, Pimpinan!
           </h1>
-          <p className="text-slate-500 text-lg">Jangan lupa istirahat sejenak.</p>
+          <p className="text-muted-foreground text-xs">Jangan lupa istirahat sejenak.</p>
         </div>
       </motion.div>
 
@@ -59,63 +59,63 @@ export function MockDashboardStats() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-lg shadow-sm"
+        className="glass-enterprise border border-border/40 rounded-lg shadow-sm"
       >
         {/* Card Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-4 sm:p-5 border-b border-slate-200 dark:border-slate-800 gap-4">
-          <div className="flex items-center gap-3">
-            <Calendar className="w-5 h-5 text-slate-700 dark:text-slate-300" />
-            <div className="w-1 h-5 bg-[#1a56db] rounded-sm" />
-            <h2 className="text-lg font-bold text-slate-900 dark:text-white">Agenda Undangan OPD</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 border-b border-border/20 gap-3">
+          <div className="flex items-center gap-2">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <div className="w-1 h-4 bg-primary rounded-sm" />
+            <h2 className="text-sm font-bold text-foreground">Agenda Undangan OPD</h2>
           </div>
           
           <div className="flex items-center gap-2">
-            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-md p-0.5">
-               <button className="px-4 py-1.5 text-sm font-medium bg-white dark:bg-slate-700 shadow-sm rounded border border-slate-200 dark:border-slate-600">Hari Ini</button>
-               <button className="px-4 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-400">Akan Datang</button>
+            <div className="flex bg-background/50 rounded-md p-0.5 border border-border/30">
+               <button className="px-3 py-1 text-[10px] font-medium bg-muted shadow-sm rounded border border-border/40">Hari Ini</button>
+               <button className="px-3 py-1 text-[10px] font-medium text-muted-foreground hover:text-foreground">Akan Datang</button>
             </div>
             
-            <div className="flex bg-slate-100 dark:bg-slate-800 rounded-md border border-slate-200 dark:border-slate-700 p-0.5 ml-2">
-               <button className="p-1.5 bg-white dark:bg-slate-700 shadow-sm rounded border border-slate-200 dark:border-slate-600"><List className="w-4 h-4" /></button>
-               <button className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"><Grid className="w-4 h-4" /></button>
+            <div className="flex bg-background/50 rounded-md border border-border/30 p-0.5 ml-1">
+               <button className="p-1 bg-muted shadow-sm rounded border border-border/40"><List className="w-3.5 h-3.5" /></button>
+               <button className="p-1 text-muted-foreground hover:text-foreground"><Grid className="w-3.5 h-3.5" /></button>
             </div>
             
-            <Button variant="outline" size="sm" className="ml-2 h-8 border-slate-200 dark:border-slate-700 text-xs">
-               <Download className="w-4 h-4 mr-2" /> Export
+            <Button variant="outline" size="sm" className="ml-1 h-7 border-border/40 bg-background/50 text-[10px]">
+               <Download className="w-3.5 h-3.5 mr-1" /> Export
             </Button>
           </div>
         </div>
 
         {/* Table Content */}
         <div className="w-full overflow-x-auto">
-          <table className="w-full text-left text-sm whitespace-nowrap sm:whitespace-normal">
+          <table className="w-full text-left text-xs whitespace-nowrap sm:whitespace-normal">
             <thead>
-              <tr className="bg-slate-50/50 dark:bg-slate-900/50 text-slate-500 dark:text-slate-400 text-xs font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-                <th className="px-6 py-4 w-[120px]">WAKTU</th>
-                <th className="px-6 py-4 w-1/2">PERIHAL & PENGIRIM</th>
-                <th className="px-6 py-4 w-[20%]">LOKASI</th>
-                <th className="px-6 py-4 w-[25%]">DISPOSISI KEPADA</th>
+              <tr className="bg-muted/10 text-muted-foreground text-[10px] font-bold uppercase tracking-wider border-b border-border/20">
+                <th className="px-4 py-3 w-[100px]">WAKTU</th>
+                <th className="px-4 py-3 w-1/2">PERIHAL & PENGIRIM</th>
+                <th className="px-4 py-3 w-[20%]">LOKASI</th>
+                <th className="px-4 py-3 w-[25%]">DISPOSISI KEPADA</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-slate-800/50">
+            <tbody className="divide-y divide-border/10">
               {AGENDA.map((item, i) => (
-                <tr key={i} className="hover:bg-slate-50/80 dark:hover:bg-slate-800/30 transition-colors">
-                  <td className="px-6 py-5 align-top">
-                    <p className="font-bold text-slate-900 dark:text-slate-100 text-[15px]">{item.waktu}</p>
-                    <p className="font-bold text-slate-900 dark:text-slate-100 text-[15px]">{item.jam}</p>
+                <tr key={i} className="hover:bg-white/5 transition-colors">
+                  <td className="px-4 py-3 align-top">
+                    <p className="font-bold text-foreground text-xs">{item.waktu}</p>
+                    <p className="font-bold text-foreground text-xs">{item.jam}</p>
                   </td>
-                  <td className="px-6 py-5 align-top">
-                    <p className="font-bold text-slate-900 dark:text-slate-100 text-[15px] leading-snug mb-1">{item.perihal}</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm mb-1.5">No: {item.nomor}</p>
-                    <p className="text-slate-500 dark:text-slate-400 text-sm flex items-center gap-1.5 uppercase font-medium">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                  <td className="px-4 py-3 align-top">
+                    <p className="font-bold text-foreground text-xs leading-snug mb-1">{item.perihal}</p>
+                    <p className="text-muted-foreground/70 text-[10px] mb-1">No: {item.nomor}</p>
+                    <p className="text-muted-foreground/80 text-[10px] flex items-center gap-1 uppercase font-semibold">
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
                       {item.pengirim}
                     </p>
                   </td>
-                  <td className="px-6 py-5 align-top text-slate-500 dark:text-slate-400 text-[15px]">
+                  <td className="px-4 py-3 align-top text-muted-foreground text-xs">
                     {item.lokasi}
                   </td>
-                  <td className="px-6 py-5 align-top text-slate-700 dark:text-slate-300 text-[15px]">
+                  <td className="px-4 py-3 align-top text-foreground/80 text-xs">
                     {item.disposisi}
                   </td>
                 </tr>

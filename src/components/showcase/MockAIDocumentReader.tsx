@@ -105,33 +105,33 @@ export function MockAIDocumentReader() {
   }, []);
 
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 overflow-hidden">
+    <div className="w-full h-full flex flex-col bg-transparent text-foreground overflow-hidden">
       {/* Header Detail Surat */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800 shrink-0">
+      <div className="px-4 sm:px-6 py-3 flex items-center justify-between border-b border-border/20 shrink-0">
         <div>
-          <div className="flex items-center gap-2 text-sm text-slate-500 mb-1">
-            <ChevronLeft className="w-4 h-4" />
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
+            <ChevronLeft className="w-3.5 h-3.5" />
             <span>Kembali ke Halaman Sebelumnya</span>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-100">
+          <h1 className="text-lg font-bold text-foreground">
             Pemberitahuan Pelaksanaan Pemeriksaan Rutin Tahunan
           </h1>
-          <div className="flex gap-2 mt-2">
-            <span className="px-3 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-semibold rounded-full">
+          <div className="flex gap-2 mt-1.5">
+            <span className="px-2.5 py-0.5 bg-muted/30 text-muted-foreground text-[10px] font-semibold rounded-full border border-border/40">
               Biasa
             </span>
-            <span className="px-3 py-1 bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 border border-blue-100 dark:border-blue-800 text-xs font-semibold rounded-full">
+            <span className="px-2.5 py-0.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[10px] font-semibold rounded-full">
               Baru
             </span>
           </div>
         </div>
       </div>
 
-      <div className="flex-1 w-full flex flex-col lg:flex-row p-6 gap-6 overflow-hidden">
+      <div className="flex-1 w-full flex flex-col lg:flex-row p-4 sm:p-6 gap-4 sm:gap-6 overflow-hidden">
         {/* Left Panel: PDF Viewer Mock */}
-        <div className="w-full lg:w-[55%] h-full flex flex-col border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-900 shadow-sm">
+        <div className="w-full lg:w-[55%] h-full flex flex-col border border-border/40 rounded-lg overflow-hidden glass-enterprise shadow-sm">
           {/* PDF Toolbar */}
-          <div className="h-12 bg-[#323639] text-white flex items-center px-4 justify-between shrink-0">
+          <div className="h-10 bg-black/80 backdrop-blur-md text-white/80 flex items-center px-3 justify-between shrink-0">
             <div className="flex items-center gap-3">
               <button>
                 <MenuIcon className="w-4 h-4" />
@@ -189,20 +189,20 @@ export function MockAIDocumentReader() {
                 </p>
               </div>
 
-              <div className="flex justify-between text-sm text-black mb-8">
+              <div className="flex justify-between text-[11px] text-black mb-6">
                 <div className="flex flex-col gap-1">
                   <p>
-                    <span className="inline-block w-20">Nomor</span>:
+                    <span className="inline-block w-16">Nomor</span>:
                     19/BP-INS/VIII/2026
                   </p>
                   <p>
-                    <span className="inline-block w-20">Sifat</span>: Biasa
+                    <span className="inline-block w-16">Sifat</span>: Biasa
                   </p>
                   <p>
-                    <span className="inline-block w-20">Lampiran</span>: -
+                    <span className="inline-block w-16">Lampiran</span>: -
                   </p>
                   <p className="flex">
-                    <span className="inline-block w-20 shrink-0">Hal</span>:{" "}
+                    <span className="inline-block w-16 shrink-0">Hal</span>:{" "}
                     <span>
                       Pemberitahuan Pelaksanaan
                       <br />
@@ -238,16 +238,16 @@ export function MockAIDocumentReader() {
         </div>
 
         {/* Right Panel: Data Extraction & Actions */}
-        <div className="w-full lg:w-[45%] h-full flex flex-col gap-6 overflow-y-auto custom-scrollbar pb-10">
-          <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-[#1e293b] overflow-hidden shadow-sm">
-            <div className="flex items-center gap-2 p-4 border-b border-slate-100 dark:border-slate-800">
-              <Info className="w-5 h-5 text-blue-500" />
-              <h3 className="font-bold text-slate-900 dark:text-white">
+        <div className="w-full lg:w-[45%] h-full flex flex-col gap-4 overflow-y-auto custom-scrollbar pb-6">
+          <div className="border border-border/30 rounded-xl glass-enterprise overflow-hidden shadow-sm">
+            <div className="flex items-center gap-2 p-3 border-b border-border/20 bg-muted/10">
+              <Info className="w-4 h-4 text-blue-500" />
+              <h3 className="font-bold text-foreground text-sm">
                 Detail Surat
               </h3>
             </div>
-
-            <div className="p-5 flex flex-col gap-5">
+            
+            <div className="p-4 flex flex-col gap-4">
               {RAW_DATA.map((item) => {
                 const extracted = extractedData.find((e) => e.key === item.key);
 
@@ -307,20 +307,21 @@ export function MockAIDocumentReader() {
           </div>
 
           {/* Kirim Pemberitahuan Mock Card */}
-          <div className="border border-slate-200 dark:border-slate-700 rounded-xl bg-white dark:bg-[#1e293b] p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          <div className="border border-border/30 rounded-xl glass-enterprise p-4 shadow-sm relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent pointer-events-none" />
+            <div className="flex items-center justify-between mb-3 relative z-10">
               <div className="flex items-center gap-2">
-                <Send className="w-5 h-5 text-blue-500" />
-                <h3 className="font-bold text-slate-900 dark:text-white">
+                <Send className="w-4 h-4 text-blue-500" />
+                <h3 className="font-bold text-foreground text-sm">
                   Kirim Pemberitahuan
                 </h3>
               </div>
-              <span className="px-2 py-1 bg-purple-100 text-purple-700 text-xs font-bold rounded-md flex items-center gap-1">
-                <Sparkles className="w-3 h-3" /> Saran AI
+              <span className="px-2 py-0.5 bg-blue-500/10 text-blue-500 border border-blue-500/20 text-[9px] uppercase tracking-wider font-bold rounded flex items-center gap-1">
+                <Sparkles className="w-2.5 h-2.5" /> Saran AI
               </span>
             </div>
-            <p className="text-sm text-slate-500 mb-4">Kirim ke (Perorangan)</p>
-            <div className="w-full h-10 border border-slate-200 dark:border-slate-700 rounded-md bg-slate-50 dark:bg-slate-800" />
+            <p className="text-[11px] text-muted-foreground mb-2 relative z-10">Kirim ke (Perorangan)</p>
+            <div className="w-full h-8 border border-border/40 rounded bg-background/50 relative z-10" />
           </div>
         </div>
       </div>

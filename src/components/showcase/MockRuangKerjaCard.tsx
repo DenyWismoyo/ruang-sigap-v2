@@ -31,27 +31,27 @@ export function MockRuangKerjaCard() {
   ];
 
   return (
-    <div className="w-full h-full flex flex-col bg-[#f8fafc] dark:bg-[#0f172a] text-slate-900 dark:text-slate-100 overflow-y-auto custom-scrollbar p-4 sm:p-8">
-      <div className="max-w-4xl mx-auto w-full flex flex-col gap-6">
+    <div className="w-full h-full flex flex-col bg-transparent text-foreground overflow-y-auto custom-scrollbar p-4 sm:p-6">
+      <div className="max-w-4xl mx-auto w-full flex flex-col gap-4">
         
         {/* Ringkasan Hari Ini Card */}
         <motion.div 
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full bg-[#f0f9ff] dark:bg-[#1e3a8a]/20 border border-[#bae6fd] dark:border-[#1e3a8a]/50 rounded-xl p-6"
+          className="w-full bg-blue-500/10 border border-blue-500/20 rounded-xl p-4 glass-enterprise"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-               <h3 className="text-xl font-bold text-[#1e3a8a] dark:text-[#60a5fa] flex items-center gap-2 mb-2">
-                 <Zap className="w-5 h-5 text-amber-500 fill-amber-500" />
+               <h3 className="text-sm font-bold text-blue-500 flex items-center gap-1.5 mb-1.5">
+                 <Zap className="w-4 h-4 text-amber-500 fill-amber-500" />
                  Ringkasan Hari Ini
                </h3>
-               <p className="text-[15px] text-[#1e40af] dark:text-[#93c5fd]">
-                 Anda memiliki <span className="font-bold">10 Surat Baru</span> yang perlu didisposisikan. <span className="font-bold text-red-600 dark:text-red-400">(1 Mendesak)</span>
+               <p className="text-xs text-blue-400">
+                 Anda memiliki <span className="font-bold text-foreground">10 Surat Baru</span> yang perlu didisposisikan. <span className="font-bold text-rose-500">(1 Mendesak)</span>
                </p>
             </div>
-            <Button variant="outline" className="bg-white dark:bg-slate-800 border-[#93c5fd] text-[#1e40af] dark:text-[#93c5fd] hover:bg-[#e0f2fe] rounded-full px-5 h-9 font-medium shadow-sm">
-               <Mail className="w-4 h-4 mr-2" /> 10 Surat
+            <Button variant="outline" className="bg-background/50 border-blue-500/30 text-blue-500 hover:bg-blue-500/20 rounded-full px-4 h-8 font-medium shadow-sm text-xs">
+               <Mail className="w-3.5 h-3.5 mr-1.5" /> 10 Surat
             </Button>
           </div>
         </motion.div>
@@ -63,42 +63,42 @@ export function MockRuangKerjaCard() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 + (idx * 0.1) }}
-            className="w-full bg-white dark:bg-[#1e293b] border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm hover:shadow-md transition-shadow"
+            className="w-full glass-enterprise border border-border/40 rounded-xl shadow-sm hover:bg-white/5 transition-all"
           >
-            <div className="p-5 sm:p-6 pb-4">
+            <div className="p-4 pb-3">
               
-              <div className="flex justify-between items-start mb-4">
-                 <div className="bg-[#f97316] text-white text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+              <div className="flex justify-between items-start mb-3">
+                 <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-bold px-2.5 py-0.5 rounded shadow-sm">
                    {item.type}
                  </div>
-                 <div className="text-slate-500 dark:text-slate-400 text-xs flex items-center gap-1.5">
-                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                 <div className="text-muted-foreground text-[10px] flex items-center gap-1">
+                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                    {item.time}
                  </div>
               </div>
 
-              <div className="flex gap-4">
-                 <div className={cn("w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg shrink-0", item.avatarColor)}>
+              <div className="flex gap-3">
+                 <div className={cn("w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 border border-border/20", item.avatarColor)}>
                     {item.avatar}
                  </div>
                  <div>
-                    <p className="text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{item.sender}</p>
-                    <h4 className="text-[17px] font-bold text-slate-900 dark:text-white leading-snug">{item.title}</h4>
+                    <p className="text-xs font-medium text-muted-foreground mb-0.5">{item.sender}</p>
+                    <h4 className="text-sm font-bold text-foreground leading-snug">{item.title}</h4>
                  </div>
               </div>
             </div>
 
-            <div className="bg-slate-50/50 dark:bg-slate-900/30 border-t border-slate-100 dark:border-slate-800 p-4 sm:px-6 flex justify-between items-center rounded-b-xl">
-               <Button className="bg-[#2563eb] hover:bg-[#1d4ed8] text-white shadow-sm font-semibold h-10 px-6 rounded-md">
-                  <Send className="w-4 h-4 mr-2" /> Disposisi / Aksi
+            <div className="bg-muted/10 border-t border-border/20 p-3 sm:px-4 flex justify-between items-center rounded-b-xl">
+               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm font-semibold h-8 px-4 rounded text-xs">
+                  <Send className="w-3 h-3 mr-1.5" /> Disposisi / Aksi
                </Button>
                
-               <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="h-10 w-10 border-slate-200 dark:border-slate-700 rounded-md bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white shadow-sm">
-                     <Eye className="w-4 h-4" />
+               <div className="flex items-center gap-1.5">
+                  <Button variant="outline" size="icon" className="h-8 w-8 border-border/40 rounded bg-background/50 text-muted-foreground hover:text-foreground shadow-sm">
+                     <Eye className="w-3.5 h-3.5" />
                   </Button>
-                  <Button variant="ghost" size="icon" className="h-10 w-10 text-slate-400 hover:text-slate-600">
-                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-foreground">
+                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
                   </Button>
                </div>
             </div>

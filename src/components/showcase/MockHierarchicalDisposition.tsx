@@ -47,26 +47,26 @@ export function MockHierarchicalDisposition() {
   }, []);
 
   return (
-    <div className="w-full h-full p-6 md:p-10 flex flex-col relative bg-white dark:bg-[#0f172a] overflow-y-auto custom-scrollbar">
-      <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+    <div className="w-full h-full p-4 md:p-6 flex flex-col relative bg-transparent overflow-y-auto custom-scrollbar">
+      <div className="flex items-center justify-between mb-6 pb-4 border-b border-white/10 shrink-0">
         <div>
-          <h3 className="text-[28px] font-bold text-[#1a56db] dark:text-[#3b82f6] flex items-center gap-3">
-            <Network className="w-8 h-8 text-slate-800 dark:text-slate-200" />
+          <h3 className="text-xl font-bold text-primary flex items-center gap-2">
+            <Network className="w-5 h-5 text-primary" />
             Rantai Disposisi Lintas Jenjang
           </h3>
-          <p className="text-base text-slate-500 mt-1">Lacak instruksi dari Kepala Daerah hingga staf pelaksana secara real-time</p>
+          <p className="text-xs text-muted-foreground mt-1">Lacak instruksi dari Kepala Daerah hingga staf pelaksana secara real-time</p>
         </div>
-        <div className="hidden sm:flex px-4 py-1.5 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 rounded-full text-sm font-semibold items-center gap-2 border border-emerald-200 dark:border-emerald-800 shrink-0">
-          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="hidden sm:flex px-3 py-1 bg-emerald-500/10 text-emerald-500 rounded-full text-[10px] font-semibold items-center gap-1.5 border border-emerald-500/20 shrink-0">
+          <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           Live Tracking
         </div>
       </div>
 
       <div className="flex-1 flex flex-col relative max-w-3xl mx-auto w-full">
         {/* Vertical line connector */}
-        <div className="absolute left-6 sm:left-10 top-4 bottom-10 w-0.5 bg-border/40 z-0" />
+        <div className="absolute left-5 sm:left-6 top-2 bottom-6 w-px bg-border/40 z-0" />
 
-        <div className="flex flex-col gap-6 relative z-10 w-full pb-10">
+        <div className="flex flex-col gap-4 relative z-10 w-full pb-6">
           <AnimatePresence>
             {DISPOSITION_FLOW.map((node, index) => {
               const isVisible = activeNodes.includes(node.id);
@@ -84,23 +84,23 @@ export function MockHierarchicalDisposition() {
                   style={{ marginLeft: `${node.level * (window.innerWidth < 640 ? 1 : 2)}rem` }}
                 >
                   {/* Status Indicator */}
-                  <div className="relative mt-3 shrink-0 flex items-start justify-center w-12 sm:w-20">
+                  <div className="relative mt-2 shrink-0 flex items-start justify-center w-10 sm:w-12">
                     <div className={cn(
-                      "w-10 h-10 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center transition-all duration-500 z-10 relative shadow-sm border",
+                      "w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center transition-all duration-500 z-10 relative shadow-sm border",
                       isDone 
                         ? "bg-primary text-primary-foreground border-primary/20 shadow-primary/20" 
-                        : "bg-background text-muted-foreground border-border animate-pulse"
+                        : "bg-background/50 backdrop-blur-sm text-muted-foreground border-white/10 animate-pulse"
                     )}>
-                      {isDone ? <CheckCircle2 className="w-5 h-5 sm:w-6 sm:h-6" /> : <Briefcase className="w-4 h-4 sm:w-5 sm:h-5" />}
+                      {isDone ? <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5" /> : <Briefcase className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
                     </div>
                   </div>
 
                   {/* Card Content */}
                   <div className={cn(
-                    "flex-1 p-5 sm:p-6 rounded-xl border transition-all duration-300 relative overflow-hidden",
+                    "flex-1 p-4 sm:p-5 rounded-xl transition-all duration-300 relative overflow-hidden",
                     isDone 
-                      ? "bg-white dark:bg-[#1e293b] border-slate-200 dark:border-slate-700 shadow-sm" 
-                      : "bg-slate-50 dark:bg-[#0f172a] border-dashed border-slate-300 dark:border-slate-600"
+                      ? "bg-white/40 dark:bg-black/20 backdrop-blur-md border border-white/10 shadow-sm" 
+                      : "bg-white/20 dark:bg-black/10 backdrop-blur-sm border border-dashed border-white/10"
                   )}>
                     {isDone && (
                       <div className="absolute -top-4 -right-4 p-3 opacity-[0.02]">
@@ -108,29 +108,29 @@ export function MockHierarchicalDisposition() {
                       </div>
                     )}
                     
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 gap-2 relative z-10">
-                      <div className="flex items-center gap-3">
-                        <span className="text-[10px] sm:text-xs font-bold px-2.5 py-1 bg-[#eff6ff] text-[#1d4ed8] dark:bg-[#1e3a8a]/30 dark:text-[#60a5fa] rounded-md uppercase tracking-wider whitespace-nowrap">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-2 gap-1.5 relative z-10">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 bg-primary/10 text-primary rounded-md uppercase tracking-wider whitespace-nowrap border border-primary/10">
                           Lvl {node.level}
                         </span>
-                        <h4 className="font-bold text-slate-900 dark:text-white text-sm sm:text-base line-clamp-1">{node.role}</h4>
+                        <h4 className="font-bold text-foreground text-xs sm:text-sm line-clamp-1">{node.role}</h4>
                       </div>
-                      <span className="text-[10px] sm:text-xs text-slate-500 font-medium flex items-center gap-1.5">
-                         {isDone ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500"/> : <div className="w-2.5 h-2.5 rounded-full bg-amber-500 animate-pulse"/>}
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium flex items-center gap-1">
+                         {isDone ? <CheckCircle2 className="w-3 h-3 text-emerald-500"/> : <div className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"/>}
                          {isDone ? 'Disposisi Terkirim' : 'Memproses...'}
                       </span>
                     </div>
                     
-                    <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-4 relative z-10">{node.name}</p>
+                    <p className="text-xs sm:text-sm text-foreground/80 font-medium mb-3 relative z-10">{node.name}</p>
                     
                     {isDone && (
                       <motion.div 
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: 'auto' }}
-                        className="p-4 bg-slate-50/80 dark:bg-slate-900/50 rounded-lg border border-slate-100 dark:border-slate-800 flex gap-3 mt-4 relative z-10"
+                        className="p-3 bg-black/5 dark:bg-white/5 rounded-lg border border-white/5 flex gap-2 mt-3 relative z-10"
                       >
-                        <Send className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                        <p className="text-sm text-muted-foreground italic leading-relaxed">
+                        <Send className="w-3.5 h-3.5 text-primary mt-0.5 shrink-0" />
+                        <p className="text-xs text-muted-foreground italic leading-relaxed">
                           "{node.message}"
                         </p>
                       </motion.div>

@@ -72,10 +72,10 @@ export function InteractiveShowcase() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "text-left py-4 px-4 rounded-xl transition-all duration-300 relative group flex flex-col items-start gap-2",
+                  "text-left py-3 px-4 rounded-xl transition-all duration-300 relative group flex flex-col items-start gap-1.5 border border-transparent",
                   isActive 
-                    ? "bg-primary/5"
-                    : "hover:bg-muted/50"
+                    ? "bg-primary/5 border-primary/10 shadow-[0_0_15px_rgba(16,185,129,0.05)]"
+                    : "hover:bg-muted/30 hover:border-border/30"
                 )}
               >
                 {isActive && (
@@ -116,23 +116,23 @@ export function InteractiveShowcase() {
 
         {/* Mock UI Display - Minimalist Browser Window */}
         <div className="w-full flex-1">
-          <div className="w-full aspect-auto min-h-[500px] xl:h-[650px] rounded-2xl border border-border/60 shadow-xl relative overflow-hidden bg-white dark:bg-[#0f172a] flex flex-col">
+          <div className="w-full aspect-auto min-h-[500px] xl:h-[600px] rounded-2xl border border-white/10 shadow-2xl relative overflow-hidden glass-enterprise flex flex-col">
             
             {/* Top Browser-like bar - Clean */}
-            <div className="w-full h-12 border-b border-border/50 bg-[#f8fafc] dark:bg-[#1e293b] flex items-center px-4 gap-2 z-20 shrink-0">
-              <div className="flex gap-2 mr-4">
-                 <div className="w-3 h-3 rounded-full bg-rose-400" />
-                 <div className="w-3 h-3 rounded-full bg-amber-400" />
-                 <div className="w-3 h-3 rounded-full bg-emerald-400" />
+            <div className="w-full h-10 border-b border-border/30 bg-background/20 backdrop-blur-md flex items-center px-4 gap-2 z-20 shrink-0">
+              <div className="flex gap-1.5 mr-4 opacity-70 hover:opacity-100 transition-opacity">
+                 <div className="w-2.5 h-2.5 rounded-full bg-rose-400" />
+                 <div className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+                 <div className="w-2.5 h-2.5 rounded-full bg-emerald-400" />
               </div>
-              <div className="h-7 px-4 rounded-md bg-white dark:bg-[#0f172a] text-[11px] text-muted-foreground font-mono flex items-center justify-center w-full max-w-sm border border-border/40 shadow-sm truncate mx-auto">
+              <div className="h-6 px-4 rounded-md bg-black/5 dark:bg-white/5 text-[10px] text-muted-foreground/70 font-mono flex items-center justify-center w-full max-w-xs border border-border/20 mx-auto">
                 sgp.omnifit.cloud/dashboard
               </div>
               <div className="w-[60px]" /> {/* Spacer to balance flex */}
             </div>
 
             {/* Render Context based on Tab */}
-            <div className="flex-1 w-full relative z-10 bg-[#f8fafc] dark:bg-[#0f172a] overflow-hidden flex flex-col">
+            <div className="flex-1 w-full relative z-10 bg-transparent overflow-hidden flex flex-col">
               <AnimatePresence mode="wait">
                 
                 {activeTab === 'hierarchical' && (
