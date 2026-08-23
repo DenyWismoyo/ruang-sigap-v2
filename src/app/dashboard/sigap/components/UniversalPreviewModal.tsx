@@ -64,8 +64,8 @@ export default function UniversalPreviewModal({ suratId, isOpen, onClose, onNavi
     const canDoLaporan = isSuratActive && isRecipient;
 
     const canPerformAction = {
-        disposisi: Boolean((canDoNormalDisposisi || needsRevision)),
-        laporan: Boolean(canDoLaporan)
+        disposisi: Boolean((canDoNormalDisposisi || needsRevision) && !isTuOrAdmin),
+        laporan: Boolean(canDoLaporan && !isTuOrAdmin)
     };
 
     if (!isOpen || !suratId) return null;

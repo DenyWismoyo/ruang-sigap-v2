@@ -265,7 +265,12 @@ export default function FormDisposisi({
     const tindakLanjutFormDesktop = document.getElementById('form-tindak-lanjut-desktop');
     if (tindakLanjutFormDesktop) tindakLanjutFormDesktop.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
-  const isStillLoadingTargets = isBawahanLoading && !isRevising;
+  
+  if (isTuOrAdmin && !isRevising) {
+    return <div className="bg-card p-4 md:p-6 text-center text-muted-foreground rounded-xl border border-border"><Info size={20} className="mx-auto mb-2 text-yellow-500"/><p className="font-semibold text-sm md:text-base">Aksi Tidak Diizinkan</p><p className="text-xs md:text-sm mt-1">Staf TU / Admin hanya bertugas mengelola surat masuk.</p></div>;
+  }
+  
+  const isStillLoadingTargets = isBawahanLoading && !isTuOrAdmin && !isRevising;
 
   return (
     <div className="bg-transparent md:bg-card md:rounded-xl md:shadow-sm md:border md:border-border">
