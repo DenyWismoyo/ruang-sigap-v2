@@ -23,6 +23,8 @@ const DevelopmentTab = dynamic(() => import('./tabs/DevelopmentTab'), { loading:
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"; 
 import AssessmentFormModal from './components/AssessmentFormModal';
 
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+
 export default function ManajemenTalentaPage() {
     const { userProfile, loading: authLoading } = useUserAuth();
     // [UPDATE] combinedData sekarang mengandung diklat & penghargaan
@@ -62,17 +64,11 @@ export default function ManajemenTalentaPage() {
 
     return (
         <div className="animate-fadeInUp pb-20 space-y-6">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <Award size={32} className="mr-3 text-purple-600" />
-                        Manajemen Talenta 360°
-                    </h1>
-                    <p className="text-muted-foreground text-sm mt-1">
-                        Analisis komprehensif Kinerja, Potensi, Kompetensi, dan Pengembangan Karir.
-                    </p>
-                </div>
-            </div>
+            <SigapPageHeader
+                title="Manajemen Talenta 360°"
+                icon={Award}
+                description="Analisis komprehensif Kinerja, Potensi, Kompetensi, dan Pengembangan Karir."
+            />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="overflow-x-auto pb-2 mb-4">

@@ -1,10 +1,6 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet, Font } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
 import { UserProfile, LogbookHarian } from '@/types';
-
-
-// Register font (Opsional, kita pakai Helvetica standar dulu agar ringan dan kompatibel)
-// Font.register({ family: 'Roboto', src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf' });
 
 const styles = StyleSheet.create({
   page: {
@@ -58,14 +54,13 @@ const styles = StyleSheet.create({
   infoValue: {
     flex: 1,
   },
-  // Table Styles
+  // Table Section
   table: {
+    display: 'flex',
     width: 'auto',
     borderStyle: 'solid',
     borderWidth: 1,
     borderColor: '#000',
-    borderRightWidth: 0,
-    borderBottomWidth: 0,
     marginBottom: 20,
   },
   tableRow: {
@@ -74,29 +69,34 @@ const styles = StyleSheet.create({
   },
   tableColHeader: {
     borderStyle: 'solid',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
     borderColor: '#000',
     backgroundColor: '#f0f0f0',
-    padding: 8,
+    padding: 5,
     textAlign: 'center',
-    fontWeight: 'bold',
   },
   tableCol: {
     borderStyle: 'solid',
-    borderWidth: 1,
-    borderLeftWidth: 0,
-    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderRightWidth: 1,
     borderColor: '#000',
     padding: 5,
   },
-  // Kolom widths
-  colNo: { width: '8%' },
-  colDate: { width: '20%' },
-  colDesc: { width: '60%' },
-  colStatus: { width: '12%' },
-  
+  // Column Widths
+  colNo: {
+    width: '8%',
+  },
+  colDate: {
+    width: '25%',
+  },
+  colDesc: {
+    width: '52%',
+  },
+  colStatus: {
+    width: '15%',
+    borderRightWidth: 0, // Kolom terakhir tidak perlu border kanan
+  },
   tableCellHeader: {
     fontSize: 10,
     fontWeight: 'bold',
@@ -127,19 +127,19 @@ const styles = StyleSheet.create({
 });
 
 interface LogbookPdfProps {
-  userProfile: UserProfile;
-  jabatanNama: string;
-  opdNama: string;
-  periode: string; // "Oktober 2025"
-  data: LogbookHarian[];
+  userProfile?: UserProfile;
+  jabatanNama?: string;
+  opdNama?: string;
+  periode?: string;
+  data?: LogbookHarian[];
 }
 
-export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode, data }: LogbookPdfProps) => {
+export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode, data = [] }: LogbookPdfProps) => {
     // Flatten data: Ubah array of hari menjadi array of semua kegiatan tunggal
     const allActivities: any[] = [];
     
-    data.forEach(daily => {
-        const date = daily.tanggal.toDate();
+    (data || []).forEach(daily => {
+        const date = daily.tanggal?.toDate ? daily.tanggal.toDate() : new Date();
         const dateStr = date.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
         const dayName = date.toLocaleDateString('id-ID', { weekday: 'long' });
         
@@ -148,7 +148,7 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
             kegiatanList.forEach((k, idx) => {
                 allActivities.push({
                     fullDate: idx === 0 ? `${dayName},\n${dateStr}` : '', // Show date only on first item of the day for cleaner look
-                    deskripsi: k.deskripsi,
+                    deskripsi: k.deskripsi || '-',
                     status: k.selesai ? 'Selesai' : 'Proses',
                     tugas: k.tugasTerkaitJudul
                 });
@@ -156,13 +156,19 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
         }
     });
 
+    const safeNama = userProfile?.namaLengkap || '-';
+    const safeNip = userProfile?.nip || '-';
+    const safeJabatan = jabatanNama || '-';
+    const safeOpd = opdNama ? opdNama.toUpperCase() : 'ORGANISASI PERANGKAT DAERAH';
+    const safePeriode = periode || '-';
+
     return (
         <Document>
             <Page size="A4" style={styles.page}>
                 {/* Header / Kop */}
                 <View style={styles.header}>
                     <Text style={styles.headerTop}>PEMERINTAH KOTA SURAKARTA</Text>
-                    <Text style={styles.title}>{opdNama.toUpperCase()}</Text>
+                    <Text style={styles.title}>{safeOpd}</Text>
                     <Text style={styles.subtitle}>LAPORAN KINERJA HARIAN PEGAWAI</Text>
                 </View>
 
@@ -171,22 +177,22 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Nama</Text>
                         <Text style={styles.infoSeparator}>:</Text>
-                        <Text style={styles.infoValue}>{userProfile.namaLengkap}</Text>
+                        <Text style={styles.infoValue}>{safeNama}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>NIP</Text>
                         <Text style={styles.infoSeparator}>:</Text>
-                        <Text style={styles.infoValue}>{userProfile.nip}</Text>
+                        <Text style={styles.infoValue}>{safeNip}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Jabatan</Text>
                         <Text style={styles.infoSeparator}>:</Text>
-                        <Text style={styles.infoValue}>{jabatanNama}</Text>
+                        <Text style={styles.infoValue}>{safeJabatan}</Text>
                     </View>
                     <View style={styles.infoRow}>
                         <Text style={styles.infoLabel}>Periode</Text>
                         <Text style={styles.infoSeparator}>:</Text>
-                        <Text style={styles.infoValue}>{periode}</Text>
+                        <Text style={styles.infoValue}>{safePeriode}</Text>
                     </View>
                 </View>
 
@@ -248,8 +254,8 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                         <Text>Surakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
                         <Text>Yang Melaporkan,</Text>
                         <View style={styles.signatureSpace} />
-                        <Text style={{ fontWeight: 'bold', textDecoration: 'underline' }}>{userProfile.namaLengkap}</Text>
-                        <Text>NIP. {userProfile.nip}</Text>
+                        <Text style={{ fontWeight: 'bold', textDecoration: 'underline' }}>{safeNama}</Text>
+                        <Text>NIP. {safeNip}</Text>
                     </View>
                 </View>
                 

@@ -9,7 +9,7 @@
     "dev": "node scripts/generate-sw-config.js && next dev --turbo",
     "build": "node scripts/generate-sw-config.js && next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint src"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",

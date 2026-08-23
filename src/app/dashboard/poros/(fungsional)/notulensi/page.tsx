@@ -115,11 +115,9 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
     onConvertToTugas: (text: string) => void
 }) => {
     const { userProfile } = useUserAuth();
-    if (!isOpen || !notulensi) return null;
-
-    const canManage = userProfile?.uid === notulensi.createdBy;
 
     const { mainContent, actionItems } = useMemo(() => {
+        if (!notulensi) return { mainContent: '', actionItems: [] };
         const content = notulensi.isiNotulensi || '';
         const tindakLanjutRegex = /^(?:\n)?\*\*(Tindak Lanjut|Action Items)(?:\s\(Action Items\))?\*\*(?:\n)?/im;
         const splitContent = content.split(tindakLanjutRegex);
@@ -132,7 +130,11 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
             items.push(match[1].trim());
         }
         return { mainContent: main, actionItems: items };
-    }, [notulensi.isiNotulensi]);
+    }, [notulensi?.isiNotulensi]);
+
+    if (!isOpen || !notulensi) return null;
+
+    const canManage = userProfile?.uid === notulensi.createdBy;
 
     const handleExportToWord = async () => {
         const doc = new Document({

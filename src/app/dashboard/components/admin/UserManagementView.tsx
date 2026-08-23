@@ -88,7 +88,7 @@ const UserCard = ({ user, getJabatanName, getOpdName, onEdit, onReset, onLoginAs
         return () => { document.removeEventListener("mousedown", handleClickOutside); };
     }, []);
     return (
-        <div className={`p-4 rounded-lg shadow-sm border ${isSelected ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20' : 'bg-card border-border'}`}>
+        <div className={`p-3 md:p-4 rounded-none md:rounded-lg shadow-none md:shadow-sm border-x-0 border-t-0 md:border ${isSelected ? 'bg-blue-50 border-blue-400 dark:bg-blue-900/20' : 'bg-card border-border'}`}>
             <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3 min-w-0"> 
                      <Checkbox 
@@ -561,13 +561,13 @@ export default function UserManagementView({ tenant }: UserManagementViewProps) 
     if (isMasterLoading) return <div className="text-center p-8 text-muted-foreground"><Loader2 className="animate-spin mx-auto h-8 w-8 mb-2"/>Memuat master data...</div>;
 
     const isPoros = tenant === 'poros';
-    const cardClass = isPoros ? 'nk-card p-6 mb-6' : 'bg-card p-6 mb-6 rounded-xl shadow-md border border-border';
-    const headerClass = isPoros ? 'nk-card p-6 mb-8 flex flex-col md:flex-row md:items-center md:justify-between' : 'flex flex-col md:flex-row md:items-center md:justify-between mb-8';
+    const cardClass = isPoros ? 'nk-card p-4 md:p-6 mb-4 md:mb-6' : 'bg-card p-3 md:p-6 mb-4 md:mb-6 sg-mobile-borderless';
+    const headerClass = isPoros ? 'nk-card p-4 md:p-6 mb-4 md:mb-8 flex flex-col md:flex-row md:items-center md:justify-between' : 'flex flex-col md:flex-row md:items-start md:justify-between mb-4 md:mb-8 gap-3';
 
     return (
-        <div className="animate-fadeInUp pb-20">
+        <div className="animate-fadeInUp pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
             <div className={headerClass}>
-                <div><h1 className="text-3xl font-bold text-foreground">Manajemen Pengguna</h1><p className="text-muted-foreground mt-2">Kelola data pegawai, jabatan, hak akses, dan mutasi.</p></div>
+                <div><h1 className="text-xl md:text-3xl font-bold text-foreground">Manajemen Pengguna</h1><p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1">Kelola data pegawai, jabatan, hak akses, dan mutasi.</p></div>
                 {isAdminInduk && (
                     <div className="mt-4 md:mt-0 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 text-sm flex items-center gap-2">
                         <Users size={16} /> Mode Admin Induk

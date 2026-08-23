@@ -1,1 +1,1 @@
-export default function PlanCreationModal(props: any) { return null; }
+export { default } from '../(main)/talenta/components/PlanCreationModal';

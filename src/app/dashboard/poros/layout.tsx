@@ -78,7 +78,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const shouldShowLoader = (loading || initializing) && !userProfile;
+  const shouldShowLoader = loading || initializing || (Boolean(user) && !userProfile);
 
   useEffect(() => { if (!loading && !initializing && !user) router.push(`/login?redirect=${pathname}`); }, [user, loading, initializing, router, pathname]);
 

@@ -1,18 +1,51 @@
-/** @type {import('eslint').Linter.Config} */
-const eslintConfig = {
-  extends: ["next/core-web-vitals"],
-  rules: {
-    // Nonaktifkan aturan yang memerlukan tipe eksplisit untuk sementara waktu.
-    // Ini akan mengatasi error: `Unexpected any. Specify a different type.`
-    "@typescript-eslint/no-explicit-any": "off",
+import { FlatCompat } from "@eslint/eslintrc";
+import js from "@eslint/js";
+import path from "path";
+import { fileURLToPath } from "url";
+import tsPlugin from "@typescript-eslint/eslint-plugin";
+import tsParser from "@typescript-eslint/parser";
 
-    // Aturan di bawah ini adalah warning, tetapi baik untuk diperbaiki.
-    // Jika Anda ingin build berhasil tanpa memperbaiki semuanya, Anda bisa mengubahnya menjadi "off".
-    "@typescript-eslint/no-unused-vars": "warn", // Memberi peringatan untuk variabel yang tidak digunakan
-    "react-hooks/exhaustive-deps": "warn", // Memberi peringatan untuk dependensi yang kurang di hooks
-    "react/no-unescaped-entities": "warn", // Memberi peringatan untuk karakter seperti ' " > }
-    "@next/next/no-img-element": "off", // Izinkan penggunaan tag <img> standar jika diperlukan
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const compat = new FlatCompat({
+  baseDirectory: __dirname,
+  recommendedConfig: js.configs.recommended,
+});
+
+const eslintConfig = [
+  ...compat.extends("next/core-web-vitals"),
+  {
+    files: ["**/*.ts", "**/*.tsx"],
+    plugins: {
+      "@typescript-eslint": tsPlugin,
+    },
+    languageOptions: {
+      parser: tsParser,
+      parserOptions: {
+        ecmaVersion: "latest",
+        sourceType: "module",
+      },
+    },
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "react-hooks/exhaustive-deps": "warn",
+      "react/no-unescaped-entities": "warn",
+      "@next/next/no-img-element": "off",
+    },
   },
-};
+  {
+    ignores: [
+      ".next/**",
+      "node_modules/**",
+      "functions/**",
+      "public/**",
+      "scratch/**",
+      "scripts/**",
+      "*.js",
+    ],
+  },
+];
 
 export default eslintConfig;

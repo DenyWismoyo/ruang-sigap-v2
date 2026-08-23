@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
 type SuratStats = {
   total: number;
@@ -98,42 +99,46 @@ export default function RekapSuratPage() {
           where("tanggalDiterima", "<", Timestamp.fromDate(endDt))
       ];
       if (isSuperAdmin) {
-          if (selectedOpdId !== "Semua") conditions.push(where("opdId", "==", selectedOpdId));
+        if (selectedOpdId !== "Semua") conditions.push(where("opdId", "==", selectedOpdId));
       } else {
-          conditions.push(where("opdId", "==", userProfile.opdId));
+        conditions.push(where("opdId", "==", userProfile.opdId));
       }
-      const q = query(collection(db, "surat"), ...conditions);
-      const querySnapshot = await getDocs(q);
-      const allSurat = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Surat));
-      allSurat.sort((a, b) => b.tanggalDiterima.toMillis() - a.tanggalDiterima.toMillis());
-      setSuratList(allSurat);
+
+      const q = query(collection(db, "surat"), ...conditions, orderBy("tanggalDiterima", "desc"));
+      const snapshot = await getDocs(q);
+      const data = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as Surat));
+      setSuratList(data);
       setCurrentPage(1);
-    } catch (error) { console.error(error); } 
-    finally { setLoading(false); }
-  }, [userProfile, isAdminOrTU, startDate, endDate, isSuperAdmin, selectedOpdId]);
+    } catch (err) {
+      console.error("Gagal mengambil data surat:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userProfile, isAdminOrTU, isSuperAdmin, selectedOpdId, startDate, endDate]);
 
   useEffect(() => {
     if (!authLoading) fetchSurat();
   }, [authLoading, fetchSurat]);
 
   const filteredSurat = useMemo(() => {
-    const searchLower = searchTerm.toLowerCase();
-    return suratList.filter(surat =>
-        surat.perihal.toLowerCase().includes(searchLower) ||
-        surat.nomorSurat.toLowerCase().includes(searchLower) ||
-        surat.pengirim.toLowerCase().includes(searchLower)
+    if (!searchTerm.trim()) return suratList;
+    const term = searchTerm.toLowerCase();
+    return suratList.filter(s => 
+      s.perihal?.toLowerCase().includes(term) ||
+      s.nomorSurat?.toLowerCase().includes(term) ||
+      s.pengirim?.toLowerCase().includes(term)
     );
   }, [suratList, searchTerm]);
 
   useEffect(() => { setCurrentPage(1); }, [searchTerm]);
 
-  const totalPages = Math.ceil(filteredSurat.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredSurat.length / itemsPerPage) || 1;
   const paginatedSurat = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filteredSurat.slice(startIndex, startIndex + itemsPerPage);
   }, [filteredSurat, currentPage, itemsPerPage]);
 
-  const stats: SuratStats = useMemo(() => {
+  const stats = useMemo<SuratStats>(() => {
     return filteredSurat.reduce((acc, surat) => {
         acc.total += 1;
         if (surat.statusPenyelesaian === "Selesai") acc.selesai += 1;
@@ -202,13 +207,14 @@ export default function RekapSuratPage() {
   if (!isAdminOrTU) return <div className="flex h-full items-center justify-center"><div className="text-center text-red-500 p-4 bg-red-100 rounded-lg"><h2 className="text-lg font-bold">Akses Ditolak</h2></div></div>;
 
   return (
-    <div className="space-y-6 animate-fadeInUp">
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold text-foreground">Rekapitulasi Surat {isSuperAdmin && selectedOpdId === "Semua" ? "(Global)" : ""}</h1>
-        <p className="text-muted-foreground">{isSuperAdmin ? "Pantau pergerakan surat di seluruh Perangkat Daerah." : "Pantau dan ekspor data surat masuk di OPD Anda."}</p>
-      </div>
+    <div className="space-y-4 md:space-y-6 animate-fadeInUp pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+      <SigapPageHeader
+        title={`Rekapitulasi Surat ${isSuperAdmin && selectedOpdId === "Semua" ? "(Global)" : ""}`}
+        icon={FileText}
+        description={isSuperAdmin ? "Pantau pergerakan surat di seluruh Perangkat Daerah." : "Pantau dan ekspor data surat masuk di OPD Anda."}
+      />
 
-      <Card className="shadow-md border-border">
+      <Card className="sg-card sg-mobile-borderless">
         <CardContent className="p-4">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
             {isSuperAdmin && (
@@ -247,7 +253,7 @@ export default function RekapSuratPage() {
         </div>
       )}
 
-      <Card className="shadow-md border-border overflow-hidden">
+      <Card className="sg-card sg-mobile-borderless overflow-hidden">
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Daftar Surat</CardTitle>
           <div className="flex items-center gap-2">

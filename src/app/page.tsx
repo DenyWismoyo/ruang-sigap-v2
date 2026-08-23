@@ -59,20 +59,20 @@ export default function LandingPage() {
       </div>
 
       {/* Premium Navbar */}
-      <nav className="w-full p-6 flex justify-between items-center z-50 relative max-w-7xl mx-auto border-b border-border/50 bg-background/50 backdrop-blur-md rounded-b-2xl">
+      <nav className="w-full p-4 md:p-6 flex justify-between items-center z-50 relative max-w-7xl mx-auto border-b border-border/50 bg-background/50 backdrop-blur-md rounded-b-2xl">
         <div className="flex items-center gap-3 group cursor-pointer" onClick={() => router.push('/')}>
-          <div className="w-9 h-9 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
-            <Layers className="w-5 h-5" />
+          <div className="w-8 h-8 md:w-9 md:h-9 bg-primary text-primary-foreground rounded-lg flex items-center justify-center shadow-lg shadow-primary/20 group-hover:scale-105 transition-transform duration-300">
+            <Layers className="w-4 h-4 md:w-5 md:h-5" />
           </div>
-          <span className="text-xl font-extrabold tracking-tight text-foreground">
+          <span className="text-lg md:text-xl font-extrabold tracking-tight text-foreground">
             Workspace
           </span>
         </div>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 md:gap-6">
           <ThemeToggleCompact />
           <Button 
             variant="default" 
-            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-6 font-semibold transition-all hidden sm:flex h-10 shadow-md shadow-primary/10"
+            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 md:px-6 font-semibold transition-all flex h-9 md:h-10 text-xs md:text-sm shadow-md shadow-primary/10"
             onClick={() => router.push('/login')}
           >
             Log In

@@ -17,6 +17,8 @@ export default function GlobalBatchReportWidget() {
     
     const [isOpen, setIsOpen] = useState(false);
 
+    const pathname = usePathname();
+
     // Jangan tampilkan widget ini jika user adalah pimpinan (karena mereka mendisposisi, bukan menindaklanjuti)
     if (isPimpinan || !feedItems) return null;
 
@@ -41,7 +43,6 @@ export default function GlobalBatchReportWidget() {
         return differenceInDays(new Date(), tanggalDisposisi) >= 2;
     }).length;
 
-    const pathname = usePathname();
     // Sama dengan posisi Copilot
     const isDetailPage = pathname?.match(/\/surat\/[^\/]+$/);
     const bottomPos = isDetailPage ? 'bottom-[190px]' : 'bottom-40'; // Posisi tepat di atas Copilot

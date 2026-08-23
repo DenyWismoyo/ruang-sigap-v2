@@ -48,32 +48,34 @@ export const runAutoHeal = onCall({ region: 'asia-southeast2' }, async (request:
         });
 
         // --- TAHAP 3: Auto-Repair Metadata (Data "Belum Didisposisikan" lama) ---
-        // Mencari surat yang berstatus didisposisikan namun tidak memiliki infoTampilan
-        const brokenMetadataSnap = await db.collection('surat')
+        // Mencari surat yang berstatus didisposisikan namun belum memiliki infoTampilan lengkap
+        const didisposisikanSnap = await db.collection('surat')
             .where('statusPenyelesaian', '==', 'Didisposisikan')
-            .where('infoTampilan', '==', null) // Atau tidak ada field infoTampilan
             .limit(200).get();
 
-        for (const doc of brokenMetadataSnap.docs) {
-            const disposisiSnap = await db.collection('disposisi')
-                .where('suratId', '==', doc.id)
-                .orderBy('tanggalDisposisi', 'desc')
-                .limit(1).get();
+        for (const doc of didisposisikanSnap.docs) {
+            const docData = doc.data();
+            if (!docData.infoTampilan || !docData.infoTampilan.recipientNames) {
+                const disposisiSnap = await db.collection('disposisi')
+                    .where('suratId', '==', doc.id)
+                    .orderBy('tanggalDisposisi', 'desc')
+                    .limit(1).get();
 
-            if (!disposisiSnap.empty) {
-                const latestDisp = disposisiSnap.docs[0].data();
-                // Ambil nama dari snapshot penerima jika ada, atau gunakan logic pemetaan
-                const recipientNames = (latestDisp.penerimaSnapshot || [])
-                    .map((p: any) => p.nama).join(', ');
+                if (!disposisiSnap.empty) {
+                    const latestDisp = disposisiSnap.docs[0].data();
+                    // Ambil nama dari snapshot penerima jika ada, atau gunakan logic pemetaan
+                    const recipientNames = (latestDisp.penerimaSnapshot || [])
+                        .map((p: any) => p.nama).join(', ');
 
-                operations.push({
-                    ref: doc.ref, 
-                    data: {
-                        'infoTampilan.recipientNames': recipientNames || 'Disposisi Terkirim',
-                        'infoTampilan.senderName': latestDisp.dariJabatanNama || 'Pimpinan'
-                    }
-                });
-                metadataFixedCount++;
+                    operations.push({
+                        ref: doc.ref, 
+                        data: {
+                            'infoTampilan.recipientNames': recipientNames || 'Disposisi Terkirim',
+                            'infoTampilan.senderName': latestDisp.dariJabatanNama || 'Pimpinan'
+                        }
+                    });
+                    metadataFixedCount++;
+                }
             }
         }
 

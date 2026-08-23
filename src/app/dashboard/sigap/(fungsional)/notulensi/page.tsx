@@ -24,8 +24,8 @@ import { useToast } from '@/context/ToastContext';
 import { useTheme } from '@/context/ThemeContext';
 import FormTugas from '@/app/dashboard/sigap/(main)/tugas/components/FormTugas';
 
-// [BARU] Import komponen modal yang sudah diekstrak
 import NotulensiFormModal from './components/NotulensiFormModal';
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
 // --- Impor Library Eksternal ---
 import dynamic from 'next/dynamic';
@@ -115,11 +115,9 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
     onConvertToTugas: (text: string) => void
 }) => {
     const { userProfile } = useUserAuth();
-    if (!isOpen || !notulensi) return null;
-
-    const canManage = userProfile?.uid === notulensi.createdBy;
 
     const { mainContent, actionItems } = useMemo(() => {
+        if (!notulensi) return { mainContent: '', actionItems: [] };
         const content = notulensi.isiNotulensi || '';
         const tindakLanjutRegex = /^(?:\n)?\*\*(Tindak Lanjut|Action Items)(?:\s\(Action Items\))?\*\*(?:\n)?/im;
         const splitContent = content.split(tindakLanjutRegex);
@@ -132,7 +130,11 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
             items.push(match[1].trim());
         }
         return { mainContent: main, actionItems: items };
-    }, [notulensi.isiNotulensi]);
+    }, [notulensi?.isiNotulensi]);
+
+    if (!isOpen || !notulensi) return null;
+
+    const canManage = userProfile?.uid === notulensi.createdBy;
 
     const handleExportToWord = async () => {
         const doc = new Document({
@@ -487,22 +489,23 @@ export default function NotulensiPage() {
     return (
         <div className="animate-fadeInUp pb-20 md:pb-0">
             {/* --- Header --- */}
-            <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 gap-4">
-                <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <ListChecks size={28} className="mr-3 text-blue-600"/>Notulensi Rapat
-                    </h1>
-                    <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
-                        <HelpCircle size={20} />
-                    </Button>
-                </div>
-                {/* Tombol Buat Notulensi Menonjol */}
-                {canCreate && (
-                    <Button onClick={() => handleOpenForm(null)} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-md">
-                        <Plus size={18} className="mr-2" /> Buat Notulensi
-                    </Button>
-                )}
-            </div>
+            <SigapPageHeader
+                title="Notulensi Rapat"
+                icon={ListChecks}
+                description="Dokumentasi hasil rapat dinas dan konversi butir tindak lanjut menjadi tugas."
+                actions={
+                    <div className="flex items-center gap-2 w-full md:w-auto">
+                        <Button variant="ghost" size="icon" onClick={() => setIsBantuanOpen(true)} title="Bantuan" className="text-muted-foreground hover:text-primary">
+                            <HelpCircle size={20} />
+                        </Button>
+                        {canCreate && (
+                            <Button onClick={() => handleOpenForm(null)} className="w-full md:w-auto bg-blue-600 hover:bg-blue-700 shadow-md">
+                                <Plus size={18} className="mr-2" /> Buat Notulensi
+                            </Button>
+                        )}
+                    </div>
+                }
+            />
 
             {/* --- Search & Filter Bar --- */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">

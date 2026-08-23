@@ -74,9 +74,9 @@ const MasterDataSkeleton = ({ label }: { label: string }) => (
 
 // [Komponen SuratDetailCard]
 const SuratDetailCard = ({ surat }: { surat: Surat }) => {
-  if (!surat) return null;
   const [isCopied, setIsCopied] = useState(false);
   const { addToast } = useToast();
+  if (!surat) return null;
   
   const handleCopy = (text: string) => {
     try {

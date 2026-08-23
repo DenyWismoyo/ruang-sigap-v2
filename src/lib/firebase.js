@@ -5,8 +5,7 @@ import { getAuth } from "firebase/auth";
 import { 
   getFirestore, 
   initializeFirestore, 
-  persistentLocalCache, 
-  persistentMultipleTabManager 
+  memoryLocalCache 
 } from "firebase/firestore"; 
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { getMessaging, getToken, onMessage } from "firebase/messaging";
@@ -26,20 +25,19 @@ const firebaseConfig = {
 export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 export const auth = getAuth(app);
 
-// Inisialisasi Firestore dengan Named Database
+// Inisialisasi Firestore dengan Named Database (Memory Cache untuk mencegah deadlock IndexedDB)
 export const db = (() => {
   const dbName = process.env.NEXT_PUBLIC_FIRESTORE_DATABASE || "database-siyap";
   if (typeof window !== "undefined") {
     try {
       const firestoreInstance = initializeFirestore(app, {
-        localCache: persistentLocalCache({
-          tabManager: persistentMultipleTabManager()
-        })
+        localCache: memoryLocalCache(),
+        experimentalAutoDetectLongPolling: true
       }, dbName); 
-      console.log(`Mode offline Firestore (Multi-Tab Cache) aktif [${dbName}].`);
+      console.log(`Firestore aktif dengan Memory Cache [${dbName}].`);
       return firestoreInstance;
     } catch (error) {
-      console.warn("Gagal mengaktifkan Multi-Tab Cache, fallback ke getFirestore", error);
+      console.warn("Inisialisasi Firestore fallback ke getFirestore", error);
       return getFirestore(app, dbName);
     }
   } else {

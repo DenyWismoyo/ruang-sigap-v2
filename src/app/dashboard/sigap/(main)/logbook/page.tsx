@@ -563,7 +563,7 @@ export default function LogbookPage() {
                 <ShortcutNav />
             </SigapPageHeader>
 
-            <div className="p-4 bg-card rounded-xl border border-border shadow-sm flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">
+            <div className="p-4 bg-card sg-mobile-borderless flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">
                 <div className="flex items-center space-x-2">
                     <Button onClick={() => changeDate(-1)} variant="outline" size="icon"><ChevronLeft/></Button>
                     <span className="md:hidden font-semibold">{selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>

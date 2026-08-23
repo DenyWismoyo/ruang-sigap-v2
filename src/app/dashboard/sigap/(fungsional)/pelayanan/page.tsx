@@ -15,6 +15,8 @@ import RiwayatTab from './tabs/RiwayatTab';
 import RekapitulasiTab from './tabs/RekapitulasiTab';
 import SettingsTab from './tabs/SettingsTab'; 
 
+import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+
 export default function PelayananPage() {
     const { userProfile, loading: authLoading } = useUserAuth();
     const [activeTab, setActiveTab] = useState('pengambilan');
@@ -47,18 +49,12 @@ export default function PelayananPage() {
     const isAdmin = userProfile.role === 'admin_opd' || userProfile.role === 'super_admin';
 
     return (
-        <div className="animate-fadeInUp space-y-6 pb-20">
-            <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground flex items-center">
-                        <HeartHandshake size={32} className="mr-3 text-pink-600" />
-                        Pelayanan Publik
-                    </h1>
-                    <p className="text-muted-foreground text-sm mt-1">
-                        Loket digital untuk pencatatan layanan masyarakat.
-                    </p>
-                </div>
-            </div>
+        <div className="animate-fadeInUp space-y-4 md:space-y-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+            <SigapPageHeader
+                title="Pelayanan Publik"
+                icon={HeartHandshake}
+                description="Loket digital untuk pencatatan dan monitoring layanan masyarakat."
+            />
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <div className="overflow-x-auto pb-2 scrollbar-hide">

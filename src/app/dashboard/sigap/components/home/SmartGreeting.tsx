@@ -51,10 +51,10 @@ export default function SmartGreeting({ userName }: { userName: string }) {
         {greetingData.icon}
       </div>
       <div>
-        <h1 className="text-3xl md:text-4xl font-bold sg-text-gradient pb-1">
+        <h1 className="text-2xl md:text-4xl font-bold sg-text-gradient pb-1 leading-tight">
           {greetingData.text}, {userName}!
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1">
           {greetingData.subText}
         </p>
       </div>

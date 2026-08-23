@@ -1,8 +1,8 @@
 /**
- * Directory: src/app/dashboard/talenta/components/PlanCreationModal.tsx
+ * Directory: src/app/dashboard/poros/(main)/talenta/components/PlanCreationModal.tsx
  * History Update:
  * - 2024-11-28: Initial creation. Modal for creating Individual Development Plan (IDP).
- * - Features: Auto-suggest program based on competency gaps.
+ * - 2026-08-23: Implementasi penyimpanan nyata Firestore ke koleksi 'idp_plans'.
  */
 
 "use client";
@@ -12,10 +12,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Target, BookOpen } from 'lucide-react';
 import { KompetensiItem, UserProfile } from '@/types';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
+import { useAuth } from '@/context/AuthContext';
+import { useToast } from '@/context/ToastContext';
 
 interface PlanCreationModalProps {
     isOpen: boolean;
@@ -25,33 +28,75 @@ interface PlanCreationModalProps {
 }
 
 export default function PlanCreationModal({ isOpen, onClose, employee, gaps }: PlanCreationModalProps) {
+    const { userProfile } = useAuth();
+    const { addToast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
     const [program, setProgram] = useState('');
     const [targetWaktu, setTargetWaktu] = useState('');
     const [prioritas, setPrioritas] = useState('Tinggi');
     
     // Auto-fill saran program berdasarkan gap terbesar (gap negatif terbesar)
-    const criticalGap = gaps.sort((a, b) => (a.aktual - a.standar) - (b.aktual - b.standar))[0];
+    const sortedGaps = [...gaps].sort((a, b) => (a.aktual - a.standar) - (b.aktual - b.standar));
+    const criticalGap = sortedGaps[0];
     
     const suggestedProgram = criticalGap 
         ? `Pelatihan Intensif: ${criticalGap.aspek} (Gap: ${criticalGap.standar - criticalGap.aktual} Level)` 
         : 'Mentoring & Coaching';
 
+    const handleClose = () => {
+        if (!isProcessing) {
+            setProgram('');
+            setTargetWaktu('');
+            setPrioritas('Tinggi');
+            onClose();
+        }
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setIsProcessing(true);
+        if (!employee || !program || !targetWaktu) {
+            addToast("Harap lengkapi semua data program dan target waktu.", "error");
+            return;
+        }
 
-        // Simulasi simpan data ke backend
-        // Di implementasi nyata: panggil API / Firestore addDoc
-        setTimeout(() => {
-            alert(`Rencana Pengembangan untuk ${employee?.namaLengkap} berhasil dibuat!\nProgram: ${program}\nTarget: ${targetWaktu}`);
+        setIsProcessing(true);
+        try {
+            const planPayload = {
+                employeeUid: employee.uid || "",
+                employeeNip: employee.nip || "",
+                employeeName: employee.namaLengkap || "",
+                employeeJabatanId: employee.jabatanId || "",
+                opdId: userProfile?.opdId || employee.opdId || "",
+                createdByUid: userProfile?.uid || "",
+                createdByName: userProfile?.namaLengkap || "",
+                program,
+                targetWaktu,
+                prioritas,
+                gaps: gaps.map(g => ({
+                    aspek: g.aspek,
+                    standar: g.standar,
+                    aktual: g.aktual,
+                    gap: g.standar - g.aktual
+                })),
+                status: 'Direncanakan',
+                createdAt: serverTimestamp() as Timestamp,
+                updatedAt: serverTimestamp() as Timestamp,
+            };
+
+            await addDoc(collection(db, 'idp_plans'), planPayload);
+
+            addToast(`Rencana Pengembangan untuk ${employee.namaLengkap} berhasil disimpan!`, 'success');
+            handleClose();
+        } catch (error: any) {
+            console.error("Gagal menyimpan IDP plan:", error);
+            addToast(`Gagal menyimpan: ${error.message || "Terjadi kesalahan sistem"}`, 'error');
+        } finally {
             setIsProcessing(false);
-            onClose();
-        }, 1000);
+        }
     };
 
     return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
+        <Dialog open={isOpen} onOpenChange={handleClose}>
             <DialogContent className="sm:max-w-lg bg-card border-border">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -59,7 +104,7 @@ export default function PlanCreationModal({ isOpen, onClose, employee, gaps }: P
                         Buat Individual Development Plan (IDP)
                     </DialogTitle>
                     <DialogDescription>
-                        Susun rencana pengembangan untuk menutup <strong>{gaps.length} Gap Kompetensi</strong> yang teridentifikasi.
+                        Susun rencana pengembangan untuk {employee?.namaLengkap ? <strong>{employee.namaLengkap}</strong> : 'pegawai'} guna menutup <strong>{gaps.length} Gap Kompetensi</strong>.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -121,7 +166,7 @@ export default function PlanCreationModal({ isOpen, onClose, employee, gaps }: P
                     </div>
 
                     <DialogFooter>
-                        <Button type="button" variant="outline" onClick={onClose} disabled={isProcessing}>Batal</Button>
+                        <Button type="button" variant="outline" onClick={handleClose} disabled={isProcessing}>Batal</Button>
                         <Button type="submit" disabled={isProcessing || !program || !targetWaktu} className="bg-blue-600 hover:bg-blue-700">
                             {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>} Simpan Rencana
                         </Button>

@@ -292,10 +292,10 @@ export default function RepositoryDokumenPage() {
                 icon={FolderArchive}
             />
 
-            <div className="flex-1 overflow-auto p-4 md:p-6 pb-24 space-y-6">
+            <div className="flex-1 overflow-auto p-3 md:p-6 pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6 space-y-4 md:space-y-6">
                 
                 {/* --- CONTROLS --- */}
-                <div className="flex flex-col md:flex-row gap-4 justify-between items-center bg-card p-4 rounded-xl border border-border shadow-sm">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center bg-card p-3 md:p-4 sg-mobile-borderless">
                     
                     <div className="w-full md:w-1/2 relative flex gap-2">
                         <div className="relative flex-1">

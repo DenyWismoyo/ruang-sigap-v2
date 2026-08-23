@@ -56,9 +56,9 @@
     /* Glass Effect */
     --sg-glass: rgba(255, 255, 255, 0.80);
     --sg-glass-border: rgba(15, 23, 42, 0.08);
-    }
+}
 
-  .dark [data-tenant="sigap"] {
+.dark [data-tenant="sigap"] {
 
     /* --- MODE GELAP (BLUE SLATE EFFECT) --- */
     
@@ -106,353 +106,317 @@
 
     --sg-glass: rgba(15, 23, 42, 0.85);
     --sg-glass-border: rgba(255, 255, 255, 0.06);
-    }
+}
 
-  /* Utility Classes for SIGAP Mobile UI */
-  .sigap-scrollable {
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding-bottom: var(--bottom-nav-height);
-  }
-  
-  .sigap-full-bleed-mobile {
-    @apply -mx-3 px-3 md:mx-0 md:px-0;
-  }
-  
-  /* Mobile Borderless Card Utility */
-  .sg-mobile-borderless {
-    @apply border-x-0 border-t-0 rounded-none shadow-none md:border md:border-border/40 md:rounded-[var(--radius)] md:shadow-sm;
-  }
+/* Utility Classes for SIGAP Mobile UI */
+.sigap-scrollable {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: var(--bottom-nav-height);
+}
 
-  /* Utility classes */
-  [data-tenant="sigap"] .sg-card {
-    background-color: hsl(var(--sg-surface-2));
+.sigap-full-bleed-mobile {
+  @apply -mx-3 px-3 md:mx-0 md:px-0;
+}
+
+/* Mobile Borderless Card Utility */
+.sg-mobile-borderless {
+  @apply border-x-0 border-t-0 rounded-none shadow-none md:border md:border-border/40 md:rounded-[var(--radius)] md:shadow-sm;
+}
+
+/* Utility classes */
+[data-tenant="sigap"] .sg-card {
+  background-color: hsl(var(--sg-surface-2));
+  border: 1px solid hsl(var(--border) / 0.8);
+  border-radius: var(--radius);
+  box-shadow: var(--sg-shadow-sm);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* Untuk sg-card yang borderless di mobile */
+[data-tenant="sigap"] .sg-card.sg-mobile-borderless {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+@media (min-width: 768px) {
+  [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
     border: 1px solid hsl(var(--border) / 0.8);
     border-radius: var(--radius);
     box-shadow: var(--sg-shadow-sm);
-    transition: box-shadow 0.2s ease, transform 0.2s ease;
   }
-  
-  /* Untuk sg-card yang borderless di mobile */
-  [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
-    border-left: none;
-    border-right: none;
-    border-top: none;
-    border-radius: 0;
-    box-shadow: none;
-  }
-  
-  @media (min-width: 768px) {
-    [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
-      border: 1px solid hsl(var(--border) / 0.8);
-      border-radius: var(--radius);
-      box-shadow: var(--sg-shadow-sm);
-    }
-  }
+}
 
-  [data-tenant="sigap"] .sg-card:hover {
-    box-shadow: var(--sg-shadow-md);
-  }
-  
-  [data-tenant="sigap"] .sg-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 1rem 1.25rem;
-    border-bottom: 1px solid hsl(var(--border) / 0.6);
-  }
-  
-  [data-tenant="sigap"] .sg-editorial-title {
-    position: relative;
-    padding-left: 1rem;
-    font-weight: 700;
-    font-size: 1.125rem;
-    letter-spacing: -0.025em;
-  }
-  
-  [data-tenant="sigap"] .sg-editorial-title::before {
-    content: '';
-    position: absolute;
-    left: 0; top: 10%; bottom: 10%;
-    width: var(--sg-editorial-line);
-    background: linear-gradient(to bottom, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
-    border-radius: 4px;
-  }
-  
-  /* Animasi page masuk */
-  @keyframes sg-slide-up {
-    from { opacity: 0; transform: translateY(12px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
-  
-  [data-tenant="sigap"] .sg-animate-in {
-    animation: sg-slide-up 0.35s ease-out forwards;
-  }
-  
-  [data-tenant="sigap"] .sg-stagger-1 { animation-delay: 0.05s; opacity: 0; }
-  [data-tenant="sigap"] .sg-stagger-2 { animation-delay: 0.10s; opacity: 0; }
-  [data-tenant="sigap"] .sg-stagger-3 { animation-delay: 0.15s; opacity: 0; }
-  [data-tenant="sigap"] .sg-stagger-4 { animation-delay: 0.20s; opacity: 0; }
-  
-  /* Custom scrollbar tipis */
-  [data-tenant="sigap"] ::-webkit-scrollbar { width: 5px; height: 5px; }
-  [data-tenant="sigap"] ::-webkit-scrollbar-track { background: transparent; }
-  [data-tenant="sigap"] ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 10px; }
-  [data-tenant="sigap"] ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sg-blue)); }
+[data-tenant="sigap"] .sg-card:hover {
+  box-shadow: var(--sg-shadow-md);
+}
 
-  /* --- HAL ISTIMEWA (PREMIUM EFFECTS) --- */
-  
-  /* 1. Glassmorphism Mewah */
-  [data-tenant="sigap"] .sg-glass {
-    background: var(--sg-glass);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border-bottom: 1px solid var(--sg-glass-border);
-  }
+[data-tenant="sigap"] .sg-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
 
-  /* 2. Text Gradient Keren (Cocok untuk Judul Halaman) */
-  [data-tenant="sigap"] .sg-text-gradient {
-    background: linear-gradient(135deg, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    display: inline-block;
-  }
+[data-tenant="sigap"] .sg-editorial-title {
+  position: relative;
+  padding-left: 1rem;
+  font-weight: 700;
+  font-size: 1.125rem;
+  letter-spacing: -0.025em;
+}
 
-  /* 3. Micro Hover Lift (Interaksi Halus) */
-  [data-tenant="sigap"] .sg-hover-lift {
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
-  }
-  [data-tenant="sigap"] .sg-hover-lift:hover {
-    transform: translateY(-2px) scale(1.005);
-    box-shadow: var(--sg-shadow-md);
-  }
+[data-tenant="sigap"] .sg-editorial-title::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 10%; bottom: 10%;
+  width: var(--sg-editorial-line);
+  background: linear-gradient(to bottom, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
+  border-radius: 4px;
+}
 
-  /* 4. Elegant Shimmer Skeleton */
-  @keyframes sg-shimmer {
-    0% { background-position: -1000px 0; }
-    100% { background-position: 1000px 0; }
-  }
-  [data-tenant="sigap"] .sg-shimmer {
-    animation: sg-shimmer 2.5s infinite linear;
-    background: linear-gradient(to right, hsl(var(--muted)) 4%, hsl(var(--muted)/0.3) 25%, hsl(var(--muted)) 36%);
-    background-size: 1000px 100%;
-  }
+/* Animasi page masuk */
+@keyframes sg-slide-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
-  /* 5. Standarisasi Tombol Aksi (Action Buttons) */
-  [data-tenant="sigap"] .sg-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-weight: 600;
-    font-size: 0.875rem;
-    padding: 0.5rem 1rem;
-    border-radius: var(--radius);
-    transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
-    white-space: nowrap;
-  }
-  
-  [data-tenant="sigap"] .sg-btn:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: var(--sg-shadow-md);
-  }
-  
-  [data-tenant="sigap"] .sg-btn:active {
-    transform: translateY(0) scale(0.98);
-  }
+[data-tenant="sigap"] .sg-animate-in {
+  animation: sg-slide-up 0.35s ease-out forwards;
+}
 
-  [data-tenant="sigap"] .sg-btn-primary {
-    background-color: hsl(var(--sg-blue));
-    color: white;
-    border: 1px solid transparent;
-  }
-  [data-tenant="sigap"] .sg-btn-primary:hover {
-    background-color: hsl(var(--sg-blue) / 0.9);
-  }
+[data-tenant="sigap"] .sg-stagger-1 { animation-delay: 0.05s; opacity: 0; }
+[data-tenant="sigap"] .sg-stagger-2 { animation-delay: 0.10s; opacity: 0; }
+[data-tenant="sigap"] .sg-stagger-3 { animation-delay: 0.15s; opacity: 0; }
+[data-tenant="sigap"] .sg-stagger-4 { animation-delay: 0.20s; opacity: 0; }
 
-  [data-tenant="sigap"] .sg-btn-success {
-    background-color: #16a34a; /* green-600 */
-    color: white;
-  }
-  [data-tenant="sigap"] .sg-btn-success:hover {
-    background-color: #15803d; /* green-700 */
-  }
+/* Custom scrollbar tipis */
+[data-tenant="sigap"] ::-webkit-scrollbar { width: 5px; height: 5px; }
+[data-tenant="sigap"] ::-webkit-scrollbar-track { background: transparent; }
+[data-tenant="sigap"] ::-webkit-scrollbar-thumb { background: hsl(var(--border)); border-radius: 10px; }
+[data-tenant="sigap"] ::-webkit-scrollbar-thumb:hover { background: hsl(var(--sg-blue)); }
 
-  [data-tenant="sigap"] .sg-btn-outline {
-    background-color: transparent;
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border));
-  }
-  [data-tenant="sigap"] .sg-btn-outline:hover {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground));
-  }
+/* --- HAL ISTIMEWA (PREMIUM EFFECTS) --- */
 
-  /* 6. Custom Scrollbar Elegan */
-  [data-tenant="sigap"] *::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
-  }
-  [data-tenant="sigap"] *::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  [data-tenant="sigap"] *::-webkit-scrollbar-thumb {
-    background: rgba(150, 150, 150, 0.3);
-    border-radius: 10px;
-  }
-  [data-tenant="sigap"] *::-webkit-scrollbar-thumb:hover {
-    background: rgba(150, 150, 150, 0.5);
-  }
-  .dark[data-tenant="sigap"] *::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.15);
-  }
-  .dark[data-tenant="sigap"] *::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.3);
-  }
+/* 1. Glassmorphism Mewah */
+[data-tenant="sigap"] .sg-glass {
+  background: var(--sg-glass);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--sg-glass-border);
+}
 
-  /* === PAGE-LEVEL TOKENS === */
-  [data-tenant="sigap"] .sg-page {
-    @apply animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out pb-20 md:pb-6;
-  }
-  
-  [data-tenant="sigap"] .sg-page-header {
-    @apply mb-6 px-4 md:px-0 flex flex-col md:flex-row md:items-start md:justify-between gap-4;
-  }
-  
-  [data-tenant="sigap"] .sg-page-title {
-    @apply text-3xl font-bold text-foreground flex items-center sg-editorial-title;
-  }
-  
-  [data-tenant="sigap"] .sg-page-subtitle {
-    @apply text-muted-foreground mt-1;
-  }
-  
-  [data-tenant="sigap"] .sg-page-actions {
-    @apply flex items-center space-x-2 md:space-x-4 flex-shrink-0 w-full md:w-auto;
-  }
+/* 2. Text Gradient Keren (Cocok untuk Judul Halaman) */
+[data-tenant="sigap"] .sg-text-gradient {
+  background: linear-gradient(135deg, hsl(var(--sg-gradient-start)), hsl(var(--sg-gradient-end)));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  display: inline-block;
+}
 
-  /* === SECTION TOKENS === */
-  [data-tenant="sigap"] .sg-section {
-    @apply mb-8;
-  }
-  
-  [data-tenant="sigap"] .sg-section-title {
-    @apply text-xl font-bold text-foreground mb-4 flex items-center;
-  }
+/* 3. Micro Hover Lift (Interaksi Halus) */
+[data-tenant="sigap"] .sg-hover-lift {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+}
+[data-tenant="sigap"] .sg-hover-lift:hover {
+  transform: translateY(-2px) scale(1.005);
+  box-shadow: var(--sg-shadow-md);
+}
 
-  /* === FILTER BAR === */
-  [data-tenant="sigap"] .sg-filter-bar {
-    @apply mb-6 flex flex-col sm:flex-row gap-3 p-4 bg-card rounded-xl border border-border shadow-sm items-center;
-  }
-  
-  [data-tenant="sigap"] .sg-search-input {
-    @apply relative flex-1 w-full;
-  }
+/* 4. Elegant Shimmer Skeleton */
+@keyframes sg-shimmer {
+  0% { background-position: -1000px 0; }
+  100% { background-position: 1000px 0; }
+}
+[data-tenant="sigap"] .sg-shimmer {
+  animation: sg-shimmer 2.5s infinite linear;
+  background: linear-gradient(to right, hsl(var(--muted)) 4%, hsl(var(--muted)/0.3) 25%, hsl(var(--muted)) 36%);
+  background-size: 1000px 100%;
+}
 
-  /* === TABLE === */
-  [data-tenant="sigap"] .sg-table-wrapper {
-    @apply overflow-hidden rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
-  }
-  
-  [data-tenant="sigap"] .sg-table {
-    @apply w-full text-left text-sm;
-  }
-  
-  [data-tenant="sigap"] .sg-table-head {
-    @apply text-xs text-muted-foreground uppercase bg-muted/50 border-b border-border;
-  }
-  
-  [data-tenant="sigap"] .sg-table-row {
-    @apply bg-card hover:bg-muted/30 transition-colors border-b border-border last:border-0;
-  }
+/* 5. Standarisasi Tombol Aksi (Action Buttons) */
+[data-tenant="sigap"] .sg-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease, background-color 0.2s ease;
+  white-space: nowrap;
+}
 
-  /* === EMPTY STATE === */
-  [data-tenant="sigap"] .sg-empty-state {
-    @apply text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center sg-animate-in;
-  }
+[data-tenant="sigap"] .sg-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: var(--sg-shadow-md);
+}
 
-  /* === STATUS BADGES === */
-  [data-tenant="sigap"] .sg-badge-new {
-    @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-200 dark:border-red-800 hover:bg-red-200;
-  }
-  
-  [data-tenant="sigap"] .sg-badge-process {
-    @apply bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:border-orange-800 hover:bg-orange-200;
-  }
-  
-  [data-tenant="sigap"] .sg-badge-done {
-    @apply bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-200 dark:border-green-800 hover:bg-green-200;
-  }
-  
-  [data-tenant="sigap"] .sg-badge-archived {
-    @apply bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-200;
-  }
-  
-  /* === PILL === */
-  [data-tenant="sigap"] .sg-stat-pill {
-    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
-  }
+[data-tenant="sigap"] .sg-btn:active {
+  transform: translateY(0) scale(0.98);
+}
 
-  /* === CARDS === */
-  [data-tenant="sigap"] .sg-list-card {
-    @apply transition-all duration-200 border-x-0 border-b border-t-0 border-border/30 md:border-border/40 md:border md:rounded-[var(--radius)] md:shadow-sm hover:md:shadow-md hover:md:-translate-y-[1px] overflow-hidden bg-background/90 dark:bg-background/50 backdrop-blur-xl border-l-[3px] md:border-l-[3px] border-l-gray-400 dark:border-l-gray-600;
-  }
-  
-  [data-tenant="sigap"] .sg-list-card-active {
-    @apply bg-card border-l-[3px] md:border-l-4 border-l-red-500 dark:border-l-red-500;
-  }
+[data-tenant="sigap"] .sg-btn-primary {
+  background-color: hsl(var(--sg-blue));
+  color: white;
+  border: 1px solid transparent;
+}
+[data-tenant="sigap"] .sg-btn-primary:hover {
+  background-color: hsl(var(--sg-blue) / 0.9);
+}
 
-  /* === NEW STANDARDIZED UI === */
-  
-  /* Glass Panel Premium */
-  [data-tenant="sigap"] .sg-glass-panel {
-    @apply rounded-[var(--radius)] bg-background/80 dark:bg-background/40 backdrop-blur-2xl border border-border/30 shadow-sm md:shadow-md;
-  }
+[data-tenant="sigap"] .sg-btn-success {
+  background-color: #16a34a;
+  color: white;
+}
+[data-tenant="sigap"] .sg-btn-success:hover {
+  background-color: #15803d;
+}
 
-  /* Tables */
-  [data-tenant="sigap"] .sg-table-container {
-    @apply w-full overflow-x-auto rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
-  }
-  
-  [data-tenant="sigap"] .sg-table {
-    @apply w-full text-sm text-left text-muted-foreground;
-  }
-  
-  [data-tenant="sigap"] .sg-table-header {
-    @apply text-xs text-foreground uppercase bg-muted/40 border-b border-border;
-  }
-  
-  [data-tenant="sigap"] .sg-table-row {
-    @apply bg-card border-b border-border/50 hover:bg-muted/30 transition-colors duration-200;
-  }
-  
-  [data-tenant="sigap"] .sg-table-cell {
-    @apply px-4 py-3 align-middle;
-  }
+[data-tenant="sigap"] .sg-btn-outline {
+  background-color: transparent;
+  color: hsl(var(--foreground));
+  border: 1px solid hsl(var(--border));
+}
+[data-tenant="sigap"] .sg-btn-outline:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
 
-  /* Animations */
-  @keyframes sg-slide-in-right {
-    from { opacity: 0; transform: translateX(30px); }
-    to { opacity: 1; transform: translateX(0); }
-  }
-  
-  [data-tenant="sigap"] .sg-slide-in-right {
-    animation: sg-slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
+/* === PAGE-LEVEL TOKENS === */
+[data-tenant="sigap"] .sg-page {
+  @apply animate-in fade-in slide-in-from-bottom-4 duration-500 ease-out pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6;
+}
 
-  @keyframes sg-zoom-in {
-    from { opacity: 0; transform: scale(0.95); }
-    to { opacity: 1; transform: scale(1); }
-  }
+[data-tenant="sigap"] .sg-page-header {
+  @apply mb-4 md:mb-6 px-4 md:px-0 flex flex-col md:flex-row md:items-start md:justify-between gap-3 md:gap-4;
+}
 
-  [data-tenant="sigap"] .sg-zoom-in {
-    animation: sg-zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  
-  [data-tenant="sigap"] .sg-active-scale {
-    @apply active:scale-95 transition-transform duration-150;
-  }
+[data-tenant="sigap"] .sg-page-title {
+  @apply text-xl md:text-3xl font-bold text-foreground flex items-center sg-editorial-title;
+}
+
+[data-tenant="sigap"] .sg-page-subtitle {
+  @apply text-xs md:text-sm text-muted-foreground mt-0.5 md:mt-1;
+}
+
+[data-tenant="sigap"] .sg-page-actions {
+  @apply flex items-center space-x-2 md:space-x-4 flex-shrink-0 w-full md:w-auto;
+}
+
+/* === SECTION TOKENS === */
+[data-tenant="sigap"] .sg-section {
+  @apply mb-6 md:mb-8;
+}
+
+[data-tenant="sigap"] .sg-section-title {
+  @apply text-base md:text-xl font-bold text-foreground mb-3 md:mb-4 flex items-center;
+}
+
+/* === FILTER BAR === */
+[data-tenant="sigap"] .sg-filter-bar {
+  @apply mb-4 md:mb-6 flex flex-col sm:flex-row gap-2.5 md:gap-3 p-3 md:p-4 bg-card sg-mobile-borderless items-center;
+}
+
+[data-tenant="sigap"] .sg-search-input {
+  @apply relative flex-1 w-full;
+}
+
+/* === TABLE === */
+[data-tenant="sigap"] .sg-table-wrapper {
+  @apply overflow-hidden rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
+}
+
+[data-tenant="sigap"] .sg-table-container {
+  @apply w-full overflow-x-auto rounded-[var(--radius)] border border-border/40 bg-card shadow-sm;
+}
+
+[data-tenant="sigap"] .sg-table {
+  @apply w-full text-sm text-left text-muted-foreground;
+}
+
+[data-tenant="sigap"] .sg-table-head,
+[data-tenant="sigap"] .sg-table-header {
+  @apply text-xs text-foreground uppercase bg-muted/40 border-b border-border;
+}
+
+[data-tenant="sigap"] .sg-table-row {
+  @apply bg-card border-b border-border/50 hover:bg-muted/30 transition-colors duration-200;
+}
+
+[data-tenant="sigap"] .sg-table-cell {
+  @apply px-4 py-3 align-middle;
+}
+
+/* === EMPTY STATE === */
+[data-tenant="sigap"] .sg-empty-state {
+  @apply text-center py-16 text-muted-foreground bg-card rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center sg-animate-in;
+}
+
+/* === STATUS BADGES === */
+[data-tenant="sigap"] .sg-badge-new {
+  @apply bg-red-100 text-red-800 border-red-200 dark:bg-red-900/50 dark:text-red-200 dark:border-red-800 hover:bg-red-200;
+}
+
+[data-tenant="sigap"] .sg-badge-process {
+  @apply bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/50 dark:text-orange-200 dark:border-orange-800 hover:bg-orange-200;
+}
+
+[data-tenant="sigap"] .sg-badge-done {
+  @apply bg-green-100 text-green-800 border-green-200 dark:bg-green-900/50 dark:text-green-200 dark:border-green-800 hover:bg-green-200;
+}
+
+[data-tenant="sigap"] .sg-badge-archived {
+  @apply bg-gray-100 text-gray-800 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700 hover:bg-gray-200;
+}
+
+/* === PILL === */
+[data-tenant="sigap"] .sg-stat-pill {
+  @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+}
+
+/* === CARDS === */
+[data-tenant="sigap"] .sg-list-card {
+  @apply transition-all duration-200 border-x-0 border-b border-t-0 border-border/30 md:border-border/40 md:border md:rounded-[var(--radius)] md:shadow-sm hover:md:shadow-md hover:md:-translate-y-[1px] overflow-hidden bg-background/90 dark:bg-background/50 backdrop-blur-xl border-l-[3px] md:border-l-[3px] border-l-gray-400 dark:border-l-gray-600;
+}
+
+[data-tenant="sigap"] .sg-list-card-active {
+  @apply bg-card border-l-[3px] md:border-l-4 border-l-red-500 dark:border-l-red-500;
+}
+
+/* Glass Panel Premium */
+[data-tenant="sigap"] .sg-glass-panel {
+  @apply rounded-[var(--radius)] bg-background/80 dark:bg-background/40 backdrop-blur-2xl border border-border/30 shadow-sm md:shadow-md;
+}
+
+/* Animations */
+@keyframes sg-slide-in-right {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+[data-tenant="sigap"] .sg-slide-in-right {
+  animation: sg-slide-in-right 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes sg-zoom-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+[data-tenant="sigap"] .sg-zoom-in {
+  animation: sg-zoom-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+[data-tenant="sigap"] .sg-active-scale {
+  @apply active:scale-95 transition-transform duration-150;
+}
 
 /* --- ENTERPRISE SHOWCASE STYLES (ORGANIC & NATURAL) --- */
 .mesh-bg {
@@ -469,7 +433,7 @@
 }
 
 .glass-enterprise {
-  background: rgba(255, 255, 255, 0.15); /* Lebih tebal agar blur menangkap mesh */
+  background: rgba(255, 255, 255, 0.15);
   backdrop-filter: blur(25px) saturate(1.5);
   -webkit-backdrop-filter: blur(25px) saturate(1.5);
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -505,17 +469,15 @@
   100% { transform: rotate(360deg); opacity: 0.5; }
 }
 
-/* Garis dasar yang redup */
 .data-flow-base {
   stroke: currentColor;
   stroke-width: 1px;
   opacity: 0.15;
 }
 
-/* Animasi cahaya yang meluncur seperti bintang jatuh */
 .data-flow-path {
-  stroke-dasharray: 20 200; /* Garis pendek, celah sangat panjang */
-  stroke-dashoffset: 220; /* Mulai dari luar layar (kiri) */
+  stroke-dasharray: 20 200;
+  stroke-dashoffset: 220;
   animation: shootingStar 2.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   stroke-linecap: round;
   filter: drop-shadow(0 0 4px currentColor);
@@ -533,7 +495,7 @@
     opacity: 1;
   }
   100% {
-    stroke-dashoffset: -20; /* Berakhir di ujung kanan */
+    stroke-dashoffset: -20;
     opacity: 0;
   }
 }
@@ -557,7 +519,6 @@
   }
 }
 
-/* Float animation untuk kotak Input */
 .float-organic {
   animation: floatOrganic 6s ease-in-out infinite;
 }
@@ -567,4 +528,3 @@
   33% { transform: translateY(-8px) rotate(1deg); }
   66% { transform: translateY(4px) rotate(-1deg); }
 }
-

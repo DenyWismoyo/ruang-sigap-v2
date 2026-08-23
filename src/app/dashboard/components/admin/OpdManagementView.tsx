@@ -130,7 +130,7 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
   if (userProfile?.role !== 'super_admin') return <div className="p-6 text-center text-red-700 bg-red-100 rounded-lg">Akses ditolak. Hanya Super Admin yang boleh mengelola OPD.</div>;
 
   const isPoros = tenant === 'poros';
-  const cardClass = isPoros ? 'nk-card p-6 mb-6' : 'bg-card p-6 mb-6 rounded-xl shadow-md border border-border';
+  const cardClass = isPoros ? 'nk-card p-4 md:p-6 mb-4 md:mb-6' : 'bg-card p-3 md:p-6 mb-4 md:mb-6 sg-mobile-borderless';
   const tableWrapperClass = isPoros ? 'nk-table-wrapper' : 'overflow-x-auto border rounded-lg';
 
   // Build tree data
@@ -138,9 +138,9 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
   const indukOpds = visibleOpds.filter(opd => opd.tipe === 'Induk').sort((a, b) => a.namaOpd.localeCompare(b.namaOpd));
   
   return (
-    <div className="animate-fadeInUp pb-20">
+    <div className="animate-fadeInUp pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
       <div className={cardClass}>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Tambah Unit Kerja Baru</h2>
+        <h2 className="text-base md:text-xl font-semibold text-foreground mb-3 md:mb-4">Tambah Unit Kerja Baru</h2>
         {error && <Alert variant="destructive" className="mb-4"><AlertDescription>{error}</AlertDescription></Alert>}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

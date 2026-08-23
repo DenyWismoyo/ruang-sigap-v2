@@ -360,7 +360,7 @@ export default function DashboardPage() {
   if (isLoading) return <RuangKerjaSkeleton />;
 
   return (
-    <div className="flex flex-col h-full px-0 md:px-6 py-4 md:py-6 bg-background">
+    <div className="sg-page flex flex-col h-full px-0 md:px-6 py-3 md:py-6 bg-background">
       <div className="px-4 md:px-0">
         <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
       </div>
