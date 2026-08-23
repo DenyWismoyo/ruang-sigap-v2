@@ -157,10 +157,8 @@ export const useSuratActions = () => {
       const idsToUnion = [effectiveJabatan.id!, ...targetJabatanIds].filter(Boolean);
       suratUpdates.terlibatJabatanIds = arrayUnion(...idsToUnion);
 
-      if (!isInformational) {
-        if (surat.statusPenyelesaian === 'Baru' || surat.statusPenyelesaian === 'Revisi Disposisi') {
-            suratUpdates.statusPenyelesaian = 'Didisposisikan';
-        }
+      if (surat.statusPenyelesaian === 'Baru' || surat.statusPenyelesaian === 'Revisi Disposisi') {
+          suratUpdates.statusPenyelesaian = 'Didisposisikan';
       }
 
       suratUpdates.infoTampilan = {
