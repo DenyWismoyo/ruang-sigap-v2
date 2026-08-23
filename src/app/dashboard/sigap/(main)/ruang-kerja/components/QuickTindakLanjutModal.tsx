@@ -92,7 +92,7 @@ const QuickTindakLanjutModal = ({
   // Logika fetch pimpinan Sub-OPD
   useEffect(() => {
     const fetchSubOpdLeaders = async () => {
-        if (!effectiveJabatan || !userProfile || isTuOrAdmin) {
+        if (!effectiveJabatan || !userProfile) {
             setSubOpdPimpinan([]);
             return;
         }
@@ -178,7 +178,7 @@ const QuickTindakLanjutModal = ({
         }
     };
     fetchSubOpdLeaders();
-  }, [effectiveJabatan, userProfile, isTuOrAdmin, isOpen]);
+  }, [effectiveJabatan, userProfile, isOpen]);
 
   // Logika filter bawahan
   const bawahanList = useMemo(() => {

@@ -604,7 +604,7 @@ export default function DetailSuratPage() {
     const isTuOrAdmin = userProfile?.role === 'staf_tu' || userProfile?.role === 'admin_opd';
     
     return { 
-        disposisi: (canDoNormalDisposisi || needsRevision) && !isTuOrAdmin, 
+        disposisi: (canDoNormalDisposisi || needsRevision), 
         tindakLanjut: isSuratActive && isRecipient && !userHasForwarded, 
         createTask: isSuratActive && isRecipient && hasConfirmed && !userHasForwarded 
     };
