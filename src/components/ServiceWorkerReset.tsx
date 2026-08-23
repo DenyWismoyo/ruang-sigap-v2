@@ -43,11 +43,13 @@ export function ServiceWorkerReset() {
           }
 
           // 3. Hapus IndexedDB (Membersihkan sisa cache Firestore yang membandel)
+          // PENTING: JANGAN hapus 'firebaseLocalStorageDb' karena berisi sesi Auth.
+          // Menghapusnya saat Firebase sedang berjalan akan memicu deadlock di mobile browser.
           if ('indexedDB' in window && (indexedDB as any).databases) {
               try {
                   const dbs = await (indexedDB as any).databases();
                   dbs.forEach((db: any) => {
-                      if (db.name) {
+                      if (db.name && db.name !== 'firebaseLocalStorageDb') {
                           console.log('[System] Menghapus IndexedDB:', db.name);
                           indexedDB.deleteDatabase(db.name);
                       }
