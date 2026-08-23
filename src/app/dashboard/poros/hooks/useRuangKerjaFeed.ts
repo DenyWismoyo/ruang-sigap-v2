@@ -136,6 +136,29 @@ export const useRuangKerjaFeed = () => {
       return Array.from(map.values());
   }, [suratList, missingSuratList, suratBaruQuery.data]);
 
+  // 5.5. AUTO-HEAL: Cek apakah user sudah mengirim disposisi untuk surat 'Baru' (menangani data lama/korup)
+  const suratBaruIds = useMemo(() => (suratBaruQuery.data || []).map(s => s.id!), [suratBaruQuery.data]);
+  const { data: sentDisposisiIds = [] } = useQuery({
+      queryKey: ['feed', 'sent_disposisi_check', suratBaruIds, effectiveJabatan?.id],
+      queryFn: async () => {
+          if (suratBaruIds.length === 0 || !effectiveJabatan?.id) return [];
+          const results: string[] = [];
+          for (let i = 0; i < suratBaruIds.length; i += 10) {
+              const chunk = suratBaruIds.slice(i, i + 10);
+              const q = query(
+                  collection(db, 'disposisi'), 
+                  where('dariJabatanId', '==', effectiveJabatan.id),
+                  where('suratId', 'in', chunk)
+              );
+              const snap = await getDocs(q);
+              snap.docs.forEach(d => results.push(d.data().suratId));
+          }
+          return results;
+      },
+      enabled: suratBaruIds.length > 0 && !!effectiveJabatan?.id,
+      staleTime: 1000 * 60 * 5,
+  });
+
   // 6. RAKIT RUANG KERJA ITEM
   const feedItems: RuangKerjaItem[] = useMemo(() => {
     const items: any[] = [];
@@ -160,6 +183,11 @@ export const useRuangKerjaFeed = () => {
             }
 
             if (shouldShow) {
+                // JIKA USER SUDAH PERNAH MENDISPOSISIKAN SURAT INI, JANGAN TAMPILKAN LAGI SEBAGAI SURAT BARU
+                if (sentDisposisiIds.includes(s.id!)) {
+                    return;
+                }
+                
                 items.push({
                     type: 'surat_baru',
                     surat: s,
