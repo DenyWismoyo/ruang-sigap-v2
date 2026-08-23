@@ -60,6 +60,7 @@ export const useSuratActions = () => {
   const refreshData = () => {
       queryClient.invalidateQueries({ queryKey: ['suratList'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] }); 
+      queryClient.invalidateQueries({ queryKey: ['suratDetailFull'] }); // Mencegah double-disposisi di detail/modal
       
       // Delay invalidasi cache feed agar Cloud Function sempat memproses perubahan
       setTimeout(() => {

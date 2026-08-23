@@ -60,6 +60,8 @@ export const useSuratActions = () => {
   const refreshData = () => {
       queryClient.invalidateQueries({ queryKey: ['suratList'] });
       queryClient.invalidateQueries({ queryKey: ['stats'] }); 
+      queryClient.invalidateQueries({ queryKey: ['suratDetailFull'] }); // Mencegah double-disposisi di detail/modal
+      
       // Cache 'feed' (user_summaries) sudah di-update secara optimistic di masing-masing action
       // sehingga tidak perlu di-invalidate dengan hardcoded delay yang memicu ghosting.
   };
