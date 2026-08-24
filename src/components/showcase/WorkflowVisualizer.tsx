@@ -182,7 +182,7 @@ export function WorkflowVisualizer() {
             </motion.div>
             
             {/* Animated Main Title */}
-            <motion.h1 variants={fadeIn} className="text-5xl md:text-7xl lg:text-[85px] font-extrabold text-foreground tracking-tighter mb-10 leading-[1.1] relative">
+            <motion.h1 variants={fadeIn} className="text-4xl md:text-6xl lg:text-[85px] font-extrabold text-foreground tracking-tighter mb-10 leading-[1.1] relative">
               <span className="relative z-10">Satu Input.</span><br />
               <motion.span 
                 className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-blue-600 bg-[length:200%_200%]"
@@ -368,7 +368,7 @@ export function WorkflowVisualizer() {
           </div>
 
           {/* Output Nodes Side - Penempatan Absolut Geometrik (100% Presisi) */}
-          <div className="relative z-20 shrink-0 lg:w-[320px] w-full h-[550px] lg:h-full mt-10 lg:mt-0">
+          <div className="relative z-20 shrink-0 lg:w-[320px] w-[calc(100%-28px)] ml-7 lg:ml-0 h-[550px] lg:h-full mt-10 lg:mt-0">
             {outputs.map((item, index) => {
               const isVisible = step >= 3 + index;
               const yPercents = [12, 31, 50, 69, 88];

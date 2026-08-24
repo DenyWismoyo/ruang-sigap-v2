@@ -138,6 +138,10 @@ Hindari font desktop yang terlalu besar di layar ponsel. Gunakan skala berikut:
 - **Ikon Inline Metadata**: `size-3.5` (14px) atau `size-4` (16px).
 - **Padding Halaman Mobile**: `pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6` agar tidak tertutup Bottom Navigation Bar.
 
+### D. Mobile Container Boundaries & Fluid Typography (CRITICAL RULE)
+- **Container Boundaries**: Dilarang keras menggunakan `absolute -left-X` atau `absolute -right-X` pada elemen di dalam kontainer yang menggunakan `w-full` di tampilan mobile (`< 768px`). Hal ini akan menyebabkan elemen melampaui batas layar (terpotong) ketika kontainer induknya menggunakan `overflow-x-hidden`. Gunakan `w-[calc(100%-...)] ml-...` untuk memberi ruang margin, atau geser `absolute` tersebut ke ukuran positif pada mobile.
+- **Fluid Typography**: Dilarang keras menggunakan `text-5xl` (48px) ke atas untuk kalimat panjang di mobile. Batasi di `text-3xl` atau `text-4xl` untuk layar kecil (`< 768px`) dan terapkan ukuran raksasa hanya di `md:` atau `lg:`.
+
 ---
 
 ## 🔍 5. Panduan & Checklist Audit Menu SIGAP
@@ -286,5 +290,107 @@ Hindari font desktop yang terlalu besar di layar ponsel. Gunakan skala berikut:
 - Hindari memuat modul grafis berat secara sinkron; gunakan `next/dynamic` dengan `ssr: false`.
 - Jalankan verifikasi linting (`npm run lint -- --quiet`) dan type-checking (`npx tsc --noEmit`) secara rutin.
 
+---
 
+## 🎨 10. Referensi Token CSS Lengkap (Dari File CSS Aktual)
+
+> Dibaca langsung dari `sigap.css` dan `poros.css` pada 24 Agustus 2026.
+
+### Token SIGAP (`--sg-*`) — Hanya di `[data-tenant="sigap"]`
+
+```css
+/* Identitas & Aksen */
+--sg-blue: 221 83% 53%;           /* Royal Blue — tombol, link, highlight */
+--sg-blue-light: 221 83% 96%;     /* Blue tint — background badge biru */
+--sg-gradient-start: 221 83% 53%; /* Awal gradient biru */
+--sg-gradient-end: 240 70% 60%;   /* Akhir gradient ungu-biru */
+--sg-editorial-line: 3px;         /* Lebar left-border identitas SIGAP */
+
+/* Surface Hierarchy */
+--sg-surface-1: 220 14% 96%;      /* Page canvas (abu sangat muda) */
+--sg-surface-2: 0 0% 100%;        /* Card canvas (putih) */
+--sg-surface-3: 220 13% 91%;      /* Table row hover / muted */
+
+/* Shadow */
+--sg-shadow-sm: 0 1px 3px 0 rgba(15, 23, 42, 0.06);
+--sg-shadow-md: 0 4px 16px -4px rgba(15, 23, 42, 0.10);
+
+/* Glass */
+--sg-glass: rgba(255, 255, 255, 0.80); /* Light mode glass */
+--sg-glass-border: rgba(15, 23, 42, 0.08);
+/* Dark mode: --sg-glass: rgba(15, 23, 42, 0.85) */
+
+/* Layout */
+--header-height: 56px;
+--bottom-nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+```
+
+### Token POROS (`--nk-*`) — Hanya di `[data-tenant="poros"]`
+
+```css
+/* Identitas & Aksen */
+--nk-gradient-start: hsl(172 80% 26%); /* Deep Teal #0D6B62 */
+--nk-gradient-end: hsl(190 70% 30%);   /* Ocean Teal */
+--nk-deep: hsl(172 80% 18%);           /* Header, sidebar active indicator */
+--nk-teal-mid: hsl(172 72% 38%);       /* Primary button, active state */
+--nk-teal-light: hsl(172 60% 55%);     /* Icon accent, hover glow */
+--nk-gold: hsl(38 85% 52%);            /* Warm Gold — badge highlight, section title line */
+--nk-editorial-line: 3px;              /* Lebar left-border identitas POROS */
+
+/* Surface Hierarchy */
+--nk-surface-1: hsl(160 15% 96%);      /* Page canvas (warm teal white) */
+--nk-surface-2: hsl(0 0% 100%);        /* Card canvas (putih) */
+--nk-surface-3: hsl(160 12% 93%);      /* Table row hover / muted */
+
+/* Glass */
+--nk-glass: rgba(255, 255, 255, 0.75);
+--nk-glass-border: rgba(13, 107, 98, 0.12); /* Teal transparan */
+
+/* Shadow (Teal-tinted) */
+--nk-shadow-sm: 0 2px 8px -2px rgba(13, 107, 98, 0.08);
+--nk-shadow-md: 0 8px 32px -8px rgba(13, 107, 98, 0.14);
+--nk-shadow-lg: 0 20px 60px -15px rgba(13, 107, 98, 0.2);
+
+/* Layout */
+--header-height: 56px;
+--bottom-nav-height: calc(60px + env(safe-area-inset-bottom, 0px));
+```
+
+### Token Bersama (Shadcn Standard) — AMAN di Kedua Tenant
+
+Token ini nilainya berbeda per tenant tapi namanya sama:
+
+| Token | SIGAP Light | POROS Light |
+|-------|------------|------------|
+| `--background` | `0 0% 100%` (putih) | `150 12% 97%` (warm white) |
+| `--foreground` | `222.2 84% 4.9%` (slate hitam) | `195 60% 8%` (deep ocean) |
+| `--card` | `0 0% 100%` | `0 0% 100%` |
+| `--border` | `214.3 31.8% 91.4%` (slate-100) | `160 18% 88%` (teal mist) |
+| `--primary` | `222.2 47.4% 11.2%` (dark slate) | `172 80% 26%` (deep teal) |
+| `--radius` | `0.15rem` (kotak tegas) | `0.75rem` (melengkung halus) |
+| `--muted` | `210 40% 96.1%` | `160 12% 93%` |
+| `--accent` | `210 40% 96.1%` | `38 85% 90%` (warm gold tint) |
+
+---
+
+## 🔐 11. Penegasan Aturan Isolasi Token (Zero Leak)
+
+```
+❌ DILARANG di sigap/ :  var(--nk-*)  →  background-color: var(--nk-teal-mid)
+❌ DILARANG di poros/ :  var(--sg-*)  →  color: hsl(var(--sg-blue))
+
+✅ BOLEH di mana saja:  var(--background), var(--foreground), var(--card),
+                        var(--border), var(--primary), var(--muted),
+                        var(--accent), var(--radius), var(--header-height),
+                        var(--bottom-nav-height)
+```
+
+**Cara cek violation cepat:**
+```bash
+# Cek token POROS yang terselip di folder SIGAP
+grep -r "--nk-" src/app/dashboard/sigap/
+
+# Cek token SIGAP yang terselip di folder POROS
+grep -r "--sg-" src/app/dashboard/poros/
+```
 
