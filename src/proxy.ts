@@ -5,24 +5,6 @@ import { jwtDecode } from 'jwt-decode';
 export function proxy(request: NextRequest) {
   const hostname = request.headers.get('host') || request.nextUrl.hostname;
   
-  // Redirect otomatis jika diakses dari domain hosting lama (Firebase Hosting)
-  if (hostname.includes('sigap-opd.web.app') || hostname.includes('firebaseapp.com')) {
-    const newUrl = new URL(request.url);
-    newUrl.hostname = 'sgp.omnifit.cloud';
-    newUrl.protocol = 'https:';
-    newUrl.port = ''; 
-    return NextResponse.redirect(newUrl);
-  }
-
-  const { pathname } = request.nextUrl;
-  
-  // Hanya berlaku untuk /dashboard
-  if (!pathname.startsWith('/dashboard')) return NextResponse.next();
-  // Cegah infinite loop
-  if (pathname.includes('/sigap') || pathname.includes('/poros')) {
-    return NextResponse.next();
-  }
-  
   // Baca token dari cookie __session (karena Firebase Hosting men-strip cookie lain) atau fallback ke firebase-auth-token
   let token = request.cookies.get('firebase-auth-token')?.value;
   let sessionTheme = null;
@@ -38,6 +20,41 @@ export function proxy(request: NextRequest) {
           if (!token) token = sessionCookie;
       }
   }
+
+  // Redirect otomatis jika diakses dari domain hosting lama (Firebase Hosting)
+  if (hostname.includes('sigap-opd.web.app') || hostname.includes('firebaseapp.com')) {
+    const newUrl = new URL(request.url);
+    newUrl.hostname = 'sgp.omnifit.cloud';
+    newUrl.protocol = 'https:';
+    newUrl.port = ''; 
+    
+    if (!token) {
+      // Jika tidak ada sesi di domain lama, arahkan ke /login di domain baru
+      newUrl.pathname = '/login';
+      // Simpan path tujuan asli agar setelah login bisa diarahkan kembali
+      if (request.nextUrl.pathname !== '/login' && request.nextUrl.pathname !== '/') {
+        newUrl.searchParams.set('redirect', request.nextUrl.pathname);
+      }
+    } else {
+      // Jika ADA sesi di domain lama, dan mengakses root atau login, arahkan ke dashboard
+      if (request.nextUrl.pathname === '/' || request.nextUrl.pathname === '/login') {
+        newUrl.pathname = '/dashboard';
+      }
+    }
+    
+    return NextResponse.redirect(newUrl);
+  }
+
+  const { pathname } = request.nextUrl;
+  
+  // Hanya berlaku untuk /dashboard
+  if (!pathname.startsWith('/dashboard')) return NextResponse.next();
+  // Cegah infinite loop
+  if (pathname.includes('/sigap') || pathname.includes('/poros')) {
+    return NextResponse.next();
+  }
+  
+
   
   if (!token) {
     // Jika mencoba akses dashboard tapi tidak ada token, redirect ke login dengan membawa path tujuan
