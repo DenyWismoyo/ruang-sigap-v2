@@ -262,10 +262,12 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     }
     if (!email) throw new Error("Data email tidak ditemukan untuk NIP tersebut.");
 
-    const isSameEmail = pendingUser?.email?.toLowerCase() === email.toLowerCase();
+    const providerIds = pendingUser?.providerData.map(p => p.providerId) || [];
+    const hasPasswordProvider = providerIds.includes('password');
 
-    // [PERBAIKAN PENTING] Hapus user Google sementara HANYA JIKA emailnya berbeda.
-    if (pendingUser && !isSameEmail) {
+    // [PERBAIKAN PENTING] Hapus user Google sementara JIKA DIA TIDAK MEMILIKI PASSWORD PROVIDER.
+    // Akun yatim (Google-only) harus dihapus agar emailnya bebas untuk login email/password.
+    if (pendingUser && !hasPasswordProvider) {
       await pendingUser.delete();
     }
 
@@ -276,8 +278,13 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
       throw new Error("Password invalid. Jika Anda belum memiliki password, silakan hubungi admin atau gunakan fitur lupa password.");
     }
 
-    if (!isSameEmail) {
+    // Selalu tautkan kredensial, kecuali jika sudah tertaut.
+    try {
       await linkWithCredential(userCredential.user, credential);
+    } catch (linkErr: any) {
+      if (linkErr.code !== 'auth/credential-already-in-use' && linkErr.code !== 'auth/provider-already-linked') {
+        throw linkErr;
+      }
     }
     
     const setNipClaim = callCloudFunction("setNipClaim");
@@ -331,7 +338,7 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
     clearSessionCookies();
     
     await signOut(auth);
-  }, [queryClient]);
+  }, [queryClient, userProfile?.nip]);
 
   // Sync ref dengan versi terbaru logOut agar bisa dipanggil dari dalam useEffect
   useEffect(() => {
@@ -353,7 +360,19 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   // Alur: onIdTokenChanged terpanggil → set cookie → fetch profil (jika UID baru) → selesai.
   // Dependency array kosong ([]) disengaja: onIdTokenChanged sudah menangani semua perubahan.
   useEffect(() => {
+    // [BARU] Safety timeout: Paksa inisialisasi selesai maksimal setelah 8 detik
+    const safetyTimeout = setTimeout(() => {
+      setInitializing(prev => {
+        if (prev) {
+          console.warn("[AuthContext] Firebase auth initialization timeout. Forcing complete.");
+          return false;
+        }
+        return prev;
+      });
+    }, 8000);
+
     const unsubscribe = onIdTokenChanged(auth, async (currentUser) => {
+      clearTimeout(safetyTimeout);
       if (currentUser) {
         // ── Ada user yang login (atau token di-refresh setiap 1 jam) ──────
         setUser(currentUser);
@@ -516,7 +535,10 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
       setInitializing(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(safetyTimeout);
+      unsubscribe();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   // Note: dependency array kosong ([]) disengaja. onIdTokenChanged sudah menangani
