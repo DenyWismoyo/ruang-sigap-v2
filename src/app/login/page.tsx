@@ -54,6 +54,9 @@ import {
 import { Alert, AlertDescription } from "@/components/ui/alert";
 // --- Akhir Impor Shadcn ---
 
+// Import CSS SIGAP agar tema landing page dan login persis seperti aplikasi
+import "@/app/dashboard/sigap/sigap.css";
+
 // Komponen utama dipisahkan agar bisa dibungkus Suspense
 function LoginComponent() {
   const [loginMode, setLoginMode] = useState<"nip" | "email">("nip");
@@ -300,8 +303,8 @@ function LoginComponent() {
   };
 
   return (
-    // [PERBAIKAN DARK MODE]
-    <div className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 relative overflow-hidden">
+    // [PERBAIKAN DARK MODE & TENANT] Menambahkan data-tenant="sigap" agar sigap.css berlaku
+    <div data-tenant="sigap" className="flex min-h-screen flex-col items-center justify-center bg-muted p-4 relative overflow-hidden">
       {/* Banner Migrasi */}
       <div className="absolute top-0 w-full z-50">
         <DomainBanner />
@@ -322,7 +325,7 @@ function LoginComponent() {
         transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
         className="z-10 w-full max-w-4xl"
       >
-        <Card className="w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-2xl border-border interactive-card">
+        <Card className="w-full grid grid-cols-1 md:grid-cols-2 overflow-hidden shadow-2xl border-none interactive-card">
           {/* === Kolom 1: Sisi Informatif === */}
           {/* [PERBAIKAN DARK MODE] */}
           <div className="relative hidden md:flex flex-col justify-center bg-card p-8 lg:p-12 overflow-hidden">
@@ -336,9 +339,8 @@ function LoginComponent() {
                 >
                   <Logo className="h-16" />
                 </motion.div>
-                {/* [PERBAIKAN DARK MODE] */}
                 <h1 className="text-3xl font-bold mt-6 text-foreground">
-                  Workspace Birokrasi Digital
+                  SIGAP
                 </h1>
                 <p className="text-lg text-muted-foreground mt-4">
                   Sistem terpadu yang mengorkestrasikan seluruh alur kerja Anda dalam satu
@@ -620,8 +622,7 @@ function LoginComponent() {
         </Card>
       </motion.div>
 
-      <div className="mt-8 text-center">
-        {/* [PERBAIKAN DARK MODE] */}
+      <div className="mt-8 text-center relative z-10">
         <Button
           asChild
           variant="link"

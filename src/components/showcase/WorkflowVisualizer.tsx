@@ -51,7 +51,7 @@ export function WorkflowVisualizer() {
 
   const waNumber = "6285777117587";
   const waMessage = encodeURIComponent(
-    "Halo, saya tertarik untuk berkonsultasi mengenai replikasi sistem Workspace E-Office untuk Instansi kami."
+    "Halo, saya tertarik untuk berkonsultasi mengenai replikasi sistem SIGAP E-Office untuk Instansi kami."
   );
   const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
 

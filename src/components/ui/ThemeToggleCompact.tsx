@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { Moon, Sun } from "lucide-react"
-import { useTheme } from "next-themes"
+import { useTheme } from "@/context/ThemeContext"
 import { cn } from '@/lib/utils'
 
 interface ThemeToggleCompactProps {
@@ -18,16 +18,16 @@ interface ThemeToggleCompactProps {
  * Uses resolvedTheme to avoid hydration mismatch.
  */
 export function ThemeToggleCompact({ className, variant = 'icon' }: ThemeToggleCompactProps) {
-  const { resolvedTheme, setTheme } = useTheme()
+  const { theme, toggleTheme } = useTheme()
   const [mounted, setMounted] = React.useState(false)
 
   // Prevent hydration mismatch — only render after mount
   React.useEffect(() => { setMounted(true) }, [])
   if (!mounted) return null
 
-  const isDark = resolvedTheme === 'dark'
+  const isDark = theme === 'dark'
 
-  const toggle = () => setTheme(isDark ? 'light' : 'dark')
+  const toggle = () => toggleTheme()
 
   if (variant === 'pill') {
     return (

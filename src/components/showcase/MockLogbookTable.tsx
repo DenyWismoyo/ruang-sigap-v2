@@ -94,7 +94,7 @@ export function MockLogbookTable() {
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
                 Rekap otomatis dari laporan tindak lanjut disposisi dan tugas
-                yang Anda kerjakan di Workspace.
+                yang Anda kerjakan di SIGAP.
               </p>
             </div>
             <div className="flex gap-2">

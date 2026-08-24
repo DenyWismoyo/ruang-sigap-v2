@@ -11,8 +11,8 @@ const Logo = ({ className }: { className?: string }) => {
         fill
         priority
         style={{ objectFit: 'contain' }}
-        // [PERBAIKAN] Menambahkan prop sizes untuk menghilangkan peringatan Next.js
-        sizes="100vw" 
+        // [PERBAIKAN] Mengubah prop sizes menjadi lebih kecil agar Next.js tidak mendownload gambar resolusi raksasa (memperbaiki warning kuning)
+        sizes="(max-width: 768px) 200px, 250px" 
       />
     </div>
   );

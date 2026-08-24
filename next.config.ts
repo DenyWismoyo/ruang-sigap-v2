@@ -1,4 +1,3 @@
-import { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 
 // Meningkatkan limit max listeners untuk menghindari warning MaxListenersExceededWarning di dev server
@@ -14,6 +13,40 @@ const nextConfig: NextConfig = {
   // Matikan kompresi build (Firebase Hosting sudah melakukan gzip otomatis)
   compress: false,
   
+  // Workaround untuk bug Firebase Hosting Web Frameworks yang terkadang me-rewrite `/` menjadi `/index.html`
+  async rewrites() {
+    return [
+      {
+        source: '/index.html',
+        destination: '/',
+      },
+    ];
+  },
+
+  // Redirect host lama (Firebase Hosting) ke App Hosting baru
+  async redirects() {
+    return [
+      {
+        // JIKA BUKA DARI DOMAIN LAMA DAN ADA SESI (Cookie __session)
+        source: '/:path*',
+        has: [
+          { type: 'host', value: 'sigap-opd.web.app' },
+          { type: 'cookie', key: '__session' }
+        ],
+        destination: 'https://sgp.omnifit.cloud/dashboard',
+        permanent: false,
+      },
+      {
+        // JIKA BUKA DARI DOMAIN LAMA TAPI TIDAK ADA SESI
+        source: '/:path*',
+        has: [
+          { type: 'host', value: 'sigap-opd.web.app' }
+        ],
+        destination: 'https://sgp.omnifit.cloud/login',
+        permanent: false,
+      }
+    ];
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

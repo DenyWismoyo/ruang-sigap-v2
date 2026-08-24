@@ -217,6 +217,7 @@ export const checkPermission = async (context: { auth?: any }, requiredRoles: st
         throw new HttpsError("permission-denied", "Hanya pimpinan (level 5 ke atas) yang diizinkan.");
     }
 };
+
 export const sendFcmMessageByUid = async (uid: string, title: string, body: string, link: string, tag: string, nip?: string, prefKey?: "pushSuratMasuk" | "pushDisposisi" | "pushTugas") => {
   try {
     // 1. Cari NIP dan tokens berdasarkan UID
@@ -235,9 +236,18 @@ export const sendFcmMessageByUid = async (uid: string, title: string, body: stri
       return;
     }
 
+    // --- [FIX] CEK PREFERENSI NOTIFIKASI PENGGUNA ---
+    if (prefKey && userProfile.notificationPreferences) {
+      if (userProfile.notificationPreferences[prefKey] === false) {
+        logger.log(`[ScheduledFn] User ${uid} has disabled push for ${prefKey}. Skipping FCM.`);
+        return; // Hentikan eksekusi push notifikasi
+      }
+    }
+    // --- [AKHIR FIX] ---
+
     // 2. Ambil total notification count (sama seperti di onNotificationCreated)
     let totalCount = 0;
-    const summarySnap = await db.collection("userSummaries").doc(uid).get();
+    const summarySnap = await db.collection("userSummaries").doc(userProfile.jabatanId || uid).get();
     if (summarySnap.exists) {
       const summaryData = summarySnap.data() as { suratBaruCount?: number, tugasBaruCount?: number };
       totalCount = (summaryData.suratBaruCount || 0) + (summaryData.tugasBaruCount || 0);
@@ -283,12 +293,7 @@ export const sendFcmMessageByUid = async (uid: string, title: string, body: stri
   }
 };
 
-
-// =================================================================================================
-// --- [BARU] FUNGSI TERJADWAL (SCHEDULED FUNCTIONS) ---
-// =================================================================================================
-
 /**
  * [BARU] PENGINGAT BERKALA (Implementasi Rencana Notifikasi 3.C)
  * Berjalan setiap 2 jam untuk mengingatkan pengguna tentang item yang belum dibaca.
- */
+ */

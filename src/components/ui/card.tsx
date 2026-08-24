@@ -9,7 +9,7 @@ const cardVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-card text-card-foreground border border-border/30 rounded-[var(--radius)] shadow-sm",
+        default: "bg-card text-card-foreground border-x-0 border-t-0 border-b border-border/30 rounded-none shadow-none md:border md:border-border/30 md:rounded-[var(--radius)] md:shadow-sm",
         glass: "card-glass",
         solid: "card-solid",
         highlight: "card-highlight",

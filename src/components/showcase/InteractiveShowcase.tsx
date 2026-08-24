@@ -57,7 +57,7 @@ export function InteractiveShowcase() {
           </span>
         </h2>
         <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-          Antarmuka yang dirancang presisi untuk skala enterprise. Rasakan pengalaman Workspace tanpa perlu mendaftar.
+          Antarmuka yang dirancang presisi untuk skala enterprise. Rasakan pengalaman SIGAP tanpa perlu mendaftar.
         </p>
       </div>
 

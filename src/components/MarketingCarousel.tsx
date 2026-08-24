@@ -14,7 +14,7 @@ const PAIN_POINTS = [
     description: "Surat penting terkubur di bawah tumpukan kertas di meja pimpinan. Baru ditemukan 3 hari kemudian. Deadline sudah lewat.",
     color: "text-rose-500 dark:text-rose-400",
     bg: "bg-rose-100 dark:bg-rose-900/30",
-    solution: "Workspace mencatat setiap surat masuk secara digital dengan pelacakan posisi secara real-time."
+    solution: "SIGAP mencatat setiap surat masuk secara digital dengan pelacakan posisi secara real-time."
   },
   {
     id: 2,
@@ -123,7 +123,7 @@ export function MarketingCarousel() {
 
               <div className="bg-blue-50 dark:bg-blue-900/20 px-6 py-3 rounded-xl border border-blue-100 dark:border-blue-800/50">
                 <p className="text-sm font-medium text-blue-700 dark:text-blue-300">
-                  <span className="font-bold mr-2">Solusi Workspace:</span>
+                  <span className="font-bold mr-2">Solusi SIGAP:</span>
                   {PAIN_POINTS[currentIndex].solution}
                 </p>
               </div>

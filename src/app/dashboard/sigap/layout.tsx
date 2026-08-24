@@ -74,6 +74,7 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
 
   const [activeSectionId, setActiveSectionId] = useState<string | null>(null); 
   const megaMenuTimerRef = useRef<NodeJS.Timeout | null>(null); 
+  const fcmSetupDone = useRef<boolean>(false); // [FIX] Mencegah FCM dipanggil berulang-ulang
   const [isProfileDropdownOpen, setIsProfileDropdownOpen] = useState(false);
   const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
@@ -89,15 +90,17 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     let unsubscribe: any;
     
-    // Pastikan proses ini hanya berjalan jika user sudah login, tidak sedang loading, dan di sisi client (browser)
-    if (!loading && user && userProfile && typeof window !== 'undefined' && 'Notification' in window && app) {
+    // [FIX] Gunakan ref agar setupFCM hanya dipanggil 1 kali per sesi login
+    // meskipun komponen re-render karena addToast atau userProfile update.
+    if (!loading && user && userProfile && typeof window !== 'undefined' && 'Notification' in window && app && !fcmSetupDone.current) {
+        fcmSetupDone.current = true; // Langsung tandai agar tidak loop
+
         const setupFCM = async () => {
              try {
-                 // 1. Langsung panggil getFCMToken. 
-                 // Ini akan memicu pop-up "Allow Notifications" di browser jika user belum pernah memberikan izin.
+                 // 1. Panggil getFCMToken (meminta izin popup jika belum)
                  const token = await getFCMToken();
                  
-                 // 2. Jika user mengizinkan (Allow) dan token berhasil dibuat, simpan ke Firestore
+                 // 2. Simpan token ke Firestore
                  if (token && userProfile.nip) {
                      await updateDoc(doc(db, 'users', userProfile.nip), { 
                          fcmTokens: arrayUnion(token) 
@@ -105,17 +108,23 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
                      console.log("✅ FCM Token berhasil di-generate dan disimpan ke database.");
                  }
 
-                 // 3. Setup listener untuk notifikasi yang masuk saat aplikasi sedang DIBUKA (Foreground)
-                 // Hanya daftarkan listener jika permission sudah 'granted'
+                 // 3. Setup listener foreground (Saat aplikasi terbuka)
                  if (Notification.permission === 'granted') {
                      unsubscribe = onMessage(getMessaging(app), (pl) => { 
-                         if(pl.notification) {
-                             addToast(pl.notification.title || 'Info', 'info'); 
+                         // [FIX] Backend kita mengirim "data-only message" (tanpa pl.notification)
+                         // Maka kita harus mengekstrak informasi dari pl.data
+                         const title = pl.notification?.title || pl.data?.title;
+                         const body = pl.notification?.body || pl.data?.body;
+                         
+                         if (title) {
+                             // Munculkan toast. Bisa di-custom jadi info atau success
+                             addToast(`${title}: ${body || ''}`, 'info'); 
                          }
                      });
                  }
              } catch (error) {
                  console.error("❌ Gagal melakukan setup FCM:", error);
+                 fcmSetupDone.current = false; // Boleh retry jika gagal error besar
              }
         }
         

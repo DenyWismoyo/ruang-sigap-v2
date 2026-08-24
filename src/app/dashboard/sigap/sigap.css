@@ -127,19 +127,15 @@
 /* Utility classes */
 [data-tenant="sigap"] .sg-card {
   background-color: hsl(var(--sg-surface-2));
-  border: 1px solid hsl(var(--border) / 0.8);
-  border-radius: var(--radius);
-  box-shadow: var(--sg-shadow-sm);
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  @apply relative transition-all duration-300 overflow-hidden border-x-0 border-t-0 border-b border-border/30 rounded-none shadow-none md:border md:rounded-[var(--radius)];
+  @media (min-width: 768px) {
+    box-shadow: var(--sg-shadow-sm);
+  }
 }
 
-/* Untuk sg-card yang borderless di mobile */
+/* Untuk sg-card yang borderless di mobile (Deprecated, sudah otomatis di .sg-card) */
 [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
-  border-left: none;
-  border-right: none;
-  border-top: none;
-  border-radius: 0;
-  box-shadow: none;
+  /* Dipertahankan untuk backward compatibility */
 }
 
 @media (min-width: 768px) {

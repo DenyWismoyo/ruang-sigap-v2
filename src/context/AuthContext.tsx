@@ -16,7 +16,7 @@ import {
 } from 'firebase/firestore';
 import { callCloudFunction } from "@/lib/firebase";
 import { useQueryClient } from '@tanstack/react-query';
-import * as Sentry from "@sentry/nextjs";
+
 
 import { 
   UserProfile, Jabatan, OpdConfig
@@ -318,10 +318,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
             }
         }
     }
-    
-    // Clear Sentry identity on logout
-    Sentry.setUser(null);
-
     // Reset State
     setUser(null);
     setUserProfile(null);
@@ -449,13 +445,6 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
           }
           setUserProfile(profile);
 
-          // Set user identity to Sentry
-          Sentry.setUser({
-            id: profile.id, // NIP is the ID
-            email: currentUser.email || undefined,
-            opdId: profile.opdId,
-            role: profile.role
-          });
 
           // 2. Ambil Config OPD (Untuk Feature Flag & Kuota)
           const configRef = doc(db, 'opdConfigs', profile.opdId);

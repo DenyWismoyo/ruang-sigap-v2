@@ -7,60 +7,62 @@ import { Button } from '@/components/ui/button';
 
 const TIERS = [
   {
-    name: "Starter",
+    name: "Skala Kecil",
     price: "500.000",
-    description: "Infrastruktur dasar untuk instansi skala kecil dengan lalu lintas dokumen ringan.",
+    description: "Kapasitas ideal untuk instansi tingkat kelurahan/desa atau unit kerja dengan lalu lintas surat ringan.",
     users: 20,
     letters: 500,
     features: [
-      "Shared Cloud Server",
-      "Backup Mingguan",
-      "Enkripsi Standar",
-      "Dukungan Email"
+      "Infrastruktur Cloud SPBE",
+      "Backup & Mirroring Data",
+      "Enkripsi Keamanan (AES-256)",
+      "Pemeliharaan Sistem & BSSN",
+      "Dukungan Teknis Instansi"
     ],
     highlighted: false
   },
   {
-    name: "Basic",
+    name: "Skala Menengah",
     price: "1.000.000",
-    description: "Kapasitas menengah untuk instansi dengan tingkat administrasi rutin.",
+    description: "Kapasitas standar untuk instansi tingkat kecamatan atau OPD skala kecil dengan administrasi rutin.",
     users: 50,
     letters: 1000,
     features: [
-      "Dedicated Resource (Small)",
-      "Backup Harian",
-      "Enkripsi Standar SPBE",
-      "Dukungan Email & Tiket"
+      "Infrastruktur Cloud SPBE",
+      "Backup & Mirroring Data",
+      "Enkripsi Keamanan (AES-256)",
+      "Pemeliharaan Sistem & BSSN",
+      "Dukungan Teknis Instansi"
     ],
     highlighted: false
   },
   {
-    name: "Standard",
+    name: "Skala Besar",
     price: "1.500.000",
-    description: "Sangat direkomendasikan untuk beban kerja pemerintahan standar yang aktif.",
+    description: "Sangat direkomendasikan untuk instansi tingkat dinas/badan dengan aktivitas persuratan tinggi.",
     users: 75,
     letters: 2500,
     features: [
-      "Dedicated Resource (Medium)",
-      "Real-time Mirroring Backup",
-      "Enkripsi Lanjut (AES-256)",
-      "Prioritas Dukungan Teknis",
-      "Monitoring Uptime 99.9%"
+      "Infrastruktur Cloud SPBE",
+      "Backup & Mirroring Data",
+      "Enkripsi Keamanan (AES-256)",
+      "Pemeliharaan Sistem & BSSN",
+      "Dukungan Teknis Instansi"
     ],
     highlighted: true
   },
   {
-    name: "Pro",
+    name: "Skala Enterprise",
     price: "3.500.000",
-    description: "Arsitektur performa tinggi untuk instansi besar dan super sibuk.",
+    description: "Kapasitas maksimal untuk tingkat sekretariat daerah atau instansi berskala sangat besar.",
     users: 150,
     letters: 10000,
     features: [
-      "High-Availability Cluster",
-      "Multi-Region Backup",
-      "Enkripsi & Audit Trail Penuh",
-      "Dukungan Khusus 24/7 (SLA)",
-      "DDoS Protection"
+      "Infrastruktur Cloud SPBE",
+      "Backup & Mirroring Data",
+      "Enkripsi Keamanan (AES-256)",
+      "Pemeliharaan Sistem & BSSN",
+      "Dukungan Teknis Instansi"
     ],
     highlighted: false
   }

@@ -9,7 +9,7 @@ import { useEffect } from "react";
  */
 export function ServiceWorkerReset() {
   useEffect(() => {
-    const RESET_TOKEN = 'reset-pwa-firebase-cache-v4'; 
+    const RESET_TOKEN = 'reset-pwa-firebase-cache-v5'; 
     const STORAGE_KEY = 'app_pwa_reset_status';
 
     const performReset = async () => {

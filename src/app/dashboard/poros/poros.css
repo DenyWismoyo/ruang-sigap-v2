@@ -150,9 +150,10 @@
     }
     
     .nk-card {
-      @apply relative bg-card rounded-[var(--radius)] overflow-hidden transition-all duration-300;
-      box-shadow: var(--nk-shadow-sm);
-      border: 1px solid var(--border);
+      @apply relative bg-card transition-all duration-300 overflow-hidden border-x-0 border-t-0 border-b border-border/30 rounded-none shadow-none md:border md:rounded-[var(--radius)];
+      @media (min-width: 768px) {
+        box-shadow: var(--nk-shadow-sm);
+      }
     }
     
     .nk-card:hover {
