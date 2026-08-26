@@ -656,12 +656,12 @@ export default function KotakMasukPage() {
                                 placeholder="Cari perihal, nomor surat..." 
                                 value={searchInput} 
                                 onChange={(e) => setSearchInput(e.target.value)}
-                                className="pl-10"
+                                className="pl-10 h-9"
                             />
                         </div>
                         <div className="hidden md:flex gap-2">
                             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
+                                <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Status" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Semua">Semua Status</SelectItem>
                                     <SelectItem value="Baru">Baru</SelectItem>
@@ -671,7 +671,7 @@ export default function KotakMasukPage() {
                                 </SelectContent>
                             </Select>
                             <Select value={jenisFilter} onValueChange={setJenisFilter}>
-                                <SelectTrigger className="w-[160px]"><SelectValue placeholder="Jenis" /></SelectTrigger>
+                                <SelectTrigger className="w-[160px] h-9"><SelectValue placeholder="Jenis" /></SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="Semua">Semua Jenis</SelectItem>
                                     <SelectItem value="Undangan">Undangan</SelectItem>

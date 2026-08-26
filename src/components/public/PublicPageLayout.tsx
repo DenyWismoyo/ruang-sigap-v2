@@ -56,22 +56,22 @@ export function PublicPageLayout({ children }: PublicPageLayoutProps) {
 
       {/* Sticky Premium Navbar */}
       <header className="sticky top-0 w-full z-[50] border-b border-border/40 bg-background/80 backdrop-blur-xl transition-all">
-        <nav className="w-full px-4 md:px-6 h-14 md:h-16 flex justify-between items-center max-w-7xl mx-auto">
+        <nav className="w-full px-4 md:px-6 h-14 md:h-16 flex justify-between items-center max-w-[1400px] mx-auto">
           {/* Kiri: Logo */}
-          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer">
+          <Link href="/" className="flex items-center gap-2.5 group cursor-pointer shrink-0">
             <Logo className="h-7 md:h-8 w-auto group-hover:scale-105 transition-transform duration-300 drop-shadow-md" />
-            <div className="flex flex-col hidden sm:flex">
+            <div className="hidden md:flex flex-col">
               <span className="text-base md:text-lg font-extrabold tracking-tight text-foreground leading-none">
                 SIGAP
               </span>
-              <span className="text-[9px] md:text-[10px] font-semibold tracking-wider text-muted-foreground uppercase leading-tight mt-0.5">
+              <span className="text-[9px] font-semibold tracking-wider text-muted-foreground uppercase leading-tight mt-0.5 hidden xl:block">
                 Sistem Integrasi Administrasi Persuratan
               </span>
             </div>
           </Link>
 
           {/* Tengah: Navigasi (Hanya di PC) */}
-          <div className="hidden md:flex items-center gap-6 lg:gap-8 text-sm font-medium text-muted-foreground">
+          <div className="hidden lg:flex items-center gap-5 xl:gap-8 text-[13px] xl:text-sm font-medium text-muted-foreground whitespace-nowrap">
             <Link href="/fitur" className="hover:text-primary transition-colors">Fitur & Modul</Link>
             <Link href="/keamanan" className="hover:text-primary transition-colors">Keamanan & Kepatuhan</Link>
             <Link href="/replikasi" className="hover:text-primary transition-colors">Panduan Replikasi</Link>

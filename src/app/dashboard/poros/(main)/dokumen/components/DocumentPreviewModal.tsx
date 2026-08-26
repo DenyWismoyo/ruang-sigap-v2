@@ -36,7 +36,7 @@ export default function DocumentPreviewModal({ isOpen, onClose, item }: Document
                                     </Button>
                                 </a>
                                 <a href={item.url} download>
-                                    <Button className="sg-btn-primary h-9 px-3" size="sm">
+                                    <Button className="sg-btn-primary" size="sm">
                                         <Download className="w-4 h-4 mr-2" /> Unduh
                                     </Button>
                                 </a>

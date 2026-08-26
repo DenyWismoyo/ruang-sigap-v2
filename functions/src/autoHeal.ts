@@ -79,6 +79,41 @@ export const runAutoHeal = onCall({ region: 'asia-southeast2' }, async (request:
             }
         }
 
+        // --- TAHAP 4: Auto-Repair Selesai Mandiri (Tindak Lanjut Mandiri lama) ---
+        const selesaiSnap = await db.collection('surat')
+            .where('statusPenyelesaian', '==', 'Selesai')
+            .limit(200).get();
+
+        for (const doc of selesaiSnap.docs) {
+            const docData = doc.data();
+            if (!docData.infoTampilan || !docData.infoTampilan.recipientNames) {
+                // Cari apakah ada tindak lanjut mandiri untuk surat ini
+                const tlSnap = await db.collection('tindakLanjut')
+                    .where('suratId', '==', doc.id)
+                    .where('judulLaporan', '==', 'Tindak Lanjut Mandiri')
+                    .limit(1).get();
+
+                if (!tlSnap.empty) {
+                    const tlData = tlSnap.docs[0].data();
+                    const userId = tlData.userId;
+                    
+                    if (userId) {
+                        const userSnap = await db.collection('users').doc(userId).get();
+                        if (userSnap.exists) {
+                            const userName = userSnap.data()?.namaLengkap;
+                            operations.push({
+                                ref: doc.ref,
+                                data: {
+                                    'infoTampilan.recipientNames': userName
+                                }
+                            });
+                            metadataFixedCount++;
+                        }
+                    }
+                }
+            }
+        }
+
         if (operations.length > 0) {
             const chunkSize = 450;
             for (let i = 0; i < operations.length; i += chunkSize) {

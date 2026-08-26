@@ -9,6 +9,9 @@ const DB_TARGET = process.env.FIRESTORE_DATABASE || "database-siyap";
 export * from "./doubleWrite";
 export * from "./logbookTriggers";
 export * from "./sessionTriggers";
+export * from "./repositoryTriggers"; // [BARU] Auto-Archive Repository
+export * from "./aiRepository"; // [BARU] AI Smart Folder Repository
+export * from "./repositoryRecycleBin"; // [BARU] Auto Purge Tong Sampah
 
 import { 
   getUserNameFromJabatanId, getUserNameFromUid, 

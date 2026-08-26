@@ -60,38 +60,39 @@ export default function LandingPage() {
       </div>
 
       {/* Replikasi CTA Section */}
-      <section className="py-24 bg-primary relative z-10 overflow-hidden">
-        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
+      <section className="py-24 bg-background relative z-10 overflow-hidden border-t border-border/50">
+        <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-5" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-white text-sm font-semibold mb-6 border border-white/30 backdrop-blur-sm">
-            <span className="animate-pulse w-2 h-2 rounded-full bg-emerald-400" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-sm font-semibold mb-6 border border-primary/20 backdrop-blur-sm">
+            <span className="animate-pulse w-2 h-2 rounded-full bg-emerald-500" />
             <span>Go-Live dalam kurang dari 1 minggu</span>
           </div>
-          <h2 className="text-3xl md:text-5xl font-extrabold text-primary-foreground tracking-tight mb-6">
+          <h2 className="text-3xl md:text-5xl font-extrabold text-foreground tracking-tight mb-6">
             Siap Mereplikasi SIGAP di Instansi Anda?
           </h2>
-          <p className="text-primary-foreground/90 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-medium">
+          <p className="text-muted-foreground text-lg md:text-xl mb-10 max-w-2xl mx-auto font-medium">
             Tingkatkan efisiensi dan wujudkan kedaulatan data dengan sistem persuratan elektronik berstandar SPBE.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <Button
               size="lg"
-              variant="secondary"
-              className="w-full sm:w-auto h-12 px-8 text-base font-bold shadow-xl rounded-full"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold rounded-full shadow-lg bg-primary text-primary-foreground hover:bg-primary/90"
               onClick={() => router.push('/replikasi')}
             >
               Lihat Panduan Replikasi
             </Button>
             <Button
               size="lg"
-              className="w-full sm:w-auto h-12 px-8 text-base font-bold bg-white text-primary hover:bg-white/90 rounded-full shadow-lg"
+              variant="outline"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold rounded-full shadow-sm bg-card hover:bg-muted"
               onClick={() => router.push('/dokumen')}
             >
               Unduh Proposal PDF <Download className="w-4 h-4 ml-2" />
             </Button>
             <Button
               size="lg"
-              className="w-full sm:w-auto h-12 px-8 text-base font-bold border-2 border-primary-foreground/20 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 rounded-full"
+              variant="ghost"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold rounded-full text-primary hover:bg-primary/10 hover:text-primary"
               onClick={() => router.push('/replikasi/daftar')}
             >
               Mulai Konsultasi Gratis

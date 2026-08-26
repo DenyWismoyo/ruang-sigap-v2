@@ -9,11 +9,11 @@ interface RepositoryBreadcrumbsProps {
 
 export default function RepositoryBreadcrumbs({ path, onNavigate }: RepositoryBreadcrumbsProps) {
     return (
-        <div className="flex items-center space-x-1 overflow-x-auto pb-2 pt-1 px-2 scrollbar-hide text-sm bg-card/50 sg-mobile-borderless rounded-md">
+        <div className="flex items-center space-x-1 overflow-x-auto pb-2 scrollbar-hide text-sm">
             <Button
                 variant="ghost"
                 size="sm"
-                className={`h-8 px-2 flex-shrink-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 ${path.length === 0 ? 'text-blue-600 font-bold' : 'text-muted-foreground'}`}
+                className={`h-8 px-2 flex-shrink-0 ${path.length === 0 ? 'text-primary font-bold' : 'text-muted-foreground'}`}
                 onClick={() => onNavigate(-1)}
             >
                 <Home size={16} className="mr-1" />
@@ -26,7 +26,7 @@ export default function RepositoryBreadcrumbs({ path, onNavigate }: RepositoryBr
                     <Button
                         variant="ghost"
                         size="sm"
-                        className={`h-8 px-2 flex-shrink-0 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 ${idx === path.length - 1 ? 'text-blue-600 font-bold' : 'text-muted-foreground'}`}
+                        className={`h-8 px-2 flex-shrink-0 ${idx === path.length - 1 ? 'text-primary font-bold' : 'text-muted-foreground'}`}
                         onClick={() => onNavigate(idx)}
                     >
                         {segment.nama}

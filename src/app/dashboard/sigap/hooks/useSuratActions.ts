@@ -714,7 +714,8 @@ export const useSuratActions = () => {
           const suratRef = doc(db, 'surat', surat.id!);
           batch.update(suratRef, { 
               statusPenyelesaian: 'Selesai',
-              terlibatJabatanIds: arrayUnion(effectiveJabatan.id!)
+              terlibatJabatanIds: arrayUnion(effectiveJabatan.id!),
+              'infoTampilan.recipientNames': userProfile.namaLengkap // [BARU] Menampilkan nama pimpinan di Info Disposisi
           });
 
           // 3. Catat Aktivitas

@@ -299,7 +299,7 @@ export default function RepositoryItemModal({
 
                     <DialogFooter className="pt-4">
                         <Button type="button" variant="outline" onClick={onClose} disabled={isSubmitting}>Batal</Button>
-                        <Button type="submit" className="sg-btn-primary" disabled={isSubmitting}>
+                        <Button type="submit" className="bg-gradient-to-r from-[var(--nk-teal-mid)] to-[var(--nk-teal-dark)] text-white shadow-md hover:shadow-lg border-0 transition-all" disabled={isSubmitting}>
                             {isSubmitting ? <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Menyimpan...</> : 'Simpan'}
                         </Button>
                     </DialogFooter>
