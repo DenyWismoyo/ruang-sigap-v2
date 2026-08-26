@@ -1,14 +1,16 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { PublicPageLayout } from "@/components/public/PublicPageLayout";
 import { InfrastructureSupportTiers } from "@/components/showcase/InfrastructureSupportTiers";
 import { ArrowRight, CheckCircle2, MessageSquare, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from 'next/navigation';
+import DemoGuideCopilot from './components/DemoGuideCopilot';
 
 export default function ReplikasiPage() {
   const router = useRouter();
+  const [isGuideOpen, setIsGuideOpen] = useState(false);
 
   const waNumber = "6285777117587";
   const waMessage = encodeURIComponent("Halo, saya tertarik untuk berkonsultasi mengenai replikasi sistem SIGAP E-Office untuk Instansi kami.");
@@ -69,6 +71,11 @@ export default function ReplikasiPage() {
              <Button variant="outline" className="border-primary/20 hover:bg-primary/5 text-sm" onClick={() => router.push('/login?demo=admin')}>
                Admin OPD (Staf TU)
              </Button>
+          </div>
+          <div className="mt-6 flex justify-center">
+            <Button variant="secondary" className="font-bold text-primary shadow-sm" onClick={() => setIsGuideOpen(true)}>
+              📖 Baca Panduan Demo
+            </Button>
           </div>
         </div>
       </section>
@@ -141,6 +148,9 @@ export default function ReplikasiPage() {
 
       {/* Skema Layanan */}
       <InfrastructureSupportTiers />
+
+      {/* Controlled Demo Guide Widget */}
+      <DemoGuideCopilot isOpen={isGuideOpen} onClose={() => setIsGuideOpen(false)} />
 
     </PublicPageLayout>
   );

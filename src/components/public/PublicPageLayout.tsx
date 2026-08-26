@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
@@ -18,13 +18,9 @@ interface PublicPageLayoutProps {
   children: React.ReactNode;
 }
 
-export function PublicPageLayout({ children }: PublicPageLayoutProps) {
-  const router = useRouter();
+function ReferralCatcher() {
   const searchParams = useSearchParams();
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-
-  // Tangkap kode referral dari URL query param ?ref=KODE
-  // Ini berjalan di SEMUA halaman publik yang menggunakan PublicPageLayout
+  
   useEffect(() => {
     const refCode = searchParams.get('ref');
     if (refCode) {
@@ -32,10 +28,21 @@ export function PublicPageLayout({ children }: PublicPageLayoutProps) {
     }
   }, [searchParams]);
 
+  return null;
+}
+
+export function PublicPageLayout({ children }: PublicPageLayoutProps) {
+  const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   return (
     // Membungkus dengan data-tenant="sigap" agar variabel dari sigap.css berlaku mutlak.
     <div data-tenant="sigap" className="min-h-screen bg-background text-foreground flex flex-col relative overflow-clip font-sans transition-colors duration-300">
       
+      <Suspense fallback={null}>
+        <ReferralCatcher />
+      </Suspense>
+
       {/* Subtle Grid & Glow Background */}
       <div className="fixed inset-0 pointer-events-none flex justify-center z-0">
         <div className="absolute top-[-20%] left-1/2 -translate-x-1/2 w-[1000px] h-[600px] bg-primary/10 blur-[150px] rounded-full" />
