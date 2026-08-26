@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
@@ -9,6 +9,7 @@ import DomainBanner from "@/components/DomainBanner";
 import Logo from "@/app/dashboard/sigap/components/Logo";
 import { PublicFooter } from "./PublicFooter";
 import { Button } from "@/components/ui/button";
+import { captureReferralCode } from "@/lib/referralUtils";
 
 // Import CSS SIGAP agar tema landing page persis seperti aplikasi
 import "@/app/dashboard/sigap/sigap.css";
@@ -19,7 +20,17 @@ interface PublicPageLayoutProps {
 
 export function PublicPageLayout({ children }: PublicPageLayoutProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  // Tangkap kode referral dari URL query param ?ref=KODE
+  // Ini berjalan di SEMUA halaman publik yang menggunakan PublicPageLayout
+  useEffect(() => {
+    const refCode = searchParams.get('ref');
+    if (refCode) {
+      captureReferralCode(refCode, window.location.href);
+    }
+  }, [searchParams]);
 
   return (
     // Membungkus dengan data-tenant="sigap" agar variabel dari sigap.css berlaku mutlak.

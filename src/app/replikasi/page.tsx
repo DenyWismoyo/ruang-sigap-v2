@@ -5,8 +5,11 @@ import { PublicPageLayout } from "@/components/public/PublicPageLayout";
 import { InfrastructureSupportTiers } from "@/components/showcase/InfrastructureSupportTiers";
 import { ArrowRight, CheckCircle2, MessageSquare, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useRouter } from 'next/navigation';
 
 export default function ReplikasiPage() {
+  const router = useRouter();
+
   const waNumber = "6285777117587";
   const waMessage = encodeURIComponent("Halo, saya tertarik untuk berkonsultasi mengenai replikasi sistem SIGAP E-Office untuk Instansi kami.");
   const waLink = `https://wa.me/${waNumber}?text=${waMessage}`;
@@ -30,9 +33,9 @@ export default function ReplikasiPage() {
             <Button
               size="lg"
               className="w-full sm:w-auto h-12 px-8 text-base font-bold shadow-xl shadow-primary/20 rounded-full"
-              onClick={() => window.open(waLink, '_blank')}
+              onClick={() => router.push('/replikasi/daftar')}
             >
-              Mulai Konsultasi Gratis <MessageSquare className="w-5 h-5 ml-2" />
+              Mulai Konsultasi Gratis <ArrowRight className="w-5 h-5 ml-2" />
             </Button>
             <Button
               size="lg"
@@ -42,6 +45,30 @@ export default function ReplikasiPage() {
             >
               Unduh Proposal PDF <Download className="w-5 h-5 ml-2" />
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Demo Call to Action */}
+      <section className="py-12 bg-card border-y border-border/50 relative z-10 shadow-sm">
+        <div className="max-w-4xl mx-auto px-6 text-center">
+          <h2 className="text-2xl font-bold text-foreground mb-3">Coba Langsung E-Office Kami</h2>
+          <p className="text-muted-foreground text-sm mb-6 max-w-xl mx-auto">
+            Penasaran dengan fitur disposisi dan logbook? Silakan login menggunakan akun demo berikut untuk melihat tampilan dari berbagai level jabatan.
+          </p>
+          <div className="flex flex-wrap justify-center gap-3">
+             <Button variant="outline" className="border-primary/20 hover:bg-primary/5 text-sm" onClick={() => router.push('/login?demo=kepala')}>
+               Pimpinan (Kadis)
+             </Button>
+             <Button variant="outline" className="border-primary/20 hover:bg-primary/5 text-sm" onClick={() => router.push('/login?demo=kabid')}>
+               Pejabat Struktural
+             </Button>
+             <Button variant="outline" className="border-primary/20 hover:bg-primary/5 text-sm" onClick={() => router.push('/login?demo=staf')}>
+               Staf Pelaksana
+             </Button>
+             <Button variant="outline" className="border-primary/20 hover:bg-primary/5 text-sm" onClick={() => router.push('/login?demo=admin')}>
+               Admin OPD (Staf TU)
+             </Button>
           </div>
         </div>
       </section>

@@ -92,9 +92,9 @@ export default function LandingPage() {
             <Button
               size="lg"
               className="w-full sm:w-auto h-12 px-8 text-base font-bold border-2 border-primary-foreground/20 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 rounded-full"
-              onClick={() => window.open(waLink, '_blank')}
+              onClick={() => router.push('/replikasi/daftar')}
             >
-              Konsultasi WhatsApp
+              Mulai Konsultasi Gratis
             </Button>
           </div>
         </div>

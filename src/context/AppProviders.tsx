@@ -11,6 +11,8 @@ import ReactQueryProvider from "@/lib/react-query-provider";
 import { UIProvider } from "@/context/UIContext"; 
 import { NotificationProvider } from "@/context/NotificationContext"; // Import baru
 
+import { InstanceConfigProvider } from "@/context/InstanceConfigProvider"; // [BARU] Import provider
+
 interface AppProvidersProps {
   children: ReactNode;
 }
@@ -24,7 +26,9 @@ export default function AppProviders({ children }: AppProvidersProps) {
             <NotificationProvider>
                 <ThemeProvider>
                     <UIProvider>
-                        {children}
+                        <InstanceConfigProvider>
+                            {children}
+                        </InstanceConfigProvider>
                     </UIProvider>
                 </ThemeProvider>
             </NotificationProvider>

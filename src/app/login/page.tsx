@@ -124,6 +124,20 @@ function LoginComponent() {
         "Sesi Anda telah berakhir. Silakan login kembali untuk melanjutkan.",
       );
     }
+
+    // [FITUR DEMO] Auto-fill form jika berasal dari tombol demo di halaman lain
+    const demoParam = searchParams?.get("demo");
+    if (demoParam) {
+      if (demoParam === "kepala") {
+        setLoginMode("nip"); setIdentifier("198001012000031001"); setPassword("DemoPassword@123");
+      } else if (demoParam === "kabid") {
+        setLoginMode("nip"); setIdentifier("198503032010011003"); setPassword("DemoPassword@123");
+      } else if (demoParam === "staf") {
+        setLoginMode("nip"); setIdentifier("199607072019021007"); setPassword("DemoPassword@123");
+      } else if (demoParam === "admin") {
+        setLoginMode("email"); setIdentifier("admin.demo@sigap.id"); setPassword("DemoPassword@123");
+      }
+    }
   }, [searchParams, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -12,7 +12,7 @@ import React, { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { initializeApp } from "firebase/app";
-import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import { db, app, functions } from '@/lib/firebase'; 
 import { doc, updateDoc, setDoc, collection, writeBatch, addDoc, Timestamp, serverTimestamp, getDocs, query, where, deleteDoc } from 'firebase/firestore'; 
 import { getFunctions, httpsCallable } from "firebase/functions";
@@ -544,15 +544,59 @@ export default function UserManagementView({ tenant }: UserManagementViewProps) 
             const jabatanId = jabatanMapByName.get(namaJabatan.toLowerCase().trim());
             if (!jabatanId) { logs.push(`Row ${rowNum}: Gagal - Jabatan "${namaJabatan}" tidak ditemukan.`); continue; }
             try {
-                const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
-                await setDoc(doc(db, 'users', nip), { uid: userCredential.user.uid, namaLengkap, nip, email, opdId: targetOpdId, jabatanId, role: role || 'user', status: 'aktif', createdAt: new Date() });
-                logs.push(`Row ${rowNum}: Sukses.`);
+                let uid = "";
+                try {
+                    const userCredential = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+                    uid = userCredential.user.uid;
+                } catch (authErr: any) {
+                    if (authErr.code === 'auth/email-already-in-use') {
+                        // Sign in to retrieve UID
+                        const existingUserCred = await signInWithEmailAndPassword(secondaryAuth, email, password);
+                        uid = existingUserCred.user.uid;
+                        logs.push(`Row ${rowNum}: Akun sudah ada, memperbarui data...`);
+                    } else {
+                        throw authErr;
+                    }
+                }
+
+                if (uid) {
+                    await setDoc(doc(db, 'users', nip), { uid: uid, namaLengkap, nip, email, opdId: targetOpdId, jabatanId, role: role || 'user', status: 'aktif', createdAt: new Date() });
+                    logs.push(`Row ${rowNum}: Sukses.`);
+                }
             } catch (err: any) { logs.push(`Row ${rowNum}: Gagal - ${err.message}`); }
             setImportLog([...logs]);
         }
         
         setTimeout(() => queryClient.invalidateQueries({ queryKey: ['master', 'opdData'] }), 2000);
         setIsImportProcessing(false); setImportLog(logs); setFlashMessage('success', "Impor selesai. Lihat log untuk detail."); if (fileInputRef.current) fileInputRef.current.value = '';
+    };
+
+    const handleExportCSV = () => {
+        if (filteredUsers.length === 0) {
+            alert("Tidak ada data untuk diekspor.");
+            return;
+        }
+
+        const dataToExport = filteredUsers.map(user => ({
+            "Nama Lengkap": user.namaLengkap,
+            "NIP": user.nip,
+            "Email": user.email,
+            "Jabatan": getJabatanNameById(user.jabatanId),
+            "OPD": getOpdName(user.opdId),
+            "Role": user.role,
+            "Status": user.status
+        }));
+
+        const csv = Papa.unparse(dataToExport);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        const url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Data_Pengguna_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     const handleSelectUser = (id: string, checked: boolean) => { setSelectedUsers(prev => checked ? [...prev, id] : prev.filter(userId => userId !== id)); };
@@ -574,6 +618,7 @@ export default function UserManagementView({ tenant }: UserManagementViewProps) 
                     </div>
                 )}
                 <div className="flex items-center space-x-2 mt-4 md:mt-0">
+                    <Button onClick={handleExportCSV} variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50"><Download size={16} className="mr-2" /> Ekspor</Button>
                     <Button onClick={() => openModal('import')} variant="outline"><Upload size={16} className="mr-2" /> Impor</Button>
                     <Button asChild><Link href="/dashboard/users/register"><UserPlus size={16} className="mr-2" /> Daftarkan</Link></Button>
                 </div>

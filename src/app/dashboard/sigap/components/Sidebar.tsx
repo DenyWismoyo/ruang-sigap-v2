@@ -22,7 +22,7 @@ import {
     ClipboardEdit, Home, Zap,
     Files, Wallet, Compass, HeartHandshake, Landmark,
     ScrollText, Award, GraduationCap, Youtube, 
-    ToyBrick, Palette
+    ToyBrick, Palette, Settings, Users2
 } from 'lucide-react';
 import { Jabatan, OpdConfig, UserProfile, WelcomeSummary, FunctionalRole } from '@/types'; 
 
@@ -97,19 +97,23 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/perencanaan', label: 'Perencanaan (Si-RANA)', icon: Compass, allowedRoles: ['admin_opd', 'super_admin'], section: 'analitika', colorClass: 'text-indigo-600' },
   { href: '/dashboard/rekap-surat', label: 'Rekap Surat', icon: FileText, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
   { href: '/dashboard/laporan', label: 'Laporan Umum', icon: BarChart3, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
-  { href: '/dashboard/laporan-langganan', label: 'Laporan Langganan', icon: DollarSign, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
-  { href: '/dashboard/dokumen-penagihan', label: 'Dokumen Penagihan', icon: FileText, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-blue-600' },
-  
   // --- ADMINISTRASI ---
   // [UPDATE] Menambahkan 'staf_tu' pada allowedRoles
   { href: '/dashboard/users', label: 'Master Pengguna', icon: UserCog, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
-  { href: '/dashboard/pengaturan-ui', label: 'Pengaturan UI', icon: Palette, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-violet-600' },
-  { href: '/dashboard/opd', label: 'Master OPD', icon: Building, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
   { href: '/dashboard/jabatan', label: 'Master Jabatan', icon: Briefcase, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
   { href: '/dashboard/templat', label: 'Templat Disposisi', icon: FileSignature, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
 
   { href: '/dashboard/form-builder', label: 'Kelola Formulir', icon: ClipboardEdit, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', featureFlag: 'formBuilder', colorClass: 'text-red-600' },
   { href: '/dashboard/feedback-admin', label: 'Dashboard Feedback', icon: Inbox, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
+  
+  // --- PUSAT KONTROL (SUPER ADMIN ONLY) ---
+  { href: '/dashboard/super-admin', label: 'Panel Instansi (SaaS)', icon: Settings, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-slate-800 dark:text-slate-200' },
+  { href: '/dashboard/opd', label: 'Master OPD', icon: Building, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-blue-600' },
+  { href: '/dashboard/laporan-langganan', label: 'Laporan Langganan', icon: DollarSign, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-pink-600' },
+  { href: '/dashboard/dokumen-penagihan', label: 'Dokumen Penagihan', icon: FileText, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-emerald-600' },
+  { href: '/dashboard/permintaan-replikasi', label: 'Permintaan Replikasi', icon: MessageSquare, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-indigo-600' },
+  { href: '/dashboard/affiliates', label: 'Mitra Affiliate', icon: Users2, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-violet-600' },
+  { href: '/dashboard/pengaturan-ui', label: 'Pengaturan Tema (Legacy)', icon: Palette, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-slate-500' },
 ];
 
 export const sections = [
@@ -119,6 +123,7 @@ export const sections = [
     { id: 'informasi', title: 'Informasi', icon: FolderArchive },
     { id: 'analitika', title: 'Analitika', icon: AreaChart },
     { id: 'administrasi', title: 'Administrasi', icon: UserCog },
+    { id: 'pusatKontrol', title: 'Pusat Kontrol', icon: Settings, adminOnly: true },
 ];
 
 interface SidebarProps {

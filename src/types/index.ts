@@ -172,7 +172,7 @@ export interface OpdConfig {
   id?: string; 
   packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; 
   langgananAktifHingga: Timestamp; 
-  paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; 
+  paymentStatus?: 'Trial' | 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa'; 
   kuotaPengguna: number; 
   penggunaAktifSaatIni: number; 
   features: { 
@@ -208,6 +208,22 @@ export interface OpdConfig {
   // NEW: Pengaturan Penomoran Surat
   penomoranConfigs?: FormatPenomoranConfig[];
 }
+
+// === AFFILIATE / MITRA REFERRAL ===
+export interface Affiliate {
+  id?: string;
+  nama: string;
+  nomorWA: string;
+  email: string;
+  kodeReferral: string;        // Unik, e.g. "AGUS2025"
+  komisiPersen: number;        // Persentase komisi, e.g. 10 = 10%
+  status: 'Aktif' | 'Nonaktif';
+  totalReferral?: number;      // Jumlah lead yang masuk via kode ini
+  totalKomisiEarned?: number;  // Total komisi yang sudah berstatus Lunas (Rupiah)
+  catatan?: string;
+  createdAt?: Timestamp;
+}
+
 export interface WelcomeSummary { disposisiBaru: number; tindakLanjutMenunggu: number; tugasAktif: number; tugasLewatBatasWaktu: number; suratMenungguDisposisi: number; suratBaruCount?: number; tugasBaruCount?: number; }
 
 export interface Surat { 

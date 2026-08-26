@@ -1,0 +1,10 @@
+namaLengkap,nip,email,password,namaJabatan,role
+Ir. Budi Santoso M.T.,198001012000031001,kepala2.demo@sigap.id,DemoPassword@123,Kepala Dinas,user
+Dr. Ani Rahayu M.Si.,198202022005012002,sekretaris2.demo@sigap.id,DemoPassword@123,Sekretaris,user
+Ahmad Fauzi S.E.,199005052015031005,kasubbag.umum2.demo@sigap.id,DemoPassword@123,Kasubbag Umum & Kepegawaian,user
+Hendra Wijaya S.Kom.,198503032010011003,kabid.informatika2.demo@sigap.id,DemoPassword@123,Kepala Bidang Informatika,user
+Siti Nurhaliza S.H.,198804042012022004,kabid.persandian2.demo@sigap.id,DemoPassword@123,Kepala Bidang Persandian,user
+Rizky Pratama,199607072019021007,staf1.baru@sigap.id,DemoPassword@123,Staf Pelaksana Informatika,user
+Maya Sari,199808082020032008,staf2.baru@sigap.id,DemoPassword@123,Staf Pelaksana Persandian,user
+Dewi Lestari A.Md.,199506062018012006,staf.tu2.demo@sigap.id,DemoPassword@123,Staf Tata Usaha,user
+Admin Demo,admin.demo,admin.demo@sigap.id,DemoPassword@123,Admin Demo,admin_opd

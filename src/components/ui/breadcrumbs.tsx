@@ -61,9 +61,16 @@ export default function Breadcrumbs() {
           const isLast = index === pathNames.length - 1;
           const href = `/${pathNames.slice(0, index + 1).join('/')}`;
           
-          // Jika segmen URL adalah ID (panjang >= 20), ganti teksnya jadi "Detail"
           let displayName = routeMapping[link] || link;
-          if (link.length >= 20) displayName = 'Detail Dokumen';
+          
+          if (link.length >= 20) {
+             const prevLink = pathNames[index - 1];
+             if (prevLink === 'super-admin') {
+                displayName = 'Konfigurasi Instansi';
+             } else {
+                displayName = 'Detail Dokumen';
+             }
+          }
 
           // Capitalize jika tidak ada di mapping
           if (displayName === link) {
