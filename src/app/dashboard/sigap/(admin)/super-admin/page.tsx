@@ -6,7 +6,7 @@ import { collection, onSnapshot, query, doc, deleteDoc } from 'firebase/firestor
 import { useUserAuth } from '@/context/AuthContext';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { OpdConfig } from '@/types';
-import { Building, Loader2, Settings, ShieldAlert, ArrowRight, ShieldCheck, Users, Calendar, Play } from 'lucide-react';
+import { Building, Loader2, Settings, ShieldAlert, ArrowRight, ShieldCheck, Users, Calendar, Play, HeartPulse } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -78,6 +78,7 @@ export default function SuperAdminDashboard() {
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/permintaan-replikasi')} className="border-indigo-200 text-indigo-700 bg-indigo-50 hover:bg-indigo-100">Permintaan Replikasi</Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/affiliates')} className="border-violet-200 text-violet-700 bg-violet-50 hover:bg-violet-100">Mitra Affiliate</Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/opd')}>Master OPD</Button>
+            <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/super-admin/kesehatan-opd')} className="border-pink-200 text-pink-700 bg-pink-50 hover:bg-pink-100"><HeartPulse className="w-3.5 h-3.5 mr-1" /> Kesehatan OPD</Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/laporan-langganan')}>Laporan Langganan</Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/dokumen-penagihan')}>Tagihan & Penagihan</Button>
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/users')}>Master Pengguna</Button>

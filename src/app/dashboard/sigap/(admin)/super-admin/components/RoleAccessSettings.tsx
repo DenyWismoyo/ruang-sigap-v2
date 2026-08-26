@@ -79,7 +79,6 @@ export default function RoleAccessSettings({ opdId, opdConfig }: RoleAccessSetti
       .map(item => item.roleAccessKey as RoleAccessKey);
   };
 
-  // Initialize state based on existing config or defaults (everything enabled)
   const [accessState, setAccessState] = useState<OpdRoleAccess>(() => {
     const existing = opdConfig?.roleAccessConfig;
     

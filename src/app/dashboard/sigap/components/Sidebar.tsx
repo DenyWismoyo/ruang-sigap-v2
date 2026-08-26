@@ -22,7 +22,7 @@ import {
     ClipboardEdit, Home, Zap,
     Files, Wallet, Compass, HeartHandshake, Landmark,
     ScrollText, Award, GraduationCap, Youtube, 
-    ToyBrick, Palette, Settings, Users2
+    ToyBrick, Palette, Settings, Users2, HeartPulse
 } from 'lucide-react';
 import { Jabatan, OpdConfig, UserProfile, WelcomeSummary, FunctionalRole } from '@/types'; 
 
@@ -130,6 +130,7 @@ export const navItems: NavItem[] = [
   
   // --- PUSAT KONTROL (SUPER ADMIN ONLY) ---
   { href: '/dashboard/super-admin', label: 'Panel Instansi (SaaS)', icon: Settings, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-slate-800 dark:text-slate-200' },
+  { href: '/dashboard/super-admin/kesehatan-opd', label: 'Kesehatan OPD', icon: HeartPulse, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-pink-600' },
   { href: '/dashboard/opd', label: 'Master OPD', icon: Building, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-blue-600' },
   { href: '/dashboard/laporan-langganan', label: 'Laporan Langganan', icon: DollarSign, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-pink-600' },
   { href: '/dashboard/dokumen-penagihan', label: 'Dokumen Penagihan', icon: FileText, allowedRoles: ['super_admin'], section: 'pusatKontrol', colorClass: 'text-emerald-600' },
