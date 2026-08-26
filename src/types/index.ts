@@ -168,7 +168,23 @@ export interface FormatPenomoranConfig {
   isDefault?: boolean;
 }
 
-export interface OpdConfig { 
+export type RoleAccessKey = 
+  | 'menu_surat_masuk' | 'menu_arsip' | 'menu_ruang_kerja' | 'menu_upload_surat'
+  | 'menu_tugas' | 'menu_logbook' | 'menu_portal' | 'menu_checklist' 
+  | 'menu_bukti_kinerja' | 'menu_kompetensi' | 'menu_surat_keluar' | 'menu_delegasi' 
+  | 'menu_formulir' | 'menu_feedback' | 'menu_notulensi' | 'menu_jadwal' 
+  | 'menu_dokumen' | 'menu_knowledge' | 'menu_tutorial' | 'menu_pengumuman'
+  | 'menu_users' | 'menu_jabatan' | 'menu_templat' | 'menu_rekap_surat';
+
+export interface OpdRoleAccess {
+  user_pimpinan?: RoleAccessKey[];
+  user_bawahan?: RoleAccessKey[];
+  user?: RoleAccessKey[]; // fallback for backward compatibility
+  staf_tu?: RoleAccessKey[];
+  admin_opd?: RoleAccessKey[];
+}
+
+export interface OpdConfig {
   id?: string; 
   packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom'; 
   langgananAktifHingga: Timestamp; 
@@ -207,6 +223,8 @@ export interface OpdConfig {
   kopSuratConfigs?: KopSuratConfig[];
   // NEW: Pengaturan Penomoran Surat
   penomoranConfigs?: FormatPenomoranConfig[];
+  // NEW: Konfigurasi Akses Role
+  roleAccessConfig?: OpdRoleAccess;
 }
 
 // === AFFILIATE / MITRA REFERRAL ===

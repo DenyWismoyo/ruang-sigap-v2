@@ -12,6 +12,8 @@ import React, { useMemo, useState } from 'react';
 import { motion, Variants } from "framer-motion"; 
 import { RuangKerjaItem } from "@/types";
 import RuangKerjaCard from "./RuangKerjaCard"; 
+import { detectScheduleConflict } from "@/lib/conflictUtils";
+import { CombinedAgendaItem } from "@/app/dashboard/sigap/(main)/ruang-kerja/page";
 import BatchQuickReportModal from "@/app/dashboard/sigap/components/BatchQuickReportModal";
 import { Zap, Mail, FileText, ClipboardList } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -138,9 +140,10 @@ const DailyBriefing = ({ items, isPimpinan, onOpenBatch }: { items: RuangKerjaIt
 type RuangKerjaCardProps = React.ComponentProps<typeof RuangKerjaCard>;
 
 // Extend tipe props
-interface VisionaryFeedProps extends Omit<RuangKerjaCardProps, 'item' | 'isActionLoading'> {
+interface VisionaryFeedProps extends Omit<RuangKerjaCardProps, 'item' | 'isActionLoading' | 'hasConflict'> {
   items: RuangKerjaItem[];
   loadingId: string | null;
+  personalAgenda?: CombinedAgendaItem[];
 }
 
 export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }: VisionaryFeedProps) {
@@ -178,16 +181,30 @@ export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }
             animate="show"
             className="space-y-3"
         >
-            {items.map((item) => (
+            {items.map((item) => {
+              let hasConflict = false;
+              if (props.personalAgenda) {
+                let s = null;
+                if (item.type === 'surat_disposisi' && item.surat.statusPenyelesaian === 'Selesai' && item.disposisi.disposisiId === 'mandiri') s = item.surat;
+                else if (item.type === 'surat_baru' && item.surat.statusPenyelesaian === 'Selesai' && item.surat.infoTampilan?.recipientNames) s = item.surat;
+                
+                if (s) {
+                   hasConflict = detectScheduleConflict(s, props.personalAgenda).length > 0;
+                }
+              }
+
+              return (
                 <motion.div key={getItemKey(item)} variants={itemAnim}>
                     <RuangKerjaCard 
                         item={item} 
                         isActionLoading={isItemLoading(item)}
                         isPimpinan={isPimpinan}
+                        hasConflict={hasConflict}
                         {...props} 
                     />
                 </motion.div>
-            ))}
+              );
+            })}
         </motion.div>
       )}
 

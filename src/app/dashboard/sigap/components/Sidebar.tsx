@@ -35,6 +35,7 @@ interface NavItem {
     section: string;
     notificationKey?: string;
     featureFlag?: string;
+    roleAccessKey?: import('@/types').RoleAccessKey;
     colorClass: string;
 }
 
@@ -49,31 +50,52 @@ export const userHasAccess = (item: NavItem, userProfile: UserProfile, jabatanPr
      if (!roleMatch) return false;
      if (item.featureFlag) {
          if (userProfile.role === 'super_admin') return true;
-         return opdConfig?.features?.[item.featureFlag as keyof typeof opdConfig.features] === true;
+         if (opdConfig?.features?.[item.featureFlag as keyof typeof opdConfig.features] !== true) return false;
+     }
+
+     // NEW: Cek custom RoleAccessKey dari super_admin per OPD
+     if (item.roleAccessKey && userProfile.role !== 'super_admin' && opdConfig?.roleAccessConfig) {
+         let effectiveRole: string = userProfile.role;
+         if (effectiveRole === 'user') {
+             effectiveRole = isPimpinan ? 'user_pimpinan' : 'user_bawahan';
+         }
+         
+         let roleConfig = opdConfig.roleAccessConfig[effectiveRole as keyof typeof opdConfig.roleAccessConfig];
+         
+         // Fallback to 'user' if specific pimpinan/bawahan config is not set yet
+         if (!roleConfig && userProfile.role === 'user') {
+             roleConfig = opdConfig.roleAccessConfig['user'];
+         }
+
+         // Jika diset, dan tidak include key tersebut, tolak akses.
+         // (Fallback true sudah otomatis ditangani: kalau undefined/null, dia akan true)
+         if (roleConfig && !roleConfig.includes(item.roleAccessKey)) {
+             return false;
+         }
      }
      return true;
 };
 
 export const navItems: NavItem[] = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'ruangKerja', colorClass: 'text-cyan-600' },
-  { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja Saya', icon: Briefcase, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', colorClass: 'text-cyan-600' },
-  { href: '/dashboard/surat', label: 'Kotak Masuk Surat', icon: Mail, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'ruangKerja', notificationKey: 'suratBaruCount', colorClass: 'text-cyan-600' }, 
-  { href: '/dashboard/tugas', label: 'Tugas Saya', icon: ClipboardCheck, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', notificationKey: 'tugasBaruCount', colorClass: 'text-cyan-600' }, 
-  { href: '/dashboard/logbook', label: 'Logbook Harian', icon: BookOpen, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', colorClass: 'text-orange-600' }, 
-  { href: '/dashboard/portal-integrasi', label: 'Portal Integrasi', icon: LinkIcon, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', colorClass: 'text-blue-600' },
+  { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja Saya', icon: Briefcase, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_ruang_kerja', colorClass: 'text-cyan-600' },
+  { href: '/dashboard/surat', label: 'Kotak Masuk Surat', icon: Mail, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_surat_masuk', notificationKey: 'suratBaruCount', colorClass: 'text-cyan-600' }, 
+  { href: '/dashboard/tugas', label: 'Tugas Saya', icon: ClipboardCheck, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_tugas', notificationKey: 'tugasBaruCount', colorClass: 'text-cyan-600' }, 
+  { href: '/dashboard/logbook', label: 'Logbook Harian', icon: BookOpen, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_logbook', colorClass: 'text-orange-600' }, 
+  { href: '/dashboard/portal-integrasi', label: 'Portal Integrasi', icon: LinkIcon, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_portal', colorClass: 'text-blue-600' },
   
   // --- PRODUKTIVITAS ---
-  { href: '/dashboard/checklist', label: 'Checklist Pribadi', icon: ClipboardList, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' }, 
-  { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
-  { href: '/dashboard/kompetensi', label: 'Portofolio Kompetensi', icon: GraduationCap, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-purple-600' },
-  { href: '/dashboard/surat-keluar', label: 'Surat Keluar', icon: FileSignature, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin', 'user'], section: 'produktivitas', colorClass: 'text-green-600' },
-  { href: '/dashboard/tugas/delegasi', label: 'Delegasi Tugas', icon: Users, allowedRoles: ['admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
-  { href: '/dashboard/formulir', label: 'Isi Formulir', icon: Edit, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' }, 
-  { href: '/dashboard/feedback', label: 'Survei & Feedback', icon: MessageSquare, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', colorClass: 'text-green-600' },
+  { href: '/dashboard/checklist', label: 'Checklist Pribadi', icon: ClipboardList, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_checklist', colorClass: 'text-green-600' }, 
+  { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_bukti_kinerja', colorClass: 'text-green-600' },
+  { href: '/dashboard/kompetensi', label: 'Portofolio Kompetensi', icon: GraduationCap, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_kompetensi', colorClass: 'text-purple-600' },
+  { href: '/dashboard/surat-keluar', label: 'Surat Keluar', icon: FileSignature, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin', 'user'], section: 'produktivitas', roleAccessKey: 'menu_surat_keluar', colorClass: 'text-green-600' },
+  { href: '/dashboard/tugas/delegasi', label: 'Delegasi Tugas', icon: Users, allowedRoles: ['admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_delegasi', colorClass: 'text-green-600' },
+  { href: '/dashboard/formulir', label: 'Isi Formulir', icon: Edit, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_formulir', colorClass: 'text-green-600' }, 
+  { href: '/dashboard/feedback', label: 'Survei & Feedback', icon: MessageSquare, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_feedback', colorClass: 'text-green-600' },
   
   // --- KOORDINASI ---
-  { href: '/dashboard/notulensi', label: 'Notulensi Rapat', icon: ListChecks, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], allowedAdditionalRoles: ['notulis_rapat'], section: 'koordinasi', colorClass: 'text-purple-600' },
-  { href: '/dashboard/jadwal', label: 'Jadwal Internal', icon: Calendar, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'koordinasi', colorClass: 'text-purple-600' }, 
+  { href: '/dashboard/notulensi', label: 'Notulensi Rapat', icon: ListChecks, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], allowedAdditionalRoles: ['notulis_rapat'], section: 'koordinasi', roleAccessKey: 'menu_notulensi', colorClass: 'text-purple-600' },
+  { href: '/dashboard/jadwal', label: 'Jadwal Internal', icon: Calendar, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'koordinasi', roleAccessKey: 'menu_jadwal', colorClass: 'text-purple-600' }, 
   { href: '/dashboard/pelayanan', label: 'Pelayanan Publik', icon: HeartHandshake, allowedRoles: ['admin_opd', 'super_admin'], allowedAdditionalRoles: ['petugas_pelayanan'], section: 'koordinasi', colorClass: 'text-pink-600' },
   { href: '/dashboard/tapem', label: 'Tata Pemerintahan', icon: Landmark, allowedRoles: ['admin_opd', 'super_admin'], allowedAdditionalRoles: ['pengelola_tapem'], section: 'koordinasi', colorClass: 'text-indigo-600' },
   // [NEW] Menu SKW
@@ -83,25 +105,25 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/talenta', label: 'Manajemen Talenta', icon: Award, allowedRoles: ['super_admin'], allowedAdditionalRoles: ['pengelola_tapem'], section: 'analitika', colorClass: 'text-purple-600' },
   
   // --- INFORMASI ---
-  { href: '/dashboard/surat/upload', label: 'Unggah Surat Baru', icon: Upload, allowedRoles: ['staf_tu', 'admin_opd'], allowedAdditionalRoles: ['operator_surat'], section: 'informasi', colorClass: 'text-yellow-600' }, 
-  { href: '/dashboard/arsip', label: 'Arsip Surat', icon: Archive, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], allowedAdditionalRoles: ['operator_surat'], section: 'informasi', colorClass: 'text-yellow-600' }, 
-  { href: '/dashboard/dokumen', label: 'Repository Dokumen', icon: FolderArchive, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', colorClass: 'text-yellow-600' },
-  { href: '/dashboard/knowledge', label: 'Knowledge Base', icon: HelpCircle, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', colorClass: 'text-yellow-600' },
-  { href: '/dashboard/tutorial', label: 'Tutorial Aplikasi', icon: Youtube, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', colorClass: 'text-red-600' },
-  { href: '/dashboard/pengumuman', label: 'Papan Pengumuman', icon: Megaphone, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', colorClass: 'text-yellow-600' },
+  { href: '/dashboard/surat/upload', label: 'Unggah Surat Baru', icon: Upload, allowedRoles: ['staf_tu', 'admin_opd'], allowedAdditionalRoles: ['operator_surat'], section: 'informasi', roleAccessKey: 'menu_upload_surat', colorClass: 'text-yellow-600' }, 
+  { href: '/dashboard/arsip', label: 'Arsip Surat', icon: Archive, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], allowedAdditionalRoles: ['operator_surat'], section: 'informasi', roleAccessKey: 'menu_arsip', colorClass: 'text-yellow-600' }, 
+  { href: '/dashboard/dokumen', label: 'Repository Dokumen', icon: FolderArchive, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', roleAccessKey: 'menu_dokumen', colorClass: 'text-yellow-600' },
+  { href: '/dashboard/knowledge', label: 'Knowledge Base', icon: HelpCircle, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', roleAccessKey: 'menu_knowledge', colorClass: 'text-yellow-600' },
+  { href: '/dashboard/tutorial', label: 'Tutorial Aplikasi', icon: Youtube, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', roleAccessKey: 'menu_tutorial', colorClass: 'text-red-600' },
+  { href: '/dashboard/pengumuman', label: 'Papan Pengumuman', icon: Megaphone, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'informasi', roleAccessKey: 'menu_pengumuman', colorClass: 'text-yellow-600' },
   { href: '/dashboard/aset', label: 'Manajemen Aset', icon: Package, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], allowedAdditionalRoles: ['pengurus_barang'], section: 'informasi', featureFlag: 'manajemenAset', colorClass: 'text-yellow-600' },
   { href: '/dashboard/keuangan', label: 'Manajemen Keuangan', icon: Wallet, allowedRoles: ['admin_opd', 'super_admin'], allowedAdditionalRoles: ['bendahara'], section: 'informasi', colorClass: 'text-emerald-600' },
   
   // --- ANALITIKA LANJUTAN ---
   { href: '/dashboard/evaluasi', label: 'Evaluasi Kinerja', icon: AreaChart, allowedRoles: ['admin_opd', 'super_admin'], section: 'analitika', featureFlag: 'analitika', colorClass: 'text-pink-600' },
   { href: '/dashboard/perencanaan', label: 'Perencanaan (Si-RANA)', icon: Compass, allowedRoles: ['admin_opd', 'super_admin'], section: 'analitika', colorClass: 'text-indigo-600' },
-  { href: '/dashboard/rekap-surat', label: 'Rekap Surat', icon: FileText, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
+  { href: '/dashboard/rekap-surat', label: 'Rekap Surat', icon: FileText, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'analitika', roleAccessKey: 'menu_rekap_surat', colorClass: 'text-pink-600' },
   { href: '/dashboard/laporan', label: 'Laporan Umum', icon: BarChart3, allowedRoles: ['super_admin'], section: 'analitika', colorClass: 'text-pink-600' },
   // --- ADMINISTRASI ---
   // [UPDATE] Menambahkan 'staf_tu' pada allowedRoles
-  { href: '/dashboard/users', label: 'Master Pengguna', icon: UserCog, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
-  { href: '/dashboard/jabatan', label: 'Master Jabatan', icon: Briefcase, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
-  { href: '/dashboard/templat', label: 'Templat Disposisi', icon: FileSignature, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', colorClass: 'text-red-600' },
+  { href: '/dashboard/users', label: 'Master Pengguna', icon: UserCog, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', roleAccessKey: 'menu_users', colorClass: 'text-red-600' },
+  { href: '/dashboard/jabatan', label: 'Master Jabatan', icon: Briefcase, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', roleAccessKey: 'menu_jabatan', colorClass: 'text-red-600' },
+  { href: '/dashboard/templat', label: 'Templat Disposisi', icon: FileSignature, allowedRoles: ['admin_opd', 'super_admin'], section: 'administrasi', roleAccessKey: 'menu_templat', colorClass: 'text-red-600' },
 
   { href: '/dashboard/form-builder', label: 'Kelola Formulir', icon: ClipboardEdit, allowedRoles: ['staf_tu', 'admin_opd', 'super_admin'], section: 'administrasi', featureFlag: 'formBuilder', colorClass: 'text-red-600' },
   { href: '/dashboard/feedback-admin', label: 'Dashboard Feedback', icon: Inbox, allowedRoles: ['super_admin'], section: 'administrasi', colorClass: 'text-red-600' },

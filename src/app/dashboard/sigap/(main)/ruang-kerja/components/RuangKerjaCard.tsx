@@ -58,6 +58,9 @@ interface RuangKerjaCardProps {
 
   onQuickSelfTindakLanjut: (surat: Surat) => void;
   
+  hasConflict?: boolean;
+  onRetroRedisposisi?: (surat: Surat) => void;
+  
   mutateTugas: () => void; 
 }
 
@@ -87,6 +90,8 @@ export default function RuangKerjaCard({
   onQuickTaskCommentToggle,
   openTaskCommentId,
   onQuickSelfTindakLanjut,
+  hasConflict,
+  onRetroRedisposisi,
   mutateTugas 
 }: RuangKerjaCardProps) {
   
@@ -372,6 +377,28 @@ export default function RuangKerjaCard({
                 )}
             </AnimatePresence>
         </div>
+
+        {hasConflict && (
+          <div className="bg-amber-50 dark:bg-amber-950/40 border-t border-amber-200 dark:border-amber-900/50 p-3 px-4 flex items-center justify-between gap-3">
+             <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <AlertTriangle size={16} />
+                <span className="text-xs font-medium">⚠️ Terdeteksi konflik jadwal pada waktu yang sama.</span>
+             </div>
+             <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-7 text-[10px] border-amber-300 text-amber-700 hover:bg-amber-100 dark:border-amber-700 dark:text-amber-300"
+                onClick={() => {
+                   if (onRetroRedisposisi) {
+                       const s = item.type === 'surat_disposisi' ? item.surat : (item.type === 'surat_baru' ? item.surat : null);
+                       if (s) onRetroRedisposisi(s);
+                   }
+                }}
+             >
+                Disposisikan Ulang
+             </Button>
+          </div>
+        )}
 
       </Card>
 

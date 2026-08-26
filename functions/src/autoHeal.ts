@@ -98,9 +98,9 @@ export const runAutoHeal = onCall({ region: 'asia-southeast2' }, async (request:
                     const userId = tlData.userId;
                     
                     if (userId) {
-                        const userSnap = await db.collection('users').doc(userId).get();
-                        if (userSnap.exists) {
-                            const userName = userSnap.data()?.namaLengkap;
+                        const userQuery = await db.collection('users').where('uid', '==', userId).limit(1).get();
+                        if (!userQuery.empty) {
+                            const userName = userQuery.docs[0].data().namaLengkap;
                             operations.push({
                                 ref: doc.ref,
                                 data: {

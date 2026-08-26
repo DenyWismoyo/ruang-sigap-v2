@@ -5,7 +5,7 @@ import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
 import { OpdConfig } from '@/types';
-import { Loader2, Save, ArrowLeft, Palette, ToggleLeft, CreditCard } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Palette, ToggleLeft, CreditCard, Shield } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -39,6 +39,7 @@ import { collection, getDocs, writeBatch } from 'firebase/firestore';
 import { PricingPackage, OPD } from '@/types';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData';
 import { Checkbox } from "@/components/ui/checkbox";
+import RoleAccessSettings from '../components/RoleAccessSettings';
 
 const DEFAULT_FEATURES = {
   aiSuratReader: false,
@@ -209,12 +210,15 @@ export default function SuperAdminOpdDetail() {
       </div>
 
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-3 mb-6">
+        <TabsList className="w-full md:w-auto grid grid-cols-4 mb-6">
           <TabsTrigger value="branding" className="gap-2">
             <Palette className="w-4 h-4" /> Identitas & Branding
           </TabsTrigger>
           <TabsTrigger value="features" className="gap-2">
             <ToggleLeft className="w-4 h-4" /> Feature Flags
+          </TabsTrigger>
+          <TabsTrigger value="role-access" className="gap-2">
+            <Shield className="w-4 h-4" /> Akses Role
           </TabsTrigger>
           <TabsTrigger value="subscription" className="gap-2">
             <CreditCard className="w-4 h-4" /> Paket & Langganan
@@ -310,6 +314,10 @@ export default function SuperAdminOpdDetail() {
               })}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="role-access">
+          <RoleAccessSettings opdId={opdId} opdConfig={config} />
         </TabsContent>
 
         <TabsContent value="subscription">

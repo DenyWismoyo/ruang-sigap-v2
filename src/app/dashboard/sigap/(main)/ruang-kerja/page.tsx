@@ -35,6 +35,7 @@ const QuickEditTaskModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ru
 const RuangKerjaTutorialModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/RuangKerjaTutorialModal'), { ssr: false });
 const NotulensiFormModal = dynamic(() => import('@/app/dashboard/sigap/(fungsional)/notulensi/components/NotulensiFormModal'), { ssr: false });
 const ConfirmModal = dynamic(() => import('@/app/dashboard/sigap/components/ConfirmModal'), { ssr: false });
+const ScheduleConflictModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/ScheduleConflictModal'), { ssr: false });
 
 import { useUserAuth } from '@/context/AuthContext'; 
 import { useToast } from '@/context/ToastContext'; 
@@ -56,6 +57,7 @@ import {
 } from 'firebase/firestore';
 import { logActivity } from '@/lib/activityLogger'; 
 import { updateLogbook } from '@/lib/logbookUtils'; 
+import { detectScheduleConflict } from '@/lib/conflictUtils';
 
 import { 
   Inbox, StickyNote, CalendarDays, Sun, Moon, CloudSun, Sunset, Loader2
@@ -67,7 +69,7 @@ import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type CombinedAgendaItem = {
+export type CombinedAgendaItem = {
     id: string;
     type: 'surat' | 'internal';
     item: Surat | JadwalTempat;
@@ -159,6 +161,7 @@ export default function RuangKerjaPage() {
   
   const [openTaskCommentId, setOpenTaskCommentId] = useState<string | null>(null);
   const [confirmSelfTindakLanjut, setConfirmSelfTindakLanjut] = useState<Surat | null>(null);
+  const [conflictData, setConflictData] = useState<{ surat: Surat; conflicts: CombinedAgendaItem[] } | null>(null);
 
   
   
@@ -394,7 +397,30 @@ export default function RuangKerjaPage() {
     } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
   };
 
-  const handleQuickSelfTindakLanjut = (surat: Surat) => { setConfirmSelfTindakLanjut(surat); };
+  const handleQuickSelfTindakLanjut = (surat: Surat) => { 
+      if (isPimpinan && surat.jenisSurat === 'Undangan') {
+          const conflicts = detectScheduleConflict(surat, combinedPersonalAgenda);
+          if (conflicts.length > 0) {
+              setConflictData({ surat, conflicts });
+              return;
+          }
+      }
+      setConfirmSelfTindakLanjut(surat); 
+  };
+  
+  const handleConflictRedisposisi = () => {
+      if (!conflictData) return;
+      const suratToRedisposisi = conflictData.surat;
+      setConflictData(null);
+      // Panggil fungsi buka modal disposisi
+      handleQuickDisposisiClick(suratToRedisposisi);
+  };
+
+  const handleConflictForceExecute = () => {
+      if (!conflictData) return;
+      setConfirmSelfTindakLanjut(conflictData.surat);
+      setConflictData(null);
+  };
   
   const executeSelfTindakLanjut = async () => {
     if (!confirmSelfTindakLanjut || !userProfile || !effectiveJabatan) return;
@@ -569,6 +595,8 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
                   onQuickTaskCommentToggle={handleQuickTaskCommentToggle}
                   openTaskCommentId={openTaskCommentId}
                   onQuickSelfTindakLanjut={handleQuickSelfTindakLanjut}
+                  onRetroRedisposisi={handleQuickDisposisiClick}
+                  personalAgenda={combinedPersonalAgenda}
                   mutateTugas={refreshFeed} 
               />
               
@@ -643,6 +671,15 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
           message={`Anda yakin ingin menandai surat "${confirmSelfTindakLanjut?.perihal}" sebagai selesai ditindaklanjuti oleh Anda sendiri. Surat ini akan ditutup (Selesai). Lanjutkan?`} 
           confirmText="Ya, Selesaikan" 
           isProcessing={!!isActionLoading} 
+      />
+
+      <ScheduleConflictModal
+          isOpen={!!conflictData}
+          onClose={() => setConflictData(null)}
+          suratToProcess={conflictData?.surat || null}
+          conflicts={conflictData?.conflicts || []}
+          onRedisposisi={handleConflictRedisposisi}
+          onForceExecute={handleConflictForceExecute}
       />
 
       {isNotulensiModalOpen && (

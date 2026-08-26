@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { LayoutGrid, Briefcase, Inbox, ListChecks, Menu } from 'lucide-react';
 import { DrawerTrigger } from "@/components/ui/drawer";
 import { WelcomeSummary } from '@/types';
+import { useRoleAccess } from '@/hooks/useRoleAccess';
+import { RoleAccessKey } from '@/types';
 
 interface BottomNavBarProps {
   pathname: string;
@@ -13,16 +15,23 @@ interface BottomNavBarProps {
 }
 
 export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: BottomNavBarProps) {
-    const navLinks = [
-        { href: '/dashboard', label: 'Beranda', icon: LayoutGrid, notifKey: 'none' as const },
-        { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, notifKey: 'none' as const },
-        { href: '/dashboard/surat', label: 'Surat', icon: Inbox, notifKey: 'surat' as const },
-        { href: '/dashboard/tugas', label: 'Tugas', icon: ListChecks, notifKey: 'tugas' as const },
+    const { hasAccess } = useRoleAccess();
+
+    const navLinks: { href: string; label: string; icon: any; notifKey: 'none'|'surat'|'tugas'; roleAccessKey?: RoleAccessKey }[] = [
+        { href: '/dashboard', label: 'Beranda', icon: LayoutGrid, notifKey: 'none' },
+        { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, notifKey: 'none', roleAccessKey: 'menu_ruang_kerja' },
+        { href: '/dashboard/surat', label: 'Surat', icon: Inbox, notifKey: 'surat', roleAccessKey: 'menu_surat_masuk' },
+        { href: '/dashboard/tugas', label: 'Tugas', icon: ListChecks, notifKey: 'tugas', roleAccessKey: 'menu_tugas' },
     ];
+
+    const visibleLinks = navLinks.filter(link => {
+        if (!link.roleAccessKey) return true;
+        return hasAccess(link.roleAccessKey);
+    });
 
     return (
         <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-around h-[var(--bottom-nav-height)] pb-[env(safe-area-inset-bottom,0px)] bg-card/95 backdrop-blur-lg border-t border-border/20 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] md:hidden">
-            {navLinks.map(link => {
+            {visibleLinks.map(link => {
                 let notifCount = 0;
                 if (link.notifKey === 'surat') notifCount = welcomeSummary.suratBaruCount || 0;
                 if (link.notifKey === 'tugas') notifCount = welcomeSummary.tugasBaruCount || 0;
