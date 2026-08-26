@@ -102,7 +102,7 @@ export default function RepositoryDokumenPage() {
             const item = repo.items.find(i => i.id === itemIdFromUrl);
             if (item) {
                 if (item.tipe === 'folder') {
-                    setCurrentFolderId(item.id);
+                    setCurrentFolderId(item.id || null);
                 } else {
                     setPreviewItem(item);
                 }

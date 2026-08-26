@@ -1,4 +1,4 @@
-﻿import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { db, REGION } from "../config/firebase";
@@ -74,33 +74,112 @@ export const aggregateHealthScore = onSchedule(
                 // PILAR 1 & 2: Adopsi & Konsistensi (dari userSessions)
                 // ═══════════════════════════════════════════════════════
 
-                const usersSnapshot = await db.collection("users")
-                    .where("opdId", "==", opd.id)
-                    .where("status", "==", "aktif")
-                    .get();
-                const totalUserAktif = usersSnapshot.size;
+                const [usersSnapshot, masterDocSnap, sessionsSnapshot, logbookSnapshot, tindakLanjutSnapshot] = await Promise.all([
+                    db.collection("users")
+                        .where("opdId", "==", opd.id)
+                        .get(),
+                    db.collection("opdMasterData").doc(opd.id).get().catch(() => null),
+                    db.collection("userSessions")
+                        .where("opdId", "==", opd.id)
+                        .where("yearMonth", "==", dateStr)
+                        .get(),
+                    db.collection("logbookHarian")
+                        .where("opdId", "==", opd.id)
+                        .where("tanggal", ">=", startTimestamp)
+                        .where("tanggal", "<=", endTimestamp)
+                        .get(),
+                    db.collection("laporanTindakLanjut")
+                        .where("opdId", "==", opd.id)
+                        .where("createdAt", ">=", startTimestamp)
+                        .where("createdAt", "<=", endTimestamp)
+                        .get().catch(() => ({ docs: [], size: 0, forEach: () => {} } as any)),
+                ]);
 
-                const sessionsSnapshot = await db.collection("userSessions")
-                    .where("opdId", "==", opd.id)
-                    .where("yearMonth", "==", dateStr)
-                    .get();
+                const allUserDocs = new Map<string, any>();
+                usersSnapshot.forEach(d => {
+                    const u = d.data();
+                    const st = String(u.status || "").toLowerCase();
+                    if (st !== "nonaktif") {
+                        const uid = (u.uid || u.nip || d.id) as string;
+                        allUserDocs.set(uid, { id: d.id, ...u });
+                    }
+                });
 
-                // Kumpulkan unique user ID dan tracking minggu aktif per user
+                if (allUserDocs.size === 0 && masterDocSnap && masterDocSnap.exists) {
+                    const masterData = masterDocSnap.data();
+                    if (masterData && Array.isArray(masterData.users)) {
+                        masterData.users.forEach((u: any) => {
+                            const st = String(u.status || "").toLowerCase();
+                            if (st !== "nonaktif") {
+                                const uid = (u.uid || u.nip || u.id) as string;
+                                if (uid) allUserDocs.set(uid, u);
+                            }
+                        });
+                    }
+                }
+
                 const uniqueUserIds = new Set<string>();
                 const userWeeks = new Map<string, Set<number>>();
 
+                const registerActivity = (uid: string | undefined, dateOrWeek?: Date | number) => {
+                    if (!uid) return;
+                    uniqueUserIds.add(uid);
+                    if (!userWeeks.has(uid)) userWeeks.set(uid, new Set());
+
+                    if (typeof dateOrWeek === "number") {
+                        userWeeks.get(uid)!.add(dateOrWeek);
+                    } else if (dateOrWeek instanceof Date) {
+                        const w = Math.max(1, Math.ceil(dateOrWeek.getDate() / 7));
+                        userWeeks.get(uid)!.add(w);
+                    } else {
+                        userWeeks.get(uid)!.add(1);
+                    }
+                };
+
+                // Sumber A: userSessions
                 sessionsSnapshot.forEach(doc => {
                     const d = doc.data();
                     const uid = d.userId as string;
                     const week = d.weekOfMonth as number;
-                    uniqueUserIds.add(uid);
-                    if (!userWeeks.has(uid)) userWeeks.set(uid, new Set());
-                    userWeeks.get(uid)!.add(week);
+                    registerActivity(uid, week);
+                });
+
+                // Sumber B: logbookHarian
+                logbookSnapshot.forEach(doc => {
+                    const d = doc.data();
+                    const uid = d.userId as string;
+                    let tglDate: Date | undefined;
+                    if (d.tanggal) {
+                        tglDate = d.tanggal.toDate ? d.tanggal.toDate() : new Date(d.tanggal);
+                    }
+                    registerActivity(uid, tglDate);
+                });
+
+                // Sumber C: laporanTindakLanjut
+                tindakLanjutSnapshot.forEach((doc: any) => {
+                    const d = doc.data();
+                    const uid = d.userId as string;
+                    let tglDate: Date | undefined;
+                    if (d.createdAt) {
+                        tglDate = d.createdAt.toDate ? d.createdAt.toDate() : new Date(d.createdAt);
+                    }
+                    registerActivity(uid, tglDate);
+                });
+
+                // Sumber D: users.lastActiveAt
+                allUserDocs.forEach((u, uid) => {
+                    if (u.lastActiveAt) {
+                        const activeDate = u.lastActiveAt.toDate ? u.lastActiveAt.toDate() : new Date(u.lastActiveAt);
+                        if (activeDate >= startOfMonth && activeDate <= yesterday) {
+                            registerActivity(uid, activeDate);
+                        }
+                    }
                 });
 
                 const totalUserLogin = uniqueUserIds.size;
+                const totalUserAktif = Math.max(allUserDocs.size, totalUserLogin);
 
-                // Skor Adopsi: % user aktif yang login min 1x bulan ini
+                // Skor Adopsi: % user aktif yang login / beraktivitas bulan ini
                 let skorAdopsi = 0;
                 if (totalUserAktif > 0) {
                     skorAdopsi = Math.min(100, Math.round((totalUserLogin / totalUserAktif) * 100));
@@ -108,12 +187,12 @@ export const aggregateHealthScore = onSchedule(
                     skorAdopsi = 100;
                 }
 
-                // Skor Konsistensi: rata-rata % minggu aktif per user (dari user yg sudah login)
+                // Skor Konsistensi: rata-rata % minggu aktif per user (dari user yg sudah aktif)
                 let skorKonsistensi = 0;
                 if (totalUserLogin > 0) {
                     let totalRate = 0;
                     userWeeks.forEach(weeksSet => {
-                        totalRate += weeksSet.size / weeksElapsed;
+                        totalRate += Math.min(1, weeksSet.size / weeksElapsed);
                     });
                     skorKonsistensi = Math.min(100, Math.round((totalRate / totalUserLogin) * 100));
                 }
@@ -150,12 +229,6 @@ export const aggregateHealthScore = onSchedule(
                     .where("tanggalDisposisi", "<=", endTimestamp)
                     .get();
                 const totalDisposisi = disposisiSnapshot.size;
-
-                const logbookSnapshot = await db.collection("logbookHarian")
-                    .where("opdId", "==", opd.id)
-                    .where("tanggal", ">=", startTimestamp)
-                    .where("tanggal", "<=", endTimestamp)
-                    .get();
                 const totalLogbook = logbookSnapshot.size;
 
                 // ═══════════════════════════════════════════════════════

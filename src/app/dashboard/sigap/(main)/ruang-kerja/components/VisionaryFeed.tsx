@@ -185,7 +185,7 @@ export default function VisionaryFeed({ items, loadingId, isPimpinan, ...props }
               let hasConflict = false;
               if (props.personalAgenda) {
                 let s = null;
-                if (item.type === 'surat_disposisi' && item.surat.statusPenyelesaian === 'Selesai' && item.disposisi.disposisiId === 'mandiri') s = item.surat;
+                if (item.type === 'surat_disposisi' && item.surat.statusPenyelesaian === 'Selesai' && (item.disposisi.id === 'mandiri' || (item.disposisi as any).disposisiId === 'mandiri')) s = item.surat;
                 else if (item.type === 'surat_baru' && item.surat.statusPenyelesaian === 'Selesai' && item.surat.infoTampilan?.recipientNames) s = item.surat;
                 
                 if (s) {

@@ -12,7 +12,7 @@ import { useContext, createContext, useState, useEffect, useRef, ReactNode, useC
 import { signInWithEmailAndPassword, signOut, onIdTokenChanged, User, UserCredential, signInWithCustomToken, GoogleAuthProvider, signInWithPopup, linkWithCredential, AuthCredential } from 'firebase/auth';
 import { db, auth, functions } from '@/lib/firebase';
 import { 
-  collection, query, where, getDocs, doc, getDoc, Timestamp, updateDoc, arrayRemove
+  collection, query, where, getDocs, doc, getDoc, Timestamp, updateDoc, arrayRemove, setDoc, serverTimestamp
 } from 'firebase/firestore';
 import { callCloudFunction } from "@/lib/firebase";
 import { useQueryClient } from '@tanstack/react-query';
@@ -116,23 +116,53 @@ export const AuthContextProvider = ({ children }: AuthContextProviderProps) => {
   const lastRecordedSessionRef = useRef<string | null>(null);
 
   const checkAndRecordSession = useCallback((uid: string) => {
+    if (!userProfile?.opdId) return;
+
     // Gunakan tanggal WIB untuk penentuan hari
-    const nowStr = new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" });
-    const today = new Date(nowStr).toLocaleDateString("en-US");
-    const sessionKey = `${uid}_${today}`;
+    const now = new Date(new Date().toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
+    const pad = (n: number) => (n < 10 ? '0' + n : String(n));
+    const yearMonth = `${now.getFullYear()}-${pad(now.getMonth() + 1)}`;
+    const dateStr = `${yearMonth}-${pad(now.getDate())}`;
+    const weekOfMonth = Math.ceil(now.getDate() / 7);
+    const sessionKey = `${uid}_${dateStr}`;
 
     if (lastRecordedSessionRef.current !== sessionKey) {
       lastRecordedSessionRef.current = sessionKey;
-      const recordSession = callCloudFunction('recordUserSession');
-      recordSession({}).catch(err => {
-        console.warn('[AuthContext] Gagal mencatat sesi user (non-critical):', err?.message);
-        // Reset agar bisa dicoba lagi jika gagal
+
+      // 1. Direct Firestore write ke koleksi userSessions (Idempotent & 100% andal di persistent session)
+      const sessionRef = doc(db, 'userSessions', sessionKey);
+      setDoc(sessionRef, {
+        userId: uid,
+        userNip: userProfile.nip || null,
+        opdId: userProfile.opdId,
+        yearMonth,
+        dayOfMonth: now.getDate(),
+        weekOfMonth,
+        lastActiveAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true }).catch((err) => {
+        console.warn('[AuthContext] Gagal mencatat sesi client-side:', err?.message);
         if (lastRecordedSessionRef.current === sessionKey) {
           lastRecordedSessionRef.current = null;
         }
       });
+
+      // 2. Update lastActiveAt pada dokumen user
+      const userDocId = userProfile.id || userProfile.nip;
+      if (userDocId) {
+        const userRef = doc(db, 'users', userDocId);
+        updateDoc(userRef, {
+          lastActiveAt: serverTimestamp(),
+        }).catch(() => {});
+      }
+
+      // 3. Fallback Cloud Function trigger jika tersedia
+      try {
+        const recordSession = callCloudFunction('recordUserSession');
+        recordSession({}).catch(() => {});
+      } catch (_) {}
     }
-  }, []);
+  }, [userProfile]);
 
   // Memantau aktivitas pengguna untuk mencatat sesi (terutama untuk sesi persistent)
   useEffect(() => {

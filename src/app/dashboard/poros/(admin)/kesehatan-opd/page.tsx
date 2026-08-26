@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { db } from '@/lib/firebase';
@@ -14,7 +14,7 @@ import {
   BarChart2, CalendarCheck
 } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
-import { callCloudFunction } from "@/lib/firebase";
+import { recalculateAllOpds } from '@/lib/healthScoreService';
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
@@ -145,131 +145,18 @@ export default function KesehatanOPDPage() {
     return () => { unsubOpd(); unsubHealth(); };
   }, [userProfile]);
 
-  // ── Force Recalculate (memanggil Cloud Function di server) ─────────────────
+  // ── Force Recalculate ─────────────────
   const handleForceAggregate = async () => {
     if (!window.confirm(
-      `Yakin ingin menjalankan ulang kalkulasi skor kesehatan untuk bulan ${selectedMonth}?\n\nProses ini dijalankan di server dan hasilnya akan muncul dalam beberapa menit.`
+      `Yakin ingin menjalankan ulang kalkulasi skor kesehatan untuk seluruh instansi/OPD?`
     )) return;
 
     setIsRefreshing(true);
-    addToast('Mengirim permintaan kalkulasi ulang ke server...', 'info');
+    addToast('Menghitung ulang kesehatan seluruh instansi...', 'info');
 
     try {
-      const [year, month] = selectedMonth.split('-');
-      const startOfMonth = new Date(parseInt(year), parseInt(month) - 1, 1);
-      startOfMonth.setHours(0, 0, 0, 0);
-
-      const now = new Date();
-      const isCurrentMonth = selectedMonth === now.toISOString().slice(0, 7);
-      const endOfMonth = new Date(parseInt(year), parseInt(month), 0);
-      endOfMonth.setHours(23, 59, 59, 999);
-      const endTargetDate = isCurrentMonth ? now : endOfMonth;
-      const daysElapsed = isCurrentMonth ? Math.max(1, now.getDate()) : endOfMonth.getDate();
-      const weeksElapsed = Math.max(1, Math.ceil(daysElapsed / 7));
-
-      const startTimestamp = Timestamp.fromDate(startOfMonth);
-      const endTimestamp = Timestamp.fromDate(endTargetDate);
-      const dateStr = selectedMonth;
-
-      const opdSnapshot = await getDocs(collection(db, "opd"));
-      const opdList = opdSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as OPD));
-      const batch = writeBatch(db);
-
-      for (const opd of opdList) {
-
-        // Pilar 1 & 2: Adopsi & Konsistensi
-        const usersQ = query(collection(db, "users"), where("opdId", "==", opd.id), where("status", "==", "aktif"));
-        const usersSnap = await getDocs(usersQ);
-        const totalUserAktif = usersSnap.size;
-
-        const sessionsQ = query(collection(db, "userSessions"), where("opdId", "==", opd.id), where("yearMonth", "==", dateStr));
-        const sessionsSnap = await getDocs(sessionsQ);
-
-        const uniqueUserIds = new Set<string>();
-        const userWeeks = new Map<string, Set<number>>();
-        sessionsSnap.forEach(d => {
-          const sd = d.data();
-          uniqueUserIds.add(sd.userId);
-          if (!userWeeks.has(sd.userId)) userWeeks.set(sd.userId, new Set());
-          userWeeks.get(sd.userId)!.add(sd.weekOfMonth as number);
-        });
-        const totalUserLogin = uniqueUserIds.size;
-
-        let skorAdopsi = 0;
-        if (totalUserAktif > 0) skorAdopsi = Math.min(100, Math.round((totalUserLogin / totalUserAktif) * 100));
-        else if (totalUserLogin > 0) skorAdopsi = 100;
-
-        let skorKonsistensi = 0;
-        if (totalUserLogin > 0) {
-          let totalRate = 0;
-          userWeeks.forEach(ws => { totalRate += ws.size / weeksElapsed; });
-          skorKonsistensi = Math.min(100, Math.round((totalRate / totalUserLogin) * 100));
-        }
-
-        // Pilar 3: Produktivitas Dokumen
-        const suratQ = query(collection(db, "surat"), where("opdId", "==", opd.id), where("tanggalDiterima", ">=", startTimestamp), where("tanggalDiterima", "<=", endTimestamp));
-        const suratSnap = await getDocs(suratQ);
-        const totalSuratMasuk = suratSnap.size;
-        let totalSuratSelesai = 0;
-        suratSnap.forEach(d => {
-          const s = d.data();
-          if (s.statusPenyelesaian === "Selesai" || s.statusPenyelesaian === "Diarsipkan") totalSuratSelesai++;
-        });
-        const skorProduktivitasDokumen = totalSuratMasuk > 0 ? Math.min(100, Math.round((totalSuratSelesai / totalSuratMasuk) * 100)) : 0;
-
-        const disposisiQ = query(collection(db, "disposisi"), where("opdId", "==", opd.id), where("tanggalDisposisi", ">=", startTimestamp), where("tanggalDisposisi", "<=", endTimestamp));
-        const disposisiSnap = await getDocs(disposisiQ);
-        const totalDisposisi = disposisiSnap.size;
-
-        const logbookQ = query(collection(db, "logbookHarian"), where("opdId", "==", opd.id), where("tanggal", ">=", startTimestamp), where("tanggal", "<=", endTimestamp));
-        const logbookSnap = await getDocs(logbookQ);
-        const totalLogbook = logbookSnap.size;
-
-        // Pilar 4: Tugas Tepat Waktu
-        const tugasQ = query(collection(db, "tugas"), where("opdId", "==", opd.id), where("status", "==", "Selesai"), where("tanggalSelesai", ">=", startTimestamp), where("tanggalSelesai", "<=", endTimestamp));
-        const tugasSnap = await getDocs(tugasQ);
-        let tugasTepatWaktu = 0;
-        const totalTugasSelesai = tugasSnap.size;
-        tugasSnap.forEach(d => {
-          const t = d.data();
-          if (t.batasWaktu && t.tanggalSelesai) {
-            if (t.tanggalSelesai.toMillis() <= t.batasWaktu.toMillis()) tugasTepatWaktu++;
-          } else {
-            tugasTepatWaktu++;
-          }
-        });
-        const skorTugasTepatWaktu = totalTugasSelesai > 0 ? Math.round((tugasTepatWaktu / totalTugasSelesai) * 100) : 100;
-
-        // Skor Akhir
-        const adaAktivitas = totalUserLogin > 0 || totalSuratMasuk > 0 || totalTugasSelesai > 0;
-        let finalScore = 0;
-        let kategori = 'Tidak Aktif';
-        if (adaAktivitas) {
-          finalScore = Math.round((0.30 * skorAdopsi) + (0.20 * skorKonsistensi) + (0.25 * skorProduktivitasDokumen) + (0.25 * skorTugasTepatWaktu));
-          if (finalScore >= 85) kategori = 'Sangat Sehat';
-          else if (finalScore >= 70) kategori = 'Sehat';
-          else if (finalScore >= 50) kategori = 'Perlu Perhatian';
-          else kategori = 'Buruk';
-        }
-
-        const healthRef = doc(db, "opdHealthScores", `${opd.id}_${dateStr}`);
-        batch.set(healthRef, {
-          opdId: opd.id, tanggal: startTimestamp, dateString: dateStr, score: finalScore,
-          metrics: {
-            skorAdopsi, skorKonsistensi, skorProduktivitasDokumen, skorTugasTepatWaktu,
-            totalUserAktif, totalUserLogin,
-            rateAdopsi: totalUserAktif > 0 ? Math.round((totalUserLogin / totalUserAktif) * 100) : 0,
-            totalSuratMasuk, totalSuratSelesai, totalTugasSelesai,
-            totalTugasTepatWaktu: tugasTepatWaktu, totalDisposisi, totalLogbook,
-          },
-          kategori, createdAt: serverTimestamp()
-        });
-        const opdRef = doc(db, "opd", opd.id!);
-        batch.update(opdRef, { currentHealthScore: finalScore, healthCategory: kategori });
-      }
-
-      await batch.commit();
-      addToast('Kalkulasi ulang selesai. Data telah diperbarui.', 'success');
+      const count = await recalculateAllOpds(opds);
+      addToast(`Kalkulasi ulang selesai untuk ${count} instansi. Data telah diperbarui.`, 'success');
     } catch (error: any) {
       addToast(`Gagal: ${error.message}`, 'error');
     } finally {
