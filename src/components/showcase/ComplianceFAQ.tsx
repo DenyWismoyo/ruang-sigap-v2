@@ -22,8 +22,12 @@ const faqs = [
     answer: "Seluruh transmisi data dienkripsi dengan standar TLS (Transport Layer Security) 1.2+ dan data yang tersimpan (Data-at-Rest) dienkripsi dengan AES-256 (Advanced Encryption Standard). Selain itu, login terproteksi via Firebase Auth dan token JWT yang aman."
   },
   {
-    question: "Apakah sistem bisa diakses saat tidak ada internet?",
-    answer: "Sistem dilengkapi fitur PWA (Progressive Web App) dengan Service Worker. Anda tetap dapat membuka aplikasi dan membaca data yang sudah tersimpan (cached) bahkan saat offline. Aksi yang dilakukan offline akan disinkronkan ke server saat jaringan kembali stabil."
+    question: "Berapa lama proses setup hingga Go-Live?",
+    answer: "Sistem dapat langsung digunakan dalam waktu kurang dari 1 minggu setelah proses administrasi awal selesai."
+  },
+  {
+    question: "Apakah kami perlu tim IT sendiri untuk mengoperasikannya?",
+    answer: "Tidak perlu. Sistem ini didesain user-friendly sehingga cukup dioperasikan oleh Admin OPD masing-masing atau bagian Tata Usaha (TU) OPD tanpa memerlukan keahlian teknis khusus."
   }
 ];
 

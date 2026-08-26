@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { InteractiveShowcase } from "@/components";
 import { PublicPageLayout } from "@/components/public/PublicPageLayout";
@@ -14,6 +14,8 @@ import { SmartWidgetsShowcase } from "@/components/showcase/SmartWidgetsShowcase
 import { ImpactStatistics } from "@/components/showcase/ImpactStatistics";
 import { ModuleCatalog } from "@/components/showcase/ModuleCatalog";
 import { ComplianceFAQ } from "@/components/showcase/ComplianceFAQ";
+import { SocialProofBanner } from "@/components/showcase/SocialProofBanner";
+import { ComparisonTable } from "@/components/showcase/ComparisonTable";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -35,6 +37,8 @@ export default function LandingPage() {
 
       {/* Pain Points Showcase (Masa Lalu vs Masa Depan) */}
       <PainPointsShowcase />
+
+      <ComparisonTable />
 
       {/* Interactive UI Showcase Section */}
       <section id="demo" className="relative z-10 w-full border-t border-border/50 bg-muted/20 scroll-mt-20">
@@ -59,10 +63,14 @@ export default function LandingPage() {
       <section className="py-24 bg-primary relative z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[url('/grid.svg')] bg-center opacity-10" />
         <div className="max-w-4xl mx-auto px-6 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-white text-sm font-semibold mb-6 border border-white/30 backdrop-blur-sm">
+            <span className="animate-pulse w-2 h-2 rounded-full bg-emerald-400" />
+            <span>Go-Live dalam kurang dari 1 minggu</span>
+          </div>
           <h2 className="text-3xl md:text-5xl font-extrabold text-primary-foreground tracking-tight mb-6">
             Siap Mereplikasi SIGAP di Instansi Anda?
           </h2>
-          <p className="text-primary-foreground/80 text-lg md:text-xl mb-10 max-w-2xl mx-auto">
+          <p className="text-primary-foreground/90 text-lg md:text-xl mb-10 max-w-2xl mx-auto font-medium">
             Tingkatkan efisiensi dan wujudkan kedaulatan data dengan sistem persuratan elektronik berstandar SPBE.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -72,7 +80,14 @@ export default function LandingPage() {
               className="w-full sm:w-auto h-12 px-8 text-base font-bold shadow-xl rounded-full"
               onClick={() => router.push('/replikasi')}
             >
-              Lihat Panduan Replikasi <ArrowRight className="w-5 h-5 ml-2" />
+              Lihat Panduan Replikasi
+            </Button>
+            <Button
+              size="lg"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold bg-white text-primary hover:bg-white/90 rounded-full shadow-lg"
+              onClick={() => router.push('/dokumen')}
+            >
+              Unduh Proposal PDF <Download className="w-4 h-4 ml-2" />
             </Button>
             <Button
               size="lg"

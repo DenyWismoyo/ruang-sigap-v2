@@ -182,7 +182,7 @@ export function WorkflowVisualizer() {
             </motion.div>
             
             {/* Animated Main Title */}
-            <motion.h1 variants={fadeIn} className="text-4xl md:text-6xl lg:text-[85px] font-extrabold text-foreground tracking-tighter mb-10 leading-[1.1] relative">
+            <motion.h1 variants={fadeIn} className="text-4xl md:text-6xl lg:text-[75px] font-extrabold text-foreground tracking-tighter mb-10 leading-[1.1] relative">
               <span className="relative z-10">Satu Input.</span><br />
               <motion.span 
                 className="relative z-10 text-transparent bg-clip-text bg-gradient-to-r from-primary via-emerald-400 to-blue-600 bg-[length:200%_200%]"
@@ -199,7 +199,7 @@ export function WorkflowVisualizer() {
               Konsep <strong>Satu Aksi Berdampak Besar</strong>. Sistem cerdas yang memproses secara paralel. Satu aksi unggah dokumen seketika menggerakkan lima instrumen organisasi tanpa intervensi manual tambahan.
             </motion.p>
             
-            <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full sm:w-auto">
+            <motion.div variants={fadeIn} className="flex flex-col sm:flex-row items-center justify-center gap-5 w-full sm:w-auto mt-6">
               <Button 
                 onClick={() => router.push('/login')}
                 size="lg"
@@ -208,15 +208,16 @@ export function WorkflowVisualizer() {
                 Mulai Sistem
                 <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-2 transition-transform duration-300" />
               </Button>
-              <Button 
-                variant="outline"
-                size="lg"
-                onClick={() => window.open(waLink, '_blank')}
-                className="w-full sm:w-auto rounded-full border-2 border-border bg-card/80 backdrop-blur-sm hover:bg-muted text-foreground h-14 px-8 font-bold transition-all duration-300 hover:border-primary/50"
-              >
-                <MessageCircle className="w-5 h-5 mr-2 text-emerald-500" />
-                Konsultasi Replikasi
-              </Button>
+            </motion.div>
+            
+            <motion.div variants={fadeIn} className="mt-8 flex items-center justify-center">
+              <div className="flex items-center gap-2 text-xs md:text-sm font-medium text-muted-foreground bg-muted/50 border border-border/50 px-4 py-2 rounded-full">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                </span>
+                <span>Mendukung PWA Offline-Ready</span>
+              </div>
             </motion.div>
           </motion.div>
         </div>
@@ -367,47 +368,48 @@ export function WorkflowVisualizer() {
             </div>
           </div>
 
-          {/* Output Nodes Side - Penempatan Absolut Geometrik (100% Presisi) */}
-          <div className="relative z-20 shrink-0 lg:w-[320px] w-[calc(100%-28px)] ml-7 lg:ml-0 h-[550px] lg:h-full mt-10 lg:mt-0">
+          {/* Output Nodes Side - Stack on Mobile, Absolute on Desktop */}
+          <div className="relative z-20 shrink-0 lg:w-[320px] w-full flex flex-col gap-4 lg:block h-auto lg:h-[550px] mt-10 lg:mt-0">
             {outputs.map((item, index) => {
               const isVisible = step >= 3 + index;
               const yPercents = [12, 31, 50, 69, 88];
               
               return (
-                <motion.div
+                <div 
                   key={index}
-                  initial={false}
-                  animate={{ 
-                    opacity: isVisible ? 1 : 0, 
-                    x: isVisible ? 0 : 40,
-                  }}
-                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
-                  className={`absolute right-0 w-full flex items-center p-3 rounded-xl glass-enterprise hover:bg-white/5 border border-white/10 transition-all group overflow-visible shadow-lg hover:shadow-xl ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}
-                  style={{ 
-                    top: `calc(${yPercents[index]}% + ${index === 0 ? '0px' : '0px'})`, // Exact center alignment for SVG
-                    transform: 'translateY(-50%)'
-                  }}
+                  className="static lg:absolute w-full lg:-translate-y-1/2 left-0 right-0"
+                  style={{ top: `calc(${yPercents[index]}%)` }}
                 >
-                  {/* Glowing line on the left inside */}
-                  <div className="absolute left-0 top-1/4 bottom-1/4 w-[3px] rounded-r-md transition-all group-hover:top-0 group-hover:bottom-0" style={{ backgroundColor: item.colorHex }} />
-                  
-                  {/* Floating Badge (Ikon menjorok ke kiri) - Dipusatkan ke tengah garis */}
-                  <div className={`absolute top-1/2 -translate-y-1/2 -left-5 w-10 h-10 rounded-full ${item.bg} flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-white/10 group-hover:scale-110 group-hover:shadow-[0_0_20px_var(--glow-color)] transition-all duration-500`} style={{ '--glow-color': item.colorHex } as React.CSSProperties}>
-                    <item.icon className={`w-4 h-4 ${item.color}`} />
-                  </div>
-                  
-                  <div className="flex flex-col pl-8 pr-2">
-                    <h4 className="font-bold text-foreground text-[13px] tracking-tight mb-0.5">
-                      {item.title}
-                    </h4>
-                    <p className="text-[10px] text-muted-foreground leading-tight">
-                      {item.desc}
-                    </p>
-                  </div>
-                  
-                  {/* Sweep highlight effect on hover */}
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none overflow-hidden rounded-xl" />
-                </motion.div>
+                  <motion.div
+                    initial={false}
+                    animate={{ 
+                      opacity: isVisible ? 1 : 0, 
+                      x: isVisible ? 0 : 40,
+                    }}
+                    transition={{ type: "spring", stiffness: 200, damping: 20 }}
+                    className={`relative w-full flex items-center p-3 rounded-xl glass-enterprise hover:bg-white/5 border border-white/10 transition-all group overflow-visible shadow-lg hover:shadow-xl ${isVisible ? 'pointer-events-auto' : 'pointer-events-none'}`}
+                  >
+                    {/* Glowing line on the left inside */}
+                    <div className="absolute left-0 top-1/4 bottom-1/4 w-[3px] rounded-r-md transition-all group-hover:top-0 group-hover:bottom-0" style={{ backgroundColor: item.colorHex }} />
+                    
+                    {/* Floating Badge */}
+                    <div className={`absolute top-1/2 -translate-y-1/2 -left-3 lg:-left-5 w-10 h-10 rounded-full ${item.bg} flex items-center justify-center shadow-[0_0_15px_rgba(0,0,0,0.5)] border border-white/10 group-hover:scale-110 group-hover:shadow-[0_0_20px_var(--glow-color)] transition-all duration-500`} style={{ '--glow-color': item.colorHex } as React.CSSProperties}>
+                      <item.icon className={`w-4 h-4 ${item.color}`} />
+                    </div>
+                    
+                    <div className="flex flex-col pl-10 lg:pl-8 pr-2">
+                      <h4 className="font-bold text-foreground text-[13px] tracking-tight mb-0.5">
+                        {item.title}
+                      </h4>
+                      <p className="text-[10px] text-muted-foreground leading-tight">
+                        {item.desc}
+                      </p>
+                    </div>
+                    
+                    {/* Sweep highlight effect on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 pointer-events-none overflow-hidden rounded-xl" />
+                  </motion.div>
+                </div>
               );
             })}
           </div>

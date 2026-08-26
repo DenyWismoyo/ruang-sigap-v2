@@ -108,7 +108,7 @@ export function PainPointsShowcase() {
 
               {/* TRANSITION DIVIDER */}
               <div className="relative h-px bg-border/50">
-                <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground z-10 group-hover:rotate-90 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-500 shadow-sm">
+                <div className="absolute left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-background border border-border flex items-center justify-center text-muted-foreground z-10 rotate-90 md:rotate-0 group-hover:rotate-90 group-hover:bg-primary group-hover:text-primary-foreground group-hover:border-primary transition-all duration-500 shadow-sm">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>

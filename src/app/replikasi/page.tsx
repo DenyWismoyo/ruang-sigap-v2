@@ -3,7 +3,7 @@
 import React from 'react';
 import { PublicPageLayout } from "@/components/public/PublicPageLayout";
 import { InfrastructureSupportTiers } from "@/components/showcase/InfrastructureSupportTiers";
-import { ArrowRight, CheckCircle2, MessageSquare } from "lucide-react";
+import { ArrowRight, CheckCircle2, MessageSquare, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function ReplikasiPage() {
@@ -26,13 +26,23 @@ export default function ReplikasiPage() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
             Transformasi digital instansi Anda sekarang. Kami siap membantu implementasi dari awal hingga Go-Live dalam waktu kurang dari 1 bulan.
           </p>
-          <Button
-            size="lg"
-            className="h-12 px-8 text-base font-bold shadow-xl shadow-primary/20 rounded-full"
-            onClick={() => window.open(waLink, '_blank')}
-          >
-            Mulai Konsultasi Gratis <MessageSquare className="w-5 h-5 ml-2" />
-          </Button>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold shadow-xl shadow-primary/20 rounded-full"
+              onClick={() => window.open(waLink, '_blank')}
+            >
+              Mulai Konsultasi Gratis <MessageSquare className="w-5 h-5 ml-2" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="w-full sm:w-auto h-12 px-8 text-base font-bold border-2 border-primary/20 text-primary hover:bg-primary/5 rounded-full shadow-sm"
+              onClick={() => window.location.href = '/dokumen'}
+            >
+              Unduh Proposal PDF <Download className="w-5 h-5 ml-2" />
+            </Button>
+          </div>
         </div>
       </section>
 

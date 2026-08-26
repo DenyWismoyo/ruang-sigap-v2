@@ -1,8 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Menu, X } from "lucide-react";
 import { ThemeToggleCompact } from "@/components/ui/ThemeToggleCompact";
 import DomainBanner from "@/components/DomainBanner";
 import Logo from "@/app/dashboard/sigap/components/Logo";
@@ -18,6 +19,7 @@ interface PublicPageLayoutProps {
 
 export function PublicPageLayout({ children }: PublicPageLayoutProps) {
   const router = useRouter();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
     // Membungkus dengan data-tenant="sigap" agar variabel dari sigap.css berlaku mutlak.
@@ -55,20 +57,42 @@ export function PublicPageLayout({ children }: PublicPageLayoutProps) {
             <Link href="/fitur" className="hover:text-primary transition-colors">Fitur & Modul</Link>
             <Link href="/keamanan" className="hover:text-primary transition-colors">Keamanan & Kepatuhan</Link>
             <Link href="/replikasi" className="hover:text-primary transition-colors">Panduan Replikasi</Link>
+            <Link href="/instansi" className="hover:text-primary transition-colors">Instansi Pengguna</Link>
+            <Link href="/dokumen" className="hover:text-primary transition-colors">Dokumen</Link>
+            <Link href="/#info" className="hover:text-primary transition-colors">Tentang Inovasi</Link>
           </div>
 
           {/* Kanan: Aksi */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggleCompact />
             <Button 
               variant="default" 
-              className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-5 font-semibold transition-all flex h-8 md:h-9 text-xs md:text-sm shadow-md shadow-primary/20"
+              className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground px-4 sm:px-5 font-semibold transition-all flex h-8 md:h-9 text-xs md:text-sm shadow-md shadow-primary/20"
               onClick={() => router.push('/login')}
             >
               Log In
             </Button>
+            {/* Mobile Menu Toggle */}
+            <button 
+              className="md:hidden p-1.5 text-muted-foreground hover:text-foreground"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+            </button>
           </div>
         </nav>
+
+        {/* Mobile Menu Overlay */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-[100%] left-0 w-full bg-background/95 backdrop-blur-xl border-b border-border/40 py-4 px-6 shadow-lg flex flex-col gap-4 z-[40]">
+            <Link href="/fitur" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2 border-b border-border/30">Fitur & Modul</Link>
+            <Link href="/keamanan" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2 border-b border-border/30">Keamanan & Kepatuhan</Link>
+            <Link href="/replikasi" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2 border-b border-border/30">Panduan Replikasi</Link>
+            <Link href="/instansi" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2 border-b border-border/30">Instansi Pengguna</Link>
+            <Link href="/dokumen" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2 border-b border-border/30">Dokumen</Link>
+            <Link href="/#info" onClick={() => setIsMobileMenuOpen(false)} className="text-sm font-medium hover:text-primary transition-colors py-2">Tentang Inovasi</Link>
+          </div>
+        )}
       </header>
 
       {/* Content */}

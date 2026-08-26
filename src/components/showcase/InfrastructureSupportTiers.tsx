@@ -9,7 +9,7 @@ const TIERS = [
   {
     name: "Skala Kecil",
     price: "500.000",
-    description: "Kapasitas ideal untuk instansi tingkat kelurahan/desa atau unit kerja dengan lalu lintas surat ringan.",
+    description: "Kapasitas dasar untuk kebutuhan administrasi persuratan ringan.",
     users: 20,
     letters: 500,
     features: [
@@ -24,7 +24,7 @@ const TIERS = [
   {
     name: "Skala Menengah",
     price: "1.000.000",
-    description: "Kapasitas standar untuk instansi tingkat kecamatan atau OPD skala kecil dengan administrasi rutin.",
+    description: "Kapasitas standar untuk volume persuratan harian tingkat menengah.",
     users: 50,
     letters: 1000,
     features: [
@@ -39,7 +39,7 @@ const TIERS = [
   {
     name: "Skala Besar",
     price: "1.500.000",
-    description: "Sangat direkomendasikan untuk instansi tingkat dinas/badan dengan aktivitas persuratan tinggi.",
+    description: "Kapasitas optimal untuk aktivitas persuratan yang lebih padat.",
     users: 75,
     letters: 2500,
     features: [
@@ -49,12 +49,12 @@ const TIERS = [
       "Pemeliharaan Sistem & BSSN",
       "Dukungan Teknis Instansi"
     ],
-    highlighted: true
+    highlighted: false
   },
   {
     name: "Skala Enterprise",
     price: "3.500.000",
-    description: "Kapasitas maksimal untuk tingkat sekretariat daerah atau instansi berskala sangat besar.",
+    description: "Kapasitas maksimal untuk instansi berskala besar dan kompleks.",
     users: 150,
     letters: 10000,
     features: [

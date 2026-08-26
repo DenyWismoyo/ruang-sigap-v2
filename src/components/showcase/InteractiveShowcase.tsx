@@ -64,7 +64,7 @@ export function InteractiveShowcase() {
       <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start">
         
         {/* Tabs Selection - Minimalist (Scrollable on mobile) */}
-        <div className="w-full lg:w-[320px] flex lg:flex-col gap-2 shrink-0 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide">
+        <div className="w-full lg:w-[320px] flex lg:flex-col gap-2 shrink-0 overflow-x-auto pb-4 lg:pb-0 scrollbar-hide snap-x snap-mandatory px-4 lg:px-0">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -72,7 +72,7 @@ export function InteractiveShowcase() {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "text-left py-3 px-4 rounded-xl transition-all duration-300 relative group flex flex-col items-start gap-1.5 border border-transparent min-w-[200px] lg:min-w-0 shrink-0",
+                  "text-left py-3 px-4 rounded-xl transition-all duration-300 relative group flex flex-col items-start gap-1.5 border border-transparent min-w-[200px] lg:min-w-0 shrink-0 snap-start",
                   isActive 
                     ? "bg-primary/5 border-primary/10 shadow-[0_0_15px_rgba(16,185,129,0.05)]"
                     : "hover:bg-muted/30 hover:border-border/30"

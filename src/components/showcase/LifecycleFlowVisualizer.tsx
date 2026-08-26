@@ -129,7 +129,7 @@ export function LifecycleFlowVisualizer() {
                 <div key={stage.id} className="relative flex flex-col items-center group">
                   
                   {/* Node Connector Point (Mobile Vertical Line) */}
-                  <div className={`md:hidden absolute left-8 top-16 bottom-[-40px] w-1 bg-border/50 z-0 ${idx === stages.length - 1 ? 'hidden' : ''}`} />
+                  <div className={`md:hidden absolute left-1/2 -translate-x-1/2 top-16 bottom-[-24px] w-1 bg-border/50 z-0 ${idx === stages.length - 1 ? 'hidden' : ''}`} />
                   
                   {/* Node Orb */}
                   <motion.div

@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import AppProviders from "@/context/AppProviders";
 import { ServiceWorkerReset } from "@/components/ServiceWorkerReset"; // [BARU] Import komponen reset
 import OfflineSyncManager from "@/components/OfflineSyncManager"; // [BARU] Import offline sync manager
+import JsonLd from "@/components/seo/JsonLd"; // [SEO] Import JSON-LD Schema
 
 const inter = Inter({
   subsets: ["latin"],
@@ -26,18 +27,66 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://spg.omnifit.cloud"),
   title: {
     template: "%s | SIGAP",
     default: "SIGAP - Sistem Integrasi & Administrasi Persuratan",
   },
   description:
-    "SIGAP: Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi.",
+    "SIGAP: Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi. Kelola persuratan, disposisi, dan dokumen secara cerdas, mudah, dan sesuai standar SPBE.",
   keywords: [
     "SIGAP",
     "e-office",
     "administrasi persuratan",
     "birokrasi modern",
+    "persuratan instansi",
+    "disposisi surat",
+    "sistem pemerintahan berbasis elektronik",
+    "SPBE",
   ],
+  authors: [{ name: "SIGAP Team" }],
+  creator: "SIGAP",
+  publisher: "SIGAP E-Office",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    title: "SIGAP - Sistem Integrasi & Administrasi Persuratan",
+    description:
+      "Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi. Kelola persuratan secara digital dan real-time.",
+    url: "https://spg.omnifit.cloud",
+    siteName: "SIGAP E-Office",
+    images: [
+      {
+        url: "/icon-192x192.png",
+        width: 192,
+        height: 192,
+        alt: "SIGAP E-Office Logo",
+      },
+    ],
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "SIGAP E-Office",
+    description: "Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi.",
+    images: ["/icon-192x192.png"],
+    creator: "@sigap",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export const viewport: Viewport = {
@@ -91,6 +140,7 @@ export default function RootLayout({
             Ini akan berjalan sekali di sisi klien untuk memastikan tidak ada SW lama yang nyangkut.
         */}
         <ServiceWorkerReset />
+        <JsonLd />
 
         <AppProviders>
           <OfflineSyncManager />
