@@ -65,6 +65,7 @@ function UploadSuratComponent() {
   const [klasifikasi, setKlasifikasi] = useState<'Biasa' | 'Penting' | 'Segera' | 'Rahasia'>('Biasa');
   const [jenisSurat, setJenisSurat] = useState<Surat['jenisSurat']>('Lainnya');
   const [ringkasanEksekutif, setRingkasanEksekutif] = useState(''); // [BARU] State untuk AI Summary
+  const [suggestedDisposisi, setSuggestedDisposisi] = useState<string[]>([]); // [BARU] Saran Disposisi dari AI
   const [tujuanJabatanId, setTujuanJabatanId] = useState<string>('none'); 
   
   // [TAMBAHAN LINTAS OPD]
@@ -244,7 +245,9 @@ function UploadSuratComponent() {
             setTanggalSurat(parsedData.tanggalSurat || '');
             setJenisSurat(parsedData.jenisSurat || 'Lainnya');
             setRingkasanEksekutif(parsedData.ringkasanEksekutif || ''); // [BARU]
-            
+            if (Array.isArray(parsedData.suggestedDisposisi) && parsedData.suggestedDisposisi.length > 0) {
+                setSuggestedDisposisi(parsedData.suggestedDisposisi);
+            }
             
             if (parsedData.detailAgenda) {
                 setTanggalAgenda(parsedData.detailAgenda.tanggal || '');
@@ -378,6 +381,7 @@ function UploadSuratComponent() {
       opdId: userProfile!.opdId,
       jenisSurat: jenisSurat,
       ringkasanEksekutif: ringkasanEksekutif || undefined, // [BARU]
+      suggestedDisposisi: suggestedDisposisi.length > 0 ? suggestedDisposisi : undefined, // [BARU]
       detailAgenda: detailAgendaPayload,
       tujuanJabatanId: tujuanJabatanId !== 'none' ? tujuanJabatanId : null,
       terlibatJabatanIds: uniqueTerlibatIds,

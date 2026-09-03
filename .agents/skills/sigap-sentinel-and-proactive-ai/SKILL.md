@@ -1,4 +1,4 @@
-﻿---
+---
 name: sigap-sentinel-and-proactive-ai
 description: >
   Panduan implementasi SIGAP Sentinel (AI Pemantau Proaktif), AI Daily Briefing Cron,
@@ -223,6 +223,26 @@ const CONFIRMATION_REQUIRED = ['create_jadwal', 'create_tugas', 'create_disposis
 
 ---
 
+---
+
+## Modul 4 -- AI Strategic Disposition Orchestration & On-Demand Callable v2
+
+### Dual Pipeline Architecture:
+1. **Pipeline 1: Pre-computed AI Extraction saat Upload (OCR & Async Trigger)**
+   - Saat dokumen surat diunggah via OCR (`extractSuratDataAIV2`), AI langsung mengekstrak metadata + `suggestedDisposisi` (2 opsi instruksi taktis) dan menyimpannya langsung di koleksi `surat/{id}`.
+   - Background Trigger `agentStrategicDisposition` (`onDocumentCreated`) memetakan kandidat penerima (`suggestedPenerimaIds`) secara asinkron menggunakan Firestore database target (`database-siyap`).
+
+2. **Pipeline 2: On-Demand Interactive AI (`getStrategicDisposisiAIV2`)**
+   - Dipanggil on-demand saat pimpinan mengklik tombol **Saran AI** (`Sparkles`) di Form Disposisi Detail Surat, Quick Disposisi Modal, atau Inline Ruang Kerja.
+   - Menggunakan Callable Firebase Function v2 (`asia-southeast2`) dengan secret `GEMINI_API_KEY` (Secret Manager) dan fallback ke Next.js API route `/api/ai/suggest-disposition`.
+   - Mengembalikan saran instruksi dan auto-select penerima bawahan langsung ke form UI.
+
+### Aturan Hirarki & Aksesibilitas Saran AI:
+- **JANGAN BATASI DENGAN `level < 5`**: Seluruh pimpinan atau pejabat yang memiliki bawahan (Level 1 Kadis s/d Level 6 Kasubbag TU UPTD / Kasi) berhak melihat dan memanfaatkan fitur Rekomendasi Asisten AI.
+- Form Disposisi wajib menampilkan banner saran instruksi jika `surat.suggestedDisposisi` terisi, dan tombol "Saran Penerima AI" jika `surat.suggestedPenerimaIds` terisi.
+
+---
+
 ## Data Sources untuk Proactive AI
 
 | Data | Koleksi | Field |
@@ -233,3 +253,4 @@ const CONFIRMATION_REQUIRED = ['create_jadwal', 'create_tugas', 'create_disposis
 | Agenda hari ini | surat | jenisSurat=='Undangan' + detailAgenda.tanggal |
 | Logbook kemarin | logbook | {userId}_{YYYY-MM-DD} |
 | Health score OPD | kinerja_agregat | {opdId}_{YYYY-MM-DD} |
+

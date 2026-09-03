@@ -106,6 +106,9 @@ export const extractSuratDataAIV2 = onCall({
                  - Buat 1 hingga 2 kalimat ringkasan padat tentang isi utama surat ini.
                  - Tulis secara lugas dan profesional agar pimpinan langsung paham inti surat tanpa membaca teks panjang.
 
+              5. **SARAN DISPOSISI**:
+                 - Berikan 2 opsi kalimat instruksi disposisi yang relevan, spesifik, dan tegas berdasarkan esensi surat ini.
+
               Ekstrak data dalam format JSON berikut:
               {
                 "nomorSurat": "string",
@@ -114,6 +117,7 @@ export const extractSuratDataAIV2 = onCall({
                 "tanggalSurat": "YYYY-MM-DD",
                 "jenisSurat": "Pilih satu: Undangan, Pemberitahuan, Permohonan, Lainnya",
                 "ringkasanEksekutif": "string",
+                "suggestedDisposisi": ["Opsi Instruksi Disposisi 1", "Opsi Instruksi Disposisi 2"],
                 "detailAgenda": {
                    "tanggal": "YYYY-MM-DD",
                    "jamMulai": "HH:mm",
@@ -135,6 +139,10 @@ export const extractSuratDataAIV2 = onCall({
                     enum: ["Undangan", "Pemberitahuan", "Permohonan", "Lainnya"] 
                 },
                 ringkasanEksekutif: { type: "STRING" },
+                suggestedDisposisi: {
+                    type: "ARRAY",
+                    items: { type: "STRING" }
+                },
                 detailAgenda: {
                     type: "OBJECT", 
                     nullable: true,
@@ -231,7 +239,7 @@ export const extractVoiceDisposisiAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
         
         const promptText = `
               Anda adalah asisten cerdas untuk sistem tata kelola persuratan pemerintahan.
@@ -301,7 +309,127 @@ export const extractVoiceDisposisiAIV2 = onCall({
         logger.error("Error di fungsi extractVoiceDisposisiAIV2:", error);
         throw new HttpsError("internal", error.message || "Terjadi kesalahan internal AI.");
     }
-});/**
+});
+
+/**
+ * FUNGSI: On-Demand Rekomendasi Disposisi Strategis AI
+ * Dipanggil langsung saat pimpinan mengklik tombol 'Saran AI'
+ */
+export const getStrategicDisposisiAIV2 = onCall({
+    region: REGION,
+    timeoutSeconds: 45,
+    memory: "256MiB",
+    cors: true,
+    secrets: [geminiApiKey]
+}, async (request) => {
+    if (!request.auth || !request.auth.uid) {
+        throw new HttpsError("unauthenticated", "Harus login untuk menggunakan AI.");
+    }
+
+    const { suratId, perihal, pengirim, jenisSurat, ringkasanEksekutif, bawahanList } = request.data;
+    const apiKey = geminiApiKey.value(); 
+    if (!apiKey) {
+        throw new HttpsError("internal", "API Key Gemini belum terkonfigurasi di server.");
+    }
+
+    try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+
+        const infoSuratText = `
+[INFORMASI SURAT]
+- Pengirim: ${pengirim || '-'}
+- Perihal: ${perihal || '-'}
+- Jenis Surat: ${jenisSurat || '-'}
+- Ringkasan Eksekutif: ${ringkasanEksekutif || '-'}
+`;
+
+        const bawahanText = Array.isArray(bawahanList) && bawahanList.length > 0
+            ? bawahanList.map((b: any) => `- ID: ${b.jabatanId}, Jabatan: ${b.namaJabatan}, Nama: ${b.namaLengkap}`).join('\n')
+            : '- (Tidak ada bawahan terdaftar)';
+
+        const prompt = `
+Anda adalah "Asisten Ahli Instruksi Disposisi dan Birokrasi" untuk Pimpinan.
+Berdasarkan informasi surat dinas dan daftar bawahan berikut:
+
+${infoSuratText}
+
+[DAFTAR BAWAHAN TERSEDIA]
+${bawahanText}
+
+TUGAS ANDA:
+1. Rumuskan 2 opsi instruksi disposisi yang tajam, spesifik, tegas, dan berorientasi pada aksi nyata (action-oriented) sesuai esensi surat.
+2. Pilih 1 s.d. 2 ID jabatan bawahan dari [DAFTAR BAWAHAN TERSEDIA] yang paling relevan dan berwenang menangani surat ini.
+
+Keluarkan format JSON murni:
+{
+  "suggestedDisposisi": ["Opsi Instruksi 1", "Opsi Instruksi 2"],
+  "suggestedRecipients": ["ID_BAWAHAN_TERPILIH"]
+}
+`;
+
+        const payload = {
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+                temperature: 0.2,
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        suggestedDisposisi: { type: "ARRAY", items: { type: "STRING" } },
+                        suggestedRecipients: { type: "ARRAY", items: { type: "STRING" } }
+                    },
+                    required: ["suggestedDisposisi", "suggestedRecipients"]
+                }
+            }
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errText = await response.text();
+            logger.error("Gemini API Error getStrategicDisposisiAIV2:", errText);
+            throw new HttpsError("internal", "Gagal menghubungi AI Server.");
+        }
+
+        const result = await response.json();
+        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!textPart) {
+            throw new HttpsError("data-loss", "AI tidak menghasilkan respons.");
+        }
+
+        const parsed = JSON.parse(textPart);
+
+        // Jika ada suratId, simpan hasilnya ke Firestore agar persisten
+        if (suratId) {
+            try {
+                const db = getFirestore("database-siyap");
+                await db.collection("surat").doc(suratId).update({
+                    suggestedDisposisi: parsed.suggestedDisposisi || [],
+                    suggestedPenerimaIds: parsed.suggestedRecipients || []
+                });
+            } catch (dbErr) {
+                logger.warn("Gagal update surat dengan saran AI:", dbErr);
+            }
+        }
+
+        return {
+            success: true,
+            suggestedDisposisi: parsed.suggestedDisposisi || [],
+            suggestedRecipients: parsed.suggestedRecipients || [],
+            suggestedInstruction: parsed.suggestedDisposisi?.[0] || ""
+        };
+
+    } catch (error: any) {
+        logger.error("Error di getStrategicDisposisiAIV2:", error);
+        throw new HttpsError("internal", error.message || "Gagal memproses rekomendasi AI.");
+    }
+});
+
+/**
  * FUNGSI: Agent AI Asynchronous untuk Saran Disposisi Strategis
  * Berjalan di background saat dokumen Surat baru dibuat.
  */
@@ -332,7 +460,7 @@ export const agentStrategicDisposition = onDocumentCreated({
     }
 
     try {
-        const db = admin.firestore();
+        const db = getFirestore("database-siyap");
         const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
 
         // ==============================================================
@@ -349,13 +477,13 @@ export const agentStrategicDisposition = onDocumentCreated({
         // Ambil daftar jabatan struktural di OPD untuk rekomendasi penerima
         const jabatanSnapshot = await db.collection("jabatan").where("opdId", "==", surat.opdId).get();
         const structuralJabatans = jabatanSnapshot.docs.map(d => ({ id: d.id, ...d.data() })).filter((j: any) => {
-            if (j.level <= 5) return true;
-            if (j.level === 6 || j.level === 7) {
+            if (j.level <= 6) return true;
+            if (j.level === 7 || j.level === 8) {
                 const n = (j.namaJabatan || "").toLowerCase();
                 return n.includes("kepala") || n.includes("sekretaris") || n.includes("camat") || 
                        n.includes("lurah") || n.includes("direktur") || n.includes("kabid") || 
                        n.includes("kasubbag") || n.includes("subbag") || n.includes("kasubid") || 
-                       n.includes("kasi") || n.includes("seksi");
+                       n.includes("kasi") || n.includes("seksi") || n.includes("koordinator");
             }
             return false;
         });
@@ -367,7 +495,7 @@ export const agentStrategicDisposition = onDocumentCreated({
         // AGENT 1: THE STRATEGIC INSTRUCTOR
         // ==============================================================
         const promptAgent1 = `
-Anda adalah "Asisten Ahli Instruksi Disposisi" untuk Pimpinan (Kepala Dinas/Badan/Biro).
+Anda adalah "Asisten Ahli Instruksi Disposisi" untuk Pimpinan (Kepala Dinas/Badan/Biro/UPTD).
 Tugas tunggal Anda adalah merumuskan 2 opsi kalimat instruksi disposisi strategis yang BENAR-BENAR spesifik, tajam, dan dapat langsung dieksekusi berdasarkan informasi surat.
 
 ${infoSuratText}

@@ -158,26 +158,49 @@ const QuickDisposisiModal = ({
             namaLengkap: b.namaLengkap
         }));
 
-        const response = await fetch('/api/ai/suggest-disposition', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat },
+        let resultData: any = null;
+        try {
+            const { getFunctions, httpsCallable } = await import('firebase/functions');
+            const { db } = await import('@/lib/firebase');
+            const functionsInstance = getFunctions(db.app, 'asia-southeast2');
+            const getDisposisiAI = httpsCallable(functionsInstance, 'getStrategicDisposisiAIV2');
+            const res = await getDisposisiAI({
+                suratId: surat.id,
+                perihal: surat.perihal,
+                pengirim: surat.pengirim,
+                jenisSurat: surat.jenisSurat,
+                ringkasanEksekutif: surat.ringkasanEksekutif,
                 bawahanList: simplifiedBawahan
-            })
-        });
+            });
+            resultData = res.data;
+        } catch (callableErr) {
+            console.warn("Callable AI gagal, beralih ke REST fallback:", callableErr);
+            const response = await fetch('/api/ai/suggest-disposition', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat, ringkasanEksekutif: surat.ringkasanEksekutif },
+                    bawahanList: simplifiedBawahan
+                })
+            });
+            resultData = await response.json();
+        }
 
-        const result = await response.json();
-
-        if (!response.ok) throw new Error(result.error || 'Gagal mendapatkan saran AI.');
-
-        if (result.success) {
-            if (result.suggestedInstruction) setInstruksi(result.suggestedInstruction);
-            if (result.suggestedRecipients && Array.isArray(result.suggestedRecipients)) {
-                const suggestedProfiles = bawahanList.filter(b => result.suggestedRecipients.includes(b.jabatanId));
-                setSelectedPenerima(suggestedProfiles);
-                if (suggestedProfiles.length > 0) addToast(`AI menyarankan: ${suggestedProfiles[0].namaLengkap}`, "success");
+        if (resultData && (resultData.success || resultData.suggestedInstruction)) {
+            if (resultData.suggestedInstruction) setInstruksi(resultData.suggestedInstruction);
+            if (resultData.suggestedRecipients && Array.isArray(resultData.suggestedRecipients)) {
+                const suggestedProfiles = bawahanList.filter(b => resultData.suggestedRecipients.includes(b.jabatanId));
+                if (suggestedProfiles.length > 0) {
+                    setSelectedPenerima(suggestedProfiles);
+                    addToast(`AI menyarankan: ${suggestedProfiles.map(p => p.namaLengkap).join(', ')}`, "success");
+                } else {
+                    addToast("Instruksi AI berhasil diterapkan.", "success");
+                }
+            } else {
+                addToast("Instruksi AI berhasil diterapkan.", "success");
             }
+        } else {
+            throw new Error(resultData?.error || "Gagal mendapatkan saran AI.");
         }
     } catch (err: any) {
         addToast(err.message || "Gagal memproses saran AI.", "error");

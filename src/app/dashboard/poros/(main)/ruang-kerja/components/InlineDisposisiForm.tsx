@@ -104,6 +104,20 @@ export default function InlineDisposisiForm({
   
   const handleRemoveJabatan = (uid: string) => setSelectedPenerima(prev => prev.filter(u => u.uid !== uid));
 
+  const handleSelectSuggestedPenerima = () => {
+      if (!surat.suggestedPenerimaIds || surat.suggestedPenerimaIds.length === 0) return;
+      const matched = bawahanList.filter(b => surat.suggestedPenerimaIds?.includes(b.jabatanId));
+      if (matched.length > 0) {
+          setSelectedPenerima(prev => {
+              const newItems = matched.filter(m => !prev.some(p => p.uid === m.uid));
+              return [...prev, ...newItems];
+          });
+          addToast(`Berhasil menambahkan ${matched.length} penerima rekomendasi AI`, 'success');
+      } else {
+          addToast('Penerima yang disarankan bukan bawahan Anda.', 'info');
+      }
+  };
+
   const submitDisposisi = async () => {
     if (selectedPenerima.length === 0) { addToast('Pilih minimal satu penerima', 'error'); return; }
     if (!instruksi.trim()) { addToast('Instruksi tidak boleh kosong', 'error'); return; }
@@ -157,24 +171,65 @@ export default function InlineDisposisiForm({
   };
 
   const handleAskAi = async () => {
-    if (!surat || bawahanList.length === 0) return;
+    if (!surat || bawahanList.length === 0) {
+        addToast("Data surat atau daftar bawahan belum siap.", "error");
+        return;
+    }
     setIsAiLoading(true);
     try {
         const simplified = bawahanList.map(b => ({ jabatanId: b.jabatanId, namaJabatan: b.namaJabatan, namaLengkap: b.namaLengkap }));
-        const response = await fetch('/api/ai/suggest-disposition', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat }, bawahanList: simplified })
-        });
-        const result = await response.json();
-        if (result.success && result.suggestedInstruction) {
-            setInstruksi(result.suggestedInstruction);
-            if (result.suggestedRecipients) {
-                const suggested = bawahanList.filter(b => result.suggestedRecipients.includes(b.jabatanId));
-                setSelectedPenerima(suggested);
-            }
+        
+        let resultData: any = null;
+        try {
+            const { getFunctions, httpsCallable } = await import('firebase/functions');
+            const { db } = await import('@/lib/firebase');
+            const functionsInstance = getFunctions(db.app, 'asia-southeast2');
+            const getDisposisiAI = httpsCallable(functionsInstance, 'getStrategicDisposisiAIV2');
+            const res = await getDisposisiAI({
+                suratId: surat.id,
+                perihal: surat.perihal,
+                pengirim: surat.pengirim,
+                jenisSurat: surat.jenisSurat,
+                ringkasanEksekutif: surat.ringkasanEksekutif,
+                bawahanList: simplified
+            });
+            resultData = res.data;
+        } catch (callableErr) {
+            console.warn("Callable AI gagal, beralih ke REST fallback:", callableErr);
+            const response = await fetch('/api/ai/suggest-disposition', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat }, bawahanList: simplified })
+            });
+            resultData = await response.json();
         }
-    } catch (err) { /* silent fail */ } 
-    finally { setIsAiLoading(false); }
+
+        if (resultData && (resultData.success || resultData.suggestedInstruction)) {
+            if (resultData.suggestedInstruction) {
+                setInstruksi(prev => prev ? `${prev}\n${resultData.suggestedInstruction}` : resultData.suggestedInstruction);
+            }
+            if (resultData.suggestedRecipients && Array.isArray(resultData.suggestedRecipients)) {
+                const suggested = bawahanList.filter(b => resultData.suggestedRecipients.includes(b.jabatanId));
+                if (suggested.length > 0) {
+                    setSelectedPenerima(prev => {
+                        const newItems = suggested.filter(m => !prev.some(p => p.uid === m.uid));
+                        return [...prev, ...newItems];
+                    });
+                    addToast(`AI menyarankan: ${suggested.map(p => p.namaLengkap).join(', ')}`, "success");
+                } else {
+                    addToast("Instruksi AI berhasil diterapkan.", "success");
+                }
+            } else {
+                addToast("Instruksi AI berhasil diterapkan.", "success");
+            }
+        } else {
+            throw new Error(resultData?.error || "Gagal mendapatkan saran AI.");
+        }
+    } catch (err: any) { 
+        console.error(err);
+        addToast(err.message || "Gagal memproses saran AI.", "error");
+    } finally { 
+        setIsAiLoading(false); 
+    }
   };
 
   return (
@@ -196,17 +251,26 @@ export default function InlineDisposisiForm({
                         <Mic size={10} className="mr-1"/> 
                         Suara (Segera)
                     </Button>
-                    <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
-                        <Sparkles size={10} />
+                    <Button 
+                        type="button" 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={handleAskAi}
+                        disabled={isAiLoading || isStafLoading} 
+                        title="Klik untuk mendapatkan saran instruksi dan penerima dari AI" 
+                        className="h-6 px-2 text-[10px] text-[var(--nk-teal-mid)] hover:bg-[var(--nk-teal-mid)]/10"
+                    >
+                        {isAiLoading ? <Loader2 size={10} className="animate-spin mr-1"/> : <Sparkles size={10} className="mr-1"/>}
+                        {isAiLoading ? 'Menganalisis...' : 'Saran AI'}
                     </Button>
                 </div>
             </div>
-            {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
-              <div className="flex flex-col gap-1.5 mb-2 p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-100 dark:border-blue-800">
-                <span className="text-[10px] font-semibold text-blue-700 flex items-center gap-1"><Sparkles size={10} /> Rekomendasi Asisten Strategis AI:</span>
+            {surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
+              <div className="flex flex-col gap-1.5 mb-2 p-2 bg-teal-50/50 dark:bg-teal-900/10 rounded-md border border-teal-100 dark:border-teal-800">
+                <span className="text-[10px] font-semibold text-[var(--nk-teal-mid)] flex items-center gap-1"><Sparkles size={10} /> Rekomendasi Asisten Strategis AI:</span>
                 <div className="flex flex-wrap gap-1.5">
                   {surat.suggestedDisposisi.map((saran, idx) => (
-                      <Badge key={idx} variant="outline" className="cursor-pointer hover:bg-blue-100 text-[10px] py-1 px-2 border-blue-200 text-blue-700 transition-colors" onClick={() => setInstruksi(prev => prev ? `${prev}\n${saran}` : saran)} title={saran}>
+                      <Badge key={idx} variant="outline" className="cursor-pointer hover:bg-teal-100 dark:hover:bg-teal-900/40 text-[10px] py-1 px-2 border-teal-200 dark:border-teal-700 text-teal-800 dark:text-teal-200 transition-colors" onClick={() => setInstruksi(prev => prev ? `${prev}\n${saran}` : saran)} title={saran}>
                           Opsi {idx + 1}: {saran.length > 60 ? saran.substring(0, 60) + '...' : saran}
                       </Badge>
                   ))}
@@ -240,7 +304,21 @@ export default function InlineDisposisiForm({
           </div>
 
           <div>
-            <Label className="text-xs mb-1.5 block text-muted-foreground">Pilih Penerima (Bawahan)</Label>
+            <div className="flex justify-between items-center mb-1.5">
+                <Label className="text-xs text-muted-foreground">Pilih Penerima (Bawahan)</Label>
+                {surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
+                    <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleSelectSuggestedPenerima}
+                        className="h-6 px-2 text-[10px] text-[var(--nk-teal-mid)] bg-teal-50 border-teal-200 dark:bg-teal-900/20"
+                        title="Klik untuk memilih penerima yang disarankan AI"
+                    >
+                        <Sparkles size={10} className="mr-1"/> Saran Penerima AI
+                    </Button>
+                )}
+            </div>
             <div className="flex flex-wrap gap-1.5 mb-2">
               {selectedPenerima.map(u => (
                 <Badge key={u.uid} variant="secondary" className="flex items-center gap-1 py-0.5 px-2 text-xs">

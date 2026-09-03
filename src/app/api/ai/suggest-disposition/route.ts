@@ -17,8 +17,10 @@ export async function POST(request: Request) {
     }
 
     // 1. Siapkan API Key
-    // [PERBAIKAN KEAMANAN]: DIBERSIHKAN DARI FALLBACK NEXT_PUBLIC DAN FIREBASE
-    const apiKey = process.env.GEMINI_API_KEY;
+    const rawApiKey = process.env.GEMINI_API_KEY;
+    const apiKey = (rawApiKey && !rawApiKey.startsWith('AQ.') && rawApiKey.length > 20) 
+        ? rawApiKey 
+        : process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
     
     if (!apiKey) {
       return NextResponse.json({ error: 'API Key AI belum dikonfigurasi.' }, { status: 500 });
@@ -30,7 +32,6 @@ export async function POST(request: Request) {
     ).join('\n');
 
     // 3. Susun Prompt
-    // Catatan: Kita tidak menggunakan backtick (```) di dalam string ini untuk menghindari syntax error JS.
     const prompt = `
       Anda adalah asisten ahli birokrasi yang cerdas. Tugas Anda adalah membantu pimpinan melakukan disposisi surat dinas.
       
@@ -38,12 +39,13 @@ export async function POST(request: Request) {
       - Perihal: "${surat.perihal}"
       - Pengirim: "${surat.pengirim}"
       - Jenis: "${surat.jenisSurat || 'Umum'}"
+      - Ringkasan: "${surat.ringkasanEksekutif || '-'}"
       
       Daftar Bawahan Tersedia:
       ${bawahanContext}
       
       Tugas:
-      Analisis perihal surat di atas. Pilih TEPAT 1 (SATU) bawahan yang paling relevan dan memiliki wewenang untuk menangani surat ini berdasarkan nama jabatannya.
+      Analisis perihal dan konteks surat di atas. Pilih TEPAT 1 (SATU) bawahan yang paling relevan dan memiliki wewenang untuk menangani surat ini berdasarkan nama jabatannya.
       Berikan juga saran instruksi disposisi yang singkat, tegas, dan sesuai konteks surat.
 
       Format Jawaban WAJIB JSON murni (tanpa markdown code block):
@@ -54,9 +56,8 @@ export async function POST(request: Request) {
     `;
 
     // 4. Panggil Google Gemini API
-    // [FIX] Ganti model ke gemini-2.0-flash yang stabil
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

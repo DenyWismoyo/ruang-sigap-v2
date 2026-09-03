@@ -22,6 +22,8 @@ import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
 import { useAgendaData } from '@/app/dashboard/poros/hooks/useAgendaData';
 import { detectScheduleConflict, CombinedAgendaItem } from '@/lib/conflictUtils';
 import { JadwalTempat } from '@/types';
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { db } from '@/lib/firebase';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -206,18 +208,42 @@ export default function FormDisposisi({
   };
   
   const handleAskAi = async () => {
-    if (!surat || bawahanList.length === 0) { addToast("Data tidak cukup untuk AI.", "error"); return; }
+    if (!surat || bawahanList.length === 0) { 
+        addToast("Data tidak cukup untuk AI.", "error"); 
+        return; 
+    }
     setIsAiLoading(true);
     try {
         const simplifiedBawahan = bawahanList.map(b => ({ jabatanId: b.jabatanId, namaJabatan: b.namaJabatan, namaLengkap: b.namaLengkap }));
-        const response = await fetch('/api/ai/suggest-disposition', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat }, bawahanList: simplifiedBawahan }) });
-        const result = await response.json();
-        if (result.success) {
-            if (result.suggestedInstruction) setInstruksi(result.suggestedInstruction);
-            if (result.suggestedRecipients && Array.isArray(result.suggestedRecipients)) {
-                const suggestedProfiles = bawahanList.filter(b => result.suggestedRecipients.includes(b.jabatanId));
+        
+        let resultData: any = null;
+        try {
+            const { getFunctions, httpsCallable } = await import('firebase/functions');
+            const { db } = await import('@/lib/firebase');
+            const functionsInstance = getFunctions(db.app, 'asia-southeast2');
+            const getDisposisiAI = httpsCallable(functionsInstance, 'getStrategicDisposisiAIV2');
+            const res = await getDisposisiAI({
+                suratId: surat.id,
+                perihal: surat.perihal,
+                pengirim: surat.pengirim,
+                jenisSurat: surat.jenisSurat,
+                ringkasanEksekutif: surat.ringkasanEksekutif,
+                bawahanList: simplifiedBawahan
+            });
+            resultData = res.data;
+        } catch (callableErr) {
+            console.warn("Callable AI gagal, beralih ke REST fallback:", callableErr);
+            const response = await fetch('/api/ai/suggest-disposition', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ surat: { perihal: surat.perihal, pengirim: surat.pengirim, jenisSurat: surat.jenisSurat, ringkasanEksekutif: surat.ringkasanEksekutif }, bawahanList: simplifiedBawahan }) });
+            resultData = await response.json();
+        }
+
+        if (resultData && (resultData.success || resultData.suggestedInstruction)) {
+            if (resultData.suggestedInstruction) setInstruksi(resultData.suggestedInstruction);
+            if (resultData.suggestedRecipients && Array.isArray(resultData.suggestedRecipients)) {
+                const suggestedProfiles = bawahanList.filter(b => resultData.suggestedRecipients.includes(b.jabatanId));
                 setSelectedPenerima(suggestedProfiles);
             }
+            addToast("Saran AI berhasil diterapkan.", "success");
         }
     } catch (err: any) { console.error(err); addToast(err.message, 'error'); } 
     finally { setIsAiLoading(false); }
@@ -350,7 +376,7 @@ export default function FormDisposisi({
                         <Label htmlFor="search-penerima" className="text-xs md:text-sm">
                           {isPemberitahuanMode ? 'Kirim ke (Perorangan)' : 'Disposisikan Kepada'}
                         </Label>
-                        {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
+                        {surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
                             <Button 
                                 type="button" 
                                 variant="outline" 
@@ -435,12 +461,9 @@ export default function FormDisposisi({
                                 <Mic size={10} className="mr-1"/> 
                                 Suara (Segera)
                             </Button>
-                            <Button type="button" variant="ghost" size="sm" disabled={true} title="Saran AI Sedang Dinonaktifkan Sementara" className="h-6 px-2 text-[10px] text-muted-foreground bg-muted/50 cursor-not-allowed">
-                                <Sparkles size={10} />
-                            </Button>
                         </div>
                     </div>
-                    {effectiveJabatan && effectiveJabatan.level < 5 && surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
+                    {surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
                       <div className="flex flex-col gap-1.5 mt-2 mb-1 p-2.5 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-100 dark:border-blue-800">
                         <span className="text-xs font-semibold text-blue-700 flex items-center gap-1.5"><Sparkles size={12} /> Rekomendasi Asisten Strategis AI:</span>
                         <div className="flex flex-wrap gap-2">
