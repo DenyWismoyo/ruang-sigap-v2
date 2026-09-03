@@ -133,6 +133,20 @@ const QuickDisposisiModal = ({
     onClose();
   };
 
+  const handleSelectSuggestedPenerima = () => {
+      if (!surat?.suggestedPenerimaIds || surat.suggestedPenerimaIds.length === 0) return;
+      const matched = bawahanList.filter(b => surat.suggestedPenerimaIds?.includes(b.jabatanId));
+      if (matched.length > 0) {
+          setSelectedPenerima(prev => {
+              const newItems = matched.filter(m => !prev.some(p => p.uid === m.uid));
+              return [...prev, ...newItems];
+          });
+          addToast(`Berhasil menambahkan ${matched.length} penerima rekomendasi AI`, 'success');
+      } else {
+          addToast('Penerima yang disarankan bukan bawahan Anda.', 'info');
+      }
+  };
+
   const handleAskAi = async () => {
     if (!surat || bawahanList.length === 0) { addToast("Data tidak cukup untuk analisis AI.", "error"); return; }
     setIsAiLoading(true);
@@ -224,6 +238,21 @@ const QuickDisposisiModal = ({
                     </Button>
                 </div>
                 
+                {surat.suggestedDisposisi && surat.suggestedDisposisi.length > 0 && (
+                  <div className="flex flex-col gap-1.5 mb-2 p-2 bg-blue-50/50 dark:bg-blue-900/10 rounded-md border border-blue-100 dark:border-blue-800">
+                    <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-400 flex items-center gap-1">
+                      <Sparkles size={10} /> Rekomendasi Asisten Strategis AI:
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {surat.suggestedDisposisi.map((saran, idx) => (
+                          <Badge key={idx} variant="outline" className="cursor-pointer hover:bg-blue-100 dark:hover:bg-blue-900/40 text-[10px] py-1 px-2 border-blue-200 dark:border-blue-700 text-blue-700 dark:text-blue-300 transition-colors" onClick={() => setInstruksi(prev => prev ? `${prev}\n${saran}` : saran)} title={saran}>
+                              Opsi {idx + 1}: {saran.length > 60 ? saran.substring(0, 60) + '...' : saran}
+                          </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="flex flex-wrap gap-2 mb-2">
                     {templatList.length > 0 ? templatList.map(t => (
                           <Button key={t.id} type="button" variant="secondary" size="sm" onClick={() => handleTemplatClick(t.teksInstruksi)}>{t.teksInstruksi}</Button>
@@ -244,7 +273,21 @@ const QuickDisposisiModal = ({
               </div>
               
               <div>
-                <Label htmlFor="search-penerima-cepat">Pilih Penerima (Bawahan)</Label>
+                <div className="flex justify-between items-center mb-1.5">
+                  <Label htmlFor="search-penerima-cepat">Pilih Penerima (Bawahan)</Label>
+                  {surat.suggestedPenerimaIds && surat.suggestedPenerimaIds.length > 0 && (
+                      <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleSelectSuggestedPenerima}
+                          className="h-6 px-2 text-[10px] text-blue-600 hover:text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-900/20"
+                          title="Klik untuk memilih penerima yang disarankan AI"
+                      >
+                          <Sparkles size={10} className="mr-1"/> Saran Penerima AI
+                      </Button>
+                  )}
+                </div>
                 <div className="flex flex-wrap gap-2 my-2">
                   {selectedPenerima.map(user => (
                     <Badge key={user.uid} variant="secondary" className="flex items-center gap-1.5 py-1 px-2">
