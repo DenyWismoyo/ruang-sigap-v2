@@ -333,7 +333,7 @@ export default function RuangKerjaPage() {
         
         let penerima = 'Belum Didisposikan';
         if (latestDisposisi) {
-            penerima = latestDisposisi.kepadaJabatanId.map((id) => userMap.get(id)?.namaLengkap || '...').join(', ');
+            penerima = latestDisposisi.kepadaJabatanId.map((id: string) => userMap.get(id)?.namaLengkap || '...').join(', ');
         } else if (isCompletedSelf) {
             penerima = userProfile.namaLengkap;
         }
@@ -342,7 +342,8 @@ export default function RuangKerjaPage() {
     });
 
     enrichedAgendas.filter((surat) => {
-        const agendaDate = surat.detailAgenda?.tanggal?.toDate ? surat.detailAgenda.tanggal.toDate() : (surat.detailAgenda?.tanggal ? new Date(surat.detailAgenda.tanggal) : null);
+        const rawTanggal = surat.detailAgenda?.tanggal as any;
+        const agendaDate = rawTanggal?.toDate ? rawTanggal.toDate() : (rawTanggal ? new Date(rawTanggal) : null);
         if (!agendaDate || agendaDate < today || agendaDate > next7Days) return false;
         return isPimpinan ? (surat.disposisiStatus === 'Belum Didisposikan' || surat.isForMe || surat.isSelfDispo || surat.isCompletedSelf) : (surat.isForMe || surat.isCompletedSelf);
     }).forEach((surat) => { 
@@ -361,7 +362,8 @@ export default function RuangKerjaPage() {
     });
 
     jadwalInternalList.filter((jadwal) => { 
-        const jadwalDate = jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate() : (jadwal.tanggalMulai ? new Date(jadwal.tanggalMulai) : null); 
+        const rawTglMulai = jadwal.tanggalMulai as any;
+        const jadwalDate = rawTglMulai?.toDate ? rawTglMulai.toDate() : (rawTglMulai ? new Date(rawTglMulai) : null); 
         return jadwalDate && jadwalDate >= today && jadwalDate <= next7Days; 
     }).forEach((jadwal) => { 
         agendas.push({ 

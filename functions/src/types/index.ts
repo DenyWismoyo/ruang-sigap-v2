@@ -106,6 +106,7 @@ export interface UserProfile {
     pushTugas: boolean;
   };
   // --- [AKHIR TAMBAHAN] ---
+  // --- [AKHIR TAMBAHAN] ---
 
   // --- [PENAMBAHAN TAHAP 1 EFISIENSI] ---
   namaJabatan?: string; // Denormalisasi dari 'jabatan'
@@ -128,6 +129,8 @@ export interface Jabatan {
     berlakuHingga: Timestamp; 
     alasan: string; 
   } | null; 
+  klasterStruktur?: 'asn' | 'blud' | 'umum';
+  allowCrossClusterDisposisi?: boolean;
 }
 export interface OPD { 
   id?: string; 

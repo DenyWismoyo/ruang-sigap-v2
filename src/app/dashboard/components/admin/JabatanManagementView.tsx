@@ -233,6 +233,9 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
     const [tipeJabatan, setTipeJabatan] = useState<'struktural' | 'fungsional' | 'pelaksana' | ''>('');
     const [eselon, setEselon] = useState<string>('');
     const [jenjangFungsional, setJenjangFungsional] = useState<string>('');
+    const [klasterStruktur, setKlasterStruktur] = useState<'asn' | 'blud' | 'umum'>('umum');
+    const [allowCrossClusterDisposisi, setAllowCrossClusterDisposisi] = useState<boolean>(false);
+    const [klasterFilter, setKlasterFilter] = useState<'semua' | 'asn' | 'blud' | 'umum'>('semua');
     const [error, setError] = useState('');
     
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
@@ -332,8 +335,12 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
 
     const filteredJabatanForTable = useMemo(() => {
         if (userProfile?.role === 'super_admin' && tableOpdFilter === 'Semua') return [];
-        return jabatanList.sort((a, b) => a.level - b.level);
-    }, [jabatanList, tableOpdFilter, userProfile]);
+        let list = [...jabatanList];
+        if (klasterFilter !== 'semua') {
+            list = list.filter(j => (j.klasterStruktur || 'umum') === klasterFilter);
+        }
+        return list.sort((a, b) => a.level - b.level);
+    }, [jabatanList, tableOpdFilter, userProfile, klasterFilter]);
     
     const hierarchyMap = useMemo(() => {
         const map: Record<string, Jabatan[]> = {};
@@ -387,7 +394,9 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                 status: 'aktif',
                 tipeJabatan: tipeJabatan || null,
                 eselon: tipeJabatan === 'struktural' ? eselon : null,
-                jenjangFungsional: tipeJabatan === 'fungsional' ? jenjangFungsional : null
+                jenjangFungsional: tipeJabatan === 'fungsional' ? jenjangFungsional : null,
+                klasterStruktur: klasterStruktur || 'umum',
+                allowCrossClusterDisposisi: allowCrossClusterDisposisi || false
             };
             const docRef = await addDoc(collection(db, 'jabatan'), newJabatanData);
 
@@ -408,6 +417,8 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
             // ---------------------------
 
             setNamaJabatan('');
+            setKlasterStruktur('umum');
+            setAllowCrossClusterDisposisi(false);
             addToast('Jabatan baru berhasil ditambahkan.', 'success'); 
         } catch (err) {
             setError('Gagal menambahkan jabatan baru.');
@@ -427,7 +438,9 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                 idAtasan: currentJabatan.idAtasan || null,
                 tipeJabatan: currentJabatan.tipeJabatan || null,
                 eselon: currentJabatan.tipeJabatan === 'struktural' ? currentJabatan.eselon : null,
-                jenjangFungsional: currentJabatan.tipeJabatan === 'fungsional' ? currentJabatan.jenjangFungsional : null
+                jenjangFungsional: currentJabatan.tipeJabatan === 'fungsional' ? currentJabatan.jenjangFungsional : null,
+                klasterStruktur: currentJabatan.klasterStruktur || 'umum',
+                allowCrossClusterDisposisi: currentJabatan.allowCrossClusterDisposisi || false
             });
 
             // --- [OPTIMISTIC UPDATE] ---
@@ -435,7 +448,14 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                 if (!oldData) return oldData;
                 return {
                     ...oldData,
-                    jabatans: oldData.jabatans.map((j: any) => j.id === currentJabatan.id ? { ...j, namaJabatan: currentJabatan.namaJabatan, level: Number(currentJabatan.level), idAtasan: currentJabatan.idAtasan || null } : j)
+                    jabatans: oldData.jabatans.map((j: any) => j.id === currentJabatan.id ? { 
+                        ...j, 
+                        namaJabatan: currentJabatan.namaJabatan, 
+                        level: Number(currentJabatan.level), 
+                        idAtasan: currentJabatan.idAtasan || null,
+                        klasterStruktur: currentJabatan.klasterStruktur || 'umum',
+                        allowCrossClusterDisposisi: currentJabatan.allowCrossClusterDisposisi || false
+                    } : j)
                 };
             });
 
@@ -796,6 +816,30 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                             </Select>
                         </div>
                     )}
+                    {/* Klaster Struktur Organisasi */}
+                    <div>
+                        <Label>Klaster Struktur (Opsional)</Label>
+                        <Select value={klasterStruktur} onValueChange={(val: 'asn' | 'blud' | 'umum') => setKlasterStruktur(val)}>
+                            <SelectTrigger><SelectValue placeholder="Pilih Klaster" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="umum">Umum / Lintas Jalur (Standar)</SelectItem>
+                                <SelectItem value="asn">Struktur ASN (Pemerintahan)</SelectItem>
+                                <SelectItem value="blud">Struktur BLUD (Operasional)</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {klasterStruktur !== 'umum' && (
+                        <div className="flex items-center space-x-2 py-2">
+                            <Checkbox 
+                                id="allowCrossClusterAdd" 
+                                checked={allowCrossClusterDisposisi} 
+                                onCheckedChange={(v) => setAllowCrossClusterDisposisi(!!v)} 
+                            />
+                            <Label htmlFor="allowCrossClusterAdd" className="text-xs cursor-pointer">
+                                Izinkan Disposisi Lintas Klaster
+                            </Label>
+                        </div>
+                    )}
                     <div className="md:col-span-2 lg:col-span-3 mt-2"><Button type="submit" className="w-full"><Save size={16} className="mr-2" /> Simpan</Button></div>
                 </form>
             </div>
@@ -818,8 +862,20 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                             <Checkbox id="showArchived" checked={showArchived} onCheckedChange={() => setShowArchived(!showArchived)} />
                             <Label htmlFor="showArchived" className="text-sm font-medium cursor-pointer">Tampilkan Non-Aktif</Label>
                         </div>
-                        <div className='w-full md:w-1/3'>
-                            <Label htmlFor="opdFilter" className="mb-1 block">Filter OPD</Label>
+                        <div className='w-full md:w-44'>
+                            <Label htmlFor="klasterFilter" className="mb-1 block text-xs">Filter Klaster</Label>
+                            <Select value={klasterFilter} onValueChange={(v: any) => setKlasterFilter(v)}>
+                                <SelectTrigger id="klasterFilter"><SelectValue placeholder="Semua Struktur" /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="semua">-- Semua Struktur --</SelectItem>
+                                    <SelectItem value="asn">Struktur ASN</SelectItem>
+                                    <SelectItem value="blud">Struktur BLUD</SelectItem>
+                                    <SelectItem value="umum">Struktur Umum</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className='w-full md:w-56'>
+                            <Label htmlFor="opdFilter" className="mb-1 block text-xs">Filter OPD</Label>
                             <Select value={tableOpdFilter} onValueChange={setTableOpdFilter}>
                                 <SelectTrigger id="opdFilter"><SelectValue placeholder="Pilih OPD" /></SelectTrigger>
                                 <SelectContent>
@@ -890,7 +946,17 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                                     />
                                                 </td>
                                             )}
-                                            <td className="p-3 font-medium">{jabatan.namaJabatan}</td>
+                                            <td className="p-3 font-medium">
+                                                <div className="flex items-center gap-2">
+                                                    <span>{jabatan.namaJabatan}</span>
+                                                    {jabatan.klasterStruktur === 'asn' && (
+                                                        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 rounded border border-blue-200">ASN</span>
+                                                    )}
+                                                    {jabatan.klasterStruktur === 'blud' && (
+                                                        <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 rounded border border-emerald-200">BLUD</span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="p-3">{jabatan.level}</td>
                                             <td className="p-3 text-muted-foreground">{jabatanMap.get(jabatan.idAtasan || '')?.namaJabatan || '-'}</td>
                                             <td className="p-3 text-muted-foreground">{getPltUserName(jabatan)}</td>
@@ -1094,6 +1160,35 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                             <SelectItem value="Pemula">Pemula</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                            )}
+
+                            {/* Klaster Struktur Organisasi Edit */}
+                            <div>
+                                <Label>Klaster Struktur Organisasi</Label>
+                                <Select 
+                                    value={currentJabatan.klasterStruktur || "umum"} 
+                                    onValueChange={(val: 'asn' | 'blud' | 'umum') => setCurrentJabatan({ ...currentJabatan, klasterStruktur: val })}
+                                >
+                                    <SelectTrigger><SelectValue placeholder="Pilih Klaster" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="umum">Umum / Lintas Jalur (Standar)</SelectItem>
+                                        <SelectItem value="asn">Struktur ASN (Pemerintahan)</SelectItem>
+                                        <SelectItem value="blud">Struktur BLUD (Operasional)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+
+                            {(currentJabatan.klasterStruktur === 'asn' || currentJabatan.klasterStruktur === 'blud') && (
+                                <div className="flex items-center space-x-2 py-1">
+                                    <Checkbox 
+                                        id="allowCrossClusterEdit" 
+                                        checked={!!currentJabatan.allowCrossClusterDisposisi} 
+                                        onCheckedChange={(v) => setCurrentJabatan({ ...currentJabatan, allowCrossClusterDisposisi: !!v })} 
+                                    />
+                                    <Label htmlFor="allowCrossClusterEdit" className="text-xs cursor-pointer">
+                                        Izinkan Disposisi Lintas Klaster
+                                    </Label>
                                 </div>
                             )}
 

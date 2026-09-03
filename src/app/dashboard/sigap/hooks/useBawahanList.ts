@@ -143,11 +143,21 @@ export const useBawahanList = (
             return true;
         }
 
-        // 2. Jalur Heuristik Administratif (Level)
+        // 2. Isolasi Klaster Dual Structure (Non-Destructive Graceful Fallback)
+        // Hanya memblok jika KEDUA jabatan memiliki klaster spesifik yang berbeda dan tidak diizinkan cross-cluster
+        const myCluster = effectiveJabatan.klasterStruktur || 'umum';
+        const theirCluster = userJabatan.klasterStruktur || 'umum';
+        if (myCluster !== 'umum' && theirCluster !== 'umum' && myCluster !== theirCluster) {
+            if (!effectiveJabatan.allowCrossClusterDisposisi) {
+                return false;
+            }
+        }
+
+        // 3. Jalur Heuristik Administratif (Level)
         const isLowerLevel = userJabatan.level > effectiveJabatan.level;
         
         if (isLowerLevel) {
-             // 3. Filter Birokrasi (Pangkat/Kesetaraan)
+             // 4. Filter Birokrasi (Pangkat/Kesetaraan)
              if (effectiveJabatan.tipeJabatan && userJabatan.tipeJabatan) {
                  const myScore = getBirokrasiScore(effectiveJabatan);
                  const theirScore = getBirokrasiScore(userJabatan);

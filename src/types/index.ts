@@ -144,6 +144,8 @@ export interface Jabatan {
   tipeJabatan?: 'struktural' | 'fungsional' | 'pelaksana';
   eselon?: 'I/a' | 'I/b' | 'II/a' | 'II/b' | 'III/a' | 'III/b' | 'IV/a' | 'IV/b' | null;
   jenjangFungsional?: 'Utama' | 'Madya' | 'Muda' | 'Pertama' | 'Penyelia' | 'Mahir' | 'Terampil' | 'Pemula' | null;
+  klasterStruktur?: 'asn' | 'blud' | 'umum';
+  allowCrossClusterDisposisi?: boolean;
 }
 export interface KopSuratConfig {
   id: string; // Misal 'default', 'bupati', 'sekda'

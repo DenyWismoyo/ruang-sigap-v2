@@ -97,6 +97,20 @@ const fetchGlobalLeaders = async (currentLevel: number): Promise<UserProfile[]> 
     return pimpinanProfiles;
 };
 
+// Helper untuk mengecek relasi idAtasan (langsung atau tidak langsung)
+const isTransitiveBawahan = (targetJabatanId: string, managerJabatanId: string, jabatanMap: Map<string, Jabatan>): boolean => {
+    let currentId = targetJabatanId;
+    let maxDepth = 20; // Mencegah infinite loop jika ada siklus
+    while (currentId && maxDepth > 0) {
+        const currentJab = jabatanMap.get(currentId);
+        if (!currentJab || !currentJab.idAtasan) return false;
+        if (currentJab.idAtasan === managerJabatanId) return true;
+        currentId = currentJab.idAtasan;
+        maxDepth--;
+    }
+    return false;
+};
+
 export const useBawahanList = (
   userCache: Map<string, UserProfile>,
   opdJabatans: Map<string, Jabatan>
@@ -144,11 +158,29 @@ export const useBawahanList = (
     const bawahanDiOpdSendiri = Array.from(userCache.values()).filter(user => {
         const userJabatan = opdJabatans.get(user.jabatanId);
         if (!userJabatan) return false;
-        const isLowerLevel = userJabatan.level > effectiveJabatan.level;
+        
         const isActive = user.status === 'aktif';
         const notSelf = user.jabatanId !== effectiveJabatan.id; 
         const notAdmin = !user.role?.includes('admin');
-        return isLowerLevel && isActive && notSelf && notAdmin;
+        if (!isActive || !notSelf || !notAdmin) return false;
+
+        // 1. Jalur Eksplisit (idAtasan) - Prioritas Tertinggi
+        if (effectiveJabatan.id && isTransitiveBawahan(user.jabatanId, effectiveJabatan.id, opdJabatans)) {
+            return true;
+        }
+
+        // 2. Isolasi Klaster Dual Structure (Non-Destructive Graceful Fallback)
+        const myCluster = effectiveJabatan.klasterStruktur || 'umum';
+        const theirCluster = userJabatan.klasterStruktur || 'umum';
+        if (myCluster !== 'umum' && theirCluster !== 'umum' && myCluster !== theirCluster) {
+            if (!effectiveJabatan.allowCrossClusterDisposisi) {
+                return false;
+            }
+        }
+
+        // 3. Jalur Heuristik Administratif (Level)
+        const isLowerLevel = userJabatan.level > effectiveJabatan.level;
+        return isLowerLevel;
     });
 
     // B. Gabungkan dengan Pimpinan Sub-OPD dan Global Leaders
