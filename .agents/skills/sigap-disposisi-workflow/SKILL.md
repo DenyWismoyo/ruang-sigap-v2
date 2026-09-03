@@ -158,3 +158,18 @@ Untuk unit kerja seperti **UPTD, BLUD (Solo Technopark / RSUD / Puskesmas)** yan
 3. **Pimpinan Lintas Klaster (`klasterStruktur: 'umum'`)**:
    - Staf TU / Agendais / Kepala Dinas bertipe `'umum'`, sehingga dapat memilih menyalurkan surat ke pucuk pimpinan ASN (Kepala UPTD) atau pucuk pimpinan BLUD (Pemimpin BLUD).
 
+---
+
+## ⚖️ 6. Matriks Paritas Aksi (Detail Surat vs Ruang Kerja)
+
+Seluruh aksi disposisi di kedua UI (Detail Surat `/surat/[id]` dan Ruang Kerja `/ruang-kerja`) bermuara pada fungsi tunggal terpusat (**Single Source of Truth - SSOT**) melalui hook [`useSuratActions.ts`](file:///d:/Project/RUANG%20SIGAP/src/app/dashboard/sigap/hooks/useSuratActions.ts), menjamin output database Firestore **100% konsisten dan identik**:
+
+| Alur Aksi | Pintu Masuk: Detail Surat | Pintu Masuk: Ruang Kerja | Fungsi SSOT (`useSuratActions`) | Mutasi Firestore yang Dihasilkan |
+| :--- | :--- | :--- | :--- | :--- |
+| **Pimpinan Disposisi** | `FormDisposisi.tsx` | `InlineDisposisiForm.tsx` & `QuickDisposisiModal.tsx` | `kirimDisposisi(...)` | • Create `disposisi/{id}` (`penerimaSnapshot`, `status: 'Terkirim'`)<br>• Update `surat.statusPenyelesaian = 'Didisposisikan'`<br>• Update `surat.terlibatJabatanIds`<br>• Create `notifications` per bawahan<br>• Create `activityLogs` |
+| **Tindak Lanjut Mandiri** | `FormDisposisi.tsx` (`handleSelfDisposition`) | `ruang-kerja/page.tsx` (`executeSelfTindakLanjut`) | `tindakLanjutiSendiri(...)` | • Create `tindakLanjut` (`disposisiId: 'mandiri'`)<br>• Update `surat.statusPenyelesaian = 'Selesai'`<br>• Update `surat.infoTampilan`<br>• Catat `logActivity` & `updateLogbook` |
+| **Teruskan Disposisi** | `FormDisposisi.tsx` (dengan `oldDisposisiId`) | `InlineTindakLanjutForm.tsx` (Tab 'Teruskan') | `kirimDisposisi(..., oldDisposisiId)` | • Update disposisi lama: `penerimaSelesai: arrayUnion(myId)`<br>• Create disposisi anak baru<br>• Notifikasi bawahan baru<br>• Update logbook personal |
+| **Lapor Selesai** | `TindakLanjutSection.tsx` (`finish`) | `InlineTindakLanjutForm.tsx` (`submitLaporan`) | `kirimTindakLanjut(..., { isFinalAction: true })` | • Create `tindakLanjut/{id}` (payload & lampiran)<br>• Update `disposisi.penerimaSelesai`<br>• Notifikasi ke atasan pengirim<br>• Optimistic remove dari feed<br>• Catat ke `logbook` |
+| **Terima (Acknowledge)** | `RiwayatDisposisi.tsx` / `page.tsx` | Kartu Feed (`onQuickAcknowledge`) | `terimaDisposisi(...)` | • Update `disposisi.penerimaDiterima`<br>• Update `surat.statusPenyelesaian = 'Proses Tindak Lanjut'`<br>• Notifikasi ke atasan |
+
+
