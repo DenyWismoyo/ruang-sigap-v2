@@ -49,10 +49,19 @@ export const extractSuratDataAI = functions.region(REGION).runWith({
                  - Contoh: Ubah "Undangan" menjadi "Undangan Rapat Koordinasi Anggaran 2025".
                  - Jika header sudah deskriptif, gunakan apa adanya.
               
-              2. **PENGIRIM**:
-                 - Ambil nama INSTANSI / DINAS / LEMBAGA pengirim (biasanya di KOP SURAT paling atas).
-                 - JANGAN ambil nama pejabat yang menandatangani (misal: 'Kepala Dinas'), kecuali surat pribadi.
-                 - Prioritaskan nama instansi.
+              2. **PENGIRIM (INSTANSI / UNIT KERJA / PEJABAT PENGUNDANG)**:
+                 - Tentukan instansi, unit kerja, atau pejabat resmi yang mengirim / mengundang.
+                 - ATURAN KOP DAERAH / LAMBANG GARUDA:
+                   * JIKA KOP SURAT hanya bertuliskan nama pemerintah daerah (contoh: "KOTA SURAKARTA", "PEMERINTAH KOTA SURAKARTA", "KABUPATEN SUKOHARJO") dengan lambang Garuda/Pemda:
+                     -> DILARANG KERAS HANYA MENULIS NAMA DAERAH seperti "Kota Surakarta"!
+                     -> PERIKSA blok tanda tangan, jabatan penandatangan, stempel cap dinas, dan alamat/website di footer surat.
+                     -> Jika ditandatangani oleh "a.n. Wali Kota / Bupati / Gubernur ... Sekretaris Daerah" (atau cap stempel SETDA / website setda.*), isi pengirim dengan: "Sekretariat Daerah Kota Surakarta" (atau sesuaikan dengan nama daerahnya).
+                     -> Jika ditandatangani langsung oleh Kepala Daerah ("Wali Kota Surakarta"), isi pengirim dengan: "Wali Kota Surakarta".
+                     -> Jika ditandatangani oleh Asisten / Kepala Bagian di Setda, isi dengan: "Sekretariat Daerah Kota Surakarta".
+                 - ATURAN KOP DINAS / BADAN / KEMENTERIAN / LEMBAGA:
+                   * Jika Kop Surat memuat nama Dinas, Badan, Inspektorat, UPTD, atau Kementerian (contoh: "DINAS KESEHATAN", "BAPPEDA", "KEMENTERIAN KEUANGAN"), gunakan nama lengkap instansi tersebut (contoh: "Dinas Kesehatan Kota Surakarta", "Bappeda Kota Surakarta").
+                 - PANTANGAN MUTLAK:
+                   * DILARANG HANYA MENULIS NAMA KOTA / KABUPATEN / PROVINSI (contoh terlarang: "Kota Surakarta", "Kabupaten Semarang"). Selalu identifikasi nama unit instansi / dinas / pejabat pengundangnya secara utuh.
 
               3. **AGENDA**:
                  - Jika surat ini adalah Undangan atau Panggilan Rapat, isi detail agenda selengkap mungkin.
