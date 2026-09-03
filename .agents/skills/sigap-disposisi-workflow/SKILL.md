@@ -140,3 +140,21 @@ flowchart TD
    - Ketika seluruh rantai disposisi selesai atau pimpinan menetapkan selesai:
      - `statusPenyelesaian: 'Selesai'`
      - `archiveSurat(...)` memindahkan status menjadi `'Diarsipkan'` dan mendistribusikan tembusan arsip jika diperlukan.
+
+---
+
+## 🌐 5. Penanganan Multi-Hierarchy & Dual Structure (ASN vs BLUD) — Non-Destruktif
+
+Untuk unit kerja seperti **UPTD, BLUD (Solo Technopark / RSUD / Puskesmas)** yang memiliki 2 struktur paralel dalam 1 OPD (Struktur ASN & Struktur BLUD):
+
+### A. Prinsip Non-Destruktif (100% Backward Compatible)
+- **Field Opsional**: Field `klasterStruktur?: 'asn' | 'blud' | 'umum'` bersifat murni *additive* pada dokumen `Jabatan`.
+- **Graceful Fallback**: Semua jabatan yang `klasterStruktur`-nya `undefined` / `null` otomatis diperlakukan sebagai `'umum'`, sehingga seluruh OPD standar (Dinas Kominfo, Bappeda, dll.) berjalan normal tanpa perubahan perilaku.
+
+### B. Aturan Evaluasi di `useBawahanList`
+1. **Jalur Eksplisit (`idAtasan` / Sub-tree Traversal)**: Pegawai yang memiliki rantai `idAtasan` menuju pimpinan (`isTransitiveBawahan`) **selalu diizinkan** sebagai prioritas tertinggi.
+2. **Jalur Isolasi Klaster**:
+   - Jika `effectiveJabatan.klasterStruktur` dan `userJabatan.klasterStruktur` keduanya terdefinisi dan berbeda (misal pimpinan `blud` vs target `asn`), **sembunyikan dari daftar disposisi**, kecuali jika pimpinan memiliki flag `allowCrossClusterDisposisi: true`.
+3. **Pimpinan Lintas Klaster (`klasterStruktur: 'umum'`)**:
+   - Staf TU / Agendais / Kepala Dinas bertipe `'umum'`, sehingga dapat memilih menyalurkan surat ke pucuk pimpinan ASN (Kepala UPTD) atau pucuk pimpinan BLUD (Pemimpin BLUD).
+
