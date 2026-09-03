@@ -548,9 +548,17 @@ export const extractAgendaInternalAIV2 = onCall({
         throw new HttpsError("internal", "Gagal memverifikasi limit keamanan.");
     }
 
-    // 3. Validasi Payload
-    const { base64Image } = request.data;
-    if (!base64Image) {
+    // 3. Validasi Payload (Mendukung single image atau multi-page PDF images)
+    const { base64Image, base64Images } = request.data;
+    const imagesToProcess: string[] = [];
+
+    if (Array.isArray(base64Images) && base64Images.length > 0) {
+        imagesToProcess.push(...base64Images.slice(0, 5));
+    } else if (base64Image && typeof base64Image === 'string') {
+        imagesToProcess.push(base64Image);
+    }
+
+    if (imagesToProcess.length === 0) {
         throw new HttpsError("invalid-argument", "Gambar dokumen surat internal tidak disertakan.");
     }
 
@@ -564,19 +572,24 @@ export const extractAgendaInternalAIV2 = onCall({
         
         const promptText = `
               Anda adalah asisten cerdas untuk sistem manajemen agenda dan rapat internal pemerintahan/korporasi.
-              Tugas Anda adalah membaca dan menganalisis gambar surat undangan internal, nota dinas, atau memo permohonan ruangan rapat untuk mengekstrak data jadwal acara dan daftar peserta secara terstruktur.
+              Tugas Anda adalah membaca dan menganalisis seluruh halaman gambar surat undangan internal (termasuk halaman pertama dan halaman lampiran daftar peserta) untuk mengekstrak data jadwal acara dan daftar peserta secara terstruktur.
 
               PANDUAN EKSTRAKSI:
               1. **kegiatan**: Nama, topik, atau perihal kegiatan/rapat secara lengkap dan formal.
               2. **tanggalMulai**: Tanggal pelaksanaan kegiatan dalam format YYYY-MM-DD. Jika berupa rentang hari, ambil tanggal hari pertama.
-              3. **jamMulai**: Jam mulai acara dalam format 24-jam HH:mm (contoh: "08:30", "13:00").
-              4. **jamSelesai**: Jam selesai acara dalam format 24-jam HH:mm (contoh: "11:30"). Jika tertulis "s.d. Selesai", isi null atau kosongkan.
-              5. **namaTempat**: Nama ruangan rapat atau gedung fisik yang digunakan (contoh: "Ruang Rapat Utama", "Aula Bappeda"). Jika rapat virtual, isi "Virtual".
+              3. **jamMulai**: Jam mulai acara dalam format 24-jam HH:mm (contoh: "08:30", "13:00", "09:00").
+              4. **jamSelesai**: Jam selesai acara dalam format 24-jam HH:mm (contoh: "11:30"). Jika tertulis "s.d. Selesai" atau tidak disebutkan, isi null.
+              5. **namaTempat**: Nama ruangan rapat atau gedung fisik yang digunakan (contoh: "Ruang Meeting 1 Gedung RnD", "Ruang Rapat Utama", "Aula Bappeda"). Jika rapat virtual, isi "Virtual".
               6. **jenis**: "Fisik" atau "Virtual". Jika terdapat tautan rapat daring (Zoom / Meet), set ke "Virtual".
               7. **tautanRapat**: URL tautan video conference (Zoom / Google Meet / Microsoft Teams) jika ada, atau kosongkan string ("").
-              8. **penanggungJawab**: Pejabat yang mengundang, pimpinan rapat, atau unit penanggung jawab.
-              9. **peserta**: Array daftar nama pejabat, jabatan struktural, unit seksi/bidang, atau perwakilan instansi yang diundang hadir (contoh: ["Sekretaris Dinas", "Kepala Bidang TI", "Kasubbag Keuangan", "Tim IT"]).
-              10. **jumlahPersonil**: Estimasi jumlah total orang yang diundang (angka bulat). Jika tidak ada angka eksplisit, hitung dari perkiraan peserta atau isi null.
+              8. **penanggungJawab**: Pejabat yang menandatangani / mengundang, pimpinan rapat, atau unit penanggung jawab.
+              9. **peserta**: Array daftar nama jabatan / pegawai / unit yang diundang hadir.
+                 - SANGAT PENTING: Periksa seluruh halaman gambar (termasuk halaman lampiran bertuliskan "Lampiran Surat", "DAFTAR PEJABAT / PEGAWAI YANG DIUNDANG", atau daftar berangka 1, 2, 3...).
+                 - Ekstrak setiap baris jabatan/pegawai yang tercantum pada daftar tersebut menjadi elemen array terpisah.
+                 - Contoh: ["Kepala UPTD KST Solo Technopark", "Kasubbag TU UPTD KST Solo Technopark", "Pejabat Teknis Umum UPTD KST Solo Technopark", "Manager Dukungan Bisnis Pelayanan dan Pengembangan UPTD KST Solo Technopark", "Kepala Divisi Inkubator Bisnis UPTD KST Solo Technopark"].
+                 - Jika tertulis "Yth. Terlampir" di halaman 1, ambil daftar pesertanya dari halaman lampiran berikutnya.
+                 - Jika tidak ada lampiran, ambil dari baris "Yth. [Nama/Jabatan]".
+              10. **jumlahPersonil**: Total jumlah orang/posisi yang ada di daftar peserta (angka bulat). Jika peserta ada 5 orang, isi 5.
 
               Keluarkan dalam format JSON terstruktur sesuai skema.
         `;
@@ -604,15 +617,17 @@ export const extractAgendaInternalAIV2 = onCall({
             required: ["kegiatan", "tanggalMulai", "jamMulai", "namaTempat", "jenis", "penanggungJawab", "peserta"]
         };
 
+        const imageParts = imagesToProcess.map(imgBase64 => ({
+            inlineData: {
+                mimeType: "image/jpeg",
+                data: imgBase64
+            }
+        }));
+
         const payload = {
             contents: [{ 
                 parts: [
-                    { 
-                        inlineData: {
-                            mimeType: "image/jpeg",
-                            data: base64Image
-                        }
-                    },
+                    ...imageParts,
                     { text: promptText }
                 ] 
             }],

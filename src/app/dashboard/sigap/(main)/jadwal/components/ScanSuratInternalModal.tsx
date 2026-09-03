@@ -200,7 +200,7 @@ export default function ScanSuratInternalModal({
     }
 
     try {
-      let base64ImageData = '';
+      const base64Images: string[] = [];
 
       if (file.type === 'application/pdf') {
         if (!isPdfJsReady && !window.pdfjsLib) {
@@ -212,18 +212,23 @@ export default function ScanSuratInternalModal({
         pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
 
         const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        const page = await pdf.getPage(1);
-        const viewport = page.getViewport({ scale: 1.2 });
+        const totalPages = Math.min(pdf.numPages, 5); // Baca hingga 5 halaman dokumen & lampiran
 
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
+        for (let pageNum = 1; pageNum <= totalPages; pageNum++) {
+          const page = await pdf.getPage(pageNum);
+          const viewport = page.getViewport({ scale: 1.2 });
 
-        if (!context) throw new Error("Gagal membuat kanvas gambar.");
-        await page.render({ canvasContext: context, viewport }).promise;
+          const canvas = document.createElement('canvas');
+          const context = canvas.getContext('2d');
+          canvas.height = viewport.height;
+          canvas.width = viewport.width;
 
-        base64ImageData = canvas.toDataURL('image/jpeg', 0.65).split(',')[1];
+          if (context) {
+            await page.render({ canvasContext: context, viewport }).promise;
+            const pageData = canvas.toDataURL('image/jpeg', 0.65).split(',')[1];
+            base64Images.push(pageData);
+          }
+        }
       } else {
         // Untuk file gambar
         const arrayBuffer = await file.arrayBuffer();
@@ -258,14 +263,22 @@ export default function ScanSuratInternalModal({
         if (!ctx) throw new Error("Gagal memproses gambar.");
         ctx.drawImage(img, 0, 0, width, height);
 
-        base64ImageData = canvas.toDataURL('image/jpeg', 0.65).split(',')[1];
+        const imgData = canvas.toDataURL('image/jpeg', 0.65).split(',')[1];
+        base64Images.push(imgData);
         URL.revokeObjectURL(imgUrl);
+      }
+
+      if (base64Images.length === 0) {
+        throw new Error("Gagal mengekstrak gambar dari berkas.");
       }
 
       const functionsInstance = getFunctions(db.app, 'asia-southeast2');
       const scanAgendaAI = httpsCallable(functionsInstance, 'extractAgendaInternalAIV2');
 
-      const response = await scanAgendaAI({ base64Image: base64ImageData });
+      const response = await scanAgendaAI({ 
+        base64Image: base64Images[0], 
+        base64Images: base64Images 
+      });
       const parsed = response.data as any;
 
       if (parsed) {
