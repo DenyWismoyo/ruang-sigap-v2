@@ -10,7 +10,7 @@ import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
     Download, Briefcase, ClipboardCheck, ListChecks, 
-    FolderArchive, BookOpen, Archive, FileText, Megaphone, User
+    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Upload
 } from 'lucide-react';
 import JadwalDetailModal from '@/app/dashboard/poros/(main)/jadwal/components/JadwalDetailModal'; 
 import RuangKerjaSkeleton from '@/app/dashboard/poros/components/skeletons/RuangKerjaSkeleton';
@@ -340,6 +340,15 @@ export default function DashboardPage() {
   // Ref untuk export
   const agendaRef = useRef<HTMLDivElement>(null);
   const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const canUploadSurat = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      userProfile.additionalRoles?.includes('operator_surat')
+    );
+  }, [userProfile]);
 
   const isLoading = authLoading || isMasterLoading || isAgendaLoading;
 
@@ -397,6 +406,17 @@ export default function DashboardPage() {
                             <h2 className="text-lg font-bold font-heading text-foreground">Agenda Undangan OPD</h2>
                         </div>
                         <div className="flex items-center space-x-2 w-full md:w-auto">
+                            {canUploadSurat && (
+                                <Button 
+                                    asChild 
+                                    size="sm" 
+                                    className="bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-teal-dark)] text-white h-8 px-2.5 text-xs shadow-xs border-0"
+                                >
+                                    <Link href="/dashboard/surat/upload">
+                                        <Upload size={14} className="mr-1.5" /> Upload Surat
+                                    </Link>
+                                </Button>
+                            )}
                             <div className="flex items-center bg-muted rounded-lg p-1 flex-grow md:flex-grow-0 relative">
                                 <button onClick={() => setAgendaFilter('hariIni')} className={`relative px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'hariIni' ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}>
                                     <span className="relative z-10">Hari Ini</span>

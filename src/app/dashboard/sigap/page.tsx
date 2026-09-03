@@ -9,7 +9,7 @@ import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
     Download, Briefcase, ClipboardCheck, ListChecks, 
-    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Plus, Sparkles
+    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Plus, Sparkles, Upload
 } from 'lucide-react';
 import JadwalDetailModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalDetailModal'; 
 import JadwalFormModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalFormModal'; 
@@ -331,6 +331,15 @@ export default function DashboardPage() {
   // Ref untuk export
   const agendaRef = useRef<HTMLDivElement>(null);
   const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const canUploadSurat = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      userProfile.additionalRoles?.includes('operator_surat')
+    );
+  }, [userProfile]);
 
   const isLoading = authLoading || isMasterLoading || isAgendaLoading;
 
@@ -383,6 +392,17 @@ export default function DashboardPage() {
                             <h2 className="sg-editorial-title text-foreground">Agenda Undangan OPD</h2>
                         </div>
                         <div className="flex items-center space-x-2 w-full md:w-auto">
+                            {canUploadSurat && (
+                                <Button 
+                                    asChild 
+                                    size="sm" 
+                                    className="bg-blue-600 hover:bg-blue-700 text-white dark:bg-blue-600 dark:hover:bg-blue-700 h-8 px-2.5 text-xs shadow-xs border-0"
+                                >
+                                    <Link href="/dashboard/surat/upload">
+                                        <Upload size={14} className="mr-1.5" /> Upload Surat
+                                    </Link>
+                                </Button>
+                            )}
                             <div className="flex items-center bg-muted rounded-lg p-1 flex-grow md:flex-grow-0">
                                 <button onClick={() => setAgendaFilter('hariIni')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'hariIni' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}>Hari Ini</button>
                                 <button onClick={() => setAgendaFilter('akanDatang')} className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${agendaFilter === 'akanDatang' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}>Akan Datang</button>
