@@ -647,7 +647,7 @@ function UploadSuratComponent() {
                             <SelectItem value="none">-- Default (Pimpinan Puncak) --</SelectItem>
                             {pimpinanList.map(p => (
                                 <SelectItem key={p.id} value={p.id!}>
-                                    {p.namaJabatan}
+                                    {p.namaJabatan} {p.klasterStruktur === 'asn' ? '(ASN)' : p.klasterStruktur === 'blud' ? '(BLUD)' : ''}
                                 </SelectItem>
                             ))}
                         </SelectContent>
