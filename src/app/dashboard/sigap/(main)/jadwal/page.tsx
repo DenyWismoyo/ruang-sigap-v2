@@ -16,14 +16,14 @@
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, where, Timestamp, doc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
 import { JadwalTempat } from '@/types';
-import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, MapPin, Video, ExternalLink, Users, List, LayoutGrid } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, MapPin, ExternalLink, Users, List, LayoutGrid, Sparkles } from 'lucide-react';
 import JadwalFormModal from './components/JadwalFormModal';
 import JadwalDetailModal from './components/JadwalDetailModal';
 import ManageRuanganModal from './components/ManageRuanganModal';
-import Link from 'next/link';
+import ScanSuratInternalModal from './components/ScanSuratInternalModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 
 // --- Impor Komponen Shadcn ---
@@ -46,6 +46,7 @@ export default function JadwalInternalPage() {
     const [isFormModalOpen, setIsFormModalOpen] = useState(false);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
     const [isManageRuanganModalOpen, setIsManageRuanganModalOpen] = useState(false);
+    const [isScanSuratInternalOpen, setIsScanSuratInternalOpen] = useState(false);
 
     const [jadwalToEdit, setJadwalToEdit] = useState<JadwalTempat | null>(null);
     const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
@@ -165,8 +166,11 @@ export default function JadwalInternalPage() {
                                 Kelola Ruangan
                             </Button>
                         )}
+                        <Button onClick={() => setIsScanSuratInternalOpen(true)} className="sg-btn bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700 border-0 shadow-sm">
+                            <Sparkles size={16} className="mr-2" /> Scan Surat Internal
+                        </Button>
                         <Button onClick={() => handleOpenFormModal(new Date())} className="sg-btn sg-btn-primary">
-                            <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
+                            <Plus size={16} className="mr-2" /> Ajukan Jadwal Manual
                         </Button>
                     </div>
                 }
@@ -355,6 +359,12 @@ export default function JadwalInternalPage() {
             <ManageRuanganModal 
                 isOpen={isManageRuanganModalOpen}
                 onClose={() => setIsManageRuanganModalOpen(false)}
+            />
+
+            <ScanSuratInternalModal
+                isOpen={isScanSuratInternalOpen}
+                onClose={() => setIsScanSuratInternalOpen(false)}
+                onSuccess={() => { setIsScanSuratInternalOpen(false); fetchData(); }}
             />
         </div>
     );

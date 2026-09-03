@@ -9,10 +9,11 @@ import {
     CalendarClock, MapPin, Calendar, Send, Info,
     Clock, ExternalLink, CalendarDays, LayoutGrid, List,
     Download, Briefcase, ClipboardCheck, ListChecks, 
-    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Plus
+    FolderArchive, BookOpen, Archive, FileText, Megaphone, User, Plus, Sparkles
 } from 'lucide-react';
 import JadwalDetailModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalDetailModal'; 
 import JadwalFormModal from '@/app/dashboard/sigap/(main)/jadwal/components/JadwalFormModal'; 
+import ScanSuratInternalModal from '@/app/dashboard/sigap/(main)/jadwal/components/ScanSuratInternalModal';
 import RuangKerjaSkeleton from '@/app/dashboard/sigap/components/skeletons/RuangKerjaSkeleton';
 import { Button } from '@/components/ui/button';
 import { db } from '@/lib/firebase';
@@ -157,6 +158,7 @@ export default function DashboardPage() {
   // --- States Modals Agenda ---
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [isJadwalFormOpen, setIsJadwalFormOpen] = useState(false);
+  const [isScanSuratInternalOpen, setIsScanSuratInternalOpen] = useState(false);
   const [jadwalToEdit, setJadwalToEdit] = useState<JadwalTempat | null>(null);
   const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
   
@@ -173,7 +175,7 @@ export default function DashboardPage() {
   // --- 1. DATA FETCHING VIA HOOKS (SSOT) ---
   // Ditambahkan jabatanMap & getUserNameByJabatanId untuk memindai nama Pimpinan
   const { isLoading: isMasterLoading, jabatanMap, getUserNameByJabatanId } = useMasterData(true); 
-  const { agendaUndangan, jadwalInternalList, isLoading: isAgendaLoading } = useAgendaData(); 
+  const { agendaUndangan, jadwalInternalList, isLoading: isAgendaLoading, refetch: refetchAgenda } = useAgendaData(); 
 
   // --- LOGIKA PENCARIAN OTOMATIS NAMA PIMPINAN ---
   const resolvePenerimaName = useCallback((surat: EnrichedSuratAgenda) => {
@@ -414,7 +416,14 @@ export default function DashboardPage() {
                 <div className="sg-glass-panel sg-mobile-borderless flex flex-col sg-animate-in sg-stagger-2 overflow-hidden">
                     <div className="sg-section-header flex-col sm:flex-row gap-3">
                         <h3 className="sg-editorial-title flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-sg-blue"/> Agenda Internal Bulan Ini</h3>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <Button 
+                                onClick={() => setIsScanSuratInternalOpen(true)} 
+                                size="sm" 
+                                className="bg-indigo-600 hover:bg-indigo-700 text-white dark:bg-indigo-600 dark:hover:bg-indigo-700 h-8 px-2.5 text-xs shadow-xs border-0"
+                            >
+                                <Sparkles size={14} className="mr-1.5" /> Scan Surat
+                            </Button>
                             <Button onClick={() => handleOpenFormModal()} size="sm" className="sg-btn-primary h-8 px-3 text-xs">
                                 <Plus size={14} className="mr-1" /> Booking
                             </Button>
@@ -500,6 +509,15 @@ export default function DashboardPage() {
             onReject={handleReject}
             onEdit={(j) => { setIsDetailModalOpen(false); handleOpenFormModal(j); }}
             onDelete={handleDelete}
+        />
+
+        <ScanSuratInternalModal
+            isOpen={isScanSuratInternalOpen}
+            onClose={() => setIsScanSuratInternalOpen(false)}
+            onSuccess={() => {
+                setIsScanSuratInternalOpen(false);
+                if (refetchAgenda) refetchAgenda();
+            }}
         />
     </div>
   );

@@ -497,3 +497,156 @@ Keluarkan dalam format JSON murni tanpa markdown:
         logger.error(`Error pada agentStrategicDisposition untuk surat ${suratId}:`, error);
     }
 });
+
+/**
+ * FUNGSI: Ekstrak Data Agenda Rapat & Surat Internal via Gemini AI
+ * Khusus untuk pemindaian undangan internal, memo rapat, dan permohonan ruangan.
+ */
+export const extractAgendaInternalAIV2 = onCall({
+    region: REGION,
+    timeoutSeconds: 60,
+    memory: "512MiB",
+    cors: true,
+    secrets: [geminiApiKey]
+}, async (request) => {
+    // 1. Validasi Autentikasi
+    if (!request.auth || !request.auth.uid) {
+        throw new HttpsError("unauthenticated", "Harus login untuk menggunakan AI.");
+    }
+
+    const uid = request.auth.uid;
+    const db = getFirestore("database-siyap");
+    const rateLimitRef = db.collection('rate_limits').doc(`ai_agenda_${uid}`);
+
+    // 2. Rate Limiting
+    try {
+        await db.runTransaction(async (transaction) => {
+            const rateLimitDoc = await transaction.get(rateLimitRef);
+            const now = Date.now();
+
+            if (rateLimitDoc.exists) {
+                const lastCallTime = rateLimitDoc.data()?.lastCallTime || 0;
+                const timeDiff = now - lastCallTime;
+                
+                if (timeDiff < COOLDOWN_SECONDS * 1000) {
+                    const remainingTime = Math.ceil((COOLDOWN_SECONDS * 1000 - timeDiff) / 1000);
+                    throw new HttpsError(
+                        "resource-exhausted", 
+                        `Harap tunggu ${remainingTime} detik sebelum memindai lagi.`
+                    );
+                }
+            }
+
+            transaction.set(rateLimitRef, { 
+                lastCallTime: now,
+                updatedAt: admin.firestore.FieldValue.serverTimestamp()
+            }, { merge: true });
+        });
+    } catch (error: any) {
+        if (error instanceof HttpsError) throw error;
+        logger.error("Error pada Rate Limiter Agenda:", error);
+        throw new HttpsError("internal", "Gagal memverifikasi limit keamanan.");
+    }
+
+    // 3. Validasi Payload
+    const { base64Image } = request.data;
+    if (!base64Image) {
+        throw new HttpsError("invalid-argument", "Gambar dokumen surat internal tidak disertakan.");
+    }
+
+    const apiKey = geminiApiKey.value(); 
+    if (!apiKey) {
+        throw new HttpsError("internal", "API Key untuk Gemini tidak terkonfigurasi di server.");
+    }
+
+    try {
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        
+        const promptText = `
+              Anda adalah asisten cerdas untuk sistem manajemen agenda dan rapat internal pemerintahan/korporasi.
+              Tugas Anda adalah membaca dan menganalisis gambar surat undangan internal, nota dinas, atau memo permohonan ruangan rapat untuk mengekstrak data jadwal acara dan daftar peserta secara terstruktur.
+
+              PANDUAN EKSTRAKSI:
+              1. **kegiatan**: Nama, topik, atau perihal kegiatan/rapat secara lengkap dan formal.
+              2. **tanggalMulai**: Tanggal pelaksanaan kegiatan dalam format YYYY-MM-DD. Jika berupa rentang hari, ambil tanggal hari pertama.
+              3. **jamMulai**: Jam mulai acara dalam format 24-jam HH:mm (contoh: "08:30", "13:00").
+              4. **jamSelesai**: Jam selesai acara dalam format 24-jam HH:mm (contoh: "11:30"). Jika tertulis "s.d. Selesai", isi null atau kosongkan.
+              5. **namaTempat**: Nama ruangan rapat atau gedung fisik yang digunakan (contoh: "Ruang Rapat Utama", "Aula Bappeda"). Jika rapat virtual, isi "Virtual".
+              6. **jenis**: "Fisik" atau "Virtual". Jika terdapat tautan rapat daring (Zoom / Meet), set ke "Virtual".
+              7. **tautanRapat**: URL tautan video conference (Zoom / Google Meet / Microsoft Teams) jika ada, atau kosongkan string ("").
+              8. **penanggungJawab**: Pejabat yang mengundang, pimpinan rapat, atau unit penanggung jawab.
+              9. **peserta**: Array daftar nama pejabat, jabatan struktural, unit seksi/bidang, atau perwakilan instansi yang diundang hadir (contoh: ["Sekretaris Dinas", "Kepala Bidang TI", "Kasubbag Keuangan", "Tim IT"]).
+              10. **jumlahPersonil**: Estimasi jumlah total orang yang diundang (angka bulat). Jika tidak ada angka eksplisit, hitung dari perkiraan peserta atau isi null.
+
+              Keluarkan dalam format JSON terstruktur sesuai skema.
+        `;
+
+        const schemaConfig = {
+            type: "OBJECT",
+            properties: {
+                kegiatan: { type: "STRING" },
+                tanggalMulai: { type: "STRING" },
+                jamMulai: { type: "STRING" },
+                jamSelesai: { type: "STRING", nullable: true },
+                namaTempat: { type: "STRING" },
+                jenis: { 
+                    type: "STRING", 
+                    enum: ["Fisik", "Virtual"] 
+                },
+                tautanRapat: { type: "STRING", nullable: true },
+                penanggungJawab: { type: "STRING" },
+                peserta: {
+                    type: "ARRAY",
+                    items: { type: "STRING" }
+                },
+                jumlahPersonil: { type: "INTEGER", nullable: true }
+            },
+            required: ["kegiatan", "tanggalMulai", "jamMulai", "namaTempat", "jenis", "penanggungJawab", "peserta"]
+        };
+
+        const payload = {
+            contents: [{ 
+                parts: [
+                    { 
+                        inlineData: {
+                            mimeType: "image/jpeg",
+                            data: base64Image
+                        }
+                    },
+                    { text: promptText }
+                ] 
+            }],
+            generationConfig: {
+                temperature: 0.1,
+                responseMimeType: "application/json",
+                responseSchema: schemaConfig
+            }
+        };
+
+        const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            const errorBody = await response.json().catch(() => ({}));
+            logger.error("Gemini API Error Details (Agenda Internal):", errorBody);
+            throw new HttpsError("internal", "Gagal memproses AI pada server.");
+        }
+
+        const result = await response.json();
+        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!textPart) {
+             throw new HttpsError("data-loss", "AI tidak menghasilkan respons terstruktur.");
+        }
+
+        return JSON.parse(textPart);
+
+    } catch (error: any) {
+        logger.error("Error di fungsi extractAgendaInternalAIV2:", error);
+        throw new HttpsError("internal", error.message || "Terjadi kesalahan internal AI saat memindai surat internal.");
+    }
+});
+

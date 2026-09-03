@@ -19,6 +19,9 @@ import { useInstruksiTemplat } from '@/app/dashboard/sigap/hooks/useInstruksiTem
 import { useSuratActions } from '@/app/dashboard/sigap/hooks/useSuratActions'; 
 import { useLocalStorage } from '@/app/dashboard/sigap/hooks/useLocalStorage'; 
 import { useVoiceAssistant } from '@/hooks/useVoiceAssistant';
+import { useAgendaData } from '@/app/dashboard/sigap/hooks/useAgendaData';
+import { detectScheduleConflict, CombinedAgendaItem } from '@/lib/conflictUtils';
+import { JadwalTempat } from '@/types';
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,6 +65,38 @@ export default function FormDisposisi({
   const { templatList, isLoading: isTemplatLoading } = useInstruksiTemplat();
   const { kirimDisposisi, tindakLanjutiSendiri, isProcessing } = useSuratActions(); 
   const { isListening, isProcessingAI, audioBlob, startListening, stopListening, resetAudio } = useVoiceAssistant(bawahanList);
+  const { agendaUndangan, jadwalInternalList } = useAgendaData();
+
+  const combinedAgendas = useMemo((): CombinedAgendaItem[] => {
+      const list: CombinedAgendaItem[] = [];
+      if (agendaUndangan && Array.isArray(agendaUndangan)) {
+          agendaUndangan.forEach((s: any) => {
+              if (s.id !== surat.id && s.detailAgenda?.tanggal && s.detailAgenda?.jam) {
+                  list.push({
+                      id: s.id,
+                      type: 'surat',
+                      item: s,
+                      time: s.detailAgenda.jam,
+                      title: s.perihal,
+                      location: s.detailAgenda.lokasi || '-'
+                  });
+              }
+          });
+      }
+      if (jadwalInternalList && Array.isArray(jadwalInternalList)) {
+          jadwalInternalList.forEach((j: JadwalTempat) => {
+              list.push({
+                  id: j.id!,
+                  type: 'internal',
+                  item: j,
+                  time: j.jamMulai || '-',
+                  title: j.kegiatan,
+                  location: j.jenis === 'Virtual' ? (j.tautanRapat || 'Rapat Virtual') : (j.namaTempat || '-')
+              });
+          });
+      }
+      return list;
+  }, [agendaUndangan, jadwalInternalList, surat.id]);
 
   const handleVoiceAIResult = (result: any) => {
       if (result) {
@@ -245,10 +280,20 @@ export default function FormDisposisi({
 
   const handleSelfDisposition = () => {
       if (!userProfile) return;
+
+      let conflictWarning = '';
+      if (surat.jenisSurat === 'Undangan') {
+          const conflicts = detectScheduleConflict(surat, combinedAgendas);
+          if (conflicts.length > 0) {
+              const conflictList = conflicts.map(c => `• "${c.title}" (Pukul ${c.time})`).join('\n');
+              conflictWarning = `\n\n⚠️ PERINGATAN - KONFLIK JADWAL TERDETEKSI (± 1 Jam):\n${conflictList}\n\nApakah Anda tetap ingin menindaklanjuti sendiri surat undangan ini?`;
+          }
+      }
+
       setConfirmModal({
         isOpen: true,
-        title: 'Konfirmasi Aksi',
-        message: 'Anda yakin ingin menyelesaikan surat ini sendiri (Tindak Lanjut Mandiri)? Alur disposisi akan langsung ditutup menjadi Selesai.',
+        title: conflictWarning ? 'Peringatan Konflik Jadwal' : 'Konfirmasi Aksi',
+        message: conflictWarning ? conflictWarning.trim() : 'Anda yakin ingin menyelesaikan surat ini sendiri (Tindak Lanjut Mandiri)? Alur disposisi akan langsung ditutup menjadi Selesai.',
         onConfirm: async () => {
             const success = await tindakLanjutiSendiri(surat);
             if (success) {

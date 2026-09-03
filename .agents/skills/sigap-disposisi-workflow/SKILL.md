@@ -86,16 +86,33 @@ flowchart TD
 - **Operasi Firestore**:
   - Buat dokumen `tindakLanjut` dengan `disposisiId: 'mandiri'`.
   - Update status `surat/{suratId}` langsung menjadi `'Selesai'`.
+  - Menuliskan objek denormalisasi utuh:
+    ```typescript
+    infoTampilan: {
+        senderName: actorName,
+        recipientNames: userProfile.namaLengkap,
+        isInformational: false
+    }
+    ```
   - Catat log aktivitas: *"Menyelesaikan Secara Mandiri (SELESAI)"*.
 
-### C. Eskalasi Surat (Bottom-Up)
+### C. Guard Deteksi Konflik Jadwal (Surat Undangan)
+- **Modul Utilitas**: `src/lib/conflictUtils.ts` (`detectScheduleConflict`)
+- **Aturan Ambang Batas**: Konflik terdeteksi jika selisih waktu antara agenda surat target dengan agenda yang sudah ada $\le 60\text{ menit}$ (1 jam).
+- **Format Parsing Waktu Aman**: Gunakan regex `(\d{1,2})[:.](\d{2})` untuk mendukung berbagai format input waktu (e.g. `13:00`, `13.00`, `09:00 - 11:00`).
+- **Urutan Deklarasi (Anti-TDZ)**: Selalu deklarasikan `useMemo` pembentuk `combinedPersonalAgenda` tepat setelah query data agenda sebelum dipanggil oleh handler aksi (`handleQuickSelfTindakLanjut`).
+- **Respon Konflik di UI**:
+  1. **Ruang Kerja**: Tampilkan modal interaktif `ScheduleConflictModal` dengan 2 opsi: *Disposisikan Ulang* atau *Tetap Lanjut Sendiri*.
+  2. **Form Disposisi**: Tampilkan dialog konfirmasi dengan rincian agenda yang bertabrakan.
+
+### D. Eskalasi Surat (Bottom-Up)
 - **Fungsi**: `eskalasiSurat(surat, atasanTarget, catatan)`
 - **Operasi Firestore**:
   - Buat record disposisi eskalasi ke atasan.
   - Tambahkan atasan ke `terlibatJabatanIds`.
   - Notifikasi ke atasan terkait.
 
-### D. Kembalikan Disposisi
+### E. Kembalikan Disposisi
 - **Fungsi**: `kembalikanDisposisi(disposisi, alasan)`
 - **Operasi Firestore**:
   - Tandai `penerimaDikembalikan: arrayUnion(effectiveJabatan.id)`.

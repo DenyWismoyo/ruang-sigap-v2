@@ -137,10 +137,13 @@ export interface OPD {
   status?: 'aktif' | 'nonaktif'; 
   currentHealthScore?: number;
   healthCategory?: string;
-} // [MODIFIKASI] Tambah 'tipe'
+  daftarRuangan?: string[];
+}
+
 export interface Pengumuman {
   attachmentFileName?: string | null;
 }
+
 export interface ApprovalStep {
   jabatanId: string;
   namaJabatan: string;
@@ -148,28 +151,30 @@ export interface ApprovalStep {
   timestamp?: Timestamp;
   comments?: string;
 }
-export interface DrafPersetujuan {
-  id?: string;
-  judul: string;
-  googleDocUrl: string;
-  opdId: string;
-  createdBy: string; // UID Pembuat
-  status: 'Draf' | 'Proses Review' | 'Revisi' | 'Selesai' | 'Ditolak';
-  currentStep: number;
-  penerimaTugasJabatanId: string | null;
-  pembuatNama?: string;
-  approvalChain: ApprovalStep[]; // [MODIFIKASI] Tambahan
-  approvalJabatanIds: string[]; // [MODIFIKASI] Tambahan
-  createdAt: Timestamp; // [MODIFIKASI] Tambahan
-  riwayat: RiwayatPersetujuan[]; // [MODIFIKASI] Tambahan
-}
-// [MODIFIKASI] Tambahan RiwayatPersetujuan
+
 export interface RiwayatPersetujuan {
   timestamp: Timestamp;
   actorName: string;
   action: string;
   comments: string;
 }
+
+export interface DrafPersetujuan {
+  id?: string;
+  judul: string;
+  googleDocUrl: string;
+  opdId: string;
+  createdBy: string;
+  status: 'Draf' | 'Proses Review' | 'Revisi' | 'Selesai' | 'Ditolak';
+  currentStep: number;
+  penerimaTugasJabatanId: string | null;
+  pembuatNama?: string;
+  approvalChain: ApprovalStep[];
+  approvalJabatanIds: string[];
+  createdAt: Timestamp;
+  riwayat: RiwayatPersetujuan[];
+}
+
 export interface JadwalTempat {
   id?: string;
   opdId: string;
@@ -179,19 +184,25 @@ export interface JadwalTempat {
   tanggalMulai: Timestamp;
   jamMulai: string;
   jamSelesai: string;
-  createdBy: string; // UID
+  createdBy: string;
   createdAt: Timestamp;
   status: 'Menunggu Persetujuan' | 'Disetujui' | 'Ditolak';
+  ditinjauOleh?: string;
+  tanggalDitinjau?: Timestamp;
+  alasanDitolak?: string;
   jenis?: 'Fisik' | 'Virtual';
   tautanRapat?: string;
+  peserta?: string[];
+  jumlahPersonil?: number;
+  suratUrl?: string;
+  suratFileName?: string;
+  suratFileType?: string;
 }
 
-// --- [MODIFIKASI BILLING] Tipe Data Baru untuk Langganan (dari types/index.ts) ---
 export interface OpdConfig {
   id?: string;
   packageName: 'Dasar' | 'Profesional' | 'Enterprise' | 'Custom';
   langgananAktifHingga: Timestamp;
-  // [MODIFIKASI BILLING] Tambahkan 'Kedaluwarsa'
   paymentStatus?: 'Lunas' | 'Menunggu Pembayaran' | 'Gagal' | 'Kedaluwarsa';
   kuotaPengguna: number;
   penggunaAktifSaatIni: number;
@@ -206,17 +217,16 @@ export interface OpdConfig {
 }
 
 export interface PricingPackage {
-  id?: string; // Nama paket, e.g., 'Dasar', 'Profesional'
+  id?: string;
   hargaPerPenggunaPerBulan: number;
-  features: OpdConfig['features']; // Gunakan struktur fitur yang sama
+  features: OpdConfig['features'];
 }
 
-// [MODIFIKASI BILLING] Tipe Data Baru untuk Tagihan (Fase 2)
 export interface Tagihan {
   id?: string;
   opdId: string;
   namaOpd: string;
-  bulanTagihan: number; // 1-12
+  bulanTagihan: number;
   tahunTagihan: number;
   packageName: string;
   jumlahPenggunaAktif: number;
@@ -225,10 +235,9 @@ export interface Tagihan {
   status: 'Belum Dibayar' | 'Lunas' | 'Kedaluwarsa';
   tanggalDibuat: Timestamp;
   tanggalDibayar: Timestamp | null;
-  catatan?: string; // [MODIFIKASI] Tambahan
+  catatan?: string;
 }
 
-// [MODIFIKASI BARU] Tipe Notifikasi
 export interface Notification {
   id?: string;
   userId: string;
@@ -239,7 +248,6 @@ export interface Notification {
   timestamp: Timestamp;
 }
 
-// [MODIFIKASI BARU] Tipe Kinerja Harian
 export interface KinerjaPerPenggunaHarian {
   tanggal: Timestamp;
   userId: string;
@@ -252,5 +260,23 @@ export interface KinerjaPerPenggunaHarian {
   disposisiDiterima: number;
   disposisiDikembalikan: number;
 }
-// --- [AKHIR MODIFIKASI BILLING] ---
-export interface PelayananTransaksi { id?: string; opdId: string; tanggal: Timestamp; namaPemohon: string; noHp?: string; namaPengambil?: string; alamat?: string; customData?: Record<string, any>; kategori: 'Pengambilan' | 'Layanan Umum'; jenisDokumen?: string; judulLayanan?: string; catatan?: string; status: 'Selesai' | 'Diproses' | 'Menunggu'; fotoBuktiUrl?: string; petugasId: string; petugasNama: string; createdAt: Timestamp; }
+
+export interface PelayananTransaksi {
+  id?: string;
+  opdId: string;
+  tanggal: Timestamp;
+  namaPemohon: string;
+  noHp?: string;
+  namaPengambil?: string;
+  alamat?: string;
+  customData?: Record<string, any>;
+  kategori: 'Pengambilan' | 'Layanan Umum';
+  jenisDokumen?: string;
+  judulLayanan?: string;
+  catatan?: string;
+  status: 'Selesai' | 'Diproses' | 'Menunggu';
+  fotoBuktiUrl?: string;
+  petugasId: string;
+  petugasNama: string;
+  createdAt: Timestamp;
+}

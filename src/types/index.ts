@@ -305,7 +305,29 @@ export interface OPD {
 export interface Notification { id?: string; userId: string; userNip: string; message: string; link: string; isRead: boolean; timestamp: Timestamp; }
 export interface InstruksiTemplat { isiInstruksi: ReactNode; id?: string; opdId: string; teksInstruksi: string; createdBy: string; sharedWithOpdIds?: string[]; }
 export interface ActivityLog { id?: string; suratId: string; timestamp: Timestamp; actorName: string; action: string; details?: string; }
-export interface JadwalTempat { id?: string; opdId: string; namaTempat: string; kegiatan: string; penanggungJawab: string; tanggalMulai: Timestamp; jamMulai: string; jamSelesai: string; createdBy: string; createdAt: Timestamp; status: 'Menunggu Persetujuan' | 'Disetujui' | 'Ditolak'; ditinjauOleh?: string; tanggalDitinjau?: Timestamp; alasanDitolak?: string; jenis?: string; tautanRapat?: string; peserta?: string[]; jumlahPersonil?: number; }
+export interface JadwalTempat { 
+  id?: string; 
+  opdId: string; 
+  namaTempat: string; 
+  kegiatan: string; 
+  penanggungJawab: string; 
+  tanggalMulai: Timestamp; 
+  jamMulai: string; 
+  jamSelesai: string; 
+  createdBy: string; 
+  createdAt: Timestamp; 
+  status: 'Menunggu Persetujuan' | 'Disetujui' | 'Ditolak'; 
+  ditinjauOleh?: string; 
+  tanggalDitinjau?: Timestamp; 
+  alasanDitolak?: string; 
+  jenis?: string; 
+  tautanRapat?: string; 
+  peserta?: string[]; 
+  jumlahPersonil?: number;
+  suratUrl?: string;
+  suratFileName?: string;
+  suratFileType?: string;
+}
 export interface AsetInventaris { id?: string; opdId: string; namaAset: string; kodeAset: string; kategori: string; kondisi: 'Baik' | 'Perlu Perbaikan' | 'Rusak Berat'; status: 'Tersedia' | 'Dipinjam' | 'Digunakan' | 'Dalam Perbaikan'; pemegangAsetId?: string | null; lokasi: string; tanggalMasuk: Timestamp; tahunPengadaan?: number; nilaiPerolehan?: number; spesifikasi?: string; fotoUrl?: string; fotoFileName?: string; jadwalMaintenanceBerikutnya?: Timestamp | null; intervalMaintenance?: number; }
 export interface AsetMaintenance { id?: string; asetId: string; namaAset: string; opdId: string; tanggal: Timestamp; jenis: 'Rutin' | 'Perbaikan' | 'Kerusakan'; deskripsi: string; biaya: number; pelaksana: string; buktiUrl?: string; dicatatOleh: string; createdAt: Timestamp; }
 export interface PeminjamanAset { id?: string; asetId: string; namaAset: string; opdId: string; peminjamEksternal: boolean; peminjamInfo: string; tanggalPinjam: Timestamp; tanggalKembali: Timestamp | null; keperluan: string; kondisiSaatPinjam: string; kondisiSaatKembali?: string; dicatatOleh: string; createdAt: Timestamp; status: 'Dipinjam' | 'Dikembalikan'; }

@@ -33,6 +33,7 @@ const QuickEditTaskModal = dynamic(() => import('@/app/dashboard/poros/(main)/ru
 const RuangKerjaTutorialModal = dynamic(() => import('@/app/dashboard/poros/(main)/ruang-kerja/components/RuangKerjaTutorialModal'), { ssr: false });
 const NotulensiFormModal = dynamic(() => import('@/app/dashboard/poros/(fungsional)/notulensi/components/NotulensiFormModal'), { ssr: false });
 const ConfirmModal = dynamic(() => import('@/app/dashboard/poros/components/ConfirmModal'), { ssr: false });
+const ScheduleConflictModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/ScheduleConflictModal'), { ssr: false });
 
 import { useUserAuth } from '@/context/AuthContext'; 
 import { useToast } from '@/context/ToastContext'; 
@@ -54,6 +55,7 @@ import {
 } from 'firebase/firestore';
 import { logActivity } from '@/lib/activityLogger'; 
 import { updateLogbook } from '@/lib/logbookUtils'; 
+import { detectScheduleConflict } from '@/lib/conflictUtils';
 
 import { 
   Inbox, StickyNote, CalendarDays, Sun, Moon, CloudSun, Sunset, Loader2
@@ -155,6 +157,7 @@ export default function RuangKerjaPage() {
   
   const [openTaskCommentId, setOpenTaskCommentId] = useState<string | null>(null);
   const [confirmSelfTindakLanjut, setConfirmSelfTindakLanjut] = useState<Surat | null>(null);
+  const [conflictData, setConflictData] = useState<{ surat: Surat; conflicts: CombinedAgendaItem[] } | null>(null);
 
   
   
@@ -312,6 +315,72 @@ export default function RuangKerjaPage() {
   const allDispositionsForAgenda = agendaData?.disposisi || [];
   const isAgendaLoading = isAgendaLoading1 || isAgendaLoading2;
 
+  const combinedPersonalAgenda = useMemo((): CombinedAgendaItem[] => {
+    if (isAgendaLoading || isMasterLoading || !userProfile || !effectiveJabatan) return []; 
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const next7Days = new Date(today); next7Days.setDate(today.getDate() + 7);
+    const agendas: CombinedAgendaItem[] = [];
+
+    const enrichedAgendas = suratUndanganList.map((surat) => {
+        const disposisiTerkait = allDispositionsForAgenda
+            .filter((d) => d.suratId === surat.id)
+            .sort((a, b) => b.tanggalDisposisi.toMillis() - a.tanggalDisposisi.toMillis());
+        const latestDisposisi = disposisiTerkait[0];
+        const disposisiStatus = latestDisposisi ? 'Sudah Didisposisi' : 'Belum Didisposikan';
+        const isForMe = latestDisposisi && effectiveJabatan?.id ? latestDisposisi.kepadaJabatanId.includes(effectiveJabatan.id as string) : false;
+        const isSelfDispo = latestDisposisi && effectiveJabatan?.id ? (latestDisposisi.dariJabatanId === effectiveJabatan.id && isForMe) : false;
+        const isCompletedSelf = surat.statusPenyelesaian === 'Selesai' && surat.terlibatJabatanIds?.includes(effectiveJabatan.id as string);
+        
+        let penerima = 'Belum Didisposikan';
+        if (latestDisposisi) {
+            penerima = latestDisposisi.kepadaJabatanId.map((id) => userMap.get(id)?.namaLengkap || '...').join(', ');
+        } else if (isCompletedSelf) {
+            penerima = userProfile.namaLengkap;
+        }
+
+        return { ...surat, penerimaDisposisi: penerima, disposisiStatus, isSelfDispo, isForMe, isCompletedSelf };
+    });
+
+    enrichedAgendas.filter((surat) => {
+        const agendaDate = surat.detailAgenda?.tanggal?.toDate ? surat.detailAgenda.tanggal.toDate() : (surat.detailAgenda?.tanggal ? new Date(surat.detailAgenda.tanggal) : null);
+        if (!agendaDate || agendaDate < today || agendaDate > next7Days) return false;
+        return isPimpinan ? (surat.disposisiStatus === 'Belum Didisposikan' || surat.isForMe || surat.isSelfDispo || surat.isCompletedSelf) : (surat.isForMe || surat.isCompletedSelf);
+    }).forEach((surat) => { 
+        if (surat.detailAgenda?.jam) {
+            agendas.push({ 
+                id: surat.id!, 
+                type: 'surat', 
+                item: surat, 
+                time: surat.detailAgenda.jam, 
+                title: surat.perihal, 
+                location: surat.detailAgenda.lokasi || '-', 
+                penerimaDisposisi: surat.penerimaDisposisi, 
+                disposisiStatus: surat.disposisiStatus as any 
+            }); 
+        }
+    });
+
+    jadwalInternalList.filter((jadwal) => { 
+        const jadwalDate = jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate() : (jadwal.tanggalMulai ? new Date(jadwal.tanggalMulai) : null); 
+        return jadwalDate && jadwalDate >= today && jadwalDate <= next7Days; 
+    }).forEach((jadwal) => { 
+        agendas.push({ 
+            id: jadwal.id!, 
+            type: 'internal', 
+            item: jadwal, 
+            time: jadwal.jamMulai || '-', 
+            title: jadwal.kegiatan, 
+            location: jadwal.jenis === 'Virtual' ? (jadwal.tautanRapat || 'Rapat Virtual') : (jadwal.namaTempat || '-') 
+        }); 
+    });
+
+    return agendas.sort((a, b) => {
+      const dateA = a.type === 'surat' ? (a.item as Surat).detailAgenda!.tanggal.toMillis() : (a.item as JadwalTempat).tanggalMulai.toMillis();
+      const dateB = b.type === 'surat' ? (b.item as Surat).detailAgenda!.tanggal.toMillis() : (b.item as JadwalTempat).tanggalMulai.toMillis();
+      if (dateA !== dateB) return dateA - dateB;
+      return a.time.localeCompare(b.time);
+    });
+  }, [isAgendaLoading, isMasterLoading, suratUndanganList, allDispositionsForAgenda, jadwalInternalList, userMap, isPimpinan, userProfile, effectiveJabatan]);
 
   useEffect(() => {
     if (!authLoading && typeof window !== 'undefined') {
@@ -387,7 +456,29 @@ export default function RuangKerjaPage() {
     } catch (err: any) { addToast(err.message, "error"); } finally { setIsActionLoading(null); }
   };
 
-  const handleQuickSelfTindakLanjut = (surat: Surat) => { setConfirmSelfTindakLanjut(surat); };
+  const handleQuickSelfTindakLanjut = (surat: Surat) => { 
+      if (isPimpinan && surat.jenisSurat === 'Undangan') {
+          const conflicts = detectScheduleConflict(surat, combinedPersonalAgenda);
+          if (conflicts.length > 0) {
+              setConflictData({ surat, conflicts });
+              return;
+          }
+      }
+      setConfirmSelfTindakLanjut(surat); 
+  };
+  
+  const handleConflictRedisposisi = () => {
+      if (!conflictData) return;
+      const suratToRedisposisi = conflictData.surat;
+      setConflictData(null);
+      handleQuickDisposisiClick(suratToRedisposisi);
+  };
+
+  const handleConflictForceExecute = () => {
+      if (!conflictData) return;
+      setConfirmSelfTindakLanjut(conflictData.surat);
+      setConflictData(null);
+  };
   
   const executeSelfTindakLanjut = async () => {
     if (!confirmSelfTindakLanjut || !userProfile || !effectiveJabatan) return;
@@ -460,43 +551,6 @@ export default function RuangKerjaPage() {
       } catch (error) { console.error("Gagal menyimpan notulensi:", error); addToast("Gagal menyimpan notulensi.", "error"); } 
       finally { setIsNotulensiSaving(false); }
   };
-
-  const combinedPersonalAgenda = useMemo((): CombinedAgendaItem[] => {
-    if (isAgendaLoading || isMasterLoading || !userProfile || !effectiveJabatan) return []; 
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const next7Days = new Date(today); next7Days.setDate(today.getDate() + 7);
-    const agendas: CombinedAgendaItem[] = [];
-const enrichedAgendas = suratUndanganList.map((surat) => {
-    const disposisiTerkait = allDispositionsForAgenda.filter((d) => d.suratId === surat.id).sort((a, b) => b.tanggalDisposisi.toMillis() - a.tanggalDisposisi.toMillis());
-    const latestDisposisi = disposisiTerkait[0];
-    const disposisiStatus = latestDisposisi ? 'Sudah Didisposisi' : 'Belum Didisposikan';
-    const isForMe = latestDisposisi && effectiveJabatan?.id ? latestDisposisi.kepadaJabatanId.includes(effectiveJabatan.id as string) : false;
-    const isSelfDispo = latestDisposisi && effectiveJabatan?.id ? (latestDisposisi.dariJabatanId === effectiveJabatan.id && isForMe) : false;
-    
-    let penerima = 'Belum Didisposikan';
-    
-    // [PERBAIKAN] Langsung gunakan mapping nama untuk semua kondisi, 
-    // hapus logika "if (isSelfDispo) penerima = 'Ditindaklanjuti Sendiri'"
-    if (latestDisposisi) {
-        penerima = latestDisposisi.kepadaJabatanId.map((id: string) => userMap.get(id)?.namaLengkap || '...').join(', ');
-    }
-
-    return { ...surat, penerimaDisposisi: penerima, disposisiStatus, isSelfDispo, isForMe };
-});
-    enrichedAgendas.filter((surat) => {
-        const agendaDate = surat.detailAgenda?.tanggal?.toDate();
-        if (!agendaDate || agendaDate < today || agendaDate > next7Days) return false;
-        return isPimpinan ? (surat.disposisiStatus === 'Belum Didisposikan' || surat.isForMe || surat.isSelfDispo) : surat.isForMe;
-    }).forEach((surat) => { agendas.push({ id: surat.id!, type: 'surat', item: surat, time: surat.detailAgenda!.jam, title: surat.perihal, location: surat.detailAgenda!.lokasi, penerimaDisposisi: surat.penerimaDisposisi, disposisiStatus: surat.disposisiStatus as any }); });
-    jadwalInternalList.filter((jadwal) => { const jadwalDate = jadwal.tanggalMulai.toDate(); return jadwalDate >= today && jadwalDate <= next7Days; })
-      .forEach((jadwal) => { agendas.push({ id: jadwal.id!, type: 'internal', item: jadwal, time: jadwal.jamMulai, title: jadwal.kegiatan, location: jadwal.jenis === 'Virtual' ? jadwal.tautanRapat || 'Rapat Virtual' : jadwal.namaTempat }); });
-    return agendas.sort((a, b) => {
-      const dateA = a.type === 'surat' ? (a.item as Surat).detailAgenda!.tanggal.toMillis() : (a.item as JadwalTempat).tanggalMulai.toMillis();
-      const dateB = b.type === 'surat' ? (b.item as Surat).detailAgenda!.tanggal.toMillis() : (b.item as JadwalTempat).tanggalMulai.toMillis();
-      if (dateA !== dateB) return dateA - dateB;
-      return a.time.localeCompare(b.time);
-    });
-  }, [isAgendaLoading, isMasterLoading, suratUndanganList, allDispositionsForAgenda, jadwalInternalList, userMap, isPimpinan, userProfile, effectiveJabatan]);
 
   const itemCounts = useMemo(() => {
     const counts = { semua: feedItems.length, surat: 0, tugas: 0, draf: 0 };
@@ -644,6 +698,15 @@ const enrichedAgendas = suratUndanganList.map((surat) => {
         templatList={templatList} 
       />}
       
+      <ScheduleConflictModal
+          isOpen={!!conflictData}
+          onClose={() => setConflictData(null)}
+          suratToProcess={conflictData?.surat || null}
+          conflicts={conflictData?.conflicts || []}
+          onRedisposisi={handleConflictRedisposisi}
+          onForceExecute={handleConflictForceExecute}
+      />
+
       <ConfirmModal 
           isOpen={!!confirmSelfTindakLanjut} 
           onClose={() => setConfirmSelfTindakLanjut(null)} 

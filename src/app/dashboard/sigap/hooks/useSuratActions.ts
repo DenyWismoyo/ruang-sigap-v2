@@ -715,13 +715,36 @@ export const useSuratActions = () => {
           batch.update(suratRef, { 
               statusPenyelesaian: 'Selesai',
               terlibatJabatanIds: arrayUnion(effectiveJabatan.id!),
-              'infoTampilan.recipientNames': userProfile.namaLengkap // [BARU] Menampilkan nama pimpinan di Info Disposisi
+              infoTampilan: {
+                  senderName: actorName,
+                  recipientNames: userProfile.namaLengkap,
+                  isInformational: false
+              }
           });
 
           // 3. Catat Aktivitas
           await logActivity(surat.id!, actorName, "Menyelesaikan Secara Mandiri (SELESAI)", "Pimpinan telah menindaklanjuti dan menyelesaikan surat secara langsung.");
 
           await batch.commit();
+
+          // [SINKRONISASI UI INSTAN]
+          if (effectiveJabatan?.opdId) {
+              queryClient.setQueryData(['suratList', effectiveJabatan.opdId], (oldData: any) => {
+                  if (!oldData) return oldData;
+                  return oldData.map((s: any) => 
+                      s.id === surat.id ? { 
+                          ...s, 
+                          statusPenyelesaian: 'Selesai',
+                          infoTampilan: {
+                              ...(s.infoTampilan || {}),
+                              recipientNames: userProfile.namaLengkap,
+                              senderName: actorName,
+                              isInformational: false
+                          }
+                      } : s
+                  );
+              });
+          }
 
           addToast("Surat berhasil ditindaklanjuti dan diselesaikan secara mandiri.", "success");
           refreshData();

@@ -8,11 +8,13 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { db } from '@/lib/firebase';
+import { db, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { addDoc, collection, Timestamp, updateDoc, doc, getDoc } from 'firebase/firestore'; 
 import { useUserAuth } from '@/context/AuthContext';
-import { X, Send, Loader2 } from 'lucide-react'; 
+import { X, Send, Loader2, Plus } from 'lucide-react'; 
 import { JadwalTempat, OPD } from '@/types'; 
+import { Badge } from "@/components/ui/badge"; 
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -74,6 +76,9 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [daftarRuangan, setDaftarRuangan] = useState<string[]>([]);
+  const [file, setFile] = useState<File | null>(null);
+  const [pesertaList, setPesertaList] = useState<string[]>([]);
+  const [pesertaInput, setPesertaInput] = useState('');
 
   useEffect(() => {
       if (isOpen && userProfile?.opdId) {
@@ -129,6 +134,9 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
             };
         }
         setFormData(data);
+        setPesertaList(jadwalToEdit?.peserta || initialData?.peserta || []);
+        setPesertaInput('');
+        setFile(null);
         setError('');
       }
   }, [isOpen, jadwalToEdit, selectedDate, userProfile, initialData]);
@@ -136,6 +144,31 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setFile(e.target.files[0]);
+    }
+  };
+
+  const handleAddPeserta = () => {
+    const trimmed = pesertaInput.trim();
+    if (trimmed && !pesertaList.includes(trimmed)) {
+      setPesertaList(prev => [...prev, trimmed]);
+      setPesertaInput('');
+    }
+  };
+
+  const handleRemovePeserta = (idxToRemove: number) => {
+    setPesertaList(prev => prev.filter((_, i) => i !== idxToRemove));
+  };
+
+  const handleKeyDownPeserta = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      handleAddPeserta();
+    }
   };
   
   // Handler terpisah untuk <Select>
@@ -162,6 +195,19 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
         // Set jam dan menit ke objek Date
         datePart.setHours(hours, minutes);
         
+        let uploadedFileUrl = jadwalToEdit?.suratUrl || '';
+        let uploadedFileName = jadwalToEdit?.suratFileName || '';
+        let uploadedFileType = jadwalToEdit?.suratFileType || '';
+
+        if (file && userProfile?.opdId) {
+          const storagePath = `opd/${userProfile.opdId}/agenda_internal/${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+          const storageRef = ref(storage, storagePath);
+          const snapshot = await uploadBytes(storageRef, file);
+          uploadedFileUrl = await getDownloadURL(snapshot.ref);
+          uploadedFileName = file.name;
+          uploadedFileType = file.type;
+        }
+
         const payload = {
             kegiatan: formData.kegiatan,
             jenis: formData.jenis,
@@ -169,19 +215,22 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
             tautanRapat: formData.jenis === 'Virtual' ? formData.tautanRapat : '',
             opdId: userProfile!.opdId,
             penanggungJawab: formData.penanggungJawab || userProfile!.namaLengkap,
-            tanggalMulai: Timestamp.fromDate(datePart), // Gunakan objek Date yang sudah digabung
+            tanggalMulai: Timestamp.fromDate(datePart),
             jamMulai: formData.jamMulai,
             jamSelesai: formData.jamSelesai,
-            jumlahPersonil: formData.jumlahPersonil ? Number(formData.jumlahPersonil) : null,
+            jumlahPersonil: formData.jumlahPersonil ? Number(formData.jumlahPersonil) : (pesertaList.length > 0 ? pesertaList.length : null),
+            peserta: pesertaList,
+            ...(uploadedFileUrl ? {
+              suratUrl: uploadedFileUrl,
+              suratFileName: uploadedFileName,
+              suratFileType: uploadedFileType,
+            } : {})
         };
 
         if (jadwalToEdit) {
             const jadwalRef = doc(db, 'jadwalTempat', jadwalToEdit.id!);
-            // [PERBAIKAN ERROR] Buat updatePayload secara eksplisit
             const updatePayload = {
               ...payload,
-              // Tambahkan field yang mungkin di-update di logic lama Anda jika ada
-              // e.g., status: 'Disetujui' // (Jika admin mengedit, status kembali disetujui)
             };
             await updateDoc(jadwalRef, updatePayload);
         } else {
@@ -189,7 +238,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
                 ...payload,
                 createdBy: userProfile!.uid,
                 createdAt: Timestamp.now(),
-                status: 'Disetujui' as const, // Default disetujui jika dibuat manual
+                status: 'Disetujui' as const,
             });
         }
         
@@ -279,6 +328,71 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
                 <Label htmlFor="jamSelesai">Jam Selesai</Label>
                 <Input id="jamSelesai" type="time" name="jamSelesai" value={formData.jamSelesai} onChange={handleChange} required />
               </div>
+            </div>
+
+            {/* Input Peserta yang Diundang */}
+            <div>
+              <Label htmlFor="peserta-manual" className="text-xs font-semibold text-foreground flex items-center justify-between">
+                <span>Daftar Peserta yang Diundang (Opsional)</span>
+                <span className="text-[10px] text-muted-foreground font-normal">Tekan Enter untuk menambah</span>
+              </Label>
+              <div className="flex gap-2 mt-1">
+                <Input
+                  id="peserta-manual"
+                  placeholder="Ketik nama jabatan/peserta..."
+                  value={pesertaInput}
+                  onChange={(e) => setPesertaInput(e.target.value)}
+                  onKeyDown={handleKeyDownPeserta}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleAddPeserta}
+                  className="shrink-0"
+                >
+                  <Plus size={14} className="mr-1" /> Tambah
+                </Button>
+              </div>
+
+              {pesertaList.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 mt-2.5 p-2 rounded-lg bg-muted/40 border border-border/60">
+                  {pesertaList.map((p, idx) => (
+                    <Badge
+                      key={idx}
+                      variant="secondary"
+                      className="pl-2.5 pr-1.5 py-0.5 text-xs flex items-center gap-1.5 bg-background border border-border"
+                    >
+                      <span>{p}</span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemovePeserta(idx)}
+                        className="hover:text-destructive rounded-full p-0.5 transition-colors"
+                      >
+                        <X size={12} />
+                      </button>
+                    </Badge>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Unggah Berkas Surat Lampiran (Opsional) */}
+            <div className="pt-2 border-t border-border/40">
+              <Label htmlFor="lampiran-surat" className="text-xs font-semibold text-foreground block mb-1">
+                Lampiran Berkas Surat / Undangan Internal (Opsional)
+              </Label>
+              <Input
+                id="lampiran-surat"
+                type="file"
+                accept=".pdf,image/jpeg,image/png,image/webp"
+                onChange={handleFileChange}
+                className="text-xs"
+              />
+              {file && (
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Berkas terpilih: {file.name} ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                </p>
+              )}
             </div>
           </div>
           

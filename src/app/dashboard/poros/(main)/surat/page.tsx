@@ -297,7 +297,18 @@ const SuratRow = React.memo(({
                 </span>
             </td>
             <td className="px-4 py-4 align-top text-sm max-w-[200px]">
-                {safeRecipientNames ? <span className="line-clamp-2">Kpda: {safeRecipientNames}</span> : <span className="text-[var(--nk-gold)] font-medium flex items-center gap-1.5 text-xs"><span className="relative flex h-1.5 w-1.5"><span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--nk-gold)] opacity-75"></span><span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[var(--nk-gold)]"></span></span> Belum didisposisi</span>}
+                <div className="flex items-center text-xs text-muted-foreground pt-1.5">
+                    {safeRecipientNames ? (
+                        <>
+                            <UsersIcon size={12} className="mr-1.5 text-[var(--nk-teal-mid)] flex-shrink-0" />
+                            <span className="text-foreground font-semibold line-clamp-2">{safeRecipientNames}</span>
+                        </>
+                    ) : surat.statusPenyelesaian === 'Selesai' ? (
+                        <span className="font-medium text-foreground">Tindak Lanjut Mandiri</span>
+                    ) : (
+                        <span className="text-muted-foreground italic font-normal">Belum didisposisikan</span>
+                    )}
+                </div>
             </td>
             
             <td className="px-4 py-4 align-top text-right">
@@ -529,7 +540,33 @@ export default function KotakMasukPage() {
     });
 
     const { actionableItems, mutate: refetchActionable } = useUserSuratSummary(effectiveJabatanId, suratList);
-    const { userMap, jabatanMap } = useMasterData(true);
+    const { userMap, jabatanMap, getUserNameByJabatanId } = useMasterData(true);
+
+    // Resolve nama penerima / pimpinan yang menyelesaikan secara mandiri
+    const resolveRecipientNames = useCallback((surat: Surat) => {
+        if (surat.infoTampilan?.recipientNames) {
+            return surat.infoTampilan.recipientNames;
+        }
+
+        if (surat.statusPenyelesaian === 'Selesai' || surat.statusPenyelesaian === 'Proses Tindak Lanjut' || surat.statusPenyelesaian === 'Didisposisikan') {
+            if (surat.terlibatJabatanIds && surat.terlibatJabatanIds.length > 0) {
+                let highestRankName = '';
+                let lowestLevel = 999;
+                surat.terlibatJabatanIds.forEach(jabatanId => {
+                    const jabatan = jabatanMap.get(jabatanId);
+                    if (jabatan && typeof jabatan.level === 'number' && jabatan.level < lowestLevel) {
+                        lowestLevel = jabatan.level;
+                        const userName = getUserNameByJabatanId(jabatanId);
+                        if (userName && userName !== 'N/A') {
+                            highestRankName = userName;
+                        }
+                    }
+                });
+                if (highestRankName) return highestRankName;
+            }
+        }
+        return null;
+    }, [jabatanMap, getUserNameByJabatanId]);
     
     // State Modal UI
     const [quickTrackSurat, setQuickTrackSurat] = useState<Surat | null>(null);
@@ -836,7 +873,7 @@ export default function KotakMasukPage() {
                                             <SuratCard 
                                                 key={`card-${surat.id}`} surat={surat} 
                                                 actionItem={actionItem}
-                                                recipientNames={surat.infoTampilan?.recipientNames}
+                                                recipientNames={resolveRecipientNames(surat)}
                                                 onNavigate={() => { setIsNavigating(true); router.push(`/dashboard/surat/${surat.id}`); }} 
                                                 onQuickTrack={setQuickTrackSurat}
                                                 onQuickPreview={setQuickPreviewSurat}
@@ -874,7 +911,7 @@ export default function KotakMasukPage() {
                                                 <SuratRow 
                                                     key={surat.id} surat={surat} 
                                                     actionItem={actionItem}
-                                                    recipientNames={surat.infoTampilan?.recipientNames}
+                                                    recipientNames={resolveRecipientNames(surat)}
                                                     onClick={() => router.push(`/dashboard/surat/${surat.id}`)}
                                                     onNavigate={() => setIsNavigating(true)} 
                                                     onQuickTrack={setQuickTrackSurat} 

@@ -11,7 +11,7 @@
 
 import React, { useState } from 'react';
 import { JadwalTempat } from '@/types';
-import { X, Calendar, Clock, MapPin, User, Check, Trash2, Edit, AlertTriangle, Users, ExternalLink, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, User, Check, Trash2, Edit, AlertTriangle, Users, ExternalLink, Loader2, FileText } from 'lucide-react';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -21,7 +21,6 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -133,6 +132,48 @@ export default function JadwalDetailModal({ isOpen, onClose, jadwal, isAdmin, on
                         <p className="flex items-center"><Clock size={14} className="mr-3"/> <strong>Waktu:</strong> <span className="text-foreground ml-1">{jadwal.jamMulai} - {jadwal.jamSelesai}</span></p>
                         {jadwal.jumlahPersonil && (
                             <p className="flex items-center"><Users size={14} className="mr-3"/> <strong>Jumlah Personil:</strong> <span className="text-foreground ml-1">{jadwal.jumlahPersonil} orang</span></p>
+                        )}
+
+                        {/* Tampilan Daftar Peserta */}
+                        {jadwal.peserta && jadwal.peserta.length > 0 && (
+                            <div className="pt-2">
+                                <strong className="text-xs text-foreground block mb-1.5 flex items-center gap-1.5">
+                                    <Users size={13} className="text-primary" /> Peserta yang Diundang:
+                                </strong>
+                                <div className="flex flex-wrap gap-1.5">
+                                    {jadwal.peserta.map((p, idx) => (
+                                        <Badge key={idx} variant="secondary" className="text-[11px] py-0.5 px-2 bg-muted/60 text-foreground border border-border/60">
+                                            {p}
+                                        </Badge>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Tampilan Lampiran Surat Internal */}
+                        {jadwal.suratUrl && (
+                            <div className="pt-3 border-t border-border/40 mt-3">
+                                <strong className="text-xs text-foreground block mb-1.5">Berkas Surat / Undangan Internal:</strong>
+                                <div className="flex items-center justify-between p-2.5 rounded-lg bg-muted/30 border border-border/60">
+                                    <div className="flex items-center gap-2 min-w-0 pr-2">
+                                        <div className="w-8 h-8 rounded-md bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-300 flex items-center justify-center shrink-0">
+                                            <FileText size={16} />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-xs font-medium text-foreground truncate">{jadwal.suratFileName || "Surat_Internal.pdf"}</p>
+                                            <p className="text-[10px] text-muted-foreground">{jadwal.suratFileType || "Dokumen Lampiran"}</p>
+                                        </div>
+                                    </div>
+                                    <a
+                                        href={jadwal.suratUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/50 hover:bg-indigo-100 dark:hover:bg-indigo-900/50 px-2.5 py-1.5 rounded-md transition-colors shrink-0"
+                                    >
+                                        <ExternalLink size={12} /> Buka Berkas
+                                    </a>
+                                </div>
+                            </div>
                         )}
                     </div>
                      {jadwal.status === 'Ditolak' && (
