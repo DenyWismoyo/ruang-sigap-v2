@@ -102,9 +102,17 @@ export const extractSuratDataAIV2 = onCall({
               3. **AGENDA**:
                  - Jika surat ini adalah Undangan atau Panggilan Rapat, isi detail agenda selengkap mungkin.
 
-              4. **RINGKASAN EKSEKUTIF (TL;DR)**:
-                 - Buat 1 hingga 2 kalimat ringkasan padat tentang isi utama surat ini.
-                 - Tulis secara lugas dan profesional agar pimpinan langsung paham inti surat tanpa membaca teks panjang.
+              4. **RINGKASAN EKSEKUTIF (TL;DR - DIRECT TO THE POINT)**:
+                 - Tulis 1 s.d. 2 kalimat singkat (maksimal 25-35 kata) yang LANGSUNG MERANGKUM POKOK SUBSTANSI / URGENSI / TUJUAN SURAT.
+                 - PANTANGAN MUTLAK (STRICT NEGATIVE RULES):
+                   * DILARANG memulai kalimat dengan frasa klise/basa-basi seperti: "Undangan menghadiri...", "Surat ini...", "Pemberitahuan mengenai...", "Berdasarkan surat...", "Disampaikan bahwa...", "Mengundang saudara...", "Sehubungan dengan...".
+                   * DILARANG mengulang hari, tanggal, jam, atau nama gedung/lokasi rapat (karena sudah diekstrak ke detailAgenda).
+                   * DILARANG mengulang nama instansi pengirim (karena sudah ada di kolom Pengirim).
+                 - PANDUAN SUBSTANSI:
+                   * Undangan: Langsung tulis topik pembahasan utama, sasaran materi, atau output keputusan yang diharapkan. Contoh: "Pemaparan teknis dan koordinasi implementasi platform OJOL Lokal Solo Technopark untuk penguatan ekosistem transportasi digital daerah."
+                   * Permohonan: Langsung tulis apa yang diminta (fasilitas, izin, narasumber, dana) dan tujuan peruntukannya. Contoh: "Permohonan peminjaman Aula Utama dan sarana pendukung untuk pelatihan digital 50 UMKM binaan."
+                   * Pemberitahuan / Edaran: Langsung tulis substansi kewajiban, perubahan aturan, atau tenggat waktu (deadline). Contoh: "Kewajiban rekonsiliasi SPJ dan pelaporan penyerapan anggaran Triwulan II paling lambat 15 Oktober 2026."
+                   * Laporan / Pengaduan: Langsung tulis pokok permasalahan teknis dan unit/wilayah terkait.
 
               5. **SARAN DISPOSISI**:
                  - Berikan 2 opsi kalimat instruksi disposisi yang relevan, spesifik, dan tegas berdasarkan esensi surat ini.
