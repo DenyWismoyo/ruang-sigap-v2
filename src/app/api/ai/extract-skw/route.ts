@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     // Mengambil bagian base64 murni (menghapus prefix data:image/...)
     const base64Data = image.split(",")[1] || image;
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-09-2025" });
+    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
     const prompt = `
       Anda adalah asisten AI yang ahli dalam mengekstrak data dari dokumen resmi pemerintah Indonesia (KTP, Kartu Keluarga, Surat Kematian, dll).

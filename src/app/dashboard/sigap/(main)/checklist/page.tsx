@@ -662,7 +662,7 @@ export default function ChecklistPage() {
         try {
             const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
             if (!apiKey) throw new Error("API Key for AI service is not configured.");
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
             const prompt = `Anda adalah asisten perencana tugas. Berdasarkan tujuan utama berikut: "${aiInput}", pecahlah menjadi langkah-langkah kerja (action items) yang jelas dan ringkas dalam format JSON array berisi string. Contoh output: ["Langkah 1", "Langkah 2", "Langkah 3"]`;
             const schema = { type: "ARRAY", items: { type: "STRING" } };
             const payload = {

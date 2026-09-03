@@ -11,8 +11,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Data surat atau profil atasan tidak lengkap.' }, { status: 400 });
     }
 
-    // [PERBAIKAN KEAMANAN]: DIBERSIHKAN DARI FALLBACK NEXT_PUBLIC DAN FIREBASE
-    const apiKey = process.env.GEMINI_API_KEY;
+    const rawApiKey = process.env.GEMINI_API_KEY || '';
+    const apiKey = rawApiKey.replace(/^["']|["']$/g, '').trim();
     
     if (!apiKey) {
       return NextResponse.json({ error: 'API Key AI belum dikonfigurasi.' }, { status: 500 });
@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     `;
 
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

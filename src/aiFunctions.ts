@@ -35,8 +35,8 @@ export const extractSuratDataAI = functions.region(REGION).runWith({
     }
 
     try {
-        // [DOWNGRADE MODEL] Menggunakan gemini-2.0-flash untuk efisiensi biaya
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+        // Menggunakan gemini-3.5-flash-lite untuk efisiensi dan kecepatan
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         
         const promptText = `
               Anda adalah sekretaris ahli birokrasi. Analisis gambar surat ini untuk mengekstrak metadata.

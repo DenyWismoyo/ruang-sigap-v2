@@ -81,7 +81,7 @@ export const extractSuratDataAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         
         const promptText = `
               Anda adalah sekretaris ahli birokrasi. Analisis gambar surat ini untuk mengekstrak metadata.
@@ -239,7 +239,7 @@ export const extractVoiceDisposisiAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         
         const promptText = `
               Anda adalah asisten cerdas untuk sistem tata kelola persuratan pemerintahan.
@@ -333,7 +333,7 @@ export const getStrategicDisposisiAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
         const infoSuratText = `
 [INFORMASI SURAT]
@@ -461,7 +461,7 @@ export const agentStrategicDisposition = onDocumentCreated({
 
     try {
         const db = getFirestore("database-siyap");
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
         // ==============================================================
         // PERSIAPAN DATA
@@ -696,7 +696,7 @@ export const extractAgendaInternalAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
         
         const promptText = `
               Anda adalah asisten cerdas untuk sistem manajemen agenda dan rapat internal pemerintahan/korporasi.

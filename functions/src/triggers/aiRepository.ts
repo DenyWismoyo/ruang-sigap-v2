@@ -1,5 +1,4 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
-import * as admin from "firebase-admin";
 import * as logger from "firebase-functions/logger";
 import { defineSecret } from "firebase-functions/params";
 
@@ -31,8 +30,9 @@ export const onRepositoryItemCreated = onDocumentCreated({
     }
 
     try {
-        const db = admin.firestore();
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`;
+        const { getFirestore } = await import("firebase-admin/firestore");
+        const db = getFirestore(DB_TARGET);
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
         // Prompt untuk Gemini
         const promptText = `

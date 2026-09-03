@@ -127,7 +127,7 @@ export default function NotulensiFormModal({
         try {
             const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY; 
             if (!apiKey) throw new Error("API Key for AI service is not configured.");
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
             
             const systemPrompt = `Anda adalah seorang notulis rapat profesional. Susun catatan mentah berikut menjadi notulensi formal. Gunakan format Markdown (Bold dan List).
             
