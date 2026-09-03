@@ -204,15 +204,20 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
         updateLevel: false,
         updateAtasan: false,
         updateStatus: false,
+        updateKlaster: false,
     });
     const [bulkEditValues, setBulkEditValues] = useState<{
         level: number;
         idAtasan: string | null;
         status: 'aktif' | 'nonaktif';
+        klasterStruktur: 'asn' | 'blud' | 'umum';
+        allowCrossClusterDisposisi: boolean;
     }>({
         level: 9,
         idAtasan: null,
-        status: 'aktif'
+        status: 'aktif',
+        klasterStruktur: 'blud',
+        allowCrossClusterDisposisi: false,
     });
 
     useEffect(() => {
@@ -558,7 +563,7 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
         e.preventDefault();
         if (selectedJabatanIds.length === 0) return;
 
-        if (!bulkEditFields.updateLevel && !bulkEditFields.updateAtasan && !bulkEditFields.updateStatus) {
+        if (!bulkEditFields.updateLevel && !bulkEditFields.updateAtasan && !bulkEditFields.updateStatus && !bulkEditFields.updateKlaster) {
             addToast('Pilih minimal satu atribut yang ingin diubah massal.', 'error');
             return;
         }
@@ -578,6 +583,10 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                         if (bulkEditFields.updateLevel) updateData.level = Number(bulkEditValues.level);
                         if (bulkEditFields.updateAtasan) updateData.idAtasan = bulkEditValues.idAtasan;
                         if (bulkEditFields.updateStatus) updateData.status = bulkEditValues.status;
+                        if (bulkEditFields.updateKlaster) {
+                            updateData.klasterStruktur = bulkEditValues.klasterStruktur;
+                            updateData.allowCrossClusterDisposisi = bulkEditValues.allowCrossClusterDisposisi;
+                        }
 
                         batch.update(ref, updateData);
                     });
@@ -591,7 +600,7 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                     setSelectedJabatanIds([]);
                     setIsBulkEditModalOpen(false);
                     // Reset fields
-                    setBulkEditFields({ updateLevel: false, updateAtasan: false, updateStatus: false });
+                    setBulkEditFields({ updateLevel: false, updateAtasan: false, updateStatus: false, updateKlaster: false });
                 } catch (err) {
                     console.error(err);
                     addToast(`Gagal mengedit data massal.`, 'error');
@@ -1131,9 +1140,46 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                             </div>
                         </div>
 
+                        {/* Opsi Ubah Klaster Struktur Massal */}
+                        <div className="flex items-start space-x-4 p-4 border rounded-lg bg-muted/20">
+                            <input 
+                                type="checkbox" id="checkKlaster" className="mt-1 w-5 h-5 cursor-pointer"
+                                checked={bulkEditFields.updateKlaster}
+                                onChange={(e) => setBulkEditFields(prev => ({...prev, updateKlaster: e.target.checked}))}
+                            />
+                            <div className="flex-1 space-y-3">
+                                <Label htmlFor="checkKlaster" className="cursor-pointer font-semibold text-base">Ubah Klaster Struktur Organisasi</Label>
+                                <Select 
+                                    disabled={!bulkEditFields.updateKlaster}
+                                    value={bulkEditValues.klasterStruktur} 
+                                    onValueChange={(v: 'asn'|'blud'|'umum') => setBulkEditValues(prev => ({...prev, klasterStruktur: v}))}
+                                >
+                                    <SelectTrigger><SelectValue placeholder="Pilih Klaster" /></SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="umum">Umum / Lintas Jalur (Standar)</SelectItem>
+                                        <SelectItem value="asn">Struktur ASN (Pemerintahan)</SelectItem>
+                                        <SelectItem value="blud">Struktur BLUD (Operasional)</SelectItem>
+                                    </SelectContent>
+                                </Select>
+
+                                {bulkEditFields.updateKlaster && bulkEditValues.klasterStruktur !== 'umum' && (
+                                    <div className="flex items-center space-x-2 pt-1">
+                                        <Checkbox 
+                                            id="bulkAllowCrossCluster" 
+                                            checked={bulkEditValues.allowCrossClusterDisposisi} 
+                                            onCheckedChange={(v) => setBulkEditValues(prev => ({...prev, allowCrossClusterDisposisi: !!v}))} 
+                                        />
+                                        <Label htmlFor="bulkAllowCrossCluster" className="text-xs cursor-pointer">
+                                            Izinkan Disposisi Lintas Klaster
+                                        </Label>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
                         <DialogFooter>
                             <Button type="button" variant="outline" onClick={() => setIsBulkEditModalOpen(false)}>Batal</Button>
-                            <Button type="submit" disabled={!bulkEditFields.updateLevel && !bulkEditFields.updateAtasan && !bulkEditFields.updateStatus}>
+                            <Button type="submit" disabled={!bulkEditFields.updateLevel && !bulkEditFields.updateAtasan && !bulkEditFields.updateStatus && !bulkEditFields.updateKlaster}>
                                 Terapkan Perubahan
                             </Button>
                         </DialogFooter>
