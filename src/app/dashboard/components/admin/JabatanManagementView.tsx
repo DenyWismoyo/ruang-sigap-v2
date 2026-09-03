@@ -667,7 +667,7 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
     const handleDownloadTemplate = () => {
         const contohOpd = opdList.length > 0 ? opdList[0].namaOpd : "Dinas Pendidikan";
         
-        const csvContent = `namaJabatan,level,namaOpd,klasterStruktur\nKepala Dinas,2,${contohOpd},umum\nSekretaris Dinas,3,${contohOpd},umum\nKepala Bidang A,3,${contohOpd},asn\nStaf Pelaksana,9,${contohOpd},umum`;
+        const csvContent = `namaJabatan,level,namaOpd,namaAtasan,klasterStruktur\nKepala Dinas,2,${contohOpd},,umum\nSekretaris Dinas,3,${contohOpd},Kepala Dinas,umum\nKepala Bidang A,3,${contohOpd},Kepala Dinas,asn\nStaf Pelaksana,9,${contohOpd},Kepala Bidang A,umum`;
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -708,6 +708,22 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
         let errorCount = 0;
 
         try {
+            // Map jabatan yang sudah ada di database: namaJabatan.toLowerCase() -> id
+            const nameToIdMap = new Map<string, string>();
+            jabatanList.forEach(j => {
+                if (j.id && j.namaJabatan) {
+                    nameToIdMap.set(j.namaJabatan.trim().toLowerCase(), j.id);
+                }
+            });
+
+            // Pass 1: Buat docRef untuk setiap baris baru dan petakan namaJabatan -> docRef.id
+            const rowsToInsert: {
+                docRef: any;
+                row: any;
+                finalOpdId: string;
+                validKlaster: 'asn' | 'blud' | 'umum';
+            }[] = [];
+
             importData.forEach((row: any) => {
                 if (row.namaJabatan && row.level) {
                     let finalOpdId = targetOpdDropdown;
@@ -728,21 +744,36 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
 
                     const docRef = doc(collection(db, "jabatan"));
                     const parsedKlaster = (row.klasterStruktur || '').toLowerCase().trim();
-                    const validKlaster = ['asn', 'blud', 'umum'].includes(parsedKlaster) 
-                        ? parsedKlaster 
+                    const validKlaster: 'asn' | 'blud' | 'umum' = ['asn', 'blud', 'umum'].includes(parsedKlaster) 
+                        ? (parsedKlaster as any) 
                         : (row.namaJabatan.toLowerCase().includes('blud') ? 'blud' : 'umum');
 
-                    batch.set(docRef, {
-                        namaJabatan: row.namaJabatan.trim(),
-                        level: Number(row.level),
-                        opdId: finalOpdId,
-                        idAtasan: null, 
-                        status: 'aktif',
-                        klasterStruktur: validKlaster,
-                        allowCrossClusterDisposisi: false
+                    nameToIdMap.set(row.namaJabatan.trim().toLowerCase(), docRef.id);
+
+                    rowsToInsert.push({
+                        docRef,
+                        row,
+                        finalOpdId,
+                        validKlaster
                     });
-                    successCount++;
                 }
+            });
+
+            // Pass 2: Set data ke batch dengan idAtasan yang terpetakan otomatis
+            rowsToInsert.forEach(({ docRef, row, finalOpdId, validKlaster }) => {
+                const atasanNameRaw = (row.namaAtasan || row.atasan || row.jabatanAtasan || '').trim().toLowerCase();
+                const resolvedIdAtasan = atasanNameRaw ? (nameToIdMap.get(atasanNameRaw) || null) : null;
+
+                batch.set(docRef, {
+                    namaJabatan: row.namaJabatan.trim(),
+                    level: Number(row.level),
+                    opdId: finalOpdId,
+                    idAtasan: resolvedIdAtasan, 
+                    status: 'aktif',
+                    klasterStruktur: validKlaster,
+                    allowCrossClusterDisposisi: false
+                });
+                successCount++;
             });
 
             if (successCount > 0) {
@@ -1351,7 +1382,7 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                     onChange={handleFileChange}
                                     className="mt-1"
                                 />
-                                <p className="text-xs text-muted-foreground mt-1">Pastikan ada kolom: <strong>namaJabatan, level</strong>. Kolom <strong>namaOpd</strong> opsional (Khusus Super Admin).</p>
+                                <p className="text-xs text-muted-foreground mt-1">Kolom format: <strong>namaJabatan, level, namaOpd (opsional), namaAtasan (opsional), klasterStruktur (opsional)</strong>.</p>
                             </div>
                             <Button variant="outline" size="sm" onClick={handleDownloadTemplate} className="mt-6 sm:mt-0">
                                 <Download size={16} className="mr-2"/> Template
@@ -1370,7 +1401,8 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                             <TableRow>
                                                 <TableHead className="h-8 text-xs">Nama Jabatan</TableHead>
                                                 <TableHead className="h-8 text-xs">Level</TableHead>
-                                                <TableHead className="h-8 text-xs">Nama OPD (Di CSV)</TableHead>
+                                                <TableHead className="h-8 text-xs">Atasan Langsung</TableHead>
+                                                <TableHead className="h-8 text-xs">Klaster</TableHead>
                                             </TableRow>
                                         </TableHeader>
                                         <TableBody>
@@ -1378,10 +1410,11 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                                                 <TableRow key={i} className="h-8">
                                                     <TableCell className="py-1 text-xs">{row.namaJabatan}</TableCell>
                                                     <TableCell className="py-1 text-xs">{row.level}</TableCell>
-                                                    <TableCell className="py-1 text-xs text-muted-foreground">{row.namaOpd || '-'}</TableCell>
+                                                    <TableCell className="py-1 text-xs text-muted-foreground">{row.namaAtasan || row.atasan || '-'}</TableCell>
+                                                    <TableCell className="py-1 text-xs text-muted-foreground">{row.klasterStruktur || 'blud'}</TableCell>
                                                 </TableRow>
                                             ))}
-                                            {importData.length > 10 && <TableRow><TableCell colSpan={3} className="text-center text-xs text-muted-foreground">... dan {importData.length - 10} lainnya</TableCell></TableRow>}
+                                            {importData.length > 10 && <TableRow><TableCell colSpan={4} className="text-center text-xs text-muted-foreground">... dan {importData.length - 10} lainnya</TableCell></TableRow>}
                                         </TableBody>
                                     </Table>
                                 </ScrollArea>
