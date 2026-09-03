@@ -623,11 +623,42 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
         } catch (err) { addToast("Gagal.", "error"); }
     };
 
+    // --- LOGIKA EXPORT CSV ---
+    const handleExportCSV = () => {
+        if (filteredJabatanForTable.length === 0) {
+            addToast("Tidak ada data jabatan untuk diekspor.", "error");
+            return;
+        }
+
+        const dataToExport = filteredJabatanForTable.map(j => ({
+            namaJabatan: j.namaJabatan,
+            level: j.level,
+            namaOpd: opdList.find(o => o.id === j.opdId)?.namaOpd || '-',
+            tipeJabatan: j.tipeJabatan || '-',
+            eselon: j.eselon || '-',
+            jenjangFungsional: j.jenjangFungsional || '-',
+            klasterStruktur: j.klasterStruktur || 'umum',
+            allowCrossClusterDisposisi: j.allowCrossClusterDisposisi ? 'Ya' : 'Tidak',
+            status: j.status || 'aktif'
+        }));
+
+        const csv = Papa.unparse(dataToExport);
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `data_jabatan_${tableOpdFilter !== 'Semua' ? tableOpdFilter : 'semua'}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        addToast("Data jabatan berhasil diekspor ke CSV.", "success");
+    };
+
     // --- LOGIKA IMPORT CSV ---
     const handleDownloadTemplate = () => {
         const contohOpd = opdList.length > 0 ? opdList[0].namaOpd : "Dinas Pendidikan";
         
-        const csvContent = `namaJabatan,level,namaOpd\nKepala Dinas,2,${contohOpd}\nSekretaris Dinas,3,${contohOpd}\nKepala Bidang A,3,${contohOpd}\nStaf Pelaksana,9,${contohOpd}`;
+        const csvContent = `namaJabatan,level,namaOpd,klasterStruktur\nKepala Dinas,2,${contohOpd},umum\nSekretaris Dinas,3,${contohOpd},umum\nKepala Bidang A,3,${contohOpd},asn\nStaf Pelaksana,9,${contohOpd},umum`;
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
@@ -687,12 +718,19 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                     }
 
                     const docRef = doc(collection(db, "jabatan"));
+                    const parsedKlaster = (row.klasterStruktur || '').toLowerCase().trim();
+                    const validKlaster = ['asn', 'blud', 'umum'].includes(parsedKlaster) 
+                        ? parsedKlaster 
+                        : (row.namaJabatan.toLowerCase().includes('blud') ? 'blud' : 'umum');
+
                     batch.set(docRef, {
-                        namaJabatan: row.namaJabatan,
+                        namaJabatan: row.namaJabatan.trim(),
                         level: Number(row.level),
                         opdId: finalOpdId,
                         idAtasan: null, 
-                        status: 'aktif'
+                        status: 'aktif',
+                        klasterStruktur: validKlaster,
+                        allowCrossClusterDisposisi: false
                     });
                     successCount++;
                 }
@@ -731,11 +769,19 @@ export default function JabatanManagementView({ tenant }: JabatanManagementViewP
                     <h1 className="text-3xl font-bold text-foreground">Manajemen Jabatan</h1>
                     <p className="text-muted-foreground mt-2">Kelola data level, posisi hierarki, dan Plt. di lingkungan kerja Anda.</p>
                 </div>
-                {isAdminInduk && (
-                    <div className="mt-4 md:mt-0 p-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 text-sm flex items-center gap-2">
-                        <Users size={16} /> Mode Admin Induk (Bisa edit jabatan Sub-OPD)
-                    </div>
-                )}
+                <div className="flex items-center gap-3 mt-4 md:mt-0 flex-wrap">
+                    {isAdminInduk && (
+                        <div className="p-2.5 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 rounded-lg border border-blue-200 text-xs md:text-sm flex items-center gap-1.5">
+                            <Users size={16} /> Mode Admin Induk
+                        </div>
+                    )}
+                    <Button onClick={handleExportCSV} variant="outline" className="text-blue-600 border-blue-200 hover:bg-blue-50">
+                        <Download size={16} className="mr-2" /> Ekspor
+                    </Button>
+                    <Button onClick={() => setIsImportModalOpen(true)} variant="outline">
+                        <Upload size={16} className="mr-2" /> Impor
+                    </Button>
+                </div>
             </div>
 
             <div className={cardClass}>
