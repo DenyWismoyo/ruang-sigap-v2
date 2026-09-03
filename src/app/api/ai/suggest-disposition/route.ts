@@ -17,10 +17,8 @@ export async function POST(request: Request) {
     }
 
     // 1. Siapkan API Key
-    const rawApiKey = process.env.GEMINI_API_KEY;
-    const apiKey = (rawApiKey && !rawApiKey.startsWith('AQ.') && rawApiKey.length > 20) 
-        ? rawApiKey 
-        : process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
+    const rawApiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
+    const apiKey = rawApiKey.replace(/^["']|["']$/g, '').trim();
     
     if (!apiKey) {
       return NextResponse.json({ error: 'API Key AI belum dikonfigurasi.' }, { status: 500 });
