@@ -54,7 +54,7 @@ function UploadSuratComponent() {
   const router = useRouter();
   const searchParams = useSearchParams(); 
   
-  const { jabatanMap } = useMasterData(true);
+  const { jabatanMap, getUserNameByJabatanId } = useMasterData(true);
   
   const [nomorSurat, setNomorSurat] = useState('');
   const [perihal, setPerihal] = useState('');
@@ -67,6 +67,7 @@ function UploadSuratComponent() {
   const [tujuanJabatanId, setTujuanJabatanId] = useState<string>('none'); 
   
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isConfirmedCheck, setIsConfirmedCheck] = useState(false);
 
   const [tanggalAgenda, setTanggalAgenda] = useState('');
   const [jamAgenda, setJamAgenda] = useState('');
@@ -331,6 +332,7 @@ function UploadSuratComponent() {
       return;
     }
     
+    setIsConfirmedCheck(false);
     setIsConfirmModalOpen(true);
   };
 
@@ -401,11 +403,29 @@ function UploadSuratComponent() {
     }
   };
 
-  const selectedPimpinan = useMemo(() => {
-    if (tujuanJabatanId === 'none') return 'Pimpinan Puncak (Kepala Dinas / Setara)';
-    const pimpinan = pimpinanList.find(p => p.id === tujuanJabatanId);
-    return pimpinan ? pimpinan.namaJabatan : 'Tidak Diketahui';
-  }, [tujuanJabatanId, pimpinanList]);
+  const resolvedTargetLeader = useMemo(() => {
+    let targetJabatan: any;
+    if (tujuanJabatanId !== 'none') {
+        targetJabatan = jabatanMap.get(tujuanJabatanId);
+    } else if (pimpinanList.length > 0) {
+        targetJabatan = pimpinanList[0];
+    }
+
+    if (!targetJabatan) {
+        return {
+            namaJabatan: 'Pimpinan Puncak (Default)',
+            userName: 'N/A'
+        };
+    }
+
+    const userName = getUserNameByJabatanId(targetJabatan.id!);
+    const klasterLabel = targetJabatan.klasterStruktur === 'asn' ? ' (ASN)' : targetJabatan.klasterStruktur === 'blud' ? ' (BLUD)' : '';
+    
+    return {
+        namaJabatan: `${targetJabatan.namaJabatan}${klasterLabel}`,
+        userName: userName && userName !== 'N/A' ? userName : 'Belum Terisi'
+    };
+  }, [tujuanJabatanId, jabatanMap, pimpinanList, getUserNameByJabatanId]);
 
   if (authLoading) return <div className="text-center p-8">Memuat...</div>;
 
@@ -684,35 +704,89 @@ function UploadSuratComponent() {
       {isConfirmModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm px-4">
             <div className="bg-background border border-border rounded-xl shadow-2xl max-w-lg w-full p-6 animate-in zoom-in-95 fade-in duration-200">
-                <div className="flex items-center gap-3 mb-4 text-primary">
-                    <AlertTriangle className="w-6 h-6" />
-                    <h2 className="text-xl font-bold">Konfirmasi Tujuan Surat</h2>
+                <div className="flex items-center gap-3 mb-3 text-amber-500">
+                    <AlertTriangle className="w-6 h-6 flex-shrink-0" />
+                    <h2 className="text-xl font-bold text-foreground">Konfirmasi Tujuan Surat</h2>
                 </div>
                 
-                <p className="text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4">
                     Mohon periksa kembali apakah surat ini sudah diarahkan ke pimpinan yang tepat sebelum diunggah.
                 </p>
 
-                <div className="bg-muted/50 rounded-lg p-4 space-y-3 mb-6 border border-border">
+                <div className="bg-muted/50 rounded-lg p-4 space-y-3 mb-4 border border-border">
                     <div>
-                        <span className="text-xs text-muted-foreground block">Nomor Surat</span>
-                        <span className="font-medium text-foreground">{nomorSurat}</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">Nomor Surat</span>
+                        <span className="font-semibold text-foreground text-sm">{nomorSurat}</span>
                     </div>
                     <div>
-                        <span className="text-xs text-muted-foreground block">Perihal</span>
-                        <span className="font-medium text-foreground line-clamp-2">{perihal}</span>
+                        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block">Perihal</span>
+                        <span className="font-medium text-foreground text-sm line-clamp-2">{perihal}</span>
                     </div>
-                    <div className="pt-2 mt-2 border-t border-border">
-                        <span className="text-xs text-muted-foreground block font-semibold">Akan Muncul di Ruang Kerja:</span>
-                        <span className="font-bold text-primary text-lg">{selectedPimpinan}</span>
+                    
+                    <div className="pt-3 border-t border-border/80 space-y-2">
+                        <div className="flex justify-between items-center">
+                            <span className="text-xs font-semibold text-muted-foreground">Tujuan Disposisi Awal:</span>
+                            <span className="text-[11px] text-blue-600 dark:text-blue-400 font-medium">Bisa diubah langsung di bawah</span>
+                        </div>
+
+                        {/* Dropdown Ganti Pimpinan Langsung di Modal */}
+                        <Select value={tujuanJabatanId} onValueChange={setTujuanJabatanId}>
+                            <SelectTrigger className="w-full bg-background border-primary/40 focus:ring-primary font-medium text-xs sm:text-sm">
+                                <SelectValue placeholder="Pilih Pimpinan Tujuan" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[60]">
+                                <SelectItem value="none">
+                                    -- Default ({pimpinanList[0]?.namaJabatan || 'Pimpinan Puncak'} {pimpinanList[0]?.klasterStruktur === 'asn' ? '(ASN)' : pimpinanList[0]?.klasterStruktur === 'blud' ? '(BLUD)' : ''}) --
+                                </SelectItem>
+                                {pimpinanList.map(p => {
+                                    const userName = getUserNameByJabatanId(p.id!);
+                                    const userLabel = userName && userName !== 'N/A' ? ` - ${userName}` : '';
+                                    return (
+                                        <SelectItem key={p.id} value={p.id!}>
+                                            {p.namaJabatan} {p.klasterStruktur === 'asn' ? '(ASN)' : p.klasterStruktur === 'blud' ? '(BLUD)' : ''}{userLabel}
+                                        </SelectItem>
+                                    );
+                                })}
+                            </SelectContent>
+                        </Select>
+
+                        {/* Ringkasan Penerima Real-Time */}
+                        <div className="p-2.5 bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-md">
+                            <span className="text-[11px] text-muted-foreground block font-medium">Surat akan masuk ke Ruang Kerja:</span>
+                            <div className="font-bold text-blue-700 dark:text-blue-300 text-sm mt-0.5 flex items-center gap-1.5">
+                                <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400 flex-shrink-0" />
+                                <span>
+                                    {resolvedTargetLeader.namaJabatan}
+                                    {resolvedTargetLeader.userName !== 'Belum Terisi' ? ` (${resolvedTargetLeader.userName})` : ''}
+                                </span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+
+                {/* Validasi Centang Wajib */}
+                <div className="mb-5 p-3 rounded-lg border border-amber-200 dark:border-amber-900/40 bg-amber-50/60 dark:bg-amber-950/20">
+                    <label className="flex items-start gap-3 cursor-pointer text-xs select-none">
+                        <input 
+                            type="checkbox" 
+                            checked={isConfirmedCheck} 
+                            onChange={(e) => setIsConfirmedCheck(e.target.checked)}
+                            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary accent-primary cursor-pointer"
+                        />
+                        <span className="text-foreground leading-relaxed">
+                            Saya telah memeriksa dan memastikan tujuan pimpinan serta seluruh data surat sudah benar.
+                        </span>
+                    </label>
                 </div>
 
                 <div className="flex gap-3 justify-end">
                     <Button 
                         type="button" 
                         variant="outline" 
-                        onClick={() => setIsConfirmModalOpen(false)}
+                        onClick={() => {
+                            setIsConfirmModalOpen(false);
+                            setIsConfirmedCheck(false);
+                        }}
                         disabled={isUploading}
                     >
                         Kembali & Edit
@@ -720,10 +794,11 @@ function UploadSuratComponent() {
                     <Button 
                         type="button" 
                         onClick={executeUpload}
-                        disabled={isUploading}
-                        className="min-w-[140px]"
+                        disabled={isUploading || !isConfirmedCheck}
+                        className="min-w-[140px] bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50"
                     >
-                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Ya, Upload Surat'}
+                        {isUploading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Upload className="w-4 h-4 mr-2" />}
+                        Ya, Upload Surat
                     </Button>
                 </div>
             </div>

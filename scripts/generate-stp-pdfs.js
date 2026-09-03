@@ -265,9 +265,77 @@ function generateDaftarAkunPDF() {
     console.log('Saved:', filePath);
 }
 
+// 3. GENERATE DAFTAR AKUN PEGAWAI ASN STP PDF
+function generateDaftarAkunAsnPDF() {
+    const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+    });
+
+    const headerColor = [30, 58, 138]; // Royal Blue 900
+    const darkColor = [30, 41, 59];
+
+    // Header Banner
+    doc.setFillColor(...headerColor);
+    doc.rect(0, 0, 210, 28, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.text('DAFTAR AKUN PEGAWAI ASN SOLO TECHNOPARK', 14, 13);
+    
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9.5);
+    doc.text('SIGAP E-Office | Login: https://sgp.omnifit.cloud | Tab: Masuk dengan NIP/NIK', 14, 21);
+
+    const userRawData = [
+        ["1", "RONY WIDJANARKO, S.H., M.H.", "198412112009121002", "Kepala UPTD Kawasan Sains dan Teknologi Solo Technopark", "Rony1211"],
+        ["2", "DENY WISMOYO, S.STP", "199311012016091003", "Kepala Subbagian Tata Usaha UPTD KST Solo Technopark", "Deny1101"],
+        ["3", "WAHYU KURNIAWAN, ST", "198506082009031004", "Penelaah Teknis Kebijakan", "Wonosobo.juni2024"],
+        ["4", "ALVIN PRAYOGO ANINDITO, A.Md. Ak.", "199308042025211016", "Pengelola Layanan Operasional 1", "Alvin1923"],
+        ["5", "MUHAMMAD FAJAR AL FANDYARI", "199810202025211006", "Pengelola Layanan Operasional 2", "Alfandy51"],
+        ["6", "RADITYA GUNTUR DEWANGGA", "199309092025211019", "Pengelola Layanan Operasional 3", "ditraditya09"],
+        ["7", "AGUS TRI HANANTO, SE", "198508032004121003", "Pengolah Data dan Informasi", "5Tp12345@"]
+    ];
+
+    autoTable(doc, {
+        startY: 34,
+        head: [['No', 'Nama Lengkap', 'NIP (Username)', 'Nama Jabatan', 'Password Akun']],
+        body: userRawData,
+        theme: 'striped',
+        headStyles: {
+            fillColor: headerColor,
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 8.5
+        },
+        bodyStyles: {
+            fontSize: 8.5,
+            textColor: darkColor
+        },
+        alternateRowStyles: {
+            fillColor: [239, 246, 255] // Blue 50
+        },
+        columnStyles: {
+            0: { cellWidth: 10, halign: 'center' },
+            1: { cellWidth: 55 },
+            2: { cellWidth: 40, fontStyle: 'bold', textColor: [30, 58, 138] },
+            3: { cellWidth: 50 },
+            4: { cellWidth: 29, fontStyle: 'bold', textColor: [185, 28, 28] }
+        },
+        margin: { left: 13, right: 13 }
+    });
+
+    const filePath = path.join(outputDir, 'DAFTAR_AKUN_PEGAWAI_ASN_STP.pdf');
+    doc.save(filePath);
+    console.log('Saved:', filePath);
+}
+
 try {
     generatePanduanPDF();
     generateDaftarAkunPDF();
+    generateDaftarAkunAsnPDF();
     console.log("SUCCESS Generating all STP PDFs!");
 } catch (e) {
     console.error("ERROR Generating PDFs:", e);
