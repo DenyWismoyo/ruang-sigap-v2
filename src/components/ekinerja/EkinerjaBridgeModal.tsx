@@ -70,7 +70,6 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
 
   const [copiedPayload, setCopiedPayload] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
-  const [copiedPath, setCopiedPath] = useState(false);
 
   // Chrome Extension Real-time State
   const [isExtensionInstalled, setIsExtensionInstalled] = useState(false);
@@ -204,16 +203,6 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
       await navigator.clipboard.writeText(getEkinerjaBookmarkletHref());
       setCopiedScript(true);
       setTimeout(() => setCopiedScript(false), 3000);
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const handleCopyFolderPath = async () => {
-    try {
-      await navigator.clipboard.writeText("d:\\Project\\RUANG SIGAP\\tools\\sigap-chrome-bridge");
-      setCopiedPath(true);
-      setTimeout(() => setCopiedPath(false), 3000);
     } catch (e) {
       console.error(e);
     }
@@ -550,42 +539,17 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
                   </div>
                 </div>
 
-                {/* Box Salin Path Folder untuk Pengembang */}
-                <div className="p-2.5 bg-muted/40 rounded-xl border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
-                  <div className="min-w-0 flex-1">
-                    <span className="text-[10px] text-muted-foreground block">Opsi Pengembang (Local Path):</span>
-                    <code className="text-[11px] text-foreground font-mono truncate block">
-                      d:\Project\RUANG SIGAP\tools\sigap-chrome-bridge
-                    </code>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={handleCopyFolderPath}
-                    className="shrink-0 text-xs h-7"
-                  >
-                    {copiedPath ? (
-                      <>
-                        <Check size={12} className="mr-1 text-green-600" /> Path Tersalin!
-                      </>
-                    ) : (
-                      <>
-                        <Copy size={12} className="mr-1" /> Salin Path
-                      </>
-                    )}
-                  </Button>
-                </div>
               </div>
 
               {/* Fitur Ekstensi */}
               <div className="p-3 bg-accent/30 rounded-xl border border-border text-xs space-y-1.5">
                 <p className="font-semibold text-foreground">💡 Keunggulan SIGAP Bridge Extension:</p>
                 <ul className="list-disc list-inside text-[11px] text-muted-foreground space-y-1">
-                  <li><strong>Zero-Click</strong>: Form di tab sebelah kanan terketik seketika tanpa perlu klik apapun.</li>
-                  <li><strong>Auto-F2</strong>: Otomatis memicu tombol [F2 : Buat Kode Baru] jika kode kegiatan kosong.</li>
-                  <li><strong>Auto-Select2</strong>: Otomatis memilih nama aktivitas resmi dari 152 master Kepwal Solo.</li>
-                  <li><strong>Auto-Focus</strong>: Otomatis membawa pandangan Anda ke tab e-Kinerja begitu data terkirim.</li>
+                  <li><strong>1-Klik Otomatis</strong>: Form di tab e-Kinerja langsung terisi seketika tanpa perlu salin-tempel manual satu per satu.</li>
+                  <li><strong>Uraian Terstandar</strong>: Otomatis menyusun nama kegiatan dengan label aktivitas resmi Kepwal: <code>[Nama Aktivitas] Uraian Tugas</code>.</li>
+                  <li><strong>Sinkronisasi Bukti Dukung</strong>: Otomatis menyematkan link folder Google Drive bukti kinerja dari profil Anda (atau dikosongkan jika belum diatur).</li>
+                  <li><strong>Catatan Audit Resmi</strong>: Menyertakan keterangan audit resmi bahwa kegiatan dicatat melalui Logbook Harian SIGAP.</li>
+                  <li><strong>Auto-Focus</strong>: Otomatis membawa pandangan Anda ke tab e-Kinerja begitu data berhasil terkirim.</li>
                 </ul>
               </div>
             </div>
