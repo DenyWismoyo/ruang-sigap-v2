@@ -163,6 +163,13 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
             jumlahPersonil: formData.jumlahPersonil ? Number(formData.jumlahPersonil) : null,
         };
 
+        const isApprover = Boolean(
+            userProfile?.role === 'admin_opd' ||
+            userProfile?.role === 'staf_tu' ||
+            userProfile?.role === 'super_admin' ||
+            userProfile?.additionalRoles?.includes('operator_surat')
+        );
+
         if (jadwalToEdit) {
             const jadwalRef = doc(db, 'jadwalTempat', jadwalToEdit.id!);
             // [PERBAIKAN ERROR] Buat updatePayload secara eksplisit
@@ -177,7 +184,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
                 ...payload,
                 createdBy: userProfile!.uid,
                 createdAt: Timestamp.now(),
-                status: 'Disetujui' as const, // Default disetujui jika dibuat manual
+                status: isApprover ? ('Disetujui' as const) : ('Menunggu Persetujuan' as const),
             });
         }
         

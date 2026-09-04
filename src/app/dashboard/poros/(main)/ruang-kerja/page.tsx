@@ -183,6 +183,15 @@ export default function RuangKerjaPage() {
 
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
   const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const isJadwalApprover = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+    );
+  }, [userProfile]);
 
   // Guard untuk mencegah auto-cleanup ganda
   const cleanupInProgressRef = useRef<Set<string>>(new Set());
@@ -687,7 +696,7 @@ export default function RuangKerjaPage() {
       </div>
       
       {isQuickPreviewOpen && <QuickPreviewModal isOpen={isQuickPreviewOpen} onClose={handleClosePreview} fileUrl={previewFileUrl || ''} fileName={previewFileName || 'Pratinjau Dokumen'} />}
-      {isDetailModalOpen && <JadwalDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} jadwal={selectedJadwal} isAdmin={isAdminOrTU} onApprove={(id) => handleApprove(id, () => setIsDetailModalOpen(false))} onReject={(id, reason) => handleReject(id, reason, () => setIsDetailModalOpen(false))} onEdit={() => {}} onDelete={(id) => handleDelete(id, () => setIsDetailModalOpen(false))} />}
+      {isDetailModalOpen && <JadwalDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} jadwal={selectedJadwal} isAdmin={isJadwalApprover} onApprove={(id) => handleApprove(id, () => setIsDetailModalOpen(false))} onReject={(id, reason) => handleReject(id, reason, () => setIsDetailModalOpen(false))} onEdit={() => {}} onDelete={(id) => handleDelete(id, () => setIsDetailModalOpen(false))} />}
       
       {quickDisposisiData && <QuickDisposisiModal 
         isOpen={!!quickDisposisiData} 

@@ -413,6 +413,49 @@ interface PresensiRecord {
 
 ---
 
+## 🗓️ `jadwalTempat/{jadwalId}` (Agenda & Peminjaman Ruangan)
+
+```typescript
+interface JadwalTempat {
+  id?: string;
+  opdId: string;
+  kegiatan: string;
+  jenis: 'Fisik' | 'Virtual';
+  namaTempat?: string;          // Ruangan fisik (e.g. Ruang Rapat Utama)
+  tautanRapat?: string;         // Link Zoom/Google Meet jika virtual
+  tanggalMulai: Timestamp;
+  jamMulai: string;             // Format "HH:mm" (e.g. "09:00")
+  jamSelesai: string;           // Format "HH:mm" (e.g. "11:30")
+  jumlahPersonil?: number | null;
+  penanggungJawab: string;
+  peserta?: string[];           // Daftar nama/jabatan peserta yang diundang
+  
+  // Berkas Undangan / Surat
+  suratUrl?: string;
+  suratFileName?: string;
+  suratFileType?: string;
+
+  // Lifecycle & Verifikasi
+  status: 'Disetujui' | 'Menunggu Persetujuan' | 'Ditolak';
+  alasanDitolak?: string;
+  ditinjauOleh?: string;        // UID Verifikator
+  tanggalDitinjau?: Timestamp;
+  createdBy: string;
+  createdAt: Timestamp;
+}
+```
+
+### Aturan Verifikator & Lifecycle Approval Jadwal:
+1. **Daftar Verifikator (`isJadwalApprover`)**:
+   - `admin_opd`
+   - `staf_tu`
+   - `super_admin`
+   - `additionalRoles: ['operator_surat']`
+2. **Auto-Approve**: Jika agenda dibuat oleh salah satu dari Verifikator di atas, sistem otomatis menyetel `status: 'Disetujui'`.
+3. **Persetujuan Bertahap**: Jika agenda dibuat oleh pegawai/staf reguler, agenda dibuat dengan `status: 'Menunggu Persetujuan'` untuk diverifikasi oleh Operator Surat / TU / Admin OPD.
+
+---
+
 ## ⚙️ `opd_config` Feature Gate — Cara Menggunakan
 
 Sebelum merender fitur premium, **selalu** periksa `opdConfig.features`:

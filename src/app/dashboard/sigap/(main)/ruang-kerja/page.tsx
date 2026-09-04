@@ -188,6 +188,15 @@ export default function RuangKerjaPage() {
 
   const isPimpinan = useMemo(() => !!(effectiveJabatan && effectiveJabatan.level <= 5), [effectiveJabatan]);
   const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const isJadwalApprover = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+    );
+  }, [userProfile]);
 
   // Guard untuk mencegah auto-cleanup ganda
   const cleanupInProgressRef = useRef<Set<string>>(new Set());
@@ -681,7 +690,7 @@ export default function RuangKerjaPage() {
             onNavigateToDetail={(id) => router.push(`/dashboard/surat/${id}`)}
         />
       )}
-      {isDetailModalOpen && <JadwalDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} jadwal={selectedJadwal} isAdmin={isAdminOrTU} onApprove={() => {}} onReject={() => {}} onEdit={() => {}} onDelete={() => {}} />}
+      {isDetailModalOpen && <JadwalDetailModal isOpen={isDetailModalOpen} onClose={() => setIsDetailModalOpen(false)} jadwal={selectedJadwal} isAdmin={isJadwalApprover} onApprove={() => {}} onReject={() => {}} onEdit={() => {}} onDelete={() => {}} />}
       
       {quickDisposisiData && <QuickDisposisiModal 
         isOpen={!!quickDisposisiData} 

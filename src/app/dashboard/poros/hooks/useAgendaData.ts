@@ -12,18 +12,18 @@ import { Surat, JadwalTempat } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 
 const fetchAgendaUndangan = async (opdId: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const future = new Date(today);
-    future.setDate(today.getDate() + 30); // 30 hari kedepan
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const future = new Date(now);
+    future.setDate(now.getDate() + 35); // 35 hari kedepan
 
     const q = query(
         collection(db, 'surat'),
         where('opdId', '==', opdId),
         where('jenisSurat', '==', 'Undangan'),
         where('statusPenyelesaian', '!=', 'Diarsipkan'),
-        where('detailAgenda.tanggal', '>=', Timestamp.fromDate(today)),
-        where('detailAgenda.tanggal', '<', Timestamp.fromDate(future)),
+        where('detailAgenda.tanggal', '>=', Timestamp.fromDate(startOfMonth)),
+        where('detailAgenda.tanggal', '<=', Timestamp.fromDate(future)),
         orderBy('detailAgenda.tanggal', 'asc')
     );
     
@@ -47,16 +47,19 @@ const fetchAgendaUndangan = async (opdId: string) => {
 };
 
 const fetchJadwalInternal = async (opdId: string) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const future = new Date(today);
-    future.setDate(today.getDate() + 30);
+    const now = new Date();
+    // Rentang awal bulan berjalan (00:00:00) agar agenda internal bulan ini selalu tampil lengkap
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    const future = new Date(now);
+    future.setDate(now.getDate() + 35);
+    const endDate = new Date(Math.max(endOfMonth.getTime(), future.getTime()));
 
     const q = query(
         collection(db, "jadwalTempat"), 
         where("opdId", "==", opdId),
-        where('tanggalMulai', '>=', Timestamp.fromDate(today)), 
-        where('tanggalMulai', '<=', Timestamp.fromDate(future)),
+        where('tanggalMulai', '>=', Timestamp.fromDate(startOfMonth)), 
+        where('tanggalMulai', '<=', Timestamp.fromDate(endDate)),
         orderBy('tanggalMulai', 'asc')
     );
     const snap = await getDocs(q);
@@ -70,14 +73,14 @@ export const useAgendaData = () => {
         queryKey: ['agenda', 'undangan', userProfile?.opdId],
         queryFn: () => fetchAgendaUndangan(userProfile!.opdId),
         enabled: !!userProfile?.opdId,
-        staleTime: 1000 * 60 * 10, // Cache 10 menit
+        staleTime: 1000 * 60 * 3, // Cache 3 menit
     });
 
     const { data: internal = [], isLoading: loadInternal, refetch: refetchInternal } = useQuery({
         queryKey: ['agenda', 'internal', userProfile?.opdId],
         queryFn: () => fetchJadwalInternal(userProfile!.opdId),
         enabled: !!userProfile?.opdId,
-        staleTime: 1000 * 60 * 10, // Cache 10 menit
+        staleTime: 1000 * 60 * 3, // Cache 3 menit
     });
 
     return { 

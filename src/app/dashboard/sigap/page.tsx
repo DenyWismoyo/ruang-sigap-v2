@@ -252,11 +252,19 @@ export default function DashboardPage() {
   }, [agendaUndangan, currentDay, resolvePenerimaName]);
 
   const agendaInternalBulanIni = useMemo(() => {
-      return [...jadwalInternalList].sort((a, b) => {
-        const dateA = a.tanggalMulai.toMillis();
-        const dateB = b.tanggalMulai.toMillis();
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      return [...jadwalInternalList].filter(item => {
+        if (!item.tanggalMulai) return false;
+        const d = item.tanggalMulai.toDate ? item.tanggalMulai.toDate() : new Date(item.tanggalMulai as any);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }).sort((a, b) => {
+        const dateA = a.tanggalMulai?.toMillis ? a.tanggalMulai.toMillis() : (a.tanggalMulai?.toDate ? a.tanggalMulai.toDate().getTime() : 0);
+        const dateB = b.tanggalMulai?.toMillis ? b.tanggalMulai.toMillis() : (b.tanggalMulai?.toDate ? b.tanggalMulai.toDate().getTime() : 0);
         if (dateA !== dateB) return dateA - dateB;
-        return a.jamMulai.localeCompare(b.jamMulai);
+        return (a.jamMulai || '').localeCompare(b.jamMulai || '');
       });
   }, [jadwalInternalList]);
   
@@ -264,17 +272,20 @@ export default function DashboardPage() {
   const handleApprove = async (id: string) => {
       await updateDoc(doc(db, 'jadwalTempat', id), { status: 'Disetujui', ditinjauOleh: userProfile?.uid, tanggalDitinjau: Timestamp.now() });
       setIsDetailModalOpen(false);
+      refetchAgenda();
   };
 
   const handleReject = async (id: string, alasan: string) => {
       await updateDoc(doc(db, 'jadwalTempat', id), { status: 'Ditolak', alasanDitolak: alasan, ditinjauOleh: userProfile?.uid, tanggalDitinjau: Timestamp.now() });
       setIsDetailModalOpen(false);
+      refetchAgenda();
   };
 
   const handleDelete = async (id: string) => {
       if (window.confirm("Yakin ingin membatalkan dan menghapus jadwal ini?")) {
           await deleteDoc(doc(db, 'jadwalTempat', id));
           setIsDetailModalOpen(false);
+          refetchAgenda();
       }
   };
   
@@ -331,7 +342,15 @@ export default function DashboardPage() {
   
   // Ref untuk export
   const agendaRef = useRef<HTMLDivElement>(null);
-  const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const isAdminOrTU = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+    );
+  }, [userProfile]);
   const canUploadSurat = useMemo(() => {
     if (!userProfile) return false;
     return (
@@ -463,6 +482,15 @@ export default function DashboardPage() {
                     <div className="sg-section-header flex-col sm:flex-row gap-3">
                         <h3 className="sg-editorial-title flex items-center text-foreground"><CalendarDays size={18} className="mr-2 text-sg-blue"/> Agenda Internal Bulan Ini</h3>
                         <div className="flex flex-wrap items-center gap-2">
+                            <Link href="/dashboard/jadwal">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-8 px-2.5 text-xs border-border/80 text-foreground hover:bg-accent flex items-center gap-1.5"
+                                >
+                                    <Calendar size={14} className="text-primary" /> Buka Jadwal
+                                </Button>
+                            </Link>
                             <Button 
                                 onClick={() => setIsScanSuratInternalOpen(true)} 
                                 size="sm" 
@@ -540,7 +568,10 @@ export default function DashboardPage() {
        <JadwalFormModal 
             isOpen={isJadwalFormOpen}
             onClose={() => setIsJadwalFormOpen(false)}
-            onSuccess={() => { setIsJadwalFormOpen(false); }} 
+            onSuccess={() => { 
+                setIsJadwalFormOpen(false); 
+                if (refetchAgenda) refetchAgenda();
+            }} 
             jadwalToEdit={jadwalToEdit}
             selectedDate={new Date()}
             initialData={undefined}

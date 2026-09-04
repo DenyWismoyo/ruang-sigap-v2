@@ -257,11 +257,19 @@ export default function DashboardPage() {
   }, [agendaUndangan, currentDay, resolvePenerimaName]);
 
   const agendaInternalBulanIni = useMemo(() => {
-      return [...jadwalInternalList].sort((a, b) => {
-        const dateA = a.tanggalMulai.toMillis();
-        const dateB = b.tanggalMulai.toMillis();
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+
+      return [...jadwalInternalList].filter(item => {
+        if (!item.tanggalMulai) return false;
+        const d = item.tanggalMulai.toDate ? item.tanggalMulai.toDate() : new Date(item.tanggalMulai as any);
+        return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
+      }).sort((a, b) => {
+        const dateA = a.tanggalMulai?.toMillis ? a.tanggalMulai.toMillis() : (a.tanggalMulai?.toDate ? a.tanggalMulai.toDate().getTime() : 0);
+        const dateB = b.tanggalMulai?.toMillis ? b.tanggalMulai.toMillis() : (b.tanggalMulai?.toDate ? b.tanggalMulai.toDate().getTime() : 0);
         if (dateA !== dateB) return dateA - dateB;
-        return a.jamMulai.localeCompare(b.jamMulai);
+        return (a.jamMulai || '').localeCompare(b.jamMulai || '');
       });
   }, [jadwalInternalList]);
   
@@ -340,7 +348,15 @@ export default function DashboardPage() {
   
   // Ref untuk export
   const agendaRef = useRef<HTMLDivElement>(null);
-  const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const isAdminOrTU = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+    );
+  }, [userProfile]);
   const canUploadSurat = useMemo(() => {
     if (!userProfile) return false;
     return (
@@ -520,9 +536,20 @@ export default function DashboardPage() {
                             </div>
                             <h3 className="text-lg font-bold font-heading text-foreground">Agenda Internal Bulan Ini</h3>
                         </div>
-                        <div className="flex bg-muted rounded-lg p-1">
-                            <button onClick={() => setAgendaInternalView('table')} className={`p-1.5 rounded ${agendaInternalView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><List size={14}/></button>
-                            <button onClick={() => setAgendaInternalView('card')} className={`p-1.5 rounded ${agendaInternalView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={14}/></button>
+                        <div className="flex items-center gap-2">
+                            <Link href="/dashboard/jadwal">
+                                <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="h-8 px-2.5 text-xs border-border/80 text-foreground hover:bg-accent flex items-center gap-1.5"
+                                >
+                                    <Calendar size={14} className="text-primary" /> Buka Jadwal
+                                </Button>
+                            </Link>
+                            <div className="flex bg-muted rounded-lg p-1">
+                                <button onClick={() => setAgendaInternalView('table')} className={`p-1.5 rounded ${agendaInternalView === 'table' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><List size={14}/></button>
+                                <button onClick={() => setAgendaInternalView('card')} className={`p-1.5 rounded ${agendaInternalView === 'card' ? 'bg-background shadow text-primary' : 'text-muted-foreground'}`}><LayoutGrid size={14}/></button>
+                            </div>
                         </div>
                     </div>
                     <div className="p-0 flex-1">

@@ -142,6 +142,20 @@ Hindari font desktop yang terlalu besar di layar ponsel. Gunakan skala berikut:
 - **Container Boundaries**: Dilarang keras menggunakan `absolute -left-X` atau `absolute -right-X` pada elemen di dalam kontainer yang menggunakan `w-full` di tampilan mobile (`< 768px`). Hal ini akan menyebabkan elemen melampaui batas layar (terpotong) ketika kontainer induknya menggunakan `overflow-x-hidden`. Gunakan `w-[calc(100%-...)] ml-...` untuk memberi ruang margin, atau geser `absolute` tersebut ke ukuran positif pada mobile.
 - **Fluid Typography**: Dilarang keras menggunakan `text-5xl` (48px) ke atas untuk kalimat panjang di mobile. Batasi di `text-3xl` atau `text-4xl` untuk layar kecil (`< 768px`) dan terapkan ukuran raksasa hanya di `md:` atau `lg:`.
 
+### E. Standarisasi Modul Kalender & Jadwal pada Mobile Viewport (< 768px)
+1. **Segmented View Mode**:
+   - Tampilan mobile jadwal **WAJIB** menyediakan segmented tab switcher antara:
+     - `Daftar Agenda` (Card List View - Default)
+     - `Kalender Ringkas` (Compact Month Grid + Inspector Tanggal Terpilih)
+2. **Compact Header Actions**:
+   - Tombol aksi di header mobile tidak boleh menumpuk vertikal 3 baris. Gunakan layout 2-kolom seimbang (`grid grid-cols-2 gap-2`) untuk aksi utama (*Scan* & *Ajukan*).
+3. **Dot Indicator pada Grid Kalender Mobile**:
+   - Di mobile, jangan paksakan teks nama kegiatan panjang di dalam sel tanggal sempit ~45px. Gunakan dot indikator berwarna (Biru: Disetujui, Kuning: Menunggu Persetujuan) dan tampilkan detail agenda di bawah kalender saat tanggal disentuh.
+4. **Desktop Preservation**:
+   - Layar desktop (`md:` dan `lg:`) tetap mempertahankan grid 7-kolom luas (`min-h-[8rem]`) dan sidebar samping *Agenda Bulan Ini*.
+5. **Safe Bottom Padding**:
+   - Pastikan root container memiliki `pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6` agar seluruh baris kalender tidak tertutup FAB / Bottom Nav.
+
 ---
 
 ## 🔍 5. Panduan & Checklist Audit Menu SIGAP

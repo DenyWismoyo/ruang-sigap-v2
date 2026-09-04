@@ -227,6 +227,13 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
             } : {})
         };
 
+        const isApprover = Boolean(
+            userProfile?.role === 'admin_opd' ||
+            userProfile?.role === 'staf_tu' ||
+            userProfile?.role === 'super_admin' ||
+            userProfile?.additionalRoles?.includes('operator_surat')
+        );
+
         if (jadwalToEdit) {
             const jadwalRef = doc(db, 'jadwalTempat', jadwalToEdit.id!);
             const updatePayload = {
@@ -238,7 +245,7 @@ export default function JadwalFormModal({ isOpen, onClose, onSuccess, jadwalToEd
                 ...payload,
                 createdBy: userProfile!.uid,
                 createdAt: Timestamp.now(),
-                status: 'Disetujui' as const,
+                status: isApprover ? ('Disetujui' as const) : ('Menunggu Persetujuan' as const),
             });
         }
         

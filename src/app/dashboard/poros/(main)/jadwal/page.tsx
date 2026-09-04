@@ -1,4 +1,4 @@
-// Lokasi: src/app/dashboard/jadwal/page.tsx
+// Lokasi: src/app/dashboard/poros/(main)/jadwal/page.tsx
 // [MODIFIKASI EFISIENSI (Fase 3)]
 // - Mengganti `onSnapshot` (real-time) dengan `getDocs` (sekali ambil).
 // - Data sekarang dimuat menggunakan `fetchData` (useCallback).
@@ -9,21 +9,22 @@
 // - Mengganti <div> untuk panel "Menunggu Persetujuan" dan "Agenda" dengan <Card>.
 // - Menggunakan <ScrollArea> untuk daftar agenda.
 // - [PENYEMPURNAAN] Menggunakan 'border-border' untuk kalender.
-// [PERBAIKAN DARK MODE v6]
-// - Mengganti semua kelas `dark:...` kustom dengan kelas semantik shadcn/ui.
+// [PERBAIKAN DARK MODE v6 & MOBILE FIRST REFINEMENT]
+// - Mobile Segmented Switcher (Daftar Agenda vs Kalender Interaktif).
+// - Mobile Compact Header Actions.
+// - Dot indicator badges pada kalender ponsel & Safe bottom padding.
 
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, onSnapshot, query, where, Timestamp, doc, updateDoc, deleteDoc, getDocs } from 'firebase/firestore';
+import { collection, query, where, Timestamp, doc, getDocs } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
 import { JadwalTempat } from '@/types';
-import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, MapPin, Video, ExternalLink, Users, List, LayoutGrid } from 'lucide-react';
+import { Plus, ChevronLeft, ChevronRight, AlertTriangle, CalendarDays, Clock, MapPin, ExternalLink, Users, List, LayoutGrid, Calendar as CalendarIcon } from 'lucide-react';
 import JadwalFormModal from './components/JadwalFormModal';
 import JadwalDetailModal from './components/JadwalDetailModal';
 import { useJadwalActions } from '@/app/dashboard/poros/hooks/useJadwalActions';
-import Link from 'next/link';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
@@ -34,8 +35,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 // --- Akhir Impor Shadcn ---
-
 
 export default function JadwalInternalPage() {
     const { userProfile } = useUserAuth();
@@ -49,12 +50,24 @@ export default function JadwalInternalPage() {
     const [selectedJadwal, setSelectedJadwal] = useState<JadwalTempat | null>(null);
     const [selectedDateForForm, setSelectedDateForForm] = useState(new Date());
 
+    // Mobile View State
+    const [mobileTab, setMobileTab] = useState<'agenda' | 'kalender'>('agenda');
+    const [selectedMobileDate, setSelectedMobileDate] = useState<Date>(new Date());
+
     const [loading, setLoading] = useState(true);
     const [agendaInternalView, setAgendaInternalView] = useState<'table' | 'card'>('card');
     
     const { handleApprove, handleReject, handleDelete } = useJadwalActions();
 
-    const isAdmin = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+    const isAdmin = useMemo(() => {
+        if (!userProfile) return false;
+        return (
+            userProfile.role === 'admin_opd' ||
+            userProfile.role === 'staf_tu' ||
+            userProfile.role === 'super_admin' ||
+            Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+        );
+    }, [userProfile]);
 
     const fetchData = useCallback(async () => {
         if (!userProfile?.opdId) return;
@@ -84,9 +97,7 @@ export default function JadwalInternalPage() {
     const handleOpenDetailModal = (jadwal: JadwalTempat) => {
         setSelectedJadwal(jadwal);
         setIsDetailModalOpen(true);
-    }
-
-    // Fungsi handleApprove, handleReject, handleDelete manual dihapus dan menggunakan useJadwalActions
+    };
 
     const daysInMonth = useMemo(() => {
         const date = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
@@ -106,7 +117,13 @@ export default function JadwalInternalPage() {
         setCurrentDate(prev => new Date(prev.getFullYear(), prev.getMonth() + offset, 1));
     };
 
-    const getJadwalForDate = (date: Date): JadwalTempat[] => {
+    const goToToday = () => {
+        const now = new Date();
+        setCurrentDate(now);
+        setSelectedMobileDate(now);
+    };
+
+    const getJadwalForDate = useCallback((date: Date): JadwalTempat[] => {
         return jadwalList.filter(j => {
             if (!j.tanggalMulai?.toDate) return false;
             const jadwalDate = j.tanggalMulai.toDate();
@@ -114,7 +131,7 @@ export default function JadwalInternalPage() {
                    jadwalDate.getMonth() === date.getMonth() &&
                    jadwalDate.getDate() === date.getDate();
         }).sort((a,b) => a.jamMulai.localeCompare(b.jamMulai));
-    };
+    }, [jadwalList]);
 
     const pendingApprovals = useMemo(() => jadwalList.filter(j => j.status === 'Menunggu Persetujuan'), [jadwalList]);
 
@@ -135,21 +152,41 @@ export default function JadwalInternalPage() {
             });
     }, [jadwalList, currentDate]);
 
+    const mobileSelectedDateJadwal = useMemo(() => {
+        return getJadwalForDate(selectedMobileDate);
+    }, [getJadwalForDate, selectedMobileDate]);
+
     return (
-        <div>
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-                {/* [PERBAIKAN DARK MODE] */}
-                <h1 className="text-3xl font-bold text-foreground">Jadwal Internal</h1>
-                <Button onClick={() => handleOpenFormModal(new Date())} className="mt-4 md:mt-0">
+        <div className="pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 md:mb-6 gap-3">
+                <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-primary/10 rounded-xl text-primary flex-shrink-0">
+                        <CalendarDays className="w-5 h-5 md:w-6 md:h-6" />
+                    </div>
+                    <div>
+                        <h1 className="text-xl md:text-3xl font-bold text-foreground">Jadwal Internal</h1>
+                        <p className="text-xs md:text-sm text-muted-foreground mt-0.5">Kelola agenda pertemuan, rapat internal, dan kegiatan instansi</p>
+                    </div>
+                </div>
+
+                {/* Desktop Action */}
+                <Button onClick={() => handleOpenFormModal(new Date())} className="hidden sm:inline-flex shadow-sm">
                     <Plus size={16} className="mr-2" /> Ajukan Jadwal Baru
+                </Button>
+
+                {/* Mobile Action */}
+                <Button onClick={() => handleOpenFormModal(new Date())} size="sm" className="sm:hidden w-full text-xs font-semibold h-9 shadow-sm">
+                    <Plus size={14} className="mr-1.5" /> Ajukan Jadwal Baru
                 </Button>
             </div>
 
             {isAdmin && pendingApprovals.length > 0 && (
-                <Card className="mb-6 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/30">
-                    <CardHeader className="pb-4">
-                        <CardTitle className="text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center">
-                            <AlertTriangle size={18} className="mr-2"/>Menunggu Persetujuan ({pendingApprovals.length})
+                <Card className="mb-4 md:mb-6 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/30">
+                    <CardHeader className="pb-3 md:pb-4">
+                        <CardTitle className="text-sm md:text-lg font-semibold text-yellow-800 dark:text-yellow-300 flex items-center">
+                            <AlertTriangle size={18} className="mr-2 flex-shrink-0"/>
+                            <span>Menunggu Persetujuan ({pendingApprovals.length})</span>
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -158,12 +195,11 @@ export default function JadwalInternalPage() {
                                 key={jadwal.id} 
                                 onClick={() => handleOpenDetailModal(jadwal)} 
                                 variant="secondary"
-                                // [PERBAIKAN DARK MODE]
-                                className="h-auto w-full justify-start text-left"
+                                className="h-auto w-full justify-start text-left p-2.5"
                              >
-                                <div className="flex flex-col">
-                                    <p className="font-bold truncate">{jadwal.kegiatan}</p>
-                                    <p className="text-xs text-muted-foreground">{jadwal.namaTempat}, {jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate().toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : ''} {jadwal.jamMulai}</p>
+                                <div className="flex flex-col min-w-0">
+                                    <p className="font-bold text-xs md:text-sm truncate">{jadwal.kegiatan}</p>
+                                    <p className="text-[11px] md:text-xs text-muted-foreground truncate">{jadwal.namaTempat}, {jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate().toLocaleDateString('id-ID', {day:'2-digit', month:'short'}) : ''} {jadwal.jamMulai}</p>
                                 </div>
                              </Button>
                         ))}
@@ -171,8 +207,277 @@ export default function JadwalInternalPage() {
                 </Card>
             )}
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* ========================================================= */}
+            {/* MOBILE ONLY: SEGMENTED SWITCHER (Daftar Agenda / Kalender) */}
+            {/* ========================================================= */}
+            <div className="block md:hidden mb-4">
+                <div className="flex items-center bg-muted/60 p-1 rounded-xl border border-border/40">
+                    <button
+                        type="button"
+                        onClick={() => setMobileTab('agenda')}
+                        className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                            mobileTab === 'agenda' 
+                                ? 'bg-background text-foreground shadow-sm' 
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <List size={14} />
+                        <span>Daftar Agenda</span>
+                        {agendaBulanIni.length > 0 && (
+                            <span className="ml-1 px-1.5 py-0.2 text-[10px] bg-primary/10 text-primary font-bold rounded-full">
+                                {agendaBulanIni.length}
+                            </span>
+                        )}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setMobileTab('kalender')}
+                        className={`flex-1 py-2 text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 transition-all ${
+                            mobileTab === 'kalender' 
+                                ? 'bg-background text-foreground shadow-sm' 
+                                : 'text-muted-foreground hover:text-foreground'
+                        }`}
+                    >
+                        <CalendarIcon size={14} />
+                        <span>Kalender Interaktif</span>
+                    </button>
+                </div>
 
+                {/* Mobile Tab 1: DAFTAR AGENDA */}
+                {mobileTab === 'agenda' && (
+                    <div className="mt-3 space-y-3">
+                        {/* Month Selector Bar */}
+                        <div className="flex items-center justify-between px-3 py-2 bg-card rounded-xl border border-border/40 shadow-sm">
+                            <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => changeMonth(-1)}>
+                                <ChevronLeft size={16} />
+                            </Button>
+                            <span className="text-xs font-bold text-foreground">
+                                {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                            </span>
+                            <div className="flex items-center gap-1">
+                                <Button variant="ghost" size="sm" className="h-7 text-[11px] px-2 font-medium" onClick={goToToday}>
+                                    Hari Ini
+                                </Button>
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => changeMonth(1)}>
+                                    <ChevronRight size={16} />
+                                </Button>
+                            </div>
+                        </div>
+
+                        {loading && (
+                            <div className="py-8 text-center text-xs text-muted-foreground">
+                                Memuat agenda...
+                            </div>
+                        )}
+
+                        {!loading && agendaBulanIni.length === 0 && (
+                            <div className="p-8 text-center bg-card rounded-xl border border-dashed border-border/60">
+                                <CalendarDays className="w-10 h-10 text-muted-foreground/50 mx-auto mb-2" />
+                                <p className="text-xs font-semibold text-foreground">Tidak ada agenda di bulan ini</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5">Ketuk tombol di atas untuk mengajukan kegiatan baru.</p>
+                                <Button 
+                                    onClick={() => handleOpenFormModal(new Date())} 
+                                    size="sm" 
+                                    variant="outline" 
+                                    className="mt-3 text-xs h-8"
+                                >
+                                    <Plus size={13} className="mr-1" /> Ajukan Jadwal
+                                </Button>
+                            </div>
+                        )}
+
+                        {!loading && agendaBulanIni.length > 0 && agendaBulanIni.map(jadwal => {
+                            const isApproved = jadwal.status === 'Disetujui';
+                            const isPending = jadwal.status === 'Menunggu Persetujuan';
+                            const dateObj = jadwal.tanggalMulai?.toDate ? jadwal.tanggalMulai.toDate() : null;
+
+                            return (
+                                <div 
+                                    key={jadwal.id} 
+                                    onClick={() => handleOpenDetailModal(jadwal)}
+                                    className="p-3.5 bg-card rounded-xl border border-border/50 shadow-sm active:scale-[0.99] transition-all"
+                                >
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div className="flex items-center gap-1.5 text-[11px] font-semibold text-primary">
+                                            <CalendarDays size={13} className="flex-shrink-0" />
+                                            <span>
+                                                {dateObj ? dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' }) : 'N/A'}
+                                            </span>
+                                            <span className="text-muted-foreground">•</span>
+                                            <Clock size={13} className="flex-shrink-0" />
+                                            <span>{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
+                                        </div>
+                                        <Badge 
+                                            variant="secondary"
+                                            className={`text-[10px] px-2 py-0.5 font-medium ${
+                                                isApproved ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300' :
+                                                isPending ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300' :
+                                                'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                                            }`}
+                                        >
+                                            {jadwal.status}
+                                        </Badge>
+                                    </div>
+
+                                    <h4 className="text-sm font-bold text-foreground mt-2 leading-snug">
+                                        {jadwal.kegiatan}
+                                    </h4>
+
+                                    <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                                        {jadwal.jenis === 'Virtual' && jadwal.tautanRapat ? (
+                                            <a 
+                                                href={jadwal.tautanRapat} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer" 
+                                                onClick={(e) => e.stopPropagation()} 
+                                                className="flex items-center text-blue-600 hover:underline"
+                                            >
+                                                <ExternalLink size={12} className="mr-1"/> Link Rapat Virtual
+                                            </a>
+                                        ) : (
+                                            <span className="flex items-center">
+                                                <MapPin size={12} className="mr-1 text-muted-foreground flex-shrink-0"/> 
+                                                <span className="truncate max-w-[200px]">{jadwal.namaTempat}</span>
+                                            </span>
+                                        )}
+
+                                        {jadwal.jumlahPersonil && (
+                                            <span className="flex items-center">
+                                                <Users size={12} className="mr-1 text-muted-foreground flex-shrink-0"/> 
+                                                <span>{jadwal.jumlahPersonil} Personil</span>
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })}
+                    </div>
+                )}
+
+                {/* Mobile Tab 2: KALENDER INTERAKTIF RINGKAS */}
+                {mobileTab === 'kalender' && (
+                    <div className="mt-3 space-y-3">
+                        <div className="bg-card rounded-xl border border-border/50 shadow-sm overflow-hidden p-3">
+                            {/* Month Nav */}
+                            <div className="flex items-center justify-between mb-3 pb-2 border-b border-border/30">
+                                <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => changeMonth(-1)}>
+                                    <ChevronLeft size={16} />
+                                </Button>
+                                <span className="text-xs font-bold text-foreground">
+                                    {currentDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })}
+                                </span>
+                                <div className="flex items-center gap-1">
+                                    <Button variant="ghost" size="sm" className="h-7 text-[11px] px-2 font-medium" onClick={goToToday}>
+                                        Hari Ini
+                                    </Button>
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => changeMonth(1)}>
+                                        <ChevronRight size={16} />
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Compact Grid */}
+                            <div className="grid grid-cols-7 gap-1 text-center">
+                                {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
+                                    <div key={day} className="text-[10px] font-bold text-muted-foreground py-1">
+                                        {day}
+                                    </div>
+                                ))}
+
+                                {Array.from({ length: firstDayOfMonth }).map((_, i) => (
+                                    <div key={`empty-mob-${i}`} className="h-10"></div>
+                                ))}
+
+                                {daysInMonth.map(date => {
+                                    const events = getJadwalForDate(date);
+                                    const isToday = date.toDateString() === new Date().toDateString();
+                                    const isSelected = date.toDateString() === selectedMobileDate.toDateString();
+                                    const hasApproved = events.some(e => e.status === 'Disetujui');
+                                    const hasPending = events.some(e => e.status === 'Menunggu Persetujuan');
+
+                                    return (
+                                        <button
+                                            key={date.toString()}
+                                            type="button"
+                                            onClick={() => setSelectedMobileDate(date)}
+                                            className={`h-11 rounded-xl flex flex-col items-center justify-center relative transition-all ${
+                                                isSelected 
+                                                    ? 'bg-primary text-primary-foreground font-bold shadow-sm' 
+                                                    : isToday 
+                                                    ? 'border border-primary text-primary font-bold bg-primary/5' 
+                                                    : 'hover:bg-accent/50 text-foreground font-medium'
+                                            }`}
+                                        >
+                                            <span className="text-xs leading-none">{date.getDate()}</span>
+                                            
+                                            {/* Event indicator dots */}
+                                            {events.length > 0 && (
+                                                <div className="flex items-center gap-0.5 mt-1">
+                                                    {hasApproved && (
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-primary-foreground' : 'bg-blue-600 dark:bg-blue-400'}`} />
+                                                    )}
+                                                    {hasPending && (
+                                                        <span className={`w-1.5 h-1.5 rounded-full ${isSelected ? 'bg-yellow-200' : 'bg-amber-500 dark:bg-amber-400'}`} />
+                                                    )}
+                                                </div>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        {/* Inspector Tanggal Terpilih */}
+                        <div className="bg-card rounded-xl border border-border/50 shadow-sm p-3.5">
+                            <div className="flex items-center justify-between pb-2 mb-2 border-b border-border/30">
+                                <span className="text-xs font-bold text-foreground">
+                                    Agenda {selectedMobileDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'short' })}
+                                </span>
+                                <Button 
+                                    onClick={() => handleOpenFormModal(selectedMobileDate)} 
+                                    size="sm" 
+                                    variant="ghost" 
+                                    className="h-7 text-[11px] px-2 text-primary font-semibold hover:bg-primary/10"
+                                >
+                                    <Plus size={13} className="mr-1" /> Tambah
+                                </Button>
+                            </div>
+
+                            {mobileSelectedDateJadwal.length === 0 ? (
+                                <p className="text-xs text-muted-foreground py-3 text-center">
+                                    Tidak ada kegiatan pada tanggal ini.
+                                </p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {mobileSelectedDateJadwal.map(jadwal => (
+                                        <div 
+                                            key={jadwal.id}
+                                            onClick={() => handleOpenDetailModal(jadwal)}
+                                            className="p-2.5 bg-background rounded-lg border border-border/40 shadow-xs cursor-pointer active:scale-[0.99] transition-all"
+                                        >
+                                            <div className="flex items-center justify-between gap-1">
+                                                <span className="text-xs font-bold text-primary">{jadwal.jamMulai} - {jadwal.jamSelesai}</span>
+                                                <Badge variant="secondary" className="text-[9px] px-1.5 py-0 font-medium">
+                                                    {jadwal.status}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-xs font-semibold text-foreground mt-1 line-clamp-1">{jadwal.kegiatan}</p>
+                                            <p className="text-[11px] text-muted-foreground flex items-center mt-0.5">
+                                                <MapPin size={11} className="mr-1 flex-shrink-0" /> {jadwal.namaTempat}
+                                            </p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* ========================================================= */}
+            {/* DESKTOP VIEW: 7-COL CALENDAR GRID + AGENDA BULAN INI       */}
+            {/* ========================================================= */}
+            <div className="hidden md:grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Card className="lg:col-span-2 shadow-md border-border overflow-hidden">
                     <CardHeader className="p-4 flex flex-row items-center justify-between border-b border-border">
                         <Button variant="ghost" size="icon" onClick={() => changeMonth(-1)}>
@@ -184,7 +489,6 @@ export default function JadwalInternalPage() {
                         </Button>
                     </CardHeader>
                     <CardContent className="p-0">
-                        {/* [PERBAIKAN DARK MODE] */}
                         <div className="grid grid-cols-7 border-t border-border">
                             {['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'].map(day => (
                                 <div key={day} className="text-center font-bold text-sm py-2 border-b border-r border-border text-muted-foreground">{day}</div>
@@ -256,7 +560,6 @@ export default function JadwalInternalPage() {
                                 )}
                                 
                                 {!loading && agendaBulanIni.length > 0 && agendaInternalView === 'card' && agendaBulanIni.map(jadwal => (
-                                    // [PERBAIKAN DARK MODE]
                                     <div key={jadwal.id} onClick={() => handleOpenDetailModal(jadwal)} className="p-3 bg-background rounded-lg border border-border hover:bg-muted cursor-pointer">
                                         <p className="font-semibold text-foreground text-sm line-clamp-2">{jadwal.kegiatan}</p>
                                         <div className="mt-1 space-y-0.5 text-xs text-muted-foreground">
@@ -285,7 +588,6 @@ export default function JadwalInternalPage() {
                                      <table className="w-full text-left text-sm">
                                         <tbody>
                                             {agendaBulanIni.map(jadwal => (
-                                                // [PERBAIKAN DARK MODE]
                                                 <tr key={jadwal.id} onClick={() => handleOpenDetailModal(jadwal)} className="border-b border-border hover:bg-muted cursor-pointer">
                                                     <td className="p-2 font-medium text-foreground whitespace-nowrap">
                                                         <div className="flex flex-col">
@@ -306,7 +608,6 @@ export default function JadwalInternalPage() {
                         </ScrollArea>
                     </CardContent>
                 </Card>
-
             </div>
 
             <JadwalFormModal

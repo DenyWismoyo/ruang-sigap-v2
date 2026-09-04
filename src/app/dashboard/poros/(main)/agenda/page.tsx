@@ -102,7 +102,15 @@ export default function AgendaPage() {
 
   const { handleApprove, handleReject, handleDelete } = useJadwalActions();
 
-  const isAdminOrTU = useMemo(() => userProfile?.role === 'admin_opd' || userProfile?.role === 'staf_tu', [userProfile]);
+  const isAdminOrTU = useMemo(() => {
+    if (!userProfile) return false;
+    return (
+      userProfile.role === 'admin_opd' ||
+      userProfile.role === 'staf_tu' ||
+      userProfile.role === 'super_admin' ||
+      Boolean(userProfile.additionalRoles?.includes('operator_surat'))
+    );
+  }, [userProfile]);
 
   // 1. Fetch Cache Pengguna
   const fetchLocalCache = useCallback(async () => {

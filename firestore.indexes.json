@@ -1069,6 +1069,174 @@
           "order": "DESCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "presensi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presensi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presensi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "userNip",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presensi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "statusKehadiran",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "presensi",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "klasterStruktur",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggal",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalTempat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalMulai",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalTempat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalMulai",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalTempat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalMulai",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalTempat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "jadwalTempat",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "opdId",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdBy",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "tanggalMulai",
+          "order": "DESCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
