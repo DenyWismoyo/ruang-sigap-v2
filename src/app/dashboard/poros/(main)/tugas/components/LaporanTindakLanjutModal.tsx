@@ -43,7 +43,19 @@ export function LaporanTindakLanjutModal({
                 alert("Google Drive Uploader belum siap. Mohon tunggu atau muat ulang halaman.");
                 return;
             }
-            const res = await uploadFile(file, 'Laporan_Tindak_Lanjut');
+            const dateObj = new Date();
+            const dateStr = dateObj.toISOString().split('T')[0].replace(/-/g, '');
+            const monthIndex = dateObj.getMonth() + 1;
+            const monthName = dateObj.toLocaleString('id-ID', { month: 'long' });
+            const year = dateObj.getFullYear();
+            const subFolderName = `${monthIndex}. ${year} ${monthName} - Bukti E Kinerja`;
+
+            const parts = file.name.split('.');
+            const ext = parts.length > 1 ? '.' + parts.pop() : '.pdf';
+            const safeNama = (namaTugas || 'Tugas').replace(/[^a-zA-Z0-9 ]/g, '').substring(0, 40).trim();
+            const fileName = `${dateStr} - Laporan_${safeNama}${ext}`;
+
+            const res = await uploadFile(file, fileName, undefined, subFolderName);
             if (res) {
                 fileUrl = res;
             } else {

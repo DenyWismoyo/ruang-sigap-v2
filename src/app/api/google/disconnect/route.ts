@@ -12,18 +12,25 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const userId = searchParams.get('userId'); // Ini adalah NIP
+  const redirectUrl = searchParams.get('redirectUrl');
+  const targetPath = (redirectUrl && redirectUrl !== '/dashboard/profil') ? redirectUrl : '/dashboard';
+
+  const getRedirect = (params: string) => {
+    const sep = targetPath.includes('?') ? '&' : '?';
+    return `${baseDomain}${targetPath}${sep}${params}`;
+  };
 
   // Validasi parameter
   if (!userId || userId === 'undefined' || userId === 'null') {
     console.warn('Disconnect attempt failed: userId missing or invalid.');
-    return NextResponse.redirect(`${baseDomain}/dashboard/profil?error=invalid_user_session`);
+    return NextResponse.redirect(getRedirect('error=invalid_user_session'));
   }
 
   try {
     // [PERBAIKAN ERROR BUILD] Cek apakah db sudah terinisialisasi
     if (!db) {
         console.error("Server Error: Database connection is missing.");
-        return NextResponse.redirect(`${baseDomain}/dashboard/profil?error=server_config_missing`);
+        return NextResponse.redirect(getRedirect('error=server_config_missing'));
     }
 
     const userRef = db.collection('users').doc(userId);
@@ -42,10 +49,10 @@ export async function GET(request: NextRequest) {
         console.warn(`Dokumen user tidak ditemukan untuk NIP: ${userId}`);
     }
     
-    return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=calendar_disconnected`);
+    return NextResponse.redirect(getRedirect('success=google_disconnected'));
   
   } catch (error: any) {
     console.error('Error disconnecting Google Calendar:', error);
-    return NextResponse.redirect(`${baseDomain}/dashboard/profil?error=${encodeURIComponent(error.message)}`);
+    return NextResponse.redirect(getRedirect(`error=${encodeURIComponent(error.message)}`));
   }
 }

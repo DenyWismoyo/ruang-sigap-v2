@@ -123,3 +123,58 @@ export async function compressImage(file: File, quality: number = 0.7, maxWidth:
       image.onerror = (err) => reject(err);
     });
 }
+
+/**
+ * Ekstraksi Folder ID Google Drive secara aman dari berbagai variasi URL maupun raw ID.
+ * Mendukung format:
+ * - https://drive.google.com/drive/folders/1abc...
+ * - https://drive.google.com/drive/u/0/folders/1abc...
+ * - https://drive.google.com/drive/u/1/folders/1abc...?usp=sharing
+ * - https://drive.google.com/open?id=1abc...
+ * - https://drive.google.com/file/d/1abc...
+ * - Raw ID: 1abc...
+ */
+export function extractGoogleDriveFolderId(input: string | null | undefined): string {
+  if (!input) return '';
+  const trimmed = input.trim();
+  // Tangani format /folders/{id}, /u/{n}/folders/{id}, open?id={id}, file/d/{id}
+  const match = trimmed.match(/(?:folders\/|open\?id=|file\/d\/)([a-zA-Z0-9_-]{15,})/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // Jika pengguna langsung memasukkan Folder ID (biasanya 15-50 karakter alphanumeric/dash/underscore)
+  const cleanIdMatch = trimmed.match(/^[a-zA-Z0-9_-]{15,50}$/);
+  if (cleanIdMatch) {
+    return trimmed;
+  }
+  return trimmed;
+}
+
+/**
+ * Format tanggal yang aman terhadap Timestamp Firestore, JS Date, ISO String, detik, atau null/undefined
+ */
+export function safeFormatDate(
+  dateInput: any,
+  options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'long', year: 'numeric' },
+  locale: string = 'id-ID'
+): string {
+  if (!dateInput) return '-';
+  try {
+    if (typeof dateInput?.toDate === 'function') {
+      return dateInput.toDate().toLocaleDateString(locale, options);
+    }
+    if (dateInput instanceof Date) {
+      return dateInput.toLocaleDateString(locale, options);
+    }
+    if (typeof dateInput === 'string' || typeof dateInput === 'number') {
+      const parsed = new Date(dateInput);
+      if (!isNaN(parsed.getTime())) {
+        return parsed.toLocaleDateString(locale, options);
+      }
+    }
+    if (dateInput?.seconds) {
+      return new Date(dateInput.seconds * 1000).toLocaleDateString(locale, options);
+    }
+  } catch (_) {}
+  return '-';
+}

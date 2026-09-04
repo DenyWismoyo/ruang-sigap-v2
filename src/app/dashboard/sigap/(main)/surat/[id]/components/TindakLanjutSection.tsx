@@ -77,7 +77,7 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
   const effectiveJabatanId = actingJabatanProfile?.id || jabatanProfile?.id;
   
   // --- HOOKS ---
-  const { uploadFile, uploadStatus, errorMessage: uploadError, isReady } = useGoogleDriveUploader();
+  const { uploadFile, uploadStatus, errorMessage: uploadError, isReady, isGoogleConnected, isFolderConfigured } = useGoogleDriveUploader();
   const { kirimTindakLanjut, editTindakLanjut, isProcessing } = useSuratActions(); 
 
   // --- STATE FOR NEW KEEP NOTES ---
@@ -323,12 +323,23 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
             setError("Upload gagal: ID Folder Google Drive belum diatur di Profil Anda.");
             return;
         }
+        if (!userProfile?.googleRefreshToken) {
+            setError("Upload gagal: Akun Google Anda belum terhubung. Harap hubungkan akun Google di menu Profil.");
+            return;
+        }
+
+        const dateObj = new Date();
+        const monthIndex = dateObj.getMonth() + 1;
+        const monthName = dateObj.toLocaleString('id-ID', { month: 'long' });
+        const year = dateObj.getFullYear();
+        const subFolderName = `${monthIndex}. ${year} ${monthName} - Bukti E Kinerja`;
 
         uploadedFileName = getSuggestedFileName(file);
         const link = await uploadFile(
             file, 
             uploadedFileName, 
-            userProfile.googleDriveReportLink
+            userProfile.googleDriveReportLink,
+            subFolderName
         );
 
         if (link) {
@@ -548,9 +559,11 @@ export default function TindakLanjutSection({ surat, disposisiList, tindakLanjut
                                     </Label>
                                     <Input id="file-upload-keep" type="file" ref={fileInputRef} onChange={handleFileChange} capture="environment" accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx" disabled={isBusy || !isReady} className="hidden" />
                                     
-                                    {!userProfile?.googleDriveReportLink && (
-                                        <span className="text-[10px] text-red-600 font-semibold bg-red-100 px-2 py-1 rounded-md">ID GDrive belum diatur</span>
-                                    )}
+                                    {!userProfile?.googleDriveReportLink ? (
+                                        <span className="text-[10px] text-red-600 font-semibold bg-red-100 dark:bg-red-950/40 px-2 py-1 rounded-md">Folder GDrive belum diatur</span>
+                                    ) : !userProfile?.googleRefreshToken ? (
+                                        <span className="text-[10px] text-amber-600 font-semibold bg-amber-100 dark:bg-amber-950/40 px-2 py-1 rounded-md">Akun Google belum terhubung</span>
+                                    ) : null}
                                 </div>
                                 
                                 {file && uploadStatus === 'idle' && (

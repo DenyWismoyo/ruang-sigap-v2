@@ -1,14 +1,14 @@
 ---
 name: sigap-google-drive-integration
-description: Panduan integrasi Google Drive di RUANG SIGAP — OAuth flow, upload bukti kinerja, refresh token, dan API route /api/google/. Gunakan saat menambahkan fitur upload ke Drive atau mengelola koneksi Google user.
+description: Panduan integrasi Google Drive di RUANG SIGAP & POROS — OAuth flow, upload bukti kinerja, sanitasi folder ID, refresh token, dukungan Shared Drive, toleransi domain Google Workspace, dan API route /api/google/.
 ---
 
-# Google Drive Integration — RUANG SIGAP
+# Google Drive Integration — RUANG SIGAP & POROS
 
 ```
-API Routes   : /api/google/authorize, /api/google/callback, /api/google/upload
-User Fields  : googleRefreshToken, googleAccessToken, googleTokenExpiry
-Feature Gate : (tidak ada gate khusus — tersedia untuk semua user)
+API Routes   : /api/google/auth, /api/google/callback, /api/google/upload-bukti, /api/google/disconnect
+User Fields  : googleRefreshToken, googleAccessToken, googleTokenExpiry, googleEmail, googleDriveReportLink
+Feature Gate : (Tersedia untuk semua user yang memiliki NIP)
 ```
 
 ---
@@ -16,157 +16,154 @@ Feature Gate : (tidak ada gate khusus — tersedia untuk semua user)
 ## 🔐 Alur OAuth Google Drive
 
 ```
-[User klik "Hubungkan Google"] 
-    → /api/google/authorize 
-    → Google OAuth Consent Screen 
-    → Callback ke /api/google/callback 
-    → Simpan refresh_token ke users/{nip} 
-    → Redirect ke halaman asal
+[User klik "Hubungkan Akun Google"] 
+    → /api/google/auth?state=<base64url(userId, redirectUrl)>
+    → Google OAuth Consent Screen (Scope: drive, calendar.events, profile, email)
+    → Callback ke /api/google/callback?code=...&state=...
+    → Simpan tokens ke users/{nip}
+    → Redirect dinamis ke statePayload.redirectUrl (misal /dashboard/sigap/bukti-kinerja)
+```
+
+> [!IMPORTANT]
+> **Scope OAuth Wajib**:
+> Selain scope profil dan kalender, wajib menyertakan `https://www.googleapis.com/auth/drive` (bukan hanya `drive.file`) agar sistem berhak membuat subfolder dan menyimpan file ke dalam folder buatan pengguna di Google Drive Web.
+
+---
+
+## 1️⃣ Universal Folder ID Extraction
+
+Selalu gunakan `extractGoogleDriveFolderId` dari `@/lib/utils` di frontend maupun backend:
+
+```typescript
+import { extractGoogleDriveFolderId } from '@/lib/utils';
+
+// Mendukung format:
+// - https://drive.google.com/drive/folders/1abc...
+// - https://drive.google.com/drive/u/0/folders/1abc...
+// - https://drive.google.com/drive/u/1/folders/1abc...?usp=sharing
+// - https://drive.google.com/open?id=1abc...
+// - Raw ID: 1abc...
+const cleanFolderId = extractGoogleDriveFolderId(rawInput);
 ```
 
 ---
 
-## 1️⃣ Cek Status Koneksi Google
+## 2️⃣ Cek Status Koneksi & Dual Guard di Menu Bukti Kinerja
+
+Menu Bukti Kinerja wajib memverifikasi **DUA** kondisi:
+1. `isFolderConfigured`: `!!userProfile?.googleDriveReportLink` (Folder ID terdaftar)
+2. `isGoogleConnected`: `!!userProfile?.googleRefreshToken` (Akun Google terotorisasi)
+
+Gunakan hook `useGoogleDriveUploader()`:
 
 ```tsx
-const { userProfile } = useUserAuth();
+const { 
+  uploadFile, 
+  uploadStatus, 
+  errorMessage, 
+  isReady, 
+  isGoogleConnected, 
+  isFolderConfigured 
+} = useGoogleDriveUploader();
 
-// Cek apakah Google Drive sudah terhubung
-const isGoogleConnected = !!userProfile?.googleRefreshToken;
-
-// Cek apakah access token masih valid
-const isTokenValid = userProfile?.googleTokenExpiry 
-  ? userProfile.googleTokenExpiry > Date.now() 
-  : false;
-
-return (
-  <div>
-    {isGoogleConnected ? (
-      <div className="flex items-center gap-2 text-sm text-green-600">
-        <CheckCircle className="size-4" />
-        <span>Google Drive terhubung ({userProfile.googleEmail})</span>
-      </div>
-    ) : (
-      <Button onClick={() => window.location.href = '/api/google/authorize'}>
-        <Google className="mr-2 size-4" />
-        Hubungkan Google Drive
-      </Button>
-    )}
-  </div>
-);
-```
-
----
-
-## 2️⃣ Upload File ke Google Drive
-
-Panggil endpoint `/api/google/upload` (sudah ada) untuk upload:
-
-```tsx
-async function uploadBuktiKinerjaToDrive(file: File, folderName: string) {
-  const { addToast } = useToast();
-  
-  // ✅ Kompres gambar sebelum upload
-  const processedFile = file.type.startsWith('image/') 
-    ? await compressImage(file, 0.8, 1920)
-    : file;
-  
-  const formData = new FormData();
-  formData.append('file', processedFile);
-  formData.append('folderName', folderName); // Nama folder di Drive
-
-  try {
-    const response = await fetch('/api/google/upload', {
-      method: 'POST',
-      body: formData,
+// Navigasi direct connect tanpa berpindah halaman
+const handleConnectGoogle = () => {
+  if (userProfile?.nip) {
+    const statePayload = JSON.stringify({ 
+      userId: userProfile.nip, 
+      redirectUrl: window.location.pathname 
     });
-
-    if (!response.ok) {
-      const error = await response.json();
-      
-      // Handle token expired — minta re-auth
-      if (error.code === 'TOKEN_EXPIRED') {
-        addToast({
-          type: 'warning',
-          title: 'Koneksi Google Expired',
-          message: 'Silakan hubungkan ulang akun Google Anda.',
-        });
-        window.location.href = '/api/google/authorize';
-        return null;
-      }
-      
-      throw new Error(error.message);
-    }
-
-    const { fileUrl, fileId } = await response.json();
-    return { fileUrl, fileId }; // URL untuk ditampilkan / disimpan ke Firestore
-    
-  } catch (error) {
-    addToast({ type: 'error', title: 'Upload Gagal', message: 'File tidak dapat diunggah ke Google Drive.' });
-    return null;
-  }
-}
-```
-
----
-
-## 3️⃣ Menyimpan Link Drive ke Firestore
-
-Setelah upload berhasil, simpan URL ke dokumen yang relevan:
-
-```tsx
-// Upload + simpan ke Firestore secara atomik
-const handleUploadBukti = async (file: File) => {
-  setIsUploading(true);
-  
-  try {
-    const result = await uploadBuktiKinerjaToDrive(file, `BuktiKinerja_${userProfile.nip}`);
-    if (!result) return;
-    
-    // Simpan link Drive ke dokumen bukti_kinerja
-    await addDoc(collection(db, 'bukti_kinerja'), {
-      userId: userProfile.uid,
-      nip: userProfile.nip,
-      opdId: userProfile.opdId,
-      namaFile: file.name,
-      driveUrl: result.fileUrl,      // URL untuk preview/download
-      driveFileId: result.fileId,    // ID file di Google Drive
-      ukuranBytes: file.size,
-      createdAt: serverTimestamp(),
-    });
-    
-    // Catat ke logbook
-    writeLogbookEntry(userProfile.uid, userProfile.opdId, {
-      deskripsi: `Mengunggah bukti kinerja: ${file.name}`,
-      kategori: 'Laporan',
-    });
-    
-    addToast({ type: 'success', title: 'Upload Berhasil' });
-    
-  } finally {
-    setIsUploading(false);
+    const state = btoa(statePayload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    window.location.href = `/api/google/auth?state=${state}`;
   }
 };
 ```
 
 ---
 
-## 4️⃣ Google Calendar (Jika Diperlukan)
+## 3️⃣ Upload File ke Google Drive Backend (`/api/google/upload-bukti`)
 
-Untuk membuat event di Google Calendar pengguna (fitur Agenda):
+Aturan wajib di backend route handler:
 
-```typescript
-// Cloud Function — menggunakan createCalendarEvent dari utils/helpers.ts
-import { createCalendarEvent } from '../utils/helpers';
+1. **Sanitasi Folder ID**:
+   ```typescript
+   const folderId = extractGoogleDriveFolderId(rawFolderId);
+   ```
+2. **Dukungan Shared Drive OPD**:
+   Sertakan `supportsAllDrives: true` dan `includeItemsFromAllDrives: true` pada `drive.files.list` dan `drive.files.create`.
+3. **Toleransi Akun Dinas (Google Workspace)**:
+   Bungkus pembagian publik (`reader: anyone`) dalam `try/catch` agar tidak menggagalkan upload jika akun dinas memiliki domain policy ketat:
+   ```typescript
+   try {
+     await drive.permissions.create({
+       fileId: fileId,
+       requestBody: { role: 'reader', type: 'anyone' },
+       supportsAllDrives: true,
+     });
+   } catch (permErr) {
+     console.warn("[Upload API] Set public permission skipped (Domain Policy):", permErr);
+   }
+   ```
 
-await createCalendarEvent(userUid, {
-  title: `Rapat: ${surat.perihal}`,
-  description: `Surat dari: ${surat.pengirim}\nNomor: ${surat.nomorSurat}`,
-  startDateTime: `${agenda.tanggal}T${agenda.jam}:00+07:00`,
-  endDateTime: `${agenda.tanggal}T${addHours(agenda.jam, 1)}:00+07:00`,
-  location: agenda.lokasi,
-});
+---
+
+## 4️⃣ Format Tanggal Aman di Riwayat Item
+
+Gunakan `safeFormatDate` dari `@/lib/utils` untuk mencegah runtime crash (`item.createdAt.toDate is not a function`):
+
+```tsx
+import { safeFormatDate } from '@/lib/utils';
+
+<p className="text-xs text-muted-foreground">
+  {safeFormatDate(item.createdAt)}
+</p>
 ```
+
+---
+
+## 5️⃣ Triple-Sync Integrated Performance Pipeline
+
+Setiap fungsi pelaporan yang mengunggah file bukti ke Google Drive (**Menu Bukti Kinerja**, **Laporan Tindak Lanjut Surat Masuk**, **Rekap Logbook Bulanan**, atau **Penyelesaian Tugas**) **WAJIB** menerapkan 3 pilar sinkronisasi:
+
+1. **Subfolder Google Drive Bulanan Konsisten**:
+   ```typescript
+   const dateObj = new Date();
+   const monthIndex = dateObj.getMonth() + 1;
+   const monthName = dateObj.toLocaleString('id-ID', { month: 'long' });
+   const year = dateObj.getFullYear();
+   const subFolderName = `${monthIndex}. ${year} ${monthName} - Bukti E Kinerja`;
+
+   await uploadFile(file, fileName, userProfile.googleDriveReportLink, subFolderName);
+   ```
+
+2. **Auto-Register ke Koleksi Firestore `buktiKinerja`**:
+   Setiap file yang terunggah wajib didata ke koleksi `buktiKinerja` agar portofolio pegawai di menu Bukti E-Kinerja langsung terisi otomatis:
+   ```typescript
+   await addDoc(collection(db, 'buktiKinerja'), {
+       userId: userProfile.uid,
+       opdId: userProfile.opdId,
+       judul: `Tindak Lanjut / Rekap: ${judul}`,
+       deskripsi: ringkasan,
+       googleDriveLink: link,
+       fileName: fileName,
+       fileType: file.type || 'application/pdf',
+       sumber: 'laporan' | 'logbook_rekap' | 'tugas' | 'mandiri',
+       createdAt: Timestamp.now(),
+   });
+   ```
+
+3. **Auto-Audit ke `logbookHarian` via `writeLogbookEntry`**:
+   Tindakan pelaporan / penyelesaian surat/tugas wajib mencatat entri kegiatan personal agar pegawai tidak perlu mengetik ulang secara manual:
+   ```typescript
+   const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+   writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+       deskripsi: `Melaporkan tindak lanjut surat: ${surat.perihal}`,
+       kategori: 'Laporan',
+       selesai: true,
+       sumber: 'laporan_tindak_lanjut',
+       suratTerkaitId: surat.id,
+   }).catch(err => console.warn('[Logbook] Auto-write gagal:', err));
+   ```
 
 ---
 
@@ -174,7 +171,14 @@ await createCalendarEvent(userUid, {
 
 | Anti-Pattern | Risiko | Solusi |
 |-------------|--------|--------|
-| Simpan file besar langsung ke Firestore | 1MB limit error | Upload ke Drive atau Firebase Storage |
-| Tidak handle `TOKEN_EXPIRED` | App crash tanpa penjelasan | Redirect ke `/api/google/authorize` |
-| Upload gambar tanpa kompresi | Kuota Drive cepat habis | `compressImage()` sebelum upload |
-| Tidak simpan driveFileId | Tidak bisa delete/update file | Selalu simpan fileId bersama fileUrl |
+| Regex folder ID hanya mencocokkan `/drive/folders/` | URL `/u/0/` gagal ekstrak, URL mentah masuk DB, upload error 400/404 | Gunakan universal `extractGoogleDriveFolderId()` |
+| Hanya cek `googleDriveReportLink` tanpa `googleRefreshToken` | Form upload aktif tapi melempar error 401 | Terapkan Dual Guard di UI dengan tombol direct auth |
+| Hanya menggunakan scope `drive.file` | Error 404 saat menulis ke folder buatan user | Gunakan scope `https://www.googleapis.com/auth/drive` |
+| Mengabaikan Shared Drive | Folder Drive Bersama OPD tidak terdeteksi | Pasang `supportsAllDrives: true` pada API calls |
+| Memanggil `drive.permissions.create` tanpa try/catch | Crash 500 pada akun email dinas (@pemkab.go.id, dll) | Tangkap exception permission secara non-fatal |
+| Hardcode redirect ke `/dashboard/profil` | User dialihkan ke 404 Not Found | Gunakan dinamis `statePayload.redirectUrl` |
+| Memanggil `item.createdAt.toDate()` mentah | React runtime crash jika Timestamp belum resolve | Gunakan `safeFormatDate()` |
+| Upload tindak lanjut tanpa parameter `subFolderName` | File bukti tercecer di root Google Drive user | Wajib kirim `${month}. ${year} ${monthName} - Bukti E Kinerja` |
+| Upload berhasil tapi tidak menulis ke `buktiKinerja` | Bukti tidak muncul di portofolio menu Bukti E-Kinerja | Wajib auto-register dokumen ke koleksi `buktiKinerja` |
+| Lapor tindak lanjut tanpa memanggil `writeLogbookEntry` | Pegawai harus input ulang kegiatan di Logbook | Panggil `writeLogbookEntry` non-blocking |
+

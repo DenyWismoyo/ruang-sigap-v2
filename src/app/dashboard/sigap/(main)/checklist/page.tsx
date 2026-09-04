@@ -108,7 +108,7 @@ interface RekapBulananModalProps {
     onClose: () => void;
     userProfile: UserProfile | null;
     uploader: {
-        uploadFile: (file: File | Blob, fileName: string, customFolderId?: string | null) => Promise<string | null>;
+        uploadFile: (file: File | Blob, fileName: string, customFolderId?: string | null, subFolderName?: string) => Promise<string | null>;
         uploadStatus: UploadStatus;
         errorMessage: string;
         isReady: boolean;
@@ -202,6 +202,10 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader }: RekapBula
             setError("Folder Google Drive E-Kinerja Anda belum diatur. Harap atur di menu Profil.");
             return;
         }
+        if (!userProfile.googleRefreshToken) {
+            setError("Akun Google belum terhubung. Harap hubungkan akun Google di menu Profil.");
+            return;
+        }
 
         setIsUploading(true);
         setError('');
@@ -209,14 +213,33 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader }: RekapBula
 
         try {
             const rekapBlob = new Blob([rekapData], { type: 'text/plain;charset=utf-8' });
-            const [year, month] = selectedMonth.split('-');
-            const monthName = new Date(Number(year), Number(month) - 1).toLocaleString('id-ID', { month: 'long' });
+            const [year, monthStr] = selectedMonth.split('-');
+            const month = parseInt(monthStr, 10);
+            const monthName = new Date(Number(year), month - 1).toLocaleString('id-ID', { month: 'long' });
             const fileName = `Laporan_Logbook_${monthName}_${year}_${userProfile.namaLengkap.replace(/\s+/g, '_')}.txt`;
+            const subFolderName = `${month}. ${year} ${monthName} - Bukti E Kinerja`;
 
-            const link = await uploader.uploadFile(rekapBlob, fileName, userProfile.googleDriveReportLink);
+            const link = await uploader.uploadFile(rekapBlob, fileName, userProfile.googleDriveReportLink, subFolderName);
 
             if (link) {
-                setSuccess(`Laporan berhasil diunggah ke Bukti Kinerja!`);
+                try {
+                    const { collection, addDoc, Timestamp } = await import('firebase/firestore');
+                    await addDoc(collection(db, 'buktiKinerja'), {
+                        userId: userProfile.uid,
+                        opdId: userProfile.opdId,
+                        judul: `Rekap Logbook Bulanan - ${monthName} ${year}`,
+                        deskripsi: `Laporan rekapitulasi checklist/logbook kinerja periode ${monthName} ${year}`,
+                        googleDriveLink: link,
+                        fileName: fileName,
+                        fileType: 'text/plain',
+                        sumber: 'logbook_rekap',
+                        createdAt: Timestamp.now(),
+                    });
+                } catch (dbErr) {
+                    console.warn("[BuktiKinerja] Gagal mencatat rekap ke buktiKinerja:", dbErr);
+                }
+
+                setSuccess(`Laporan berhasil diunggah ke folder "${subFolderName}" dan tercatat di Bukti Kinerja!`);
             } else {
                 throw new Error(uploader.errorMessage || "Upload gagal tanpa pesan error.");
             }

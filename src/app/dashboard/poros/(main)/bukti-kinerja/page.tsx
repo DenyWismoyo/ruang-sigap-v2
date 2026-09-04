@@ -6,8 +6,12 @@ import { collection, addDoc, Timestamp, query, where, getDocs, orderBy, limit, s
 import { useUserAuth } from '@/context/AuthContext';
 import { useGoogleDriveUploader } from '@/app/dashboard/poros/hooks/useGoogleDriveUploader';
 import { BuktiKinerja } from '@/types';
-import { Upload, FileText, CheckCircle, Loader2, AlertCircle, Link as LinkIcon, ExternalLink, ChevronDown, Download, BarChart2 } from 'lucide-react';
+import { Upload, FileText, CheckCircle, Loader2, AlertCircle, Link as LinkIcon, ExternalLink, ChevronDown, Download, BarChart2, FolderCheck, Zap, Sparkles } from 'lucide-react';
 import Link from 'next/link';
+import { safeFormatDate } from '@/lib/utils';
+import { AktivitasCombobox } from '@/components/ekinerja/AktivitasCombobox';
+import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
+import { AktivitasSolo } from '@/data/masterAktivitasSolo';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
@@ -21,38 +25,72 @@ import { generateLaporanKinerjaPdf } from '@/lib/pdfGenerator';
 // --- Akhir Impor Shadcn ---
 
 
-const RiwayatItem = ({ item }: { item: BuktiKinerja }) => {
+const RiwayatItem = ({ 
+    item, 
+    onPrepareEkinerja 
+}: { 
+    item: BuktiKinerja; 
+    onPrepareEkinerja: (item: BuktiKinerja) => void;
+}) => {
     return (
-        <a 
-            href={item.googleDriveLink || '#'} 
-            target={item.googleDriveLink ? "_blank" : "_self"} 
-            rel="noopener noreferrer"
-            className="group flex flex-col p-4 bg-card rounded-xl border border-border hover:border-blue-500 hover:shadow-md transition-all h-full"
-        >
-            <div className="flex justify-between items-start mb-3">
-                <Badge variant={item.sumber === 'laporan' ? 'default' : item.sumber === 'tugas_selesai' ? 'secondary' : 'outline'} className="text-[10px] uppercase">
-                    {item.sumber === 'laporan' ? 'Laporan TL' : item.sumber === 'tugas_selesai' ? 'Penyelesaian Tugas' : 'Manual Upload'}
-                </Badge>
-                {item.googleDriveLink && <ExternalLink size={14} className="text-muted-foreground group-hover:text-blue-600" />}
+        <div className="group flex flex-col p-4 bg-card rounded-xl border border-border hover:border-teal-500 hover:shadow-md transition-all h-full justify-between">
+            <div>
+                <div className="flex justify-between items-start mb-2.5">
+                    <Badge variant={item.sumber === 'laporan' ? 'default' : item.sumber === 'tugas_selesai' ? 'secondary' : 'outline'} className="text-[10px] uppercase">
+                        {item.sumber === 'laporan' ? 'Laporan TL' : item.sumber === 'tugas_selesai' ? 'Penyelesaian Tugas' : 'Manual Upload'}
+                    </Badge>
+                    {item.googleDriveLink && (
+                        <a 
+                            href={item.googleDriveLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-1 text-muted-foreground hover:text-teal-600 transition-colors"
+                            title="Buka File di Google Drive"
+                        >
+                            <ExternalLink size={14} />
+                        </a>
+                    )}
+                </div>
+                <p className="font-semibold text-sm text-foreground line-clamp-2 mb-1.5">{item.judul}</p>
+                {item.aktivitasNama ? (
+                    <Badge variant="outline" className="text-[11px] font-normal bg-teal-50 dark:bg-teal-950/40 text-teal-700 dark:text-teal-300 border-teal-200 dark:border-teal-800 line-clamp-1 mb-2">
+                        ⚡ {item.aktivitasNama}
+                    </Badge>
+                ) : (
+                    <p className="text-xs text-muted-foreground line-clamp-2 mb-2">{item.deskripsi || item.fileName || 'Kinerja sistem otomatis'}</p>
+                )}
             </div>
-            <div className="flex-1">
-                <p className="font-semibold text-sm text-foreground line-clamp-2 mb-1">{item.judul}</p>
-                <p className="text-xs text-muted-foreground line-clamp-2">{item.deskripsi || item.fileName || 'Kinerja sistem otomatis'}</p>
+            
+            <div className="mt-3 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center text-[11px]">
+                    <FileText size={12} className="mr-1"/> {safeFormatDate(item.createdAt, { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+                <Button 
+                    type="button" 
+                    size="sm" 
+                    onClick={() => onPrepareEkinerja(item)}
+                    className="h-7 px-2.5 text-xs bg-teal-600 hover:bg-teal-700 text-white flex items-center gap-1.5 shadow-sm"
+                >
+                    <Zap size={12} />
+                    <span>⚡ Siapkan e-Kinerja</span>
+                </Button>
             </div>
-            <div className="mt-4 pt-3 border-t border-border flex items-center justify-between text-xs text-muted-foreground">
-                <span className="flex items-center"><FileText size={12} className="mr-1"/> {item.createdAt.toDate().toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
-            </div>
-        </a>
+        </div>
     );
 };
 
 export default function BuktiKinerjaPage() {
     const { userProfile } = useUserAuth();
-    const { uploadFile, uploadStatus, errorMessage, isReady } = useGoogleDriveUploader();
+    const { uploadFile, uploadStatus, errorMessage, isReady, isGoogleConnected, isFolderConfigured } = useGoogleDriveUploader();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [judul, setJudul] = useState('');
     const [file, setFile] = useState<File | null>(null);
+    const [selectedAktivitas, setSelectedAktivitas] = useState<AktivitasSolo | undefined>(undefined);
+
+    // Modal e-Kinerja Bridge State
+    const [activeModalBukti, setActiveModalBukti] = useState<BuktiKinerja | null>(null);
+    const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
     
     const [riwayatList, setRiwayatList] = useState<BuktiKinerja[]>([]);
     const [loadingRiwayat, setLoadingRiwayat] = useState(true);
@@ -67,7 +105,16 @@ export default function BuktiKinerjaPage() {
     const [successMessage, setSuccessMessage] = useState('');
     const [uploadError, setUploadError] = useState(''); 
 
-    const linkNotSet = !userProfile?.googleDriveReportLink;
+    const handleConnectGoogle = () => {
+        if (userProfile?.nip) {
+            const statePayload = JSON.stringify({ 
+                userId: userProfile.nip, 
+                redirectUrl: '/dashboard/poros/bukti-kinerja' 
+            });
+            const state = btoa(statePayload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+            window.location.href = `/api/google/auth?state=${state}`;
+        }
+    };
 
     const fetchRiwayat = useCallback(async (loadMore = false) => {
         if (!userProfile?.uid) return;
@@ -127,8 +174,12 @@ export default function BuktiKinerjaPage() {
 
     // Handle Upload Manual
     const handleUpload = async (fileToUpload: File | Blob) => {
-        if (linkNotSet) {
+        if (!isFolderConfigured) {
             setUploadError("Harap atur ID Folder Google Drive di profil Anda terlebih dahulu.");
+            return;
+        }
+        if (!isGoogleConnected) {
+            setUploadError("Akun Google belum terhubung. Harap hubungkan akun Google Anda terlebih dahulu.");
             return;
         }
         if (!judul.trim()) {
@@ -176,12 +227,15 @@ export default function BuktiKinerjaPage() {
                     fileName: finalFileName,
                     fileType: fileToUpload.type,
                     sumber: 'manual', // Set sumber manual
+                    aktivitasId: selectedAktivitas?.id || null,
+                    aktivitasNama: selectedAktivitas?.nama || null,
                     createdAt: Timestamp.now(),
                 } as Omit<BuktiKinerja, 'id'>);
                 
                 setSuccessMessage(`File berhasil diunggah ke folder "${subFolderName}"!`);
                 setJudul('');
                 setFile(null);
+                setSelectedAktivitas(undefined);
                 if (fileInputRef.current) {
                     fileInputRef.current.value = "";
                 }
@@ -214,7 +268,12 @@ export default function BuktiKinerjaPage() {
         generateLaporanKinerjaPdf(riwayatList, userProfile, monthYearStr);
     };
 
-    const isUploadDisabled = isProcessing || !judul.trim() || !file || !isReady || linkNotSet;
+    const isUploadDisabled = isProcessing || !judul.trim() || !file || !isReady;
+
+    const handleOpenEkinerjaModal = (item: BuktiKinerja) => {
+        setActiveModalBukti(item);
+        setIsEkinerjaModalOpen(true);
+    };
 
     // Filter client-side
     const filteredRiwayat = riwayatList.filter(item => {
@@ -231,43 +290,79 @@ export default function BuktiKinerjaPage() {
         <div className="animate-fadeInUp pb-12">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
                 <h1 className="text-3xl font-bold text-foreground flex items-center">
-                    <BarChart2 size={28} className="mr-3 text-blue-600"/> Portofolio Kinerja
+                    <BarChart2 size={28} className="mr-3 text-teal-600"/> Portofolio Kinerja
                 </h1>
-                <Button onClick={handleExportPDF} variant="outline" className="flex items-center">
-                    <Download size={16} className="mr-2" /> Export PDF Bulanan
+                <Button onClick={handleExportPDF} variant="outline" className="flex items-center border-teal-200 dark:border-teal-800 hover:bg-teal-50 dark:hover:bg-teal-950/40">
+                    <Download size={16} className="mr-2 text-teal-600" /> Export PDF Bulanan
                 </Button>
             </div>
             
             {/* Stats Dashboard */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <Card className="bg-blue-50/50 dark:bg-blue-900/10 border-blue-100 dark:border-blue-900 shadow-sm">
+                <Card className="bg-teal-50/50 dark:bg-teal-900/10 border-teal-100 dark:border-teal-900 shadow-sm">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Kinerja Tercatat</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-blue-600 dark:text-blue-400">{totalKinerjaBulanIni}</div>
+                        <div className="text-3xl font-bold text-teal-600 dark:text-teal-400">{totalKinerjaBulanIni}</div>
                         <p className="text-xs text-muted-foreground mt-1">Dokumen/Aktivitas</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-green-50/50 dark:bg-green-900/10 border-green-100 dark:border-green-900 shadow-sm">
+                <Card className="bg-emerald-50/50 dark:bg-emerald-900/10 border-emerald-100 dark:border-emerald-900 shadow-sm">
                     <CardHeader className="pb-2">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Tercatat Otomatis</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-3xl font-bold text-green-600 dark:text-green-400">{totalOtomatis}</div>
+                        <div className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{totalOtomatis}</div>
                         <p className="text-xs text-muted-foreground mt-1">Dari Penyelesaian Tugas & Laporan</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {linkNotSet && (
+            {/* Status 1: Folder Belum Diatur */}
+            {!isFolderConfigured && (
                 <Alert variant="destructive" className="mb-6">
                     <AlertCircle className="h-4 w-4" /> 
                     <AlertTitle>Folder Google Drive Belum Diatur</AlertTitle>
-                    <AlertDescription>
-                        Anda harus mengatur **ID Folder Google Drive** di halaman <Link href="/dashboard/profil" className="font-bold underline hover:text-yellow-600">Profil</Link> Anda untuk fitur upload manual. Pencatatan otomatis tetap berjalan.
+                    <AlertDescription className="mt-1">
+                        Anda harus mengatur <strong>ID Folder Google Drive</strong> di halaman <Link href="/dashboard/poros/profil" className="font-bold underline hover:text-yellow-600">Profil Saya</Link> untuk fitur upload manual. Pencatatan otomatis tetap berjalan.
                     </AlertDescription>
                 </Alert>
+            )}
+
+            {/* Status 2: Akun Google Belum Terhubung */}
+            {!isGoogleConnected && (
+                <Alert className="mb-6 border-amber-300 bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200">
+                    <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                    <AlertTitle className="font-semibold">Akun Google Belum Terhubung</AlertTitle>
+                    <AlertDescription className="mt-2 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                        <span>Aplikasi memerlukan izin akses Google Drive untuk menyimpan file bukti kinerja Anda secara otomatis.</span>
+                        <Button 
+                            type="button" 
+                            size="sm" 
+                            onClick={handleConnectGoogle}
+                            className="bg-amber-600 hover:bg-amber-700 text-white shrink-0"
+                        >
+                            Hubungkan Akun Google
+                        </Button>
+                    </AlertDescription>
+                </Alert>
+            )}
+
+            {/* Status 3: Siap Upload */}
+            {isReady && (
+                <div className="mb-6 p-4 bg-teal-50/50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800 rounded-xl flex flex-wrap items-center justify-between gap-3 text-sm">
+                    <div className="flex items-center gap-2">
+                        <FolderCheck className="h-5 w-5 text-teal-600 dark:text-teal-400" />
+                        <div>
+                            <span className="font-semibold text-foreground">Google Drive Tersinkron: </span>
+                            <span className="text-muted-foreground">{userProfile?.googleEmail || 'Akun Aktif'}</span>
+                        </div>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                        Target Folder: <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-[11px]">{userProfile?.googleDriveReportLink}</code>
+                    </div>
+                </div>
             )}
 
             <Tabs defaultValue="semua" onValueChange={setActiveTab} className="mb-6">
@@ -280,7 +375,9 @@ export default function BuktiKinerjaPage() {
 
             {activeTab === 'manual' && (
                 <div className="p-6 bg-card rounded-xl shadow-sm border border-border mb-8 max-w-2xl animate-in fade-in">
-                    <h3 className="font-semibold mb-4 flex items-center"><Upload size={18} className="mr-2"/> Form Upload Manual</h3>
+                    <h3 className="font-semibold mb-4 flex items-center text-teal-700 dark:text-teal-300">
+                        <Upload size={18} className="mr-2 text-teal-600"/> Form Upload Manual
+                    </h3>
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <Label htmlFor="judul">Judul Bukti Dukung</Label>
@@ -289,11 +386,34 @@ export default function BuktiKinerjaPage() {
                                 type="text" 
                                 value={judul} 
                                 onChange={e => setJudul(e.target.value)} 
-                                placeholder="Contoh: Laporan Kegiatan Harian"
-                                disabled={isProcessing || linkNotSet}
+                                placeholder="Contoh: Notulen Rapat Koordinasi Wilayah"
+                                disabled={isProcessing || !isReady}
                                 required 
                                 className="mt-1"
                             />
+                        </div>
+
+                        {/* Pemilihan Aktivitas Resmi BKPSDM */}
+                        <div>
+                            <div className="flex items-center justify-between mb-1">
+                                <Label className="text-xs font-semibold flex items-center gap-1">
+                                    <Sparkles size={13} className="text-teal-600" /> Aktivitas Resmi BKPSDM Solo (Opsional)
+                                </Label>
+                                {selectedAktivitas && (
+                                    <span className="text-xs text-muted-foreground">
+                                        Bobot: <strong className="text-foreground">{selectedAktivitas.nilaiPoin} Poin</strong> ({selectedAktivitas.satuan})
+                                    </span>
+                                )}
+                            </div>
+                            <AktivitasCombobox
+                                value={selectedAktivitas?.id}
+                                onChange={(act) => setSelectedAktivitas(act)}
+                                tenant="poros"
+                                placeholder="Pilih aktivitas resmi Pemkot Solo (Kepwal 786/154)..."
+                            />
+                            <p className="text-[11px] text-muted-foreground mt-1">
+                                Tautkan dengan 1 dari 152 aktivitas resmi agar formulir e-Kinerja dapat terisi otomatis 1-klik.
+                            </p>
                         </div>
 
                         <div>
@@ -305,20 +425,20 @@ export default function BuktiKinerjaPage() {
                                 onChange={(e) => setFile(e.target.files ? e.target.files[0] : null)}
                                 accept="image/*,application/pdf,.doc,.docx,.xls,.xlsx"
                                 className="mt-1"
-                                disabled={isProcessing || linkNotSet}
+                                disabled={isProcessing || !isReady}
                             />
                         </div>
                         
                         {uploadStatus === 'uploading' && (
-                            <Alert variant="default" className="bg-blue-50 text-blue-800 border-blue-200">
+                            <Alert variant="default" className="bg-teal-50 dark:bg-teal-950/40 text-teal-800 dark:text-teal-300 border-teal-200 dark:border-teal-800">
                                 <Loader2 className="h-4 w-4 animate-spin" />
                                 <AlertDescription>Mengunggah file ke folder E-Kinerja...</AlertDescription>
                             </Alert>
                         )}
                         {uploadError && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{uploadError}</AlertDescription></Alert>}
-                        {successMessage && <Alert variant="default" className="bg-green-50 text-green-800 border-green-200"><CheckCircle className="h-4 w-4" /><AlertDescription>{successMessage}</AlertDescription></Alert>}
+                        {successMessage && <Alert variant="default" className="bg-green-50 dark:bg-green-950/40 text-green-800 dark:text-green-300 border-green-200 dark:border-green-800"><CheckCircle className="h-4 w-4" /><AlertDescription>{successMessage}</AlertDescription></Alert>}
 
-                        <Button type="submit" disabled={isUploadDisabled} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={isUploadDisabled} className="w-full sm:w-auto bg-teal-600 hover:bg-teal-700 text-white">
                             <Upload size={16} className="mr-2"/> Upload Sekarang
                         </Button>
                     </form>
@@ -326,8 +446,14 @@ export default function BuktiKinerjaPage() {
             )}
 
             <div>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+                    <p className="text-xs text-muted-foreground">
+                        💡 Tips: Klik tombol <strong>⚡ Siapkan e-Kinerja</strong> pada setiap bukti untuk mengisi otomatis formulir BKPSDM.
+                    </p>
+                </div>
+
                 {loadingRiwayat ? (
-                    <div className="flex justify-center p-12"><Loader2 className="animate-spin text-muted-foreground" size={32}/></div>
+                    <div className="flex justify-center p-12"><Loader2 className="animate-spin text-teal-600" size={32}/></div>
                 ) : filteredRiwayat.length === 0 ? (
                     <p className="text-center text-muted-foreground py-16 bg-card rounded-xl border border-dashed border-border">
                         Belum ada bukti dukung untuk kategori ini.
@@ -335,7 +461,11 @@ export default function BuktiKinerjaPage() {
                 ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredRiwayat.map(item => (
-                            <RiwayatItem key={item.id} item={item} />
+                            <RiwayatItem 
+                                key={item.id} 
+                                item={item} 
+                                onPrepareEkinerja={handleOpenEkinerjaModal}
+                            />
                         ))}
                     </div>
                 )}
@@ -348,6 +478,14 @@ export default function BuktiKinerjaPage() {
                     </div>
                 )}
             </div>
+
+            {/* Modal Jembatan e-Kinerja Solo */}
+            <EkinerjaBridgeModal
+                isOpen={isEkinerjaModalOpen}
+                onClose={() => setIsEkinerjaModalOpen(false)}
+                bukti={activeModalBukti}
+                tenant="poros"
+            />
         </div>
     );
 }

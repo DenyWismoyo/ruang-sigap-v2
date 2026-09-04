@@ -3,6 +3,7 @@ import type { NextRequest } from 'next/server';
 import { google } from 'googleapis';
 import { Readable } from 'stream';
 import { db } from '@/lib/firebase-admin';
+import { extractGoogleDriveFolderId } from '@/lib/utils';
 
 // Helper: Mime Type
 function getMimeType(fileName: string): string {
@@ -40,11 +41,17 @@ export async function POST(request: NextRequest) {
         const file = formData.get('file') as File | null;
         const nip = formData.get('nip') as string | null;
         const fileName = formData.get('fileName') as string | null;
-        const folderId = formData.get('folderId') as string | null;
+        const rawFolderId = formData.get('folderId') as string | null;
         const subFolderName = formData.get('subFolderName') as string | null;
 
-        if (!file || !nip || !fileName || !folderId) {
+        if (!file || !nip || !fileName || !rawFolderId) {
             return NextResponse.json({ error: 'Data upload tidak lengkap.' }, { status: 400 });
+        }
+
+        // Sanitasi Folder ID agar selalu berupa ID bersih (bukan URL mentah)
+        const folderId = extractGoogleDriveFolderId(rawFolderId);
+        if (!folderId) {
+            return NextResponse.json({ error: 'ID Folder Google Drive tidak valid.' }, { status: 400 });
         }
 
         // 2. Ambil Refresh Token dari User
@@ -57,7 +64,7 @@ export async function POST(request: NextRequest) {
         
         const googleRefreshToken = userDoc.data()?.googleRefreshToken;
         if (!googleRefreshToken) {
-            return NextResponse.json({ error: 'Akun Google tidak terhubung. Harap hubungkan ulang.' }, { status: 401 });
+            return NextResponse.json({ error: 'Akun Google tidak terhubung. Harap hubungkan ulang di Profil atau menu Bukti Kinerja.' }, { status: 401 });
         }
 
         // 3. Setup Google Auth Client
@@ -84,6 +91,8 @@ export async function POST(request: NextRequest) {
                     q: query,
                     fields: 'files(id, name)',
                     spaces: 'drive',
+                    supportsAllDrives: true,
+                    includeItemsFromAllDrives: true,
                 });
 
                 if (folderSearch.data.files && folderSearch.data.files.length > 0) {
@@ -97,12 +106,14 @@ export async function POST(request: NextRequest) {
                     const folder = await drive.files.create({
                         requestBody: fileMetadata,
                         fields: 'id',
+                        supportsAllDrives: true,
                     });
                     targetFolderId = folder.data.id!;
                 }
             } catch (folderErr) {
-                console.error("[Upload API] Subfolder error, fallback to root:", folderErr);
-                // Lanjut upload ke folder utama jika subfolder gagal
+                console.error("[Upload API] Subfolder error, fallback to root folder:", folderErr);
+                // Lanjut upload ke folder utama jika pembuatan subfolder gagal
+                targetFolderId = folderId;
             }
         }
 
@@ -123,23 +134,29 @@ export async function POST(request: NextRequest) {
                 mimeType: mimeType,
                 body: stream,
             },
-            fields: 'id, webViewLink',
+            fields: 'id, webViewLink, webContentLink',
+            supportsAllDrives: true,
         });
 
         const fileId = response.data.id;
-        const webViewLink = response.data.webViewLink;
+        const webViewLink = response.data.webViewLink || (fileId ? `https://drive.google.com/file/d/${fileId}/view` : '');
 
-        if (!fileId || !webViewLink) {
+        if (!fileId) {
              throw new Error('Drive API did not return file ID.');
         }
 
-        // 7. Set Permission Public Reader (Agar bisa dilihat orang lain)
-        await drive.permissions.create({
-            fileId: fileId,
-            requestBody: { role: 'reader', type: 'anyone' },
-        });
+        // 7. Set Permission Public Reader (Dibungkus try/catch agar tidak crash di Google Workspace ber-kebijakan ketat)
+        try {
+            await drive.permissions.create({
+                fileId: fileId,
+                requestBody: { role: 'reader', type: 'anyone' },
+                supportsAllDrives: true,
+            });
+        } catch (permErr: any) {
+            console.warn("[Upload API] Gagal set reader permission ke 'anyone' (mungkin restriksi domain Workspace):", permErr?.message || permErr);
+        }
 
-        return NextResponse.json({ success: true, webViewLink: webViewLink });
+        return NextResponse.json({ success: true, webViewLink: webViewLink, fileId: fileId });
 
     } catch (error: any) {
         console.error('[Upload API] Critical Error:', error);

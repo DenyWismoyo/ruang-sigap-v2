@@ -1,0 +1,50 @@
+{
+  "manifest_version": 3,
+  "name": "SIGAP e-Kinerja Bridge",
+  "version": "1.0.0",
+  "description": "Jembatan Otomasi Real-time Cross-Tab antara RUANG SIGAP / POROS E-Office dan Portal e-Kinerja BKPSDM Surakarta.",
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://103.115.227.196/*",
+    "http://localhost/*",
+    "https://*.surakarta.go.id/*",
+    "https://*.web.app/*",
+    "https://*.firebaseapp.com/*",
+    "*://sgp.omnifit.cloud/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://localhost/*",
+        "https://*.surakarta.go.id/*",
+        "https://*.web.app/*",
+        "https://*.firebaseapp.com/*",
+        "*://sgp.omnifit.cloud/*"
+      ],
+      "js": ["content-sigap.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "http://103.115.227.196/e-kinerja/*"
+      ],
+      "js": ["content-ekinerja.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "SIGAP e-Kinerja Bridge Status"
+  },
+  "icons": {
+    "48": "icon48.png",
+    "128": "icon128.png"
+  }
+}

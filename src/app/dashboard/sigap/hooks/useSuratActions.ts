@@ -377,6 +377,28 @@ export const useSuratActions = () => {
 
         batch.set(tindakLanjutRef, tindakLanjutData as any);
 
+        // [TRIPLE-SYNC: AUTO REGISTER BUKTI KINERJA]
+        if (fileData) {
+            const buktiRef = doc(collection(db, 'buktiKinerja'));
+            const judulBukti = `Tindak Lanjut: ${payload.judulLaporan || surat.perihal || 'Laporan Surat'}`;
+            const fileExt = fileData.name.includes('.') ? fileData.name.split('.').pop()?.toLowerCase() : 'pdf';
+            const mimeType = fileExt === 'pdf' ? 'application/pdf' : (fileExt === 'png' || fileExt === 'jpg' || fileExt === 'jpeg' ? `image/${fileExt}` : 'application/octet-stream');
+
+            batch.set(buktiRef, {
+                userId: userProfile.uid,
+                opdId: surat.opdId || userProfile.opdId,
+                judul: judulBukti,
+                deskripsi: payload.isiLaporan || `Tindak lanjut surat: ${surat.perihal || '-'}`,
+                googleDriveLink: fileData.url,
+                fileName: fileData.name,
+                fileType: mimeType,
+                sumber: 'laporan',
+                suratId: surat.id,
+                disposisiId: disposisi.id,
+                createdAt: serverTimestamp(),
+            });
+        }
+
         const logText = payload.judulLaporan ? `[${payload.judulLaporan}] ${payload.isiLaporan}` : payload.isiLaporan;
         const actionLogText = isFinal ? "Menyelesaikan Tindak Lanjut (SELESAI)" : "Melaporkan Progres Tindak Lanjut";
         await logActivity(surat.id!, actorName, actionLogText, logText.substring(0, 100));
@@ -426,7 +448,21 @@ export const useSuratActions = () => {
         
         await batch.commit();
 
-
+        // [TRIPLE-SYNC: AUTO LOGBOOK ENTRY]
+        try {
+            const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+            writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+                deskripsi: `Melaporkan tindak lanjut: ${surat.perihal || payload.judulLaporan || 'Surat Dinas'}`,
+                kategori: 'Laporan',
+                selesai: isFinal,
+                sumber: 'laporan_tindak_lanjut',
+                suratTerkaitId: surat.id,
+                suratPerihal: surat.perihal,
+                disposisiTerkaitId: disposisi.id,
+            }).catch(err => console.warn('[Logbook] Auto-write gagal:', err));
+        } catch (logErr) {
+            console.warn('[Logbook] Import logbookUtils gagal:', logErr);
+        }
 
         addToast(isFinal ? "Surat diselesaikan." : "Laporan dikirim.", "success");
         refreshData();

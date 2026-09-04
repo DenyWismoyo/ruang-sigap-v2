@@ -515,7 +515,7 @@ export interface RepositoryItem {
 }
 export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
-export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; createdAt: Timestamp; }
+export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; aktivitasId?: number; aktivitasNama?: string; createdAt: Timestamp; }
 export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string; tanggalRapat: Timestamp; pemimpinRapat: string; notulis: string; peserta: string; createdBy: string; createdAt: Timestamp; isiNotulensi: string; }
 export interface KnowledgeArticle { id?: string; opdId: string; judul: string; kategori: string; konten: string; attachmentUrl?: string; createdBy: string; createdAt: Timestamp; lastUpdatedAt: Timestamp; sharedWithOpdIds?: string[]; }
 export interface PengumumanAttachment { url: string; fileName: string; type: string; }

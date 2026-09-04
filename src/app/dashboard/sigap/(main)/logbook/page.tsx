@@ -5,14 +5,16 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, query, where, onSnapshot, doc, setDoc, getDoc, Timestamp, orderBy, getDocs } from 'firebase/firestore';
-import { useUserAuth } from '@/context/AuthContext';
-import { ChecklistBoard, ChecklistItem, LogbookKegiatan, LogbookHarian, Tugas, UserProfile } from '@/types';
-import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText } from 'lucide-react';
 import Link from 'next/link';
+import { UserProfile, LogbookHarian, LogbookKegiatan, Tugas, BuktiKinerja } from '@/types';
+import { db } from '@/lib/firebase';
+import { collection, query, where, onSnapshot, doc, setDoc, getDoc, Timestamp, orderBy, getDocs, addDoc } from 'firebase/firestore';
+import { useUserAuth } from '@/context/AuthContext';
+import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText, Zap, Download } from 'lucide-react';
 import FormTugas from '@/app/dashboard/sigap/(main)/tugas/components/FormTugas';
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/sigap/hooks/useGoogleDriveUploader';
+import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
+import { detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
@@ -194,6 +196,10 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
             setError("Folder Google Drive E-Kinerja belum diatur di Profil.");
             return;
         }
+        if (!userProfile.googleRefreshToken) {
+            setError("Akun Google belum terhubung. Harap hubungkan akun Google di menu Profil.");
+            return;
+        }
         setIsUploading(true);
         setError('');
         setSuccess('');
@@ -203,28 +209,113 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
             const month = parseInt(monthStr, 10);
             const monthName = new Date(Number(year), month - 1).toLocaleString('id-ID', { month: 'long' });
             const fileName = `Laporan_Logbook_${monthName}_${year}_${userProfile.namaLengkap.replace(/\s+/g, '_')}.txt`;
-            
-            // --- [UPDATE] SUB FOLDER OTOMATIS ---
-            // Format Lama: "11. November - Bukti E Kinerja"
-            // Format Baru: "11. 2025 November - Bukti E Kinerja"
             const subFolderName = `${month}. ${year} ${monthName} - Bukti E Kinerja`;
-            // ---
 
             const link = await uploader.uploadFile(
                 rekapBlob, 
                 fileName, 
                 userProfile.googleDriveReportLink,
-                subFolderName // Kirim nama sub folder
+                subFolderName
             );
             
             if (link) {
-                setSuccess(`Laporan berhasil diunggah ke folder "${subFolderName}"!`);
+                // [TRIPLE-SYNC: AUTO REGISTER BUKTI KINERJA]
+                try {
+                    await addDoc(collection(db, 'buktiKinerja'), {
+                        userId: userProfile.uid,
+                        opdId: userProfile.opdId,
+                        judul: `Rekap Logbook Bulanan - ${monthName} ${year}`,
+                        deskripsi: `Laporan rekapitulasi aktivitas logbook kinerja harian periode ${monthName} ${year}`,
+                        googleDriveLink: link,
+                        fileName: fileName,
+                        fileType: 'text/plain',
+                        sumber: 'logbook_rekap',
+                        createdAt: Timestamp.now(),
+                    });
+                } catch (dbErr) {
+                    console.warn("[BuktiKinerja] Gagal mencatat rekap ke buktiKinerja:", dbErr);
+                }
+
+                setSuccess(`Laporan teks berhasil diunggah ke folder "${subFolderName}" dan tercatat di Bukti Kinerja!`);
             } else {
                 throw new Error(uploader.errorMessage || "Upload gagal.");
             }
         } catch (err: any) {
             console.error(err);
             setError(`Gagal mengunggah: ${err.message}`);
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleUploadPdfRekap = async () => {
+        if (!rekapData || rawLogbookList.length === 0 || !userProfile || !uploader.isReady) {
+            setError("Data rekap belum siap atau uploader belum aktif.");
+            return;
+        }
+        if (!userProfile.googleDriveReportLink) {
+            setError("Folder Google Drive E-Kinerja belum diatur di Profil.");
+            return;
+        }
+        if (!userProfile.googleRefreshToken) {
+            setError("Akun Google belum terhubung. Harap hubungkan akun Google di menu Profil.");
+            return;
+        }
+
+        setIsUploading(true);
+        setError('');
+        setSuccess('');
+        try {
+            const [year, monthStr] = selectedMonth.split('-');
+            const month = parseInt(monthStr, 10);
+            const monthName = new Date(Number(year), month - 1).toLocaleString('id-ID', { month: 'long' });
+            const fileName = `Laporan_Kinerja_${monthName}_${year}_${userProfile.namaLengkap.replace(/\s+/g, '_')}.pdf`;
+            const subFolderName = `${month}. ${year} ${monthName} - Bukti E Kinerja`;
+
+            const document = (
+                <LogbookPdfDocument 
+                    userProfile={userProfile} 
+                    jabatanNama={jabatanNama} 
+                    opdNama={opdNama} 
+                    periode={`${new Date(Number(year), month - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' })}`} 
+                    data={rawLogbookList} 
+                />
+            );
+            
+            const pdfBlob = await pdf(document).toBlob();
+
+            const link = await uploader.uploadFile(
+                pdfBlob, 
+                fileName, 
+                userProfile.googleDriveReportLink,
+                subFolderName
+            );
+            
+            if (link) {
+                // [TRIPLE-SYNC: AUTO REGISTER BUKTI KINERJA]
+                try {
+                    await addDoc(collection(db, 'buktiKinerja'), {
+                        userId: userProfile.uid,
+                        opdId: userProfile.opdId,
+                        judul: `Laporan Kinerja Resmi (PDF) - ${monthName} ${year}`,
+                        deskripsi: `Laporan resmi PDF kinerja bulanan periode ${monthName} ${year}`,
+                        googleDriveLink: link,
+                        fileName: fileName,
+                        fileType: 'application/pdf',
+                        sumber: 'logbook_rekap',
+                        createdAt: Timestamp.now(),
+                    });
+                } catch (dbErr) {
+                    console.warn("[BuktiKinerja] Gagal mencatat PDF ke buktiKinerja:", dbErr);
+                }
+
+                setSuccess(`Laporan PDF resmi berhasil diunggah ke folder "${subFolderName}" dan tercatat di Bukti Kinerja!`);
+            } else {
+                throw new Error(uploader.errorMessage || "Upload PDF gagal.");
+            }
+        } catch (err: any) {
+            console.error(err);
+            setError(`Gagal mengunggah PDF: ${err.message}`);
         } finally {
             setIsUploading(false);
         }
@@ -313,24 +404,35 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
                 
                 <DialogFooter className="p-4 border-t border-border flex-shrink-0 bg-muted/50 flex flex-col sm:flex-row gap-2">
                     {rekapData && rawLogbookList.length > 0 && userProfile && (
-                        <Button 
-                            onClick={handleDownloadPdf}
-                            disabled={isPdfGenerating}
-                            variant="outline" 
-                            className="w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
-                        >
-                            {isPdfGenerating ? <Loader2 size={16} className="animate-spin mr-2"/> : <FileText size={16} className="mr-2"/>}
-                            {isPdfGenerating ? 'Menyiapkan...' : 'Download PDF'}
-                        </Button>
+                        <>
+                            <Button 
+                                onClick={handleDownloadPdf}
+                                disabled={isPdfGenerating || isLoading}
+                                variant="outline" 
+                                className="w-full sm:w-auto border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20"
+                            >
+                                {isPdfGenerating ? <Loader2 size={16} className="animate-spin mr-2"/> : <FileText size={16} className="mr-2"/>}
+                                {isPdfGenerating ? 'Menyiapkan...' : 'Download PDF'}
+                            </Button>
+                            <Button
+                                onClick={handleUploadPdfRekap}
+                                disabled={isLoading || !!success}
+                                className="bg-red-600 hover:bg-red-700 text-white w-full sm:w-auto"
+                            >
+                                {isUploading ? <Loader2 size={16} className="animate-spin mr-2" /> : <FileDown size={16} className="mr-2" />}
+                                {isUploading ? 'Mengunggah...' : 'Upload PDF ke Drive'}
+                            </Button>
+                        </>
                     )}
 
                     <Button
                         onClick={handleUploadRekap}
                         disabled={isLoading || !rekapData || !!success}
-                        className="bg-green-600 hover:bg-green-700 w-full sm:w-auto"
+                        variant="secondary"
+                        className="w-full sm:w-auto"
                     >
                         <FileDown size={16} className="mr-2" />
-                        {isUploading ? 'Mengunggah...' : 'Upload ke Drive'}
+                        {isUploading ? 'Mengunggah...' : 'Upload Teks ke Drive'}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -346,6 +448,11 @@ const ShortcutNav = () => (
         </Button>
         <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
           <Link href="/dashboard/checklist"><ListChecks size={14} /> Checklist</Link>
+        </Button>
+        <Button asChild variant="outline" size="sm" className="rounded-full sg-btn border-emerald-300 dark:border-emerald-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 font-medium">
+          <a href="/downloads/sigap-chrome-bridge.zip" download="sigap-chrome-bridge.zip" title="Unduh Ekstensi Chrome Bridge untuk Otomasi e-Kinerja Solo">
+            <Download size={13} className="mr-1.5 text-emerald-600 dark:text-emerald-400" /> Ekstensi e-Kinerja (.ZIP)
+          </a>
         </Button>
     </div>
 );
@@ -371,7 +478,19 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
     );
 };
 
-const LogbookItem = ({ k, onToggle, onEdit, onDelete }: { k: LogbookKegiatan, onToggle: (id: string) => void, onEdit: (entry: LogbookKegiatan) => void, onDelete: (id: string) => void }) => {
+const LogbookItem = ({ 
+    k, 
+    onToggle, 
+    onEdit, 
+    onDelete,
+    onKirimEkinerja,
+}: { 
+    k: LogbookKegiatan, 
+    onToggle: (id: string) => void, 
+    onEdit: (entry: LogbookKegiatan) => void, 
+    onDelete: (id: string) => void,
+    onKirimEkinerja?: (entry: LogbookKegiatan) => void,
+}) => {
     return (
         <div className="sg-glass-panel sg-mobile-borderless p-3 flex items-start gap-3 group md:hover:-translate-y-[1px] md:hover:shadow-md transition-all duration-200">
             <Button variant="ghost" size="icon" onClick={() => onToggle(k.id)} title="Tandai selesai / belum selesai" className="mt-1 shrink-0 h-auto w-auto p-0">
@@ -381,10 +500,38 @@ const LogbookItem = ({ k, onToggle, onEdit, onDelete }: { k: LogbookKegiatan, on
                 <p className={`font-medium text-foreground ${k.selesai ? 'line-through text-muted-foreground' : ''}`}>{k.deskripsi}</p>
                 {k.tugasTerkaitId && (<Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-green-700 dark:text-green-300"><Link href={`/dashboard/tugas`}><LinkIcon size={12} className="mr-1.5"/> Tugas: {k.tugasTerkaitJudul || 'Lihat Tugas'}</Link></Button>)}
             </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"><MoreVertical size={16} /></Button></DropdownMenuTrigger>
-                <DropdownMenuContent><DropdownMenuItem onClick={() => onEdit(k)}><Edit size={14} className="mr-2"/> Edit</DropdownMenuItem><DropdownMenuItem onClick={() => onDelete(k.id)} className="text-red-600 focus:text-red-600"><Trash2 size={14} className="mr-2"/> Hapus</DropdownMenuItem></DropdownMenuContent>
-            </DropdownMenu>
+            
+            <div className="flex items-center gap-1 shrink-0">
+                <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onKirimEkinerja?.(k)}
+                    title="Kirim entri ini ke portal e-Kinerja BKPSDM Surakarta"
+                    className="h-7 px-2 text-xs text-amber-600 hover:text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/30 border-amber-300 dark:border-amber-700/50 flex items-center gap-1 font-medium transition-colors"
+                >
+                    <Zap size={13} className="fill-amber-500 text-amber-500 shrink-0" />
+                    <span className="hidden sm:inline">e-Kinerja</span>
+                </Button>
+
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground opacity-60 group-hover:opacity-100 transition-opacity">
+                            <MoreVertical size={16} />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => onKirimEkinerja?.(k)} className="text-amber-600 dark:text-amber-400 focus:text-amber-600 font-medium">
+                            <Zap size={14} className="mr-2 fill-amber-500 text-amber-500" /> Kirim ke e-Kinerja
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(k)}>
+                            <Edit size={14} className="mr-2"/> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onDelete(k.id)} className="text-red-600 focus:text-red-600">
+                            <Trash2 size={14} className="mr-2"/> Hapus
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
         </div>
     );
 };
@@ -411,6 +558,8 @@ export default function LogbookPage() {
     
     const [isBantuanOpen, setIsBantuanOpen] = useState(false);
     const [isRekapOpen, setIsRekapOpen] = useState(false);
+    const [ekinerjaModalBukti, setEkinerjaModalBukti] = useState<BuktiKinerja | null>(null);
+    const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
 
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -526,6 +675,30 @@ export default function LogbookPage() {
     const handleToggleSelesai = async (kegiatanId: string) => { const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.map(k => k.id === kegiatanId ? { ...k, selesai: !k.selesai } : k)); };
     const handleDeleteKegiatan = async (kegiatanId: string) => { if (!window.confirm("Hapus kegiatan ini dari logbook?")) return; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.filter(k => k.id !== kegiatanId)); if (entryToEdit?.id === kegiatanId) { setIsEditModalOpen(false); setEntryToEdit(null); } };
 
+    const handleOpenEkinerja = (entry: LogbookKegiatan) => {
+        const detected = detectAktivitasFromLogbookText(entry.deskripsi);
+        const rawDrive = userProfile?.googleDriveReportLink || effectiveProfile?.googleDriveReportLink || '';
+        const driveUrl = rawDrive 
+            ? (rawDrive.startsWith('http') ? rawDrive : `https://drive.google.com/drive/folders/${rawDrive}`)
+            : '';
+        const virtualBukti: BuktiKinerja = {
+            id: `logbook_${entry.id}`,
+            userId: effectiveProfile?.uid || '',
+            opdId: effectiveProfile?.opdId || '',
+            judul: entry.deskripsi,
+            deskripsi: `Dicatat melalui Logbook Harian SIGAP pada ${selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.`,
+            googleDriveLink: driveUrl,
+            fileName: `Logbook_${entry.id}.txt`,
+            fileType: 'text/plain',
+            sumber: 'logbook_rekap',
+            createdAt: Timestamp.fromDate(selectedDate),
+            aktivitasId: detected ? detected.id : undefined,
+            aktivitasNama: detected ? detected.nama : undefined,
+        };
+        setEkinerjaModalBukti(virtualBukti);
+        setIsEkinerjaModalOpen(true);
+    };
+
     const changeDate = (offset: number) => setSelectedDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + offset); return d; });
 
     const progress = useMemo(() => {
@@ -628,6 +801,7 @@ export default function LogbookPage() {
                                                         onToggle={handleToggleSelesai} 
                                                         onDelete={handleDeleteKegiatan} 
                                                         onEdit={(entry) => { setEntryToEdit(entry); setIsEditModalOpen(true); }}
+                                                        onKirimEkinerja={handleOpenEkinerja}
                                                     />
                                                 </div>
                                             );
@@ -663,6 +837,13 @@ export default function LogbookPage() {
                 jabatanNama={effectiveJabatan?.namaJabatan || 'Staf'} 
                 opdNama={opdName || 'Pemerintah Kota Surakarta'} 
                 uploader={uploader}
+            />
+
+            <EkinerjaBridgeModal
+                isOpen={isEkinerjaModalOpen}
+                onClose={() => setIsEkinerjaModalOpen(false)}
+                bukti={ekinerjaModalBukti}
+                tenant="sigap"
             />
         </div>
     );

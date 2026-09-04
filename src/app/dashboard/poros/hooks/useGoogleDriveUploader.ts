@@ -1,11 +1,12 @@
 // Lokasi File: src/app/dashboard/hooks/useGoogleDriveUploader.ts
-// [UPDATE] Menambahkan parameter opsional 'subFolderName' pada fungsi uploadFile.
+// [UPDATE] Menambahkan sanitasi folderId, pengecekan koneksi Google (isGoogleConnected), dan status kesiapan yang akurat.
 
 "use client";
 
 import { useState, useCallback } from 'react';
 import { useUserAuth } from '@/context/AuthContext';
 import { useToast } from '@/context/ToastContext'; 
+import { extractGoogleDriveFolderId } from '@/lib/utils';
 
 export type UploadStatus = 'idle' | 'uploading' | 'success' | 'error';
 
@@ -15,13 +16,15 @@ export const useGoogleDriveUploader = () => {
   const [uploadStatus, setUploadStatus] = useState<UploadStatus>('idle');
   const [errorMessage, setErrorMessage] = useState('');
   
-  const isReady = !!userProfile?.nip && !!userProfile.googleDriveReportLink;
+  const isGoogleConnected = !!userProfile?.googleRefreshToken;
+  const isFolderConfigured = !!userProfile?.googleDriveReportLink;
+  const isReady = !!userProfile?.nip && isFolderConfigured && isGoogleConnected;
 
   const uploadFile = useCallback(async (
     file: File | Blob, 
     fileName: string, 
     customFolderId?: string | null, // folderId opsional (override)
-    subFolderName?: string // [BARU] Nama subfolder otomatis (misal: "Portofolio Kompetensi")
+    subFolderName?: string // Nama subfolder otomatis (misal: "Portofolio Kompetensi")
   ): Promise<string | null> => { 
     
     if (!userProfile?.nip) {
@@ -31,8 +34,17 @@ export const useGoogleDriveUploader = () => {
       addToast(msg, 'error');
       return null;
     }
+
+    if (!userProfile.googleRefreshToken) {
+      const msg = 'Akun Google belum terhubung. Harap hubungkan akun Google Anda terlebih dahulu.';
+      setErrorMessage(msg);
+      setUploadStatus('error');
+      addToast(msg, 'error');
+      return null;
+    }
     
-    const targetFolderId = customFolderId || userProfile.googleDriveReportLink;
+    const rawTarget = customFolderId || userProfile.googleDriveReportLink;
+    const targetFolderId = extractGoogleDriveFolderId(rawTarget);
 
     if (!targetFolderId) {
       const msg = 'ID Folder Google Drive tujuan tidak ditemukan. Harap atur di Profil Anda.';
@@ -52,7 +64,7 @@ export const useGoogleDriveUploader = () => {
       formData.append('fileName', fileName);
       formData.append('folderId', targetFolderId);
       
-      // [BARU] Kirim nama subfolder jika ada
+      // Kirim nama subfolder jika ada
       if (subFolderName) {
           formData.append('subFolderName', subFolderName);
       }
@@ -87,5 +99,12 @@ export const useGoogleDriveUploader = () => {
     }
   }, [userProfile, addToast]);
     
-  return { uploadFile, uploadStatus, errorMessage, isReady };
+  return { 
+    uploadFile, 
+    uploadStatus, 
+    errorMessage, 
+    isReady, 
+    isGoogleConnected, 
+    isFolderConfigured 
+  };
 };

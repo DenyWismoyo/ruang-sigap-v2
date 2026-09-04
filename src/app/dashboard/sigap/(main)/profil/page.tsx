@@ -17,6 +17,7 @@ import { UserCircle, ShieldCheck, Save, KeyRound, Palette, Users, Mail, Link as 
 import DelegasiWidget from '@/app/dashboard/sigap/components/DelegasiWidget';
 import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
+import { extractGoogleDriveFolderId } from '@/lib/utils';
 
 // --- Impor Komponen Shadcn ---
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ export default function ProfilPage() {
 
     const handleConnectGoogle = () => {
         if (userProfile) {
-            const statePayload = JSON.stringify({ userId: userProfile.nip, redirectUrl: '/dashboard/profil' });
+            const statePayload = JSON.stringify({ userId: userProfile.nip, redirectUrl: '/dashboard/sigap/profil' });
             const state = btoa(statePayload).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
             window.location.href = `/api/google/auth?state=${state}`;
         }
@@ -134,7 +135,7 @@ export default function ProfilPage() {
                 isProcessing: false,
                 onConfirm: () => {
                     setConfirmModal(prev => ({ ...prev, isProcessing: true }));
-                    window.location.href = `/api/google/disconnect?userId=${userProfile.nip}`;
+                    window.location.href = `/api/google/disconnect?userId=${userProfile.nip}&redirectUrl=/dashboard/sigap/profil`;
                 },
             });
         }
@@ -149,11 +150,12 @@ export default function ProfilPage() {
         setIsProfileSaving(true);
         try {
             const userRef = doc(db, 'users', userProfile.nip);
+            const cleanFolderId = extractGoogleDriveFolderId(googleDriveLink);
             await updateDoc(userRef, {
                 namaLengkap,
                 nomorWa,
                 personalEmail: personalEmail.trim() || null,
-                googleDriveReportLink: googleDriveLink.trim() || null,
+                googleDriveReportLink: cleanFolderId || null,
                 googleCalendarSyncEnabled: googleCalendarSyncEnabled,
                 notificationPreferences: {
                     pushSuratMasuk,
@@ -172,15 +174,18 @@ export default function ProfilPage() {
     };
 
     const handleGoogleLinkChange = (value: string) => {
-        const regex = /drive\.google\.com\/drive\/folders\/([a-zA-Z0-9_-]+)/;
-        const match = value.match(regex);
+        const extractedId = extractGoogleDriveFolderId(value);
 
-        if (match && match[1]) {
-            setGoogleDriveLink(match[1]);
+        if (extractedId && extractedId !== value.trim()) {
+            setGoogleDriveLink(extractedId);
             setLinkHelperText('Link folder terdeteksi, ID telah diekstrak secara otomatis.');
         } else {
             setGoogleDriveLink(value);
-            setLinkHelperText('');
+            if (extractedId && extractedId.length >= 15) {
+                setLinkHelperText('Format ID Folder Google Drive valid.');
+            } else {
+                setLinkHelperText('');
+            }
         }
     };
 

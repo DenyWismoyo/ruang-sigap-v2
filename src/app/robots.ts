@@ -7,6 +7,6 @@ export default function robots(): MetadataRoute.Robots {
       allow: ['/', '/replikasi', '/privacy-policy', '/terms-of-service'],
       disallow: ['/dashboard/', '/api/', '/login/'],
     },
-    sitemap: 'https://spg.omnifit.cloud/sitemap.xml',
+    sitemap: 'https://sgp.omnifit.cloud/sitemap.xml',
   };
 }

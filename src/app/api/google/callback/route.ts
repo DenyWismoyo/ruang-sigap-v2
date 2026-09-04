@@ -33,31 +33,22 @@ export async function GET(request: NextRequest) {
   const state = searchParams.get('state'); 
   const error = searchParams.get('error');
 
-  // 1. Handle Error dari Google (misal user klik Cancel)
-  if (error) {
-      console.error("[Google Callback] Google Error:", error);
-      return NextResponse.redirect(`${baseDomain}/dashboard/profil?error=google_auth_denied`);
+  if (!state) {
+      return NextResponse.json({ error: 'Missing state parameter' }, { status: 400 });
   }
 
-  // 2. Validasi Parameter Dasar
-  if (!code || !state) {
-    console.error("[Google Callback] Missing code or state");
-    return NextResponse.json({ error: 'Code and state are required' }, { status: 400 });
-  }
+  let userId: string;
+  let targetRedirectUrl = '/dashboard';
 
-  // 3. Validasi Koneksi Database Server
-  if (!db) {
-    console.error("[Google Callback] Server Error: Database connection missing.");
-    return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=false&error=server_config_missing`);
-  }
-  
-  let userId;
   try {
-      // Parse state untuk mendapatkan User ID (NIP)
+      // Parse state untuk mendapatkan User ID (NIP) dan redirectUrl
       // Format state dari frontend: base64url
       const base64 = state.replace(/-/g, '+').replace(/_/g, '/');
       const statePayload = JSON.parse(Buffer.from(base64, 'base64').toString('utf-8'));
       userId = statePayload.userId;
+      if (statePayload.redirectUrl && statePayload.redirectUrl !== '/dashboard/profil') {
+          targetRedirectUrl = statePayload.redirectUrl;
+      }
 
       if (!userId) {
           throw new Error('User ID not found in state');
@@ -65,6 +56,29 @@ export async function GET(request: NextRequest) {
   } catch (e) {
       console.error("[Google Callback] Gagal mem-parsing state:", e);
       return NextResponse.json({ error: 'Invalid state format', details: String(e) }, { status: 400 });
+  }
+
+  const getRedirect = (params: string) => {
+      const sep = targetRedirectUrl.includes('?') ? '&' : '?';
+      return `${baseDomain}${targetRedirectUrl}${sep}${params}`;
+  };
+
+  // 1. Handle Error dari Google (misal user klik Cancel)
+  if (error) {
+      console.error("[Google Callback] Google Error:", error);
+      return NextResponse.redirect(getRedirect('error=google_auth_denied'));
+  }
+
+  // 2. Validasi Kode Otorisasi
+  if (!code) {
+      console.error("[Google Callback] Missing authorization code.");
+      return NextResponse.redirect(getRedirect('error=missing_code'));
+  }
+
+  // 3. Validasi Koneksi Database Server
+  if (!db) {
+    console.error("[Google Callback] Server Error: Database connection missing.");
+    return NextResponse.redirect(getRedirect('success=false&error=server_config_missing'));
   }
 
   try {
@@ -100,8 +114,8 @@ export async function GET(request: NextRequest) {
     console.error('[Google Callback] Critical Error during token exchange/save:', error.response?.data || error);
     const errorMessage = error.message || 'token_failed';
     // Redirect dengan pesan error yang aman
-    return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=false&error=${encodeURIComponent(errorMessage)}`);
+    return NextResponse.redirect(getRedirect(`success=false&error=${encodeURIComponent(errorMessage)}`));
   }
 
-return NextResponse.redirect(`${baseDomain}/dashboard/profil?success=true`);
+  return NextResponse.redirect(getRedirect('success=google_connected'));
 }
