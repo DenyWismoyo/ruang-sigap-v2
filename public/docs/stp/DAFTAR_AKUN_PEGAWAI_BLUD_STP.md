@@ -6,7 +6,7 @@
 
 ---
 
-## 👥 Tabel Rincian 45 Akun Pegawai BLUD STP
+## 👥 Tabel Rincian 46 Akun Pegawai BLUD STP
 
 | No | Nama Lengkap | Nomor Induk (Login) | Password Default | Nama Jabatan di Sistem | Penugasan di STP |
 | :---: | :--- | :---: | :---: | :--- | :--- |
@@ -55,9 +55,11 @@
 | 43 | Jarot Sutono | `24.210699.2018` | `StpUser2026!` | Programer CNC Bubut | Programer CNC Bubut |
 | 44 | Farid Mahendra | `25.271199.2019` | `StpUser2026!` | Programer CNC Milling 1 | Programer CNC Milling |
 | 45 | Andreas | `2023.190502.56` | `StpUser2026!` | Operator CNC Milling | Operator CNC Milling |
+| 46 | Admin BLUD Solo Technopark | `admin.blud.stp` | `StpUser2026!` | Admin BLUD Solo Technopark (admin_opd) | Admin OPD BLUD STP |
 
 ---
 
 ### 💡 Tips Bagi Pegawai:
 1. Setelah berhasil login pertama kali, disarankan untuk memperbarui kata sandi mandiri melalui menu **Pengaturan Profil** di pojok kanan atas.
 2. Jika ada kendala akun atau jabatan, silakan menghubungi **Administrator E-Office UPTD Solo Technopark**.
+

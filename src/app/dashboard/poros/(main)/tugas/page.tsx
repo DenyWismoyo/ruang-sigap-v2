@@ -337,15 +337,18 @@ export default function TugasSayaPage() {
         onValueChange={(v) => setActiveStatusTab(v as TaskStatusFilter)}
         className="w-full"
       >
-        <TabsList className="w-full grid grid-cols-4 h-auto p-1 bg-muted">
+        <TabsList className="w-full grid grid-cols-5 h-auto p-1 bg-muted">
+          <TabsTrigger value="Semua">Semua ({taskCounts["Semua"]})</TabsTrigger>
           <TabsTrigger value="Baru">Baru ({taskCounts["Baru"]})</TabsTrigger>
           <TabsTrigger value="Dikerjakan">
-            Dikerjakan ({taskCounts["Dikerjakan"]})
+            Proses ({taskCounts["Dikerjakan"]})
+          </TabsTrigger>
+          <TabsTrigger value="Menunggu Review">
+            Review ({taskCounts["Menunggu Review"]})
           </TabsTrigger>
           <TabsTrigger value="Selesai">
             Selesai ({taskCounts["Selesai"]})
           </TabsTrigger>
-          <TabsTrigger value="Semua">Semua ({taskCounts["Semua"]})</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -377,10 +380,9 @@ export default function TugasSayaPage() {
                   />
                 ) : (
                   <KanbanBoard
-                    tugasList={filteredTasks}
+                    tasks={filteredTasks}
                     onOpenDetail={setSelectedTask}
                     onStatusChange={handleStatusChange}
-                    onDeleteTask={handleDeleteTask}
                     userCache={userMap}
                   />
                 )}
@@ -389,6 +391,7 @@ export default function TugasSayaPage() {
           </AnimatePresence>
         </div>
       </Tabs>
+
 
       {/* Modals */}
       <FormTugas

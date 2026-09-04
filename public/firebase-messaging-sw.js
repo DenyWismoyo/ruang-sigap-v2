@@ -6,6 +6,25 @@
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js");
 
+// --- [PWA LIFECYCLE & WEBAPK FETCH HANDLER] ---
+self.addEventListener("install", (event) => {
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", (event) => {
+  event.waitUntil(self.clients.claim());
+});
+
+// Fetch listener - Wajib ada agar Android Chrome memenuhi syarat instalasi WebAPK PWA
+self.addEventListener("fetch", (event) => {
+  // Passthrough fetch ke jaringan
+  event.respondWith(
+    fetch(event.request).catch(() => {
+      return fetch(event.request);
+    })
+  );
+});
+
 // Impor konfigurasi Firebase Anda dari file terpisah di /public
 // File ini (firebase-config.js) sudah ada di folder public Anda.
 importScripts("/firebase-config.js");

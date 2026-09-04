@@ -227,7 +227,8 @@ function generateDaftarAkunPDF() {
         ["42", "Bangun Fajar Kusnanto", "22.160494.2017", "Operator Manual", "StpUser2026!"],
         ["43", "Jarot Sutono", "24.210699.2018", "Programer CNC Bubut", "StpUser2026!"],
         ["44", "Farid Mahendra", "25.271199.2019", "Programer CNC Milling 1", "StpUser2026!"],
-        ["45", "Andreas", "2023.190502.56", "Operator CNC Milling", "StpUser2026!"]
+        ["45", "Andreas", "2023.190502.56", "Operator CNC Milling", "StpUser2026!"],
+        ["46", "Admin BLUD Solo Technopark", "admin.blud.stp", "Admin BLUD Solo Technopark", "StpUser2026!"]
     ];
 
     autoTable(doc, {

@@ -1,15 +1,15 @@
 // Lokasi: src/app/layout.tsx
 // [REFACTOR] Menggunakan AppProviders untuk struktur provider yang bersih.
-// [INTEGRASI] Menambahkan ServiceWorkerReset untuk membersihkan cache PWA yang bermasalah.
+// [INTEGRASI] PWA WebAPK Compliance, Early Install Prompt Capture, & Multi-Device Icons.
 
 import type { Metadata, Viewport } from "next";
 import { Inter, Sora, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import AppProviders from "@/context/AppProviders";
-import { ServiceWorkerReset } from "@/components/ServiceWorkerReset"; // [BARU] Import komponen reset
-import OfflineSyncManager from "@/components/OfflineSyncManager"; // [BARU] Import offline sync manager
-import JsonLd from "@/components/seo/JsonLd"; // [SEO] Import JSON-LD Schema
+import OfflineSyncManager from "@/components/OfflineSyncManager";
+import JsonLd from "@/components/seo/JsonLd";
+import PwaRegister from "@/components/PwaRegister";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -27,7 +27,7 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://spg.omnifit.cloud"),
+  metadataBase: new URL("https://sgp.omnifit.cloud"),
   title: {
     template: "%s | SIGAP",
     default: "SIGAP - Sistem Integrasi & Administrasi Persuratan",
@@ -52,15 +52,31 @@ export const metadata: Metadata = {
     address: false,
     telephone: false,
   },
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png?v=2.2.0", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png?v=2.2.0", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-192x192.png?v=2.2.0", sizes: "192x192", type: "image/png" },
+    ],
+    shortcut: "/icon-192x192.png?v=2.2.0",
+  },
+  manifest: "/manifest.json?v=2.2.0",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SIGAP",
+  },
   openGraph: {
     title: "SIGAP - Sistem Integrasi & Administrasi Persuratan",
     description:
       "Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi. Kelola persuratan secara digital dan real-time.",
-    url: "https://spg.omnifit.cloud",
+    url: "https://sgp.omnifit.cloud",
     siteName: "SIGAP E-Office",
     images: [
       {
-        url: "/icon-192x192.png",
+        url: "/icon-192x192.png?v=2.2.0",
         width: 192,
         height: 192,
         alt: "SIGAP E-Office Logo",
@@ -73,7 +89,7 @@ export const metadata: Metadata = {
     card: "summary",
     title: "SIGAP E-Office",
     description: "Solusi E-Office Cerdas untuk Transformasi Digital Birokrasi.",
-    images: ["/icon-192x192.png"],
+    images: ["/icon-192x192.png?v=2.2.0"],
     creator: "@sigap",
   },
   robots: {
@@ -108,10 +124,28 @@ export default function RootLayout({
       <head>
         <meta name="application-name" content="SIGAP" />
         <meta name="theme-color" content="#0284c7" />
-        <link rel="manifest" href="/manifest.json" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="SIGAP" />
+        <link rel="manifest" href="/manifest.json?v=2.2.0" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192x192.png?v=2.2.0" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512x512.png?v=2.2.0" />
+        <link rel="apple-touch-icon" href="/icon-192x192.png?v=2.2.0" />
         <script
           dangerouslySetInnerHTML={{
             __html: `
+              // Early capture PWA install prompt before React hydrates
+              window.__deferredPwaPrompt = null;
+              window.addEventListener('beforeinstallprompt', function(e) {
+                e.preventDefault();
+                window.__deferredPwaPrompt = e;
+                if (typeof window.__onPwaPromptReady === 'function') {
+                  window.__onPwaPromptReady(e);
+                }
+              });
+
+              // ChunkLoadError handler
               window.addEventListener('error', function(e) {
                 if (e.message && e.message.toLowerCase().includes('loading chunk')) {
                   console.warn('ChunkLoadError intercepted. Hard reloading...');
@@ -136,10 +170,7 @@ export default function RootLayout({
           plusJakartaSans.variable
         )}
       >
-        {/* [BARU] ServiceWorkerReset dipasang di sini (paling atas dalam body).
-            Ini akan berjalan sekali di sisi klien untuk memastikan tidak ada SW lama yang nyangkut.
-        */}
-        <ServiceWorkerReset />
+        <PwaRegister />
         <JsonLd />
 
         <AppProviders>

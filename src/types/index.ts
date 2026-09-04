@@ -387,10 +387,44 @@ export interface Surat {
 
 export interface AgendaDetail { tanggal: Timestamp; jam: string; jamSelesai?: string | null; lokasi: string; }
 export interface Disposisi { id?: string; suratId: string; dariJabatanId: string; kepadaJabatanId: string[]; tembusanJabatanId?: string[]; tanggalDisposisi: Timestamp; instruksi: string; catatan?: string; batasWaktu?: Timestamp; status?: 'Terkirim' | 'Dikembalikan'; isInformational?: boolean; penerimaDiterima?: string[]; penerimaSelesai?: string[]; penerimaDikembalikan?: string[]; alasanPengembalian?: string; dikembalikanPada?: Timestamp; isDelegated?: boolean; delegatedToJabatanId?: string; originalKepadaJabatanId?: string; opdId?: string; dariJabatanNama?: string; dariOpdId?: string; dariOpdNama?: string; audioUrl?: string; penerimaSnapshot?: { jabatanId: string; nama: string; nip: string; golongan: string; namaJabatan?: string }[]; }
-export interface Tugas { id?: string; opdId: string; judulTugas: string; deskripsi: string; dariJabatanId: string; kepadaJabatanId: string; tanggalDibuat: Timestamp; batasWaktu?: Timestamp | null; tanggalSelesai?: Timestamp | null; status: 'Baru' | 'Dikerjakan' | 'Selesai' | 'Dibatalkan'; prioritas: 'Tinggi' | 'Sedang' | 'Rendah'; suratId?: string; suratPerihal?: string; lampiran?: TugasLampiran[]; subTugas?: SubTugas[]; kategoriTugas?: 'Penyusunan Laporan' | 'Analisis Data' | 'Persiapan Materi' | 'Koordinasi' | 'Lainnya'; delegatedToJabatanId?: string | null; isDelegated?: boolean; collaboratorIds?: string[]; dariJabatanNama?: string; kepadaJabatanNama?: string; }
+export interface LaporanHasilTugas {
+  ringkasan: string;
+  buktiUrl?: string;
+  diserahkanPada: Timestamp;
+  catatanTambahan?: string;
+}
+
+export interface Tugas { 
+  id?: string; 
+  opdId: string; 
+  judulTugas: string; 
+  deskripsi: string; 
+  dariJabatanId: string; 
+  kepadaJabatanId: string; 
+  tanggalDibuat: Timestamp; 
+  batasWaktu?: Timestamp | null; 
+  tanggalSelesai?: Timestamp | null; 
+  status: 'Baru' | 'Dikerjakan' | 'Menunggu Review' | 'Selesai' | 'Revisi' | 'Dibatalkan'; 
+  prioritas: 'Tinggi' | 'Sedang' | 'Rendah'; 
+  suratId?: string; 
+  suratPerihal?: string; 
+  lampiran?: TugasLampiran[]; 
+  subTugas?: SubTugas[]; 
+  kategoriTugas?: 'Penyusunan Laporan' | 'Analisis Data' | 'Persiapan Materi' | 'Koordinasi' | 'Teknis Lapangan' | 'Lainnya'; 
+  delegatedToJabatanId?: string | null; 
+  isDelegated?: boolean; 
+  collaboratorIds?: string[]; 
+  dariJabatanNama?: string; 
+  kepadaJabatanNama?: string;
+  instruksiTipe?: 'mandiri' | 'delegasi_langsung' | 'surat';
+  audioUrl?: string;
+  laporanHasil?: LaporanHasilTugas;
+  catatanRevisi?: string;
+}
 export interface TugasLampiran { name: string; url: string; uploadedAt: Timestamp; type: 'file' | 'link'; }
 export interface TugasKomentar { id?: string; tugasId: string; userId: string; userName: string; userJabatan: string; komentar: string; timestamp: Timestamp; }
 export interface SubTugas { id: string; teks: string; selesai: boolean; }
+
 export interface OPD { 
   id?: string; 
   nama?: string;

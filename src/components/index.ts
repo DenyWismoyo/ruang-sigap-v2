@@ -7,6 +7,7 @@ export * from './AreaChart';
 export * from './InstallPwaButton';
 export * from './OfflineSyncManager';
 export * from './ServiceWorkerReset';
+export * from './PwaRegister';
 export * from './showcase/InteractiveShowcase';
 export * from './showcase/MockRuangKerjaCard';
 export * from './showcase/MockSuratMasukList';

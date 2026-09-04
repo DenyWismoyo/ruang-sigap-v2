@@ -319,8 +319,304 @@ export const useTugasActions = () => {
       } catch (e) { console.error(e); return false; }
   };
 
+  // --- 1.2 BATCH TASK CREATION (MULTI-ASSIGNEE SPLIT) ---
+  const createBatchTasks = async (
+      taskTemplate: Omit<Tugas, 'id' | 'opdId' | 'dariJabatanId' | 'dariJabatanNama' | 'tanggalDibuat' | 'status' | 'kepadaJabatanId' | 'kepadaJabatanNama'>,
+      pemberiTugasUser: UserProfile,
+      assignees: UserProfile[]
+  ) => {
+      if (!userProfile || !effectiveJabatan || assignees.length === 0) return false;
+      setIsProcessing(true);
+      try {
+          const batch = writeBatch(db);
+          const opdId = userProfile.opdId;
+          const createdTaskIds: string[] = [];
+
+          for (const assignee of assignees) {
+              const tugasRef = doc(collection(db, 'tugas'));
+              createdTaskIds.push(tugasRef.id);
+
+              const singleTugas: Omit<Tugas, 'id'> = {
+                  ...taskTemplate,
+                  opdId,
+                  dariJabatanId: pemberiTugasUser.jabatanId,
+                  dariJabatanNama: pemberiTugasUser.namaLengkap,
+                  kepadaJabatanId: assignee.jabatanId,
+                  kepadaJabatanNama: assignee.namaLengkap,
+                  tanggalDibuat: Timestamp.now(),
+                  status: 'Baru',
+                  instruksiTipe: 'delegasi_langsung',
+                  isDelegated: true,
+              };
+
+              batch.set(tugasRef, singleTugas);
+              // Fan-out ke pemberi tugas
+              batch.set(doc(db, 'tugasPerPengguna', pemberiTugasUser.uid, 'tugas', tugasRef.id), singleTugas);
+              // Fan-out ke penerima
+              batch.set(doc(db, 'tugasPerPengguna', assignee.uid, 'tugas', tugasRef.id), singleTugas);
+
+              // Notifikasi
+              if (assignee.uid !== pemberiTugasUser.uid) {
+                  const notifRef = doc(collection(db, 'notifications'));
+                  batch.set(notifRef, {
+                      userId: assignee.uid,
+                      userNip: assignee.nip,
+                      message: `Instruksi tugas baru: "${taskTemplate.judulTugas}"`,
+                      link: '/dashboard/tugas',
+                      isRead: false,
+                      timestamp: Timestamp.now()
+                  });
+                  if (assignee.nomorWa) {
+                      sendWhatsAppNotification(assignee.nomorWa, 'tugas_baru', [getActorName(), taskTemplate.judulTugas]).catch(console.error);
+                  }
+              }
+          }
+
+          await batch.commit();
+
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
+          addToast(`Berhasil menugaskan ${assignees.length} staf!`, 'success');
+          return createdTaskIds;
+      } catch (error: any) {
+          console.error("Batch Task Error:", error);
+          addToast(error.message || "Gagal membuat tugas batch.", 'error');
+          return null;
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
+  // --- 1.3 SUBMIT LAPORAN HASIL TUGAS (STAF -> REVIEW ATASAN) ---
+  const submitTaskReport = async (
+      task: Tugas,
+      report: { ringkasan: string; buktiUrl?: string; catatanTambahan?: string },
+      autoLogbook: boolean = true
+  ) => {
+      if (!userProfile || !effectiveJabatan || !task.id) return false;
+      setIsProcessing(true);
+      try {
+          const batch = writeBatch(db);
+          const tugasRef = doc(db, 'tugas', task.id);
+          
+          const isMandiri = task.dariJabatanId === task.kepadaJabatanId;
+          // Jika tugas mandiri, langsung Selesai. Jika dari atasan, status Menunggu Review
+          const targetStatus: Tugas['status'] = isMandiri ? 'Selesai' : 'Menunggu Review';
+
+          const laporanPayload: any = {
+              ringkasan: report.ringkasan,
+              diserahkanPada: Timestamp.now(),
+          };
+          if (report.buktiUrl) laporanPayload.buktiUrl = report.buktiUrl;
+          if (report.catatanTambahan) laporanPayload.catatanTambahan = report.catatanTambahan;
+
+          const updateData: Partial<Tugas> = {
+              status: targetStatus,
+              laporanHasil: laporanPayload,
+              catatanRevisi: undefined,
+              tanggalSelesai: isMandiri ? Timestamp.now() : null
+          };
+
+          batch.update(tugasRef, updateData);
+
+          // Update fan-out per pengguna
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.update(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!), updateData);
+              });
+
+              // Notifikasi ke Pemberi Tugas jika bukan diri sendiri
+              if (!isMandiri && task.dariJabatanId) {
+                  const assignerUser = usersSnap.docs.find(d => d.data().jabatanId === task.dariJabatanId);
+                  if (assignerUser) {
+                      const assignerData = assignerUser.data();
+                      const notifRef = doc(collection(db, 'notifications'));
+                      batch.set(notifRef, {
+                          userId: assignerData.uid || assignerUser.id,
+                          userNip: assignerData.nip,
+                          message: `${userProfile.namaLengkap} telah menyelesaikan dan mengirim laporan tugas: "${task.judulTugas}". Mohon verifikasi.`,
+                          link: '/dashboard/tugas',
+                          isRead: false,
+                          timestamp: Timestamp.now()
+                      });
+                  }
+              }
+          }
+
+          if (task.suratId) {
+              await logActivity(task.suratId, getActorName(), `Menyerahkan laporan hasil pengerjaan: "${report.ringkasan}"`);
+          }
+
+          // Catat ke Logbook Kinerja Otomatis
+          if (autoLogbook && userProfile.opdId) {
+              try {
+                  const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+                  await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+                      deskripsi: `Menyelesaikan tugas: ${task.judulTugas}. Hasil: ${report.ringkasan}`,
+                      kategori: 'Tugas',
+                      sumber: 'tugas',
+                      tugasTerkaitId: task.id,
+                      tugasTerkaitJudul: task.judulTugas,
+                      selesai: true,
+                  });
+
+              } catch (logErr) {
+                  console.error("Auto logbook error:", logErr);
+              }
+          }
+
+          await batch.commit();
+
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
+          addToast(isMandiri ? 'Tugas berhasil diselesaikan & dicatat ke logbook!' : 'Laporan hasil tugas berhasil diserahkan untuk review atasan!', 'success');
+          return true;
+      } catch (error: any) {
+          console.error("Submit Task Report Error:", error);
+          addToast("Gagal menyerahkan laporan tugas.", 'error');
+          return false;
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
+  // --- 1.4 APPROVE TASK (ATASAN -> SELESAI) ---
+  const approveTask = async (task: Tugas) => {
+      if (!userProfile || !effectiveJabatan || !task.id) return false;
+      setIsProcessing(true);
+      try {
+          const batch = writeBatch(db);
+          const tugasRef = doc(db, 'tugas', task.id);
+          const updateData: Partial<Tugas> = {
+              status: 'Selesai',
+              tanggalSelesai: Timestamp.now(),
+              catatanRevisi: undefined
+          };
+
+          batch.update(tugasRef, updateData);
+
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.update(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!), updateData);
+              });
+
+              // Notifikasi ke staf pelaksana
+              const executor = usersSnap.docs.find(d => d.data().jabatanId === task.kepadaJabatanId);
+              if (executor && executor.data().uid !== userProfile.uid) {
+                  const notifRef = doc(collection(db, 'notifications'));
+                  batch.set(notifRef, {
+                      userId: executor.data().uid,
+                      userNip: executor.data().nip,
+                      message: `Laporan tugas "${task.judulTugas}" telah disetujui & diverifikasi oleh ${getActorName()}.`,
+                      link: '/dashboard/tugas',
+                      isRead: false,
+                      timestamp: Timestamp.now()
+                  });
+              }
+          }
+
+          if (task.suratId) {
+              await logActivity(task.suratId, getActorName(), `Menyetujui dan menyelesaikan tugas: "${task.judulTugas}"`);
+          }
+
+          await batch.commit();
+
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
+          addToast('Tugas telah diverifikasi dan disetujui!', 'success');
+          return true;
+      } catch (error: any) {
+          console.error("Approve Task Error:", error);
+          addToast("Gagal menyetujui tugas.", 'error');
+          return false;
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
+  // --- 1.5 REQUEST REVISION (ATASAN -> REVISI) ---
+  const requestTaskRevision = async (task: Tugas, revisionNote: string) => {
+      if (!userProfile || !effectiveJabatan || !task.id || !revisionNote) return false;
+      setIsProcessing(true);
+      try {
+          const batch = writeBatch(db);
+          const tugasRef = doc(db, 'tugas', task.id);
+          const updateData: Partial<Tugas> = {
+              status: 'Revisi',
+              catatanRevisi: revisionNote
+          };
+
+          batch.update(tugasRef, updateData);
+
+          const allJabatanIds = [...new Set([task.dariJabatanId, task.kepadaJabatanId, ...(task.collaboratorIds || [])])];
+          if (allJabatanIds.length > 0) {
+              const usersSnap = await getDocs(query(collection(db, 'users'), where('jabatanId', 'in', allJabatanIds.slice(0, 30))));
+              usersSnap.forEach(uDoc => {
+                  const uid = uDoc.data().uid || uDoc.id;
+                  batch.update(doc(db, 'tugasPerPengguna', uid, 'tugas', task.id!), updateData);
+              });
+
+              // Notifikasi ke staf pelaksana
+              const executor = usersSnap.docs.find(d => d.data().jabatanId === task.kepadaJabatanId);
+              if (executor && executor.data().uid !== userProfile.uid) {
+                  const notifRef = doc(collection(db, 'notifications'));
+                  batch.set(notifRef, {
+                      userId: executor.data().uid,
+                      userNip: executor.data().nip,
+                      message: `Catatan revisi tugas "${task.judulTugas}" dari ${getActorName()}: "${revisionNote}"`,
+                      link: '/dashboard/tugas',
+                      isRead: false,
+                      timestamp: Timestamp.now()
+                  });
+                  if (executor.data().nomorWa) {
+                      sendWhatsAppNotification(executor.data().nomorWa, 'tugas_baru', [getActorName(), `Revisi: ${revisionNote}`]).catch(console.error);
+                  }
+              }
+          }
+
+          if (task.suratId) {
+              await logActivity(task.suratId, getActorName(), `Meminta revisi tugas: "${revisionNote}"`);
+          }
+
+          await batch.commit();
+
+          if (effectiveJabatan?.id) {
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan'] });
+              queryClient.invalidateQueries({ queryKey: ['tugasBawahan', effectiveJabatan.id] });
+          }
+
+          addToast('Permintaan revisi berhasil dikirim ke pelaksana.', 'success');
+          return true;
+      } catch (error: any) {
+          console.error("Revision Task Error:", error);
+          addToast("Gagal mengirim revisi tugas.", 'error');
+          return false;
+      } finally {
+          setIsProcessing(false);
+      }
+  };
+
   return {
       createNewTask,
+      createBatchTasks,
+      submitTaskReport,
+      approveTask,
+      requestTaskRevision,
       updateTaskStatus,
       updateTaskDetail,
       deleteTask,
@@ -333,4 +629,4 @@ export const useTugasActions = () => {
       addAttachment,
       isProcessing
   };
-};
+};

@@ -110,8 +110,8 @@ export const config = {
      * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
-     * - favicon.ico, manifest.json, sw.js (PWA assets)
+     * - PWA assets, Service Worker, and static images
      */
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.json|sw.js|firebase-messaging-sw.js|firebase-config.js|.*\\.(?:png|jpg|jpeg|svg|webp|ico)).*)',
   ],
 };

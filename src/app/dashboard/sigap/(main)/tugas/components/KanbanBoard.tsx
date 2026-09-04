@@ -1,7 +1,7 @@
 /**
- * Directory: src/app/dashboard/poros/(main)/tugas/components/KanbanBoard.tsx
- * Status: REFACTORED - KANBAN BOARD WITH REVIEW STATUS (POROS)
- * Deskripsi: Visual Kanban Board (Baru, Dikerjakan, Menunggu Review, Selesai) di tenant POROS.
+ * Directory: src/app/dashboard/sigap/(main)/tugas/components/KanbanBoard.tsx
+ * Status: NEW COMPONENT - KANBAN BOARD FOR SIGAP
+ * Deskripsi: Visual Kanban Board (Baru, Dikerjakan, Menunggu Review, Selesai) dengan drag/click status dan interaksi cepat.
  */
 
 "use client";
@@ -34,7 +34,7 @@ const getDeadlineText = (deadline: Date) => {
 
 export default function KanbanBoard({ tasks, onOpenDetail, onStatusChange, userCache }: KanbanBoardProps) {
   const columns: { id: string; title: string; filterStatuses: Tugas['status'][]; color: string }[] = [
-    { id: 'todo', title: 'Perlu Dikerjakan', filterStatuses: ['Baru', 'Revisi'], color: 'border-teal-500 text-teal-700 dark:text-teal-400' },
+    { id: 'todo', title: 'Perlu Dikerjakan', filterStatuses: ['Baru', 'Revisi'], color: 'border-blue-500 text-blue-700 dark:text-blue-400' },
     { id: 'inprogress', title: 'Sedang Proses', filterStatuses: ['Dikerjakan'], color: 'border-amber-500 text-amber-700 dark:text-amber-400' },
     { id: 'review', title: 'Menunggu Review', filterStatuses: ['Menunggu Review'], color: 'border-purple-500 text-purple-700 dark:text-purple-400' },
     { id: 'done', title: 'Selesai', filterStatuses: ['Selesai'], color: 'border-emerald-500 text-emerald-700 dark:text-emerald-400' },
@@ -45,7 +45,7 @@ export default function KanbanBoard({ tasks, onOpenDetail, onStatusChange, userC
       {columns.map(col => {
         const colTasks = tasks.filter(t => col.filterStatuses.includes(t.status));
         return (
-          <div key={col.id} className="flex flex-col bg-muted/30 rounded-2xl p-3 border border-border/60 min-w-[260px] nk-card">
+          <div key={col.id} className="flex flex-col bg-muted/30 rounded-2xl p-3 border border-border min-w-[260px]">
             
             {/* Header Kolom */}
             <div className={`flex items-center justify-between pb-2 mb-3 border-b-2 ${col.color}`}>
@@ -69,7 +69,7 @@ export default function KanbanBoard({ tasks, onOpenDetail, onStatusChange, userC
                     <div
                       key={task.id}
                       onClick={() => onOpenDetail(task)}
-                      className="p-3 bg-card rounded-xl border border-border/60 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer space-y-2 group"
+                      className="p-3 bg-card rounded-xl border border-border shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all cursor-pointer space-y-2 group"
                     >
                       <div className="flex items-center justify-between gap-1">
                         <Badge
@@ -86,7 +86,7 @@ export default function KanbanBoard({ tasks, onOpenDetail, onStatusChange, userC
                         )}
                       </div>
 
-                      <h4 className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-teal-600 transition-colors">
+                      <h4 className="text-xs font-bold text-foreground leading-snug line-clamp-2 group-hover:text-blue-600 transition-colors">
                         {task.judulTugas}
                       </h4>
 

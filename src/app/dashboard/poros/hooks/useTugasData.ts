@@ -14,7 +14,7 @@ import { db } from '@/lib/firebase';
 import { useUserAuth } from '@/context/AuthContext';
 import { Tugas } from '@/types';
 
-export type TaskStatusFilter = 'Semua' | 'Baru' | 'Dikerjakan' | 'Selesai';
+export type TaskStatusFilter = 'Semua' | 'Baru' | 'Dikerjakan' | 'Menunggu Review' | 'Revisi' | 'Selesai';
 export type TaskAssignmentFilter = 'all' | 'toMe' | 'byMe';
 export type TaskTypeFilter = 'all' | 'surat' | 'internal';
 
@@ -70,7 +70,6 @@ export const useTugasData = ({ statusFilter, assignmentFilter, typeFilter }: Use
           // toMe: Saya sebagai PJ atau Kolaborator
           // byMe: Saya sebagai Pemberi Tugas
           
-          // [PERBAIKAN ERROR] Menggunakan actingJabatanProfile.id! karena sudah di-guard di atas
           const myId = actingJabatanProfile.id!; 
 
           const isToMe = task.kepadaJabatanId === myId || 
@@ -97,11 +96,10 @@ export const useTugasData = ({ statusFilter, assignmentFilter, typeFilter }: Use
 
   // 3. Hitung Statistik (Counts) untuk Tab Badge
   const taskCounts = useMemo(() => {
-    if (!actingJabatanProfile?.id) return { 'Baru': 0, 'Dikerjakan': 0, 'Selesai': 0, 'Semua': 0 };
+    if (!actingJabatanProfile?.id) return { 'Baru': 0, 'Dikerjakan': 0, 'Menunggu Review': 0, 'Revisi': 0, 'Selesai': 0, 'Semua': 0 };
 
-    const counts = { 'Baru': 0, 'Dikerjakan': 0, 'Selesai': 0, 'Semua': 0 };
+    const counts = { 'Baru': 0, 'Dikerjakan': 0, 'Menunggu Review': 0, 'Revisi': 0, 'Selesai': 0, 'Semua': 0 };
     
-    // [PERBAIKAN] Definisi myId agar aman
     const myId = actingJabatanProfile.id;
 
     allTasks.forEach(task => {
@@ -129,6 +127,7 @@ export const useTugasData = ({ statusFilter, assignmentFilter, typeFilter }: Use
 
     return counts;
   }, [allTasks, assignmentFilter, typeFilter, actingJabatanProfile]);
+
 
   return {
       allTasks,       // Raw data (jarang dipakai langsung di UI, tapi berguna untuk debug)
