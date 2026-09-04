@@ -96,3 +96,14 @@ Gunakan komponen `<AntiFraudAuditDialog />` di [`src/components/presensi/AntiFra
 - Menampilkan breakdown skor resiko.
 - Memvisualisasikan akurasi GPS, deviasi waktu jam client vs WIB, platform perangkat.
 - Merinci temuan anomali dalam format peringatan warna-warni yang jelas dan ramah Light / Dark mode.
+
+---
+
+## 🚫 Anti-Pattern & Aturan Wajib Anti-Fraud (Learnings)
+
+1. **Validasi Clock Tamper HARUS Server-Side**: DILARANG membandingkan `Date.now()` dengan hasil konversi timezone-nya sendiri (misal `toLocaleString()`) karena keduanya berasal dari jam lokal perangkat yang bisa dimanipulasi. Selalu bandingkan waktu lokal dengan waktu absolut dari server (misal: baca kembali field `serverTimestamp()` Firestore setelah operasi write berhasil, atau gunakan endpoint NTP `/api/server-time`).
+2. **Indoor GPS Tuning**:
+   - Atur `maximumAge` minimal `10000ms` pada `watchPosition` saat di dalam ruangan perkantoran. Nilai kecil (`3000ms`) menyebabkan error `TIMEOUT` beruntun dan boros baterai karena sinyal GPS sulit menembus beton.
+   - Ambang batas **Jitter (Koordinat Statis)** harus minimal **6 sampel** (jangan kurang), untuk menghindari false positive pada pegawai jujur di basement/lobby gedung yang kehilangan sinyal satelit.
+3. **Explicit GPS Sampling**: Native `watchPosition` di OS modern (terutama iOS Power Save mode) sering kali sangat agresif mengurangi frekuensi update. Gunakan `setInterval` (misal per 5 detik) untuk mengeksekusi `getCurrentPosition` secara eksplisit dan memasukkannya ke dalam array telemetri histori.
+4. **Toleransi Radius Dinamis (Dynamic Geofence)**: Tambahkan radius absensi kantor secara dinamis berdasarkan akurasi GPS aktual pada saat absensi, BUKAN nilai konstan (e.g. radius 100m + toleransi 50m). Jika akurasi GPS sedang buruk (misal `accuracy = 80m`), toleransi harus mengembang otomatis (maksimal batas wajar).

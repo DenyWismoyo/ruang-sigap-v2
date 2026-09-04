@@ -14,6 +14,7 @@ import {
   serverTimestamp,
   orderBy,
   limit,
+  getDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { useUserAuth } from "@/context/AuthContext";
@@ -132,6 +133,7 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
   const [gpsMessage, setGpsMessage] = useState<string>("Mencari sinyal GPS...");
   const [loadingLocation, setLoadingLocation] = useState<boolean>(false);
   const watchIdRef = useRef<number | null>(null);
+  const gpsIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Anti-Fraud Telemetry In-Memory Refs
   const gpsHistoryRef = useRef<GpsSample[]>([]);
@@ -258,6 +260,10 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
       navigator.geolocation.clearWatch(watchIdRef.current);
       watchIdRef.current = null;
     }
+    if (gpsIntervalRef.current !== null) {
+      clearInterval(gpsIntervalRef.current);
+      gpsIntervalRef.current = null;
+    }
   };
 
   const startGpsWatch = () => {
@@ -272,10 +278,29 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
     setLoadingLocation(true);
     stopGps();
 
-    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 3000 };
+    const options = { enableHighAccuracy: true, timeout: 15000, maximumAge: 10000 };
+
+    gpsIntervalRef.current = setInterval(() => {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const { latitude, longitude, accuracy, speed, altitude } = pos.coords;
+          const sample: GpsSample = {
+            latitude,
+            longitude,
+            accuracy: accuracy || 10,
+            timestamp: pos.timestamp || Date.now(),
+            speed,
+            altitude
+          };
+          gpsHistoryRef.current = [...gpsHistoryRef.current.slice(-11), sample];
+        },
+        () => {}, 
+        options
+      );
+    }, 5000);
 
     const handlePos = (pos: GeolocationPosition) => {
-      const { latitude, longitude, accuracy } = pos.coords;
+      const { latitude, longitude, accuracy, speed, altitude } = pos.coords;
       setUserLocation({ latitude, longitude });
 
       // Catat sampel ke in-memory telemetry untuk anti-fraud audit
@@ -285,8 +310,10 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
         longitude,
         accuracy: accuracy || 10,
         timestamp: pos.timestamp || Date.now(),
+        speed,
+        altitude
       };
-      gpsHistoryRef.current = [...gpsHistoryRef.current.slice(-9), sample];
+      gpsHistoryRef.current = [...gpsHistoryRef.current.slice(-11), sample];
 
       if (presensiConfig.lokasiKantor?.latitude && presensiConfig.lokasiKantor?.longitude) {
         const dist = calculateDistanceMeters(
@@ -297,7 +324,8 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
         );
         setDistanceToOffice(dist);
 
-        const allowedRadius = (presensiConfig.lokasiKantor?.radiusMeter || 100) + GPS_DRIFT_TOLERANCE;
+        const dynamicTolerance = Math.min(Math.max(gpsAccuracyRef.current, 30), 80);
+        const allowedRadius = (presensiConfig.lokasiKantor?.radiusMeter || 100) + dynamicTolerance;
 
         if (dist <= allowedRadius) {
           setGpsStatus("siap");
@@ -414,8 +442,13 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
   };
 
   const handleCameraCapture = async (file: File) => {
+    let photoFreshnessWarning = false;
+    if (file.lastModified && Date.now() - file.lastModified > 60000) {
+      photoFreshnessWarning = true;
+    }
+
     if (cameraPurpose === "checkin") {
-      await doCheckIn(file);
+      await doCheckIn(file, photoFreshnessWarning);
     } else if (cameraPurpose === "activity") {
       setTempActivityPhoto(file);
       setActivityPreview(URL.createObjectURL(file));
@@ -423,12 +456,12 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
     } else if (cameraPurpose === "checkout") {
       setTempCheckoutPhoto(file);
       setCheckoutPreview(URL.createObjectURL(file));
-      await doCheckOut(file);
+      await doCheckOut(file, photoFreshnessWarning);
     }
   };
 
   // CHECK-IN SUBMISSION
-  const doCheckIn = async (photoFile?: File) => {
+  const doCheckIn = async (photoFile?: File, photoFreshnessWarning: boolean = false) => {
     if (!userProfile?.opdId || !userProfile?.uid) return;
 
     const maxRadius = presensiConfig.lokasiKantor?.radiusMeter || 100;
@@ -472,10 +505,19 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
           accuracy: gpsAccuracyRef.current,
         },
         gpsHistory: gpsHistoryRef.current,
+        officeLocation: presensiConfig.lokasiKantor,
       });
 
+      if (photoFreshnessWarning) {
+        antiFraudAudit.anomaliesDetected.push("Metadata foto terindikasi lampau (Mencurigakan/Reuse foto)");
+        antiFraudAudit.fraudScore += 25;
+        antiFraudAudit.riskLevel = antiFraudAudit.fraudScore >= 65 ? "high" : antiFraudAudit.fraudScore >= 35 ? "suspicious" : "low";
+      }
+
       const docId = `${userProfile.opdId}_${userProfile.uid}_${todayStr}`;
-      const recordPayload: PresensiRecord = {
+      const isWeekend = now.getDay() === 0 || now.getDay() === 6;
+
+      const recordPayload: any = {
         userId: userProfile.uid,
         userNip: userProfile.nip || "",
         namaLengkap: userProfile.namaLengkap || "",
@@ -497,11 +539,47 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
         antiFraudAudit,
         statusMasuk,
         statusKehadiran,
+        isWeekend,
+        isHariLibur: isWeekend, 
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       };
 
       await setDoc(doc(db, "presensi", docId), recordPayload, { merge: true });
+      
+      try {
+        const snap = await getDoc(doc(db, "presensi", docId));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.timestampMasuk) {
+            const serverTimeMs = data.timestampMasuk.toMillis();
+            const updatedAudit = performAntiFraudAudit({
+              currentPos: {
+                latitude: userLocation?.latitude || 0,
+                longitude: userLocation?.longitude || 0,
+                accuracy: gpsAccuracyRef.current,
+              },
+              gpsHistory: gpsHistoryRef.current,
+              officeLocation: presensiConfig.lokasiKantor,
+              serverTimeMs,
+            });
+            
+            if (photoFreshnessWarning) {
+              updatedAudit.anomaliesDetected.push("Metadata foto terindikasi lampau (Mencurigakan/Reuse foto)");
+              updatedAudit.fraudScore += 25;
+              updatedAudit.riskLevel = updatedAudit.fraudScore >= 65 ? "high" : updatedAudit.fraudScore >= 35 ? "suspicious" : "low";
+            }
+            
+            if (updatedAudit.clockDriftSeconds && updatedAudit.clockDriftSeconds > 180) {
+              await updateDoc(doc(db, "presensi", docId), {
+                antiFraudAudit: updatedAudit
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to verify server time drift", e);
+      }
       addToast(
         `Presensi Masuk Berhasil! (${statusMasuk === "tepat_waktu" ? "Tepat Waktu" : "Terlambat"})`,
         "success"
@@ -551,7 +629,7 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
   };
 
   // CHECK-OUT SUBMISSION
-  const doCheckOut = async (photoFile?: File) => {
+  const doCheckOut = async (photoFile?: File, photoFreshnessWarning: boolean = false) => {
     if (!userProfile?.opdId || !userProfile?.uid || !todayRecord) return;
 
     const maxRadius = presensiConfig.lokasiKantor?.radiusMeter || 100;
@@ -598,7 +676,14 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
           accuracy: gpsAccuracyRef.current,
         },
         gpsHistory: gpsHistoryRef.current,
+        officeLocation: presensiConfig.lokasiKantor,
       });
+
+      if (photoFreshnessWarning) {
+        antiFraudAuditPulang.anomaliesDetected.push("Metadata foto terindikasi lampau (Mencurigakan/Reuse foto)");
+        antiFraudAuditPulang.fraudScore += 25;
+        antiFraudAuditPulang.riskLevel = antiFraudAuditPulang.fraudScore >= 65 ? "high" : antiFraudAuditPulang.fraudScore >= 35 ? "suspicious" : "low";
+      }
 
       const docId = `${userProfile.opdId}_${userProfile.uid}_${todayStr}`;
       await updateDoc(doc(db, "presensi", docId), {
@@ -617,6 +702,40 @@ export default function PresensiPageView({ tenant = "sigap" }: PresensiPageViewP
         catatanPulang: activityText || todayRecord.catatanMasuk || "",
         updatedAt: serverTimestamp(),
       });
+      
+      try {
+        const snap = await getDoc(doc(db, "presensi", docId));
+        if (snap.exists()) {
+          const data = snap.data();
+          if (data.timestampPulang) {
+            const serverTimeMs = data.timestampPulang.toMillis();
+            const updatedAudit = performAntiFraudAudit({
+              currentPos: {
+                latitude: userLocation?.latitude || 0,
+                longitude: userLocation?.longitude || 0,
+                accuracy: gpsAccuracyRef.current,
+              },
+              gpsHistory: gpsHistoryRef.current,
+              officeLocation: presensiConfig.lokasiKantor,
+              serverTimeMs,
+            });
+
+            if (photoFreshnessWarning) {
+              updatedAudit.anomaliesDetected.push("Metadata foto terindikasi lampau (Mencurigakan/Reuse foto)");
+              updatedAudit.fraudScore += 25;
+              updatedAudit.riskLevel = updatedAudit.fraudScore >= 65 ? "high" : updatedAudit.fraudScore >= 35 ? "suspicious" : "low";
+            }
+            
+            if (updatedAudit.clockDriftSeconds && updatedAudit.clockDriftSeconds > 180) {
+              await updateDoc(doc(db, "presensi", docId), {
+                antiFraudAuditPulang: updatedAudit
+              });
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to verify server time drift on check-out", e);
+      }
 
       addToast("Presensi Pulang Berhasil! Terima kasih atas dedikasi Anda.", "success");
       setTempCheckoutPhoto(null);

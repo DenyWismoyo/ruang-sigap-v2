@@ -169,3 +169,13 @@ const isIOSPWA = (window.navigator as any).standalone === true;
 | Tidak ada fallback untuk offline | App crash | Tampilkan UI offline yang informatif |
 | Service Worker cache terlalu agresif | Data stale | Set cache TTL yang tepat untuk Firestore data |
 | Tidak hapus item dari antrian setelah sync | Data ganda | Selalu `deletePendingSuratUpload` setelah berhasil |
+
+---
+
+## 🚀 Persyaratan WebAPK Android (Native App Install)
+
+Agar PWA di Android terinstal sebagai **WebAPK** (aplikasi native dengan icon penuh dan laci aplikasi sendiri), BUKAN sekadar *browser shortcut* (icon kecil dengan lambang Chrome), patuhi aturan berikut:
+
+1. **Wajib Memiliki Fetch Listener**: Service Worker (`firebase-messaging-sw.js` atau `sw.js`) **HARUS** memanggil `self.addEventListener('fetch', ...)` meskipun isinya kosong/hanya pass-through. Ini adalah syarat teknis mutlak dari Chrome Android.
+2. **Manifest Cache Busting**: Selalu tambahkan query string versi pada link manifest di `layout.tsx` (e.g. `<link rel="manifest" href="/manifest.json?v=2" />`) jika memperbarui icon atau data manifest, karena browser sering mem-cache manifest dengan sangat agresif.
+3. **Global `beforeinstallprompt`**: Tangkap event instalasi di level teratas aplikasi (Top-level Layout atau Provider) lalu simpan ke state global agar komponen tombol Install bisa memanggilnya kapanpun tanpa kehilangan konteks.

@@ -23,6 +23,7 @@ interface AntiFraudAuditParams {
     longitude: number;
     radiusMeter?: number;
   };
+  serverTimeMs?: number;
 }
 
 // Haversine formula untuk menghitung jarak meter
@@ -48,6 +49,7 @@ export function performAntiFraudAudit({
   currentPos,
   gpsHistory = [],
   officeLocation,
+  serverTimeMs,
 }: AntiFraudAuditParams): PresensiAntiFraudAudit {
   const anomalies: string[] = [];
   let fraudScore = 0;
@@ -74,8 +76,8 @@ export function performAntiFraudAudit({
       anomalies.push("Akurasi GPS dilaporkan 0m (Pola khas Fake GPS / Software Inject)");
       fraudScore += 45;
       isMockGpsSuspected = true;
-    } else if (accuracy < 1.0) {
-      anomalies.push("Akurasi GPS tidak realistis (< 1.0m pada perangkat seluler)");
+    } else if (accuracy < 1.5) {
+      anomalies.push("Akurasi GPS tidak realistis (< 1.5m pada perangkat seluler)");
       fraudScore += 30;
       isMockGpsSuspected = true;
     } else if (accuracy > 250) {
@@ -84,8 +86,8 @@ export function performAntiFraudAudit({
     }
 
     // B. Micro-Jitter & Satellite Noise Check (Berdasarkan riwayat sampel GPS)
-    if (gpsHistory.length >= 4) {
-      const recentSamples = gpsHistory.slice(-4);
+    if (gpsHistory.length >= 6) {
+      const recentSamples = gpsHistory.slice(-6);
       let identicalCount = 0;
       for (let i = 1; i < recentSamples.length; i++) {
         const latDiff = Math.abs(recentSamples[i].latitude - recentSamples[0].latitude);
@@ -96,7 +98,7 @@ export function performAntiFraudAudit({
         }
       }
 
-      if (identicalCount >= 3 && accuracy < 10) {
+      if (identicalCount >= 5 && accuracy < 10) {
         anomalies.push("Koordinat 100% statis tanpa fluktuasi satelit (Indikasi Mock Location)");
         fraudScore += 25;
         isMockGpsSuspected = true;
@@ -125,25 +127,21 @@ export function performAntiFraudAudit({
   // -------------------------------------------------------------
   // Deteksi jika user mengubah jam lokal sistem secara manual
   let clockDriftSeconds = 0;
-  try {
-    // Hitung estimasi perbedaan antara Date lokal dengan WIB
-    const localNow = new Date();
-    const wibExpected = new Date(localNow.toLocaleString("en-US", { timeZone: "Asia/Jakarta" }));
-    // Cek selisih milidetik waktu lokal terhadap jam referensi
-    const timezoneOffsetDiff = Math.abs(localNow.getTimezoneOffset() - (-420)); // WIB offset is -420 minutes (-7 hours)
-    
-    // Jika perangkat berada di zona WIB tapi jam melenceng > 3 menit
-    if (timezoneOffsetDiff === 0) {
-      const systemVsExpected = Math.abs(localNow.getTime() - wibExpected.getTime());
-      clockDriftSeconds = Math.round(systemVsExpected / 1000);
-      if (clockDriftSeconds > 180) {
-        anomalies.push(`Jam perangkat berbeda ${Math.round(clockDriftSeconds / 60)} menit dari waktu referensi`);
-        fraudScore += 35;
-        isClockDriftSuspected = true;
-      }
+  if (serverTimeMs) {
+    const systemVsExpected = Math.abs(now.getTime() - serverTimeMs);
+    clockDriftSeconds = Math.round(systemVsExpected / 1000);
+    if (clockDriftSeconds > 180) {
+      anomalies.push(`Jam perangkat berbeda ${Math.round(clockDriftSeconds / 60)} menit dari waktu referensi server`);
+      fraudScore += 35;
+      isClockDriftSuspected = true;
     }
-  } catch (e) {
-    // Ignore time eval error
+  } else {
+    // Basic timezone check
+    const timezoneOffsetDiff = Math.abs(now.getTimezoneOffset() - (-420));
+    if (timezoneOffsetDiff !== 0) {
+      anomalies.push("Zona waktu perangkat bukan WIB (Indikasi Anomali)");
+      fraudScore += 20;
+    }
   }
 
   // -------------------------------------------------------------
@@ -174,6 +172,15 @@ export function performAntiFraudAudit({
       fraudScore += 70;
       isBotSuspected = true;
     }
+
+    // Cek anomali timezone/locale
+    try {
+      const resolvedTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      if (resolvedTimeZone !== "Asia/Jakarta" && resolvedTimeZone !== "Asia/Makassar" && resolvedTimeZone !== "Asia/Jayapura") {
+         anomalies.push(`Zona waktu sistem anomali (${resolvedTimeZone}) - Indikasi VPN/Proxy`);
+         fraudScore += 20;
+      }
+    } catch(e) {}
   }
 
   // Final Cap Fraud Score (0 - 100)
