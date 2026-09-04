@@ -27,6 +27,7 @@ import QuickLinksWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/component
 import EmptyStateWidget from '@/app/dashboard/sigap/(main)/ruang-kerja/components/EmptyStateWidget'; 
 import PemantauanMultiFeed from '@/app/dashboard/sigap/(main)/ruang-kerja/components/PemantauanMultiFeed';
 import { usePemantauanMulti } from '@/app/dashboard/sigap/hooks/usePemantauanMulti';
+import { PresensiSmartBanner } from '@/components/presensi/PresensiSmartBanner';
 
 const UniversalPreviewModal = dynamic(() => import('@/app/dashboard/sigap/components/UniversalPreviewModal'), { ssr: false });
 const QuickDisposisiModal = dynamic(() => import('@/app/dashboard/sigap/(main)/ruang-kerja/components/QuickDisposisiModal'), { ssr: false });
@@ -569,8 +570,9 @@ export default function RuangKerjaPage() {
 
   return (
     <div className="flex flex-col h-full px-0 md:px-6 pt-2 pb-4 bg-background sg-animate-in">
-      <div className="px-3 md:px-0">
+      <div className="px-3 md:px-0 space-y-3 mb-4">
         <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+        <PresensiSmartBanner tenant="sigap" />
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">

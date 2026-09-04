@@ -12,7 +12,8 @@ export type FunctionalRole =
   | 'pengelola_tapem' 
   | 'operator_surat'
   | 'petugas_kelurahan' // Operator SKW Kelurahan
-  | 'petugas_kecamatan'; // Verifikator SKW Kecamatan
+  | 'petugas_kecamatan' // Verifikator SKW Kecamatan
+  | 'hrd'; // Pengelola Kepegawaian / HRD (Akses Monitoring & Laporan Presensi)
 
 // [BARU] Interface untuk SKW
 export type SkwJenisLayanan = 'Tanah' | 'Umum' | 'Perwalian' | 'Ralat';
@@ -176,7 +177,7 @@ export type RoleAccessKey =
   | 'menu_bukti_kinerja' | 'menu_kompetensi' | 'menu_surat_keluar' | 'menu_delegasi' 
   | 'menu_formulir' | 'menu_feedback' | 'menu_notulensi' | 'menu_jadwal' 
   | 'menu_dokumen' | 'menu_knowledge' | 'menu_tutorial' | 'menu_pengumuman'
-  | 'menu_users' | 'menu_jabatan' | 'menu_templat' | 'menu_rekap_surat';
+  | 'menu_users' | 'menu_jabatan' | 'menu_templat' | 'menu_rekap_surat' | 'menu_presensi';
 
 export interface OpdRoleAccess {
   user_pimpinan?: RoleAccessKey[];
@@ -184,6 +185,101 @@ export interface OpdRoleAccess {
   user?: RoleAccessKey[]; // fallback for backward compatibility
   staf_tu?: RoleAccessKey[];
   admin_opd?: RoleAccessKey[];
+}
+
+export interface OpdPresensiConfig {
+  enabled: boolean;
+  klasterTarget: ('asn' | 'blud' | 'umum')[]; // Klaster struktur organisasi yang diwajibkan presensi
+  lokasiKantor?: {
+    namaLokasi?: string;
+    latitude: number;
+    longitude: number;
+    radiusMeter: number;
+    strictLocation?: boolean;
+  };
+  jadwalKerja?: {
+    jamMasuk: string; // contoh "07:30"
+    jamPulang: string; // contoh "16:00"
+    toleransiKeterlambatanMenit: number; // contoh 15
+  };
+  metode?: {
+    requirePhoto: boolean;
+    requireLocation: boolean;
+    allowIzinSakit: boolean;
+  };
+}
+
+export type PresensiKehadiranStatus = 'hadir' | 'terlambat' | 'izin' | 'sakit' | 'dinas_luar' | 'alpha';
+
+export interface PresensiAntiFraudAudit {
+  fraudScore: number; // 0 (Sangat Aman) - 100 (Sangat Mencurigakan)
+  riskLevel: 'safe' | 'low' | 'suspicious' | 'high';
+  isMockGpsSuspected: boolean;
+  isClockDriftSuspected: boolean;
+  isBotSuspected: boolean;
+  clockDriftSeconds: number;
+  gpsAccuracyMeters: number;
+  anomaliesDetected: string[];
+  deviceInfo: {
+    userAgent: string;
+    platform: string;
+    isMobile: boolean;
+    screenResolution?: string;
+  };
+  capturedAtClientTime: string;
+  evaluatedAtWibTime: string;
+}
+
+export interface PresensiRecord {
+  id?: string; // Format: `${opdId}_${userId}_${tanggal}`
+  userId: string;
+  userNip: string;
+  namaLengkap: string;
+  opdId: string;
+  jabatanId: string;
+  namaJabatan: string;
+  klasterStruktur: 'asn' | 'blud' | 'umum';
+  tanggal: string; // Format "YYYY-MM-DD"
+  
+  // Check-In (Masuk)
+  jamMasuk?: string;
+  timestampMasuk?: any;
+  lokasiMasuk?: {
+    latitude: number;
+    longitude: number;
+    jarakMeter: number;
+    isWithinRadius: boolean;
+    alamat?: string;
+  };
+  fotoMasukUrl?: string;
+  statusMasuk?: 'tepat_waktu' | 'terlambat';
+  catatanMasuk?: string;
+
+  // Check-Out (Pulang)
+  jamPulang?: string;
+  timestampPulang?: any;
+  lokasiPulang?: {
+    latitude: number;
+    longitude: number;
+    jarakMeter: number;
+    isWithinRadius: boolean;
+    alamat?: string;
+  };
+  fotoPulangUrl?: string;
+  statusPulang?: 'cepat_pulang' | 'sesuai_jadwal' | 'lembur';
+  catatanPulang?: string;
+
+  // Status Kehadiran
+  statusKehadiran: PresensiKehadiranStatus;
+  keteranganIzin?: string;
+  dokumenPendukungUrl?: string;
+
+  // Metadata Audit Anti-Fraud
+  antiFraudAudit?: PresensiAntiFraudAudit;
+  antiFraudAuditPulang?: PresensiAntiFraudAudit;
+
+  createdAt?: any;
+  updatedAt?: any;
 }
 
 export interface OpdConfig {
@@ -205,6 +301,7 @@ export interface OpdConfig {
     enableEkinerja?: boolean;
     enableAgenda?: boolean;
     enableBulkImport?: boolean;
+    enablePresensi?: boolean;
     maxSuratPerHari?: number;
   }; 
   default_theme?: AppTheme; 
@@ -227,6 +324,8 @@ export interface OpdConfig {
   penomoranConfigs?: FormatPenomoranConfig[];
   // NEW: Konfigurasi Akses Role
   roleAccessConfig?: OpdRoleAccess;
+  // NEW: Konfigurasi Presensi Berbasis Klaster
+  presensiConfig?: OpdPresensiConfig;
 }
 
 // === AFFILIATE / MITRA REFERRAL ===

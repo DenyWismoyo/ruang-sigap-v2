@@ -22,7 +22,7 @@ import {
     ClipboardEdit, Home, Zap,
     Files, Wallet, Compass, HeartHandshake, Landmark,
     ScrollText, Award, GraduationCap, Youtube, 
-    ToyBrick, Palette, Settings, Users2, HeartPulse
+    ToyBrick, Palette, Settings, Users2, HeartPulse, Clock
 } from 'lucide-react';
 import { Jabatan, OpdConfig, UserProfile, WelcomeSummary, FunctionalRole } from '@/types'; 
 
@@ -51,6 +51,22 @@ export const userHasAccess = (item: NavItem, userProfile: UserProfile, jabatanPr
      if (item.featureFlag) {
          if (userProfile.role === 'super_admin') return true;
          if (opdConfig?.features?.[item.featureFlag as keyof typeof opdConfig.features] !== true) return false;
+     }
+
+     // KHUSUS MENU PRESENSI: Validasi pengaktifan OPD & Klaster Struktur Organisasi Target
+     if (item.href === '/dashboard/presensi') {
+         if (
+             userProfile.role === 'super_admin' || 
+             userProfile.role === 'admin_opd' || 
+             userProfile.role === ('hrd' as any) ||
+             userProfile.additionalRoles?.includes('hrd')
+         ) return true;
+         const presensiCfg = opdConfig?.presensiConfig;
+         const isEnabled = opdConfig?.features?.enablePresensi || presensiCfg?.enabled;
+         if (!isEnabled) return false;
+         const userCluster = jabatanProfile?.klasterStruktur || 'umum';
+         const targetClusters = presensiCfg?.klasterTarget || ['blud'];
+         return targetClusters.includes(userCluster);
      }
 
      // NEW: Cek custom RoleAccessKey dari super_admin per OPD
@@ -85,6 +101,7 @@ export const navItems: NavItem[] = [
   { href: '/dashboard/portal-integrasi', label: 'Portal Integrasi', icon: LinkIcon, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'ruangKerja', roleAccessKey: 'menu_portal', colorClass: 'text-blue-600' },
   
   // --- PRODUKTIVITAS ---
+  { href: '/dashboard/presensi', label: 'Presensi Pegawai', icon: Clock, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_presensi', colorClass: 'text-blue-600' },
   { href: '/dashboard/checklist', label: 'Checklist Pribadi', icon: ClipboardList, allowedRoles: ['user', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_checklist', colorClass: 'text-green-600' }, 
   { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_bukti_kinerja', colorClass: 'text-green-600' },
   { href: '/dashboard/kompetensi', label: 'Portofolio Kompetensi', icon: GraduationCap, allowedRoles: ['user', 'staf_tu', 'admin_opd', 'super_admin'], section: 'produktivitas', roleAccessKey: 'menu_kompetensi', colorClass: 'text-purple-600' },

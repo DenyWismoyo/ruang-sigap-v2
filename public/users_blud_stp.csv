@@ -1,48 +1,46 @@
 namaLengkap,nip,email,password,namaJabatan,role
 "Yudit Cahyantoro Nyoto Saputro, S.T., M.T.",33720130037220002,yudit.cahyantoro@solotechnopark.id,StpUser2026!,Pemimpin BLUD,user
-"Ariyani Oktaviana Rakhmawati, SE.",3311126310720003,ariyani.oktaviana@solotechnopark.id,StpUser2026!,Kepala Divisi Akuntansi,user
-"Salsa Bella Radifa, S.Ak.",3372055209010003,salsa.bella@solotechnopark.id,StpUser2026!,Staf Keuangan,user
-"Anang Handyka Pratama, S.Akun",3310181504970001,anang.handyka@solotechnopark.id,StpUser2026!,Kepala Divisi Anggaran,user
-"Budiharto, ST.",3313031401870001,budiharto@solotechnopark.id,StpUser2026!,Kepala Divisi Pengelolaan Aset,user
+"Ariyani Oktaviana Rakhmawati, SE.",14.231072.2012,ariyani.oktaviana@solotechnopark.id,StpUser2026!,Kepala Divisi Akuntansi,user
+"Salsa Bella Radifa, S.Ak.",2026.120901.77,salsa.bella@solotechnopark.id,StpUser2026!,Staf Keuangan,user
+"Anang Handyka Pratama, S.Akun",28.150497.2022,anang.handyka@solotechnopark.id,StpUser2026!,Kepala Divisi Anggaran,user
+"Budiharto, ST.",02.140187.2005,budiharto@solotechnopark.id,StpUser2026!,Kepala Divisi Pemasaran dan Marketing,user
 "Untung Priyohananto, S.E.",3402113105770002,untung.priyohananto@solotechnopark.id,StpUser2026!,Pejabat Teknis Umum,user
-"Ani Anggraeni, SE.",3372054508850028,ani.anggraeni@solotechnopark.id,StpUser2026!,Kepala Divisi Administrasi dan Kepegawaian,user
-"Renny Widyaningsih, S.Ak.",3313115401930001,renny.widyaningsih@solotechnopark.id,StpUser2026!,Staf Kesekretariatan,user
-"Oktafianto Nugroho, ST.",3372051510870003,oktafianto.nugroho@solotechnopark.id,StpUser2026!,Kepala Divisi Logistik,user
-"Nanang Dwi Setiawan",3372040503820026,nanang.dwi@solotechnopark.id,StpUser2026!,Driver,user
-"Agus Jatmiko, S.Kom",3309111507919004,agus.jatmiko@solotechnopark.id,StpUser2026!,Kepala Divisi Information Technology,user
-"Muhammad Restu Choiri, A.Md",3311121807010004,restu.choiri@solotechnopark.id,StpUser2026!,Staf Information Technology,user
-"Danang Cahyono",3313121803810001,danang.cahyono@solotechnopark.id,StpUser2026!,Kepala Divisi Pemberdayaan Kawasan,user
-"Lucia Citra Hirawati, SE.",3175094404750009,lucia.citra@solotechnopark.id,StpUser2026!,Kepala Divisi Public Relation,user
-"Tegar Pinatar, SE.",3372052806900007,tegar.pinatar@solotechnopark.id,StpUser2026!,Staf Pemberdayaan Kawasan 1,user
-"Rika Dewi Savitri, ST.",3372034602810003,rika.dewi@solotechnopark.id,StpUser2026!,Staf Pemberdayaan Kawasan 2,user
-"Anang Tri Ruwiyanto, ST.",3372012407780006,anang.tri@solotechnopark.id,StpUser2026!,Staff Maintenance 1,user
-"Sri Purwanto",3372040305800002,sri.purwanto@solotechnopark.id,StpUser2026!,Staff Maintenance 2,user
-"Sarino",3313132801730002,sarino@solotechnopark.id,StpUser2026!,Staff Maintenance 3,user
-"Sapardi",3372042109710002,sapardi@solotechnopark.id,StpUser2026!,House Keeping,user
-"Susilo Budi Arianto, S.T.",3372013001830003,susilo.budi@solotechnopark.id,StpUser2026!,Manager Dukungan Bisnis Pelayanan dan Pengembangan,user
-"Riza Kurniawan, SH.",3372010311890001,riza.kurniawan@solotechnopark.id,StpUser2026!,Kepala Divisi Kerjasama dan Hukum,user
-"Yuli Tri Hartuti, SH.",3372054407840004,yuli.tri@solotechnopark.id,StpUser2026!,Staf Divisi Kerjasama dan Hukum 1,user
-"Alfian Sherendra Zulfa, SH.",3372050702020002,alfian.sherendra@solotechnopark.id,StpUser2026!,Staf Divisi Kerjasama dan Hukum 2,user
-"Thessa Anial John, SH.",3372056003960008,thessa.anial@solotechnopark.id,StpUser2026!,Marketing Officer,user
-"Abednego Danu Setyawan, A.Md",3372050408830044,abednego.danu@solotechnopark.id,StpUser2026!,Kepala Divisi Riset dan Inkubator,user
-"Ridho Adi Prabowo, SE.",3314020405970004,ridho.adi@solotechnopark.id,StpUser2026!,Staf Riset dan Inkubator 1,user
-"Prasetyo Okmana Saputra, S.Sos",3313130510010001,prasetyo.okmana@solotechnopark.id,StpUser2026!,Staf Riset dan Inkubator 2,user
-"Arief Wibowo",3311090807790007,arief.wibowo@solotechnopark.id,StpUser2026!,Kepala Divisi Diklat,user
-"Erwin Sudrajat",3372012509890004,erwin.sudrajat@solotechnopark.id,StpUser2026!,Kepala Divisi Welding Edukasi,user
-"Jati Utomo",3372012906850023,jati.utomo@solotechnopark.id,StpUser2026!,Toolman dan Expedisi,user
-"Sri Hartono",3372041010920005,sri.hartono@solotechnopark.id,StpUser2026!,Operator Welding,user
-"Eva Sofyana",3372027105870001,eva.sofyana@solotechnopark.id,StpUser2026!,Marketing Diklat,user
-"Andre Firmansyah",3314013009010003,andre.firmansyah@solotechnopark.id,StpUser2026!,Support OGSCI,user
-"Agus Munaji, S.Kom",3311121408880002,agus.munaji@solotechnopark.id,StpUser2026!,Instruktur Welding,user
-"Anton Efendi",3372011804840003,anton.efendi@solotechnopark.id,StpUser2026!,Instruktur Milling,user
-"Mulyanto",3311092110850002,mulyanto@solotechnopark.id,StpUser2026!,Instruktur Grinding,user
-"Putra Adi Widrajat, A.Md.",3308081102830001,putra.adi@solotechnopark.id,StpUser2026!,Instruktur Bubut,user
-"Agus Wahyudi",3372051008850013,agus.wahyudi@solotechnopark.id,StpUser2026!,Instruktur Kerja Bangku,user
-"Tommy Trisula Putra, ST.",3372021204910001,tommy.trisula@solotechnopark.id,StpUser2026!,Instruktur Cadcam/ Gambar Teknik,user
-"Febri Arif Purnomo, A.Md",3372052202890003,febri.arif@solotechnopark.id,StpUser2026!,Kepala Divisi Produksi Dan Pemasaran,user
-"Bangun Fajar Kusnanto",3372041604940002,bangun.fajar@solotechnopark.id,StpUser2026!,Operator Manual,user
-"Jarot Sutono",3314052106990001,jarot.sutono@solotechnopark.id,StpUser2026!,Programer CNC Bubut,user
-"Farid Mahendra",3372022711990001,farid.mahendra@solotechnopark.id,StpUser2026!,Programer CNC Milling 1,user
-"Andreas",3372041905020001,andreas@solotechnopark.id,StpUser2026!,Operator CNC Milling,user
-"Dio Achmad Thoriq",3372012009020002,dio.achmad@solotechnopark.id,StpUser2026!,Programer CNC Milling 2,user
-"Tammarizqi Arsyinta Putrie",3317077103020001,tammarizqi.arsyinta@solotechnopark.id,StpUser2026!,Staff Admin Produksi,user
+"Ani Anggraeni, SE.",11.050885.2010,ani.anggraeni@solotechnopark.id,StpUser2026!,Kepala Divisi Administrasi dan Kepegawaian,user
+"Renny Widyaningsih, S.Ak.",1450-12-14,renny.widyaningsih@solotechnopark.id,StpUser2026!,Staf Kesekretariatan,user
+"Oktafianto Nugroho, ST.",04.151087.2007,oktafianto.nugroho@solotechnopark.id,StpUser2026!,Kepala Divisi Logistik,user
+"Nanang Dwi Setiawan",13.050382.2012,nanang.dwi@solotechnopark.id,StpUser2026!,Driver,user
+"Agus Jatmiko, S.Kom",09.150791.2010,agus.jatmiko@solotechnopark.id,StpUser2026!,Kepala Divisi Information Technology,user
+"Muhammad Restu Choiri, A.Md",2023.180701.63,restu.choiri@solotechnopark.id,StpUser2026!,Staf Information Technology,user
+"Danang Cahyono",07.180381.2009,danang.cahyono@solotechnopark.id,StpUser2026!,Kepala Divisi Pemberdayaan Kawasan,user
+"Lucia Citra Hirawati, SE.",08.040475.2009,lucia.citra@solotechnopark.id,StpUser2026!,Kepala Divisi Public Relation,user
+"Tegar Pinatar, SE.",27.280690.2021,tegar.pinatar@solotechnopark.id,StpUser2026!,Staf Pemberdayaan Kawasan 1,user
+"Rika Dewi Savitri, ST.",2024.060281.73,rika.dewi@solotechnopark.id,StpUser2026!,Marketing Pemberdayaan Kawasan,user
+"Anang Tri Ruwiyanto, ST.",06.240778.2009,anang.tri@solotechnopark.id,StpUser2026!,Staff Maintenance 1,user
+"Sri Purwanto",20.030580.2013,sri.purwanto@solotechnopark.id,StpUser2026!,Staff Maintenance 2,user
+"Sarino",21.280173.2013,sarino@solotechnopark.id,StpUser2026!,Staff Maintenance 3,user
+"Sapardi",19.210971.2012,sapardi@solotechnopark.id,StpUser2026!,House Keeping,user
+"Susilo Budi Arianto, S.T.",12.300183.2010,susilo.budi@solotechnopark.id,StpUser2026!,Manager Dukungan Bisnis Pelayanan dan Pengembangan,user
+"Riza Kurniawan, SH.",26.031189.2021,riza.kurniawan@solotechnopark.id,StpUser2026!,Kepala Divisi Kerjasama dan Hukum,user
+"Yuli Tri Hartuti, SH.",29.040784.2022,yuli.tri@solotechnopark.id,StpUser2026!,Staf Divisi Kerjasama dan Hukum 1,user
+"Alfian Sherendra Zulfa, SH.",2024.070202.70,alfian.sherendra@solotechnopark.id,StpUser2026!,Staf Divisi Kerjasama dan Hukum 2,user
+"Thessa Anial John, SH.",2023.200396.59,thessa.anial@solotechnopark.id,StpUser2026!,Marketing Officer,user
+"Abednego Danu Setyawan, A.Md",15.040883.2012,abednego.danu@solotechnopark.id,StpUser2026!,Kepala Divisi Riset dan Inkubator,user
+"Ridho Adi Prabowo, SE.",30.040597.2022,ridho.adi@solotechnopark.id,StpUser2026!,Staf Riset dan Inkubator 1,user
+"Prasetyo Okmana Saputra, S.Sos",2025.051001.76,prasetyo.okmana@solotechnopark.id,StpUser2026!,Staf Riset dan Inkubator 2,user
+"Arief Wibowo",16.080779.2012,arief.wibowo@solotechnopark.id,StpUser2026!,Kepala Divisi Diklat,user
+"Erwin Sudrajat",17.250989.2012,erwin.sudrajat@solotechnopark.id,StpUser2026!,Kepala Divisi Welding Edukasi,user
+"Jati Utomo",18.290685.2012,jati.utomo@solotechnopark.id,StpUser2026!,Toolman dan Expedisi,user
+"Sri Hartono",23.101092.2017,sri.hartono@solotechnopark.id,StpUser2026!,Operator Welding,user
+"Eva Sofyana",31.300587.2022,eva.sofyana@solotechnopark.id,StpUser2026!,Marketing Diklat,user
+"Andre Firmansyah",2024.300901.71,andre.firmansyah@solotechnopark.id,StpUser2026!,Support OGSCI,user
+"Agus Munaji, S.Kom",2025.140888.75,agus.munaji@solotechnopark.id,StpUser2026!,Instruktur Welding,user
+"Anton Efendi",01.180484.2003,anton.efendi@solotechnopark.id,StpUser2026!,Instruktur Milling,user
+"Mulyanto",03.211085.2005,mulyanto@solotechnopark.id,StpUser2026!,Instruktur Grinding,user
+"Putra Adi Widrajat, A.Md.",05.110283.2008,putra.adi@solotechnopark.id,StpUser2026!,Instruktur Bubut,user
+"Agus Wahyudi",10.100885.2010,agus.wahyudi@solotechnopark.id,StpUser2026!,Instruktur Kerja Bangku,user
+"Tommy Trisula Putra, ST.",2023.120491.55,tommy.trisula@solotechnopark.id,StpUser2026!,Instruktur Cadcam/ Gambar Teknik,user
+"Febri Arif Purnomo, A.Md",449-12-14,febri.arif@solotechnopark.id,StpUser2026!,Kepala Divisi Produksi Dan Pemasaran,user
+"Bangun Fajar Kusnanto",22.160494.2017,bangun.fajar@solotechnopark.id,StpUser2026!,Operator Manual,user
+"Jarot Sutono",24.210699.2018,jarot.sutono@solotechnopark.id,StpUser2026!,Programer CNC Bubut,user
+"Farid Mahendra",25.271199.2019,farid.mahendra@solotechnopark.id,StpUser2026!,Programer CNC Milling 1,user
+"Andreas",2023.190502.56,andreas@solotechnopark.id,StpUser2026!,Operator CNC Milling,user

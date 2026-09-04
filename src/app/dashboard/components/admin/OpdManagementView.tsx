@@ -6,8 +6,9 @@ import { collection, addDoc, doc, updateDoc } from 'firebase/firestore';
 import { OPD } from '@/types';
 import { useUserAuth } from '@/context/AuthContext';
 import { useMasterData } from '@/app/dashboard/sigap/hooks/useMasterData'; 
-import { Save, FilePenLine, Archive, ArchiveRestore, Loader2, Copy, Building2, ChevronRight, ChevronDown } from 'lucide-react';
+import { Save, FilePenLine, Archive, ArchiveRestore, Loader2, Copy, Building2, ChevronRight, ChevronDown, Clock } from 'lucide-react';
 import { useToast } from '@/context/ToastContext';
+import OpdPresensiConfigModal from '@/app/dashboard/components/admin/OpdPresensiConfigModal';
 
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription
@@ -44,6 +45,9 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
   const [currentOpd, setCurrentOpd] = useState<OPD | null>(null);
   const [isProcessing, setIsProcessing] = useState(false); 
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
+
+  const [isPresensiModalOpen, setIsPresensiModalOpen] = useState(false);
+  const [selectedOpdForPresensi, setSelectedOpdForPresensi] = useState<OPD | null>(null);
 
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
@@ -218,8 +222,9 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
                          </Badge>
                          <Badge>Induk</Badge>
                          <div className="flex gap-1">
-                           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); setCurrentOpd(induk); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
-                           <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleToggleArchive(induk); }}>{induk.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
+                           <Button variant="ghost" size="icon" title="Pengaturan Modul Presensi" onClick={(e) => { e.stopPropagation(); setSelectedOpdForPresensi(induk); setIsPresensiModalOpen(true); }}><Clock size={16} className="text-blue-600" /></Button>
+                           <Button variant="ghost" size="icon" title="Edit Data OPD" onClick={(e) => { e.stopPropagation(); setCurrentOpd(induk); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
+                           <Button variant="ghost" size="icon" title="Arsipkan OPD" onClick={(e) => { e.stopPropagation(); handleToggleArchive(induk); }}>{induk.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
                          </div>
                        </div>
                      </div>
@@ -240,8 +245,9 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
                                 </Badge>
                                 <Badge variant="secondary">Sub-OPD</Badge>
                                 <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" onClick={() => { setCurrentOpd(sub); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
-                                  <Button variant="ghost" size="icon" onClick={() => handleToggleArchive(sub)}>{sub.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
+                                  <Button variant="ghost" size="icon" title="Pengaturan Modul Presensi" onClick={() => { setSelectedOpdForPresensi(sub); setIsPresensiModalOpen(true); }}><Clock size={16} className="text-blue-600" /></Button>
+                                  <Button variant="ghost" size="icon" title="Edit Data OPD" onClick={() => { setCurrentOpd(sub); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
+                                  <Button variant="ghost" size="icon" title="Arsipkan OPD" onClick={() => handleToggleArchive(sub)}>{sub.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
                                 </div>
                              </div>
                            </div>
@@ -269,8 +275,9 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
                             </Badge>
                             <Badge variant="destructive">Orphaned Sub-OPD</Badge>
                             <div className="flex gap-1">
-                              <Button variant="ghost" size="icon" onClick={() => { setCurrentOpd(sub); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleToggleArchive(sub)}>{sub.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
+                              <Button variant="ghost" size="icon" title="Pengaturan Modul Presensi" onClick={() => { setSelectedOpdForPresensi(sub); setIsPresensiModalOpen(true); }}><Clock size={16} className="text-blue-600" /></Button>
+                              <Button variant="ghost" size="icon" title="Edit Data OPD" onClick={() => { setCurrentOpd(sub); setIsEditModalOpen(true); }}><FilePenLine size={16} className="text-yellow-600" /></Button>
+                              <Button variant="ghost" size="icon" title="Arsipkan OPD" onClick={() => handleToggleArchive(sub)}>{sub.status === 'aktif' ? <Archive size={16} className="text-red-600" /> : <ArchiveRestore size={16} className="text-green-600" />}</Button>
                             </div>
                          </div>
                       </div>
@@ -333,6 +340,17 @@ export default function OpdManagementView({ tenant }: OpdManagementViewProps) {
               </DialogFooter>
           </DialogContent>
       </Dialog>
+
+      {/* MODAL PENGATURAN PRESENSI OPD */}
+      <OpdPresensiConfigModal
+        isOpen={isPresensiModalOpen}
+        onClose={() => {
+          setIsPresensiModalOpen(false);
+          setSelectedOpdForPresensi(null);
+        }}
+        opd={selectedOpdForPresensi}
+        tenant={tenant}
+      />
     </div>
   );
 }

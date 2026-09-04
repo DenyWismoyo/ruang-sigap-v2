@@ -153,6 +153,22 @@ window.open(url); // Buka di tab baru
 
 ---
 
+## 📁 `src/lib/antiFraudUtils.ts` — Evaluasi Anti-Fraud Presensi
+
+```typescript
+import { performAntiFraudAudit, GpsSample } from '@/lib/antiFraudUtils';
+
+// Audit telemetri presensi (Fake GPS, Mock Location, Clock Drift, Webdriver)
+const audit = performAntiFraudAudit({
+  currentPosition: { latitude: -7.556, longitude: 110.831, accuracy: 8 },
+  gpsHistory: [/* list of GpsSample */],
+  referenceServerTimeMs: Date.now(),
+});
+// Return: PresensiAntiFraudAudit { fraudScore, riskLevel, anomalies, indicators, auditedAt }
+```
+
+---
+
 ## 🚫 Anti-Pattern Utilitas
 
 | Anti-Pattern | Solusi |
@@ -162,3 +178,5 @@ window.open(url); // Buka di tab baru
 | Upload gambar tanpa kompresi | Gunakan `compressImage()` sebelum upload |
 | Buat fungsi format rupiah sendiri | Gunakan `formatCurrency()` |
 | `twMerge(clsx(...))` manual | Gunakan `cn()` yang sudah ada |
+| Memblokir presensi secara kasar saat sinyal drop | Gunakan `performAntiFraudAudit()` non-blocking risk scoring |
+

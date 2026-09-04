@@ -34,6 +34,7 @@ Region      : asia-southeast2 (Jakarta)
 | `instruksi_templat` | Auto-ID | Bank templat instruksi disposisi |
 | `rate_limits` | userId | Rate limiting AI scan |
 | `activity_logs` | Auto-ID | Jejak audit per surat |
+| `presensi` | `{opdId}_{userId}_{YYYY-MM-DD}` | Presensi pegawai, geolocation, swafoto & anti-fraud audit |
 
 ---
 
@@ -354,6 +355,64 @@ interface UserSummary {
 
 ---
 
+## 📍 `presensi/{opdId}_{userId}_{tanggal}`
+
+```typescript
+interface PresensiRecord {
+  id?: string;
+  userId: string;
+  userNip: string;
+  namaLengkap: string;
+  opdId: string;
+  jabatanId: string;
+  namaJabatan: string;
+  klasterStruktur?: 'blud' | 'asn' | 'umum';
+  tanggal: string; // YYYY-MM-DD
+  
+  // Sesi Masuk (Check-In)
+  jamMasuk?: string; // HH:mm:ss
+  timestampMasuk?: Timestamp;
+  lokasiMasuk?: {
+    latitude: number;
+    longitude: number;
+    jarakMeter?: number;
+    isWithinRadius: boolean;
+    alamat?: string;
+  };
+  fotoMasukUrl?: string;
+  statusMasuk?: 'tepat_waktu' | 'terlambat';
+  statusKehadiran: 'hadir' | 'terlambat' | 'izin' | 'sakit' | 'dinas_luar' | 'alpha';
+  
+  // Sesi Pulang (Check-Out)
+  jamPulang?: string;
+  timestampPulang?: Timestamp;
+  lokasiPulang?: {
+    latitude: number;
+    longitude: number;
+    jarakMeter?: number;
+    isWithinRadius: boolean;
+    alamat?: string;
+  };
+  fotoPulangUrl?: string;
+  statusPulang?: 'cepat_pulang' | 'sesuai_jadwal' | 'lembur';
+  
+  // Catatan & Bukti
+  catatanMasuk?: string;
+  catatanPulang?: string;
+  dokumenPendukungUrl?: string;
+  keteranganIzin?: string;
+
+  // Anti-Fraud Audit Telemetri
+  antiFraudAudit?: PresensiAntiFraudAudit;
+  antiFraudAuditPulang?: PresensiAntiFraudAudit;
+
+  createdAt: Timestamp;
+  updatedAt: Timestamp;
+}
+```
+
+---
+
 ## ⚙️ `opd_config` Feature Gate — Cara Menggunakan
 
 Sebelum merender fitur premium, **selalu** periksa `opdConfig.features`:
@@ -362,14 +421,8 @@ Sebelum merender fitur premium, **selalu** periksa `opdConfig.features`:
 const { opdConfig, userProfile } = useUserAuth();
 
 // ✅ Selalu cek feature gate sebelum render
-{opdConfig?.features?.aiSuratReader && (
-  <Button onClick={handleAIScan}>
-    <Sparkles className="mr-2 h-4 w-4" />
-    Scan dengan AI
-  </Button>
-)}
-
-{opdConfig?.features?.persetujuanDraf && (
-  <NavItem href="/dashboard/persetujuan-draf" label="Persetujuan Draf" />
+{opdConfig?.features?.enablePresensi && (
+  <NavItem href="/dashboard/presensi" label="Presensi Pegawai" />
 )}
 ```
+

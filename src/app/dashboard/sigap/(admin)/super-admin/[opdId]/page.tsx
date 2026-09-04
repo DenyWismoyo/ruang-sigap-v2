@@ -1,16 +1,30 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
 import { OpdConfig } from '@/types';
-import { Loader2, Save, ArrowLeft, Palette, ToggleLeft, CreditCard, Shield } from 'lucide-react';
+import { Loader2, Save, ArrowLeft, Palette, ToggleLeft, CreditCard, Shield, Clock, MapPin, Users, Navigation } from 'lucide-react';
 import { useRouter, useParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+
+const LocationRadiusPickerMap = dynamic(
+  () => import('@/components/maps/LocationRadiusPickerMap'),
+  { 
+    ssr: false, 
+    loading: () => (
+      <div className="h-[280px] w-full rounded-xl bg-muted/40 animate-pulse flex flex-col items-center justify-center text-xs text-muted-foreground gap-2">
+        <Loader2 className="w-5 h-5 animate-spin text-primary" />
+        <span>Memuat Peta Leaflet...</span>
+      </div>
+    ) 
+  }
+);
 import {
   Card,
   CardContent,
@@ -52,6 +66,7 @@ const DEFAULT_FEATURES = {
   enableEkinerja: false,
   enableAgenda: false,
   enableBulkImport: false,
+  enablePresensi: false,
   maxSuratPerHari: 1000
 };
 
@@ -210,12 +225,15 @@ export default function SuperAdminOpdDetail() {
       </div>
 
       <Tabs defaultValue="branding" className="w-full">
-        <TabsList className="w-full md:w-auto grid grid-cols-4 mb-6">
+        <TabsList className="w-full md:w-auto grid grid-cols-2 sm:grid-cols-5 mb-6">
           <TabsTrigger value="branding" className="gap-2">
             <Palette className="w-4 h-4" /> Identitas & Branding
           </TabsTrigger>
           <TabsTrigger value="features" className="gap-2">
             <ToggleLeft className="w-4 h-4" /> Feature Flags
+          </TabsTrigger>
+          <TabsTrigger value="presensi" className="gap-2">
+            <Clock className="w-4 h-4" /> Presensi Pegawai
           </TabsTrigger>
           <TabsTrigger value="role-access" className="gap-2">
             <Shield className="w-4 h-4" /> Akses Role
@@ -312,6 +330,275 @@ export default function SuperAdminOpdDetail() {
                   </div>
                 );
               })}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="presensi">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Konfigurasi Presensi & Klaster Target
+              </CardTitle>
+              <CardDescription>
+                Atur pengaktifan presensi, geofencing GPS, jam kerja, dan klaster pegawai yang diwajibkan presensi mandiri.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Toggle Status Modul */}
+              <div className="flex items-center justify-between border p-4 rounded-lg bg-muted/20">
+                <div className="space-y-0.5">
+                  <Label className="text-base font-semibold">Aktifkan Modul Presensi</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Modul presensi akan aktif untuk instansi ini.
+                  </p>
+                </div>
+                <Switch
+                  checked={config.presensiConfig?.enabled ?? false}
+                  onCheckedChange={(checked) => 
+                    setConfig({
+                      ...config,
+                      features: {
+                        ...config.features,
+                        enablePresensi: checked
+                      },
+                      presensiConfig: {
+                        ...(config.presensiConfig || {
+                          enabled: false,
+                          klasterTarget: ['blud'],
+                          lokasiKantor: { namaLokasi: '', latitude: -7.55611, longitude: 110.83167, radiusMeter: 100 },
+                          jadwalKerja: { jamMasuk: '07:30', jamPulang: '16:00', toleransiKeterlambatanMenit: 15 },
+                          metode: { requirePhoto: true, requireLocation: true, allowIzinSakit: true }
+                        }),
+                        enabled: checked
+                      }
+                    })
+                  }
+                />
+              </div>
+
+              {/* Klaster Target */}
+              <div className="border p-4 rounded-lg space-y-3">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <Users className="w-4 h-4 text-blue-600" />
+                  Pilih Klaster Struktur Organisasi yang Diaktifkan
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Pegawai pada klaster terpilih akan melihat menu Presensi di dashboard.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+                  {(['blud', 'asn', 'umum'] as const).map((klaster) => {
+                    const currentClusters = config.presensiConfig?.klasterTarget || ['blud'];
+                    const isChecked = currentClusters.includes(klaster);
+                    const labels: Record<string, string> = {
+                      blud: 'BLUD / Non-ASN',
+                      asn: 'ASN (PNS/PPPK)',
+                      umum: 'Umum / Semua'
+                    };
+                    return (
+                      <div 
+                        key={klaster}
+                        onClick={() => {
+                          const next = isChecked 
+                            ? currentClusters.filter(k => k !== klaster)
+                            : [...currentClusters, klaster];
+                          setConfig({
+                            ...config,
+                            presensiConfig: {
+                              ...(config.presensiConfig || {
+                                enabled: true,
+                                lokasiKantor: { namaLokasi: '', latitude: -7.55611, longitude: 110.83167, radiusMeter: 100 },
+                                jadwalKerja: { jamMasuk: '07:30', jamPulang: '16:00', toleransiKeterlambatanMenit: 15 }
+                              }),
+                              enabled: config.presensiConfig?.enabled ?? true,
+                              klasterTarget: next
+                            }
+                          });
+                        }}
+                        className={`p-3 rounded-lg border cursor-pointer flex items-center gap-3 ${
+                          isChecked ? 'border-blue-500 bg-blue-50/50 dark:bg-blue-950/30' : 'hover:bg-muted/40'
+                        }`}
+                      >
+                        <Checkbox checked={isChecked} />
+                        <span className="text-sm font-medium">{labels[klaster]}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Titik Lokasi & Radius */}
+              <div className="border p-4 rounded-lg space-y-4">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-emerald-600" />
+                  Koordinat Lokasi Kantor & Radius (Meter)
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Latitude</Label>
+                    <Input 
+                      type="number"
+                      step="any"
+                      value={config.presensiConfig?.lokasiKantor?.latitude ?? -7.55611}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          lokasiKantor: {
+                            ...(config.presensiConfig?.lokasiKantor || { radiusMeter: 100 }),
+                            longitude: config.presensiConfig?.lokasiKantor?.longitude ?? 110.83167,
+                            latitude: parseFloat(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Longitude</Label>
+                    <Input 
+                      type="number"
+                      step="any"
+                      value={config.presensiConfig?.lokasiKantor?.longitude ?? 110.83167}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          lokasiKantor: {
+                            ...(config.presensiConfig?.lokasiKantor || { radiusMeter: 100 }),
+                            latitude: config.presensiConfig?.lokasiKantor?.latitude ?? -7.55611,
+                            longitude: parseFloat(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Radius Toleransi (Meter)</Label>
+                    <Input 
+                      type="number"
+                      value={config.presensiConfig?.lokasiKantor?.radiusMeter ?? 100}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          lokasiKantor: {
+                            ...(config.presensiConfig?.lokasiKantor || { latitude: -7.55611, longitude: 110.83167 }),
+                            radiusMeter: parseInt(e.target.value) || 100
+                          }
+                        }
+                      })}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Leaflet Map & Radius Visualization */}
+                <div className="pt-2">
+                  <LocationRadiusPickerMap
+                    latitude={config.presensiConfig?.lokasiKantor?.latitude ?? -7.55611}
+                    longitude={config.presensiConfig?.lokasiKantor?.longitude ?? 110.83167}
+                    radiusMeter={config.presensiConfig?.lokasiKantor?.radiusMeter ?? 100}
+                    onChangeLocation={(newLat, newLng) => {
+                      setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          lokasiKantor: {
+                            ...(config.presensiConfig?.lokasiKantor || { radiusMeter: 100 }),
+                            latitude: newLat,
+                            longitude: newLng
+                          }
+                        }
+                      });
+                    }}
+                    height="260px"
+                  />
+                </div>
+              </div>
+
+              {/* Jadwal Jam Kerja */}
+              <div className="border p-4 rounded-lg space-y-4">
+                <Label className="text-sm font-semibold flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-orange-600" />
+                  Jadwal Jam Kerja & Toleransi
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs">Jam Masuk (WIB)</Label>
+                    <Input 
+                      type="time"
+                      value={config.presensiConfig?.jadwalKerja?.jamMasuk || '07:30'}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          jadwalKerja: {
+                            jamPulang: config.presensiConfig?.jadwalKerja?.jamPulang || '16:00',
+                            toleransiKeterlambatanMenit: config.presensiConfig?.jadwalKerja?.toleransiKeterlambatanMenit ?? 15,
+                            jamMasuk: e.target.value
+                          }
+                        }
+                      })}
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Jam Pulang (WIB)</Label>
+                    <Input 
+                      type="time"
+                      value={config.presensiConfig?.jadwalKerja?.jamPulang || '16:00'}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          jadwalKerja: {
+                            jamMasuk: config.presensiConfig?.jadwalKerja?.jamMasuk || '07:30',
+                            toleransiKeterlambatanMenit: config.presensiConfig?.jadwalKerja?.toleransiKeterlambatanMenit ?? 15,
+                            jamPulang: e.target.value
+                          }
+                        }
+                      })}
+                      className="text-xs"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Toleransi Terlambat (Menit)</Label>
+                    <Input 
+                      type="number"
+                      value={config.presensiConfig?.jadwalKerja?.toleransiKeterlambatanMenit ?? 15}
+                      onChange={e => setConfig({
+                        ...config,
+                        presensiConfig: {
+                          ...(config.presensiConfig || { enabled: true, klasterTarget: ['blud'] }),
+                          enabled: config.presensiConfig?.enabled ?? true,
+                          klasterTarget: config.presensiConfig?.klasterTarget || ['blud'],
+                          jadwalKerja: {
+                            jamMasuk: config.presensiConfig?.jadwalKerja?.jamMasuk || '07:30',
+                            jamPulang: config.presensiConfig?.jadwalKerja?.jamPulang || '16:00',
+                            toleransiKeterlambatanMenit: parseInt(e.target.value) || 0
+                          }
+                        }
+                      })}
+                      className="font-mono text-xs"
+                    />
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

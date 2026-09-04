@@ -23,6 +23,7 @@ import { doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import SmartGreeting from '@/app/dashboard/sigap/components/home/SmartGreeting';
 import QuickAccessCard from '@/app/dashboard/sigap/components/home/QuickAccessCard';
 import MobileAgendaCarousel from '@/app/dashboard/sigap/components/home/MobileAgendaCarousel';
+import { PresensiSmartBanner } from '@/components/presensi/PresensiSmartBanner';
 
 
 // --- IMPORT HOOKS SSOT ---
@@ -153,7 +154,7 @@ const AgendaInternalTable = ({ agendas, onRowClick }: { agendas: JadwalTempat[],
 
 // --- Main Component ---
 export default function DashboardPage() {
-  const { userProfile, loading: authLoading } = useUserAuth();
+  const { userProfile, jabatanProfile, opdConfig, loading: authLoading } = useUserAuth();
   
   // --- States Modals Agenda ---
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
@@ -356,24 +357,49 @@ export default function DashboardPage() {
     }
   }, []);
 
-  const quickAccessLinks = [
-    { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, colorClass: 'text-cyan-600' },
-    { href: '/dashboard/tugas', label: 'Tugas Saya', icon: ClipboardCheck, colorClass: 'text-green-600' },
-    { href: '/dashboard/notulensi', label: 'Notulensi', icon: ListChecks, colorClass: 'text-purple-600' },
-    { href: '/dashboard/dokumen', label: 'Repository', icon: FolderArchive, colorClass: 'text-yellow-600' },
-    { href: '/dashboard/logbook', label: 'Logbook', icon: BookOpen, colorClass: 'text-orange-600' },
-    { href: '/dashboard/pengumuman', label: 'Pengumuman', icon: Megaphone, colorClass: 'text-red-600' },
-    { href: '/dashboard/jadwal', label: 'Jadwal Internal', icon: Calendar, colorClass: 'text-blue-600' },
-    { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, colorClass: 'text-pink-600' },
-    { href: '/dashboard/arsip', label: 'Arsip Surat', icon: Archive, colorClass: 'text-gray-600' },
-  ];
+  const isPresensiTargetUser = useMemo(() => {
+    const isModuleEnabled = opdConfig?.features?.enablePresensi || opdConfig?.presensiConfig?.enabled;
+    if (!isModuleEnabled) return false;
+    const userCluster = jabatanProfile?.klasterStruktur || 'umum';
+    const targetClusters = opdConfig?.presensiConfig?.klasterTarget || ['blud'];
+    const isHrdOrAdmin =
+      userProfile?.role === 'admin_opd' ||
+      userProfile?.role === 'super_admin' ||
+      userProfile?.role === ('hrd' as any) ||
+      userProfile?.additionalRoles?.includes('hrd') ||
+      (jabatanProfile && jabatanProfile.level <= 5);
+    return targetClusters.includes(userCluster) || isHrdOrAdmin;
+  }, [opdConfig, jabatanProfile, userProfile]);
+
+  const quickAccessLinks = useMemo(() => {
+    const baseLinks = [
+      { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, colorClass: 'text-cyan-600' },
+      { href: '/dashboard/tugas', label: 'Tugas Saya', icon: ClipboardCheck, colorClass: 'text-green-600' },
+      { href: '/dashboard/notulensi', label: 'Notulensi', icon: ListChecks, colorClass: 'text-purple-600' },
+      { href: '/dashboard/dokumen', label: 'Repository', icon: FolderArchive, colorClass: 'text-yellow-600' },
+      { href: '/dashboard/logbook', label: 'Logbook', icon: BookOpen, colorClass: 'text-orange-600' },
+      { href: '/dashboard/pengumuman', label: 'Pengumuman', icon: Megaphone, colorClass: 'text-red-600' },
+      { href: '/dashboard/jadwal', label: 'Jadwal Internal', icon: Calendar, colorClass: 'text-blue-600' },
+      { href: '/dashboard/bukti-kinerja', label: 'Bukti E-Kinerja', icon: FileText, colorClass: 'text-pink-600' },
+      { href: '/dashboard/arsip', label: 'Arsip Surat', icon: Archive, colorClass: 'text-gray-600' },
+    ];
+
+    if (isPresensiTargetUser) {
+      return [
+        { href: '/dashboard/presensi', label: 'Presensi Pegawai', icon: Clock, colorClass: 'text-blue-600' },
+        ...baseLinks.slice(0, 8),
+      ];
+    }
+    return baseLinks;
+  }, [isPresensiTargetUser]);
   
   if (isLoading) return <RuangKerjaSkeleton />;
 
   return (
     <div className="sg-page flex flex-col h-full px-0 md:px-6 py-3 md:py-6 bg-background">
-      <div className="px-4 md:px-0">
+      <div className="px-4 md:px-0 space-y-3 mb-4 md:mb-6">
         <SmartGreeting userName={userProfile?.namaLengkap.split(' ')[0] || ''} />
+        <PresensiSmartBanner tenant="sigap" />
       </div>
 
       {/* --- Layout Utama (Desktop Grid System) --- */}

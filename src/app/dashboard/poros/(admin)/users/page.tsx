@@ -207,6 +207,7 @@ export default function ManajemenUserPage() {
         { value: 'petugas_kelurahan', label: 'Petugas Registrasi Kelurahan (SKW)' },
         { value: 'petugas_kecamatan', label: 'Verifikator Kecamatan (SKW)' },
         { value: 'operator_surat', label: 'Operator Surat (Akses Upload Surat)' },
+        { value: 'hrd', label: 'HRD / Pengelola Kepegawaian (Monitoring & Laporan Presensi)' },
     ];
 
     const filteredUsers = useMemo(() => {

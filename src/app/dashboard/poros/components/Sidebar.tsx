@@ -57,6 +57,7 @@ import {
   Palette,
   Activity,
   Database,
+  Clock,
 } from "lucide-react";
 import {
   Jabatan,
@@ -110,6 +111,25 @@ export const userHasAccess = (
       ] === true
     );
   }
+
+  // KHUSUS MENU PRESENSI: Validasi pengaktifan OPD & Klaster Struktur Organisasi Target
+  if (item.href === "/dashboard/presensi") {
+    if (
+      userProfile.role === "super_admin" ||
+      userProfile.role === "admin_opd" ||
+      userProfile.role === ("hrd" as any) ||
+      userProfile.additionalRoles?.includes("hrd")
+    )
+      return true;
+    const presensiCfg = opdConfig?.presensiConfig;
+    const isEnabled =
+      opdConfig?.features?.enablePresensi || presensiCfg?.enabled;
+    if (!isEnabled) return false;
+    const userCluster = jabatanProfile?.klasterStruktur || "umum";
+    const targetClusters = presensiCfg?.klasterTarget || ["blud"];
+    return targetClusters.includes(userCluster);
+  }
+
   return true;
 };
 
@@ -166,6 +186,14 @@ export const navItems: NavItem[] = [
   },
 
   // --- PRODUKTIVITAS ---
+  {
+    href: "/dashboard/presensi",
+    label: "Presensi Pegawai",
+    icon: Clock,
+    allowedRoles: ["user", "staf_tu", "admin_opd", "super_admin"],
+    section: "produktivitas",
+    colorClass: "text-blue-600",
+  },
   {
     href: "/dashboard/checklist",
     label: "Checklist Pribadi",
