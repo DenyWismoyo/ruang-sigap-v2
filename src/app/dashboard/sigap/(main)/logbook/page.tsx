@@ -10,7 +10,7 @@ import { UserProfile, LogbookHarian, LogbookKegiatan, Tugas, BuktiKinerja } from
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc, getDoc, Timestamp, orderBy, getDocs, addDoc } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
-import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText, Zap, Download } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText, Zap, Download, Settings } from 'lucide-react';
 import FormTugas from '@/app/dashboard/sigap/(main)/tugas/components/FormTugas';
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/sigap/hooks/useGoogleDriveUploader';
 import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
@@ -22,6 +22,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
 import { SmartAddKegiatanModal } from '@/app/dashboard/poros/(main)/logbook/components/SmartAddKegiatanModal';
+import { LogbookSettingsModal } from '@/components/logbook/LogbookSettingsModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 
@@ -472,6 +473,16 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
                 <DialogHeader><DialogTitle>Edit Kegiatan</DialogTitle></DialogHeader>
                 <form onSubmit={handleSave} className="space-y-4 pt-2">
                     <div><Label htmlFor="edit-deskripsi">Deskripsi Kegiatan</Label><Textarea id="edit-deskripsi" value={currentEntry.deskripsi} onChange={(e) => setCurrentEntry({ ...currentEntry, deskripsi: e.target.value })} rows={3} autoFocus /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <Label htmlFor="edit-jam-mulai" className="text-xs">Jam Mulai</Label>
+                            <Input id="edit-jam-mulai" type="time" value={currentEntry.waktuMulai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuMulai: e.target.value })} />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-jam-selesai" className="text-xs">Jam Selesai</Label>
+                            <Input id="edit-jam-selesai" type="time" value={currentEntry.waktuSelesai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuSelesai: e.target.value })} />
+                        </div>
+                    </div>
                     <div><Label htmlFor="tugas-terkait">Tautkan ke Tugas (Opsional)</Label><Select value={currentEntry.tugasTerkaitId || ''} onValueChange={(value) => { const task = tasks.find(t => t.id === value); setCurrentEntry({ ...currentEntry, tugasTerkaitId: value || undefined, tugasTerkaitJudul: task?.judulTugas || undefined }); }}><SelectTrigger id="tugas-terkait"><SelectValue placeholder="-- Tidak ditautkan --" /></SelectTrigger><SelectContent><SelectItem value="">-- Tidak ditautkan --</SelectItem>{tasks.map(t => <SelectItem key={t.id} value={t.id!}>{t.judulTugas}</SelectItem>)}</SelectContent></Select></div>
                     <DialogFooter className="sm:justify-between"><Button type="button" variant="destructive" onClick={() => onFullDelete(currentEntry.id)}><Trash2 size={16} className="mr-2" /> Hapus</Button><Button type="submit" disabled={!currentEntry.deskripsi.trim()}><Save size={16} className="mr-2" /> Simpan</Button></DialogFooter>
                 </form>
@@ -499,7 +510,19 @@ const LogbookItem = ({
                 {k.selesai ? <CheckSquare size={20} className="text-green-600"/> : <Square size={20} className="text-muted-foreground"/>}
             </Button>
             <div className="flex-1 min-w-0">
-                <p className={`font-medium text-foreground ${k.selesai ? 'line-through text-muted-foreground' : ''}`}>{k.deskripsi}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                    <p className={`font-medium text-foreground ${k.selesai ? 'line-through text-muted-foreground' : ''}`}>{k.deskripsi}</p>
+                    {k.aktivitasNama && (
+                        <span className="text-[10px] font-semibold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-900/60 px-1.5 py-0.5 rounded flex items-center gap-1">
+                            ⭐ {k.aktivitasNama}
+                        </span>
+                    )}
+                    {(k.waktuMulai || k.waktuSelesai) && (
+                        <span className="text-[11px] font-semibold text-muted-foreground shrink-0 bg-muted/60 px-1.5 py-0.5 rounded border border-border/50">
+                            🕒 {k.waktuMulai || '08:00'} - {k.waktuSelesai || '09:30'}
+                        </span>
+                    )}
+                </div>
                 {k.tugasTerkaitId && (<Button asChild variant="link" size="sm" className="h-auto p-0 text-xs text-green-700 dark:text-green-300"><Link href={`/dashboard/tugas`}><LinkIcon size={12} className="mr-1.5"/> Tugas: {k.tugasTerkaitJudul || 'Lihat Tugas'}</Link></Button>)}
             </div>
             
@@ -563,6 +586,7 @@ export default function LogbookPage() {
     const [ekinerjaModalBukti, setEkinerjaModalBukti] = useState<BuktiKinerja | null>(null);
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
     const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const { isSubscribed } = useEkinerjaSubscription();
 
     const parentRef = useRef<HTMLDivElement>(null);
@@ -657,11 +681,36 @@ export default function LogbookPage() {
              await fetchLogbookData();
         } catch (error) { console.error("Error updating logbook:", error); alert("Gagal menyimpan perubahan ke logbook."); throw error; }
     };
-    const handleAddKegiatan = async (text: string) => { const newKegiatan: LogbookKegiatan = { id: new Date().getTime().toString(), deskripsi: text, selesai: false }; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList([...currentKegiatan, newKegiatan]); };
+    const handleAddKegiatan = async (text: string, waktuMulaiInput?: string, waktuSelesaiInput?: string, aktivitasId?: number, aktivitasNama?: string) => { 
+        const now = new Date();
+        const pad = (num: number) => String(num).padStart(2, '0');
+        const autoJamMulai = waktuMulaiInput || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        const autoEndDate = new Date(now.getTime() + 60 * 60 * 1000);
+        const autoJamSelesai = waktuSelesaiInput || `${pad(autoEndDate.getHours())}:${pad(autoEndDate.getMinutes())}`;
+
+        const newKegiatan: LogbookKegiatan = { 
+            id: now.getTime().toString(), 
+            deskripsi: text, 
+            selesai: false,
+            waktuMulai: autoJamMulai,
+            waktuSelesai: autoJamSelesai,
+            createdAt: now.toISOString(),
+            aktivitasId: aktivitasId,
+            aktivitasNama: aktivitasNama,
+        }; 
+        const currentKegiatan = logbookData?.kegiatan || []; 
+        await updateKegiatanList([...currentKegiatan, newKegiatan]); 
+    };
     
     const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
+        const now = new Date();
+        const pad = (num: number) => String(num).padStart(2, '0');
+        const autoJamMulai = kegiatanBaru.waktuMulai || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        const autoEndDate = new Date(now.getTime() + 60 * 60 * 1000);
+        const autoJamSelesai = kegiatanBaru.waktuSelesai || `${pad(autoEndDate.getHours())}:${pad(autoEndDate.getMinutes())}`;
+
         const newKegiatan: LogbookKegiatan = {
-            id: new Date().getTime().toString(),
+            id: now.getTime().toString(),
             deskripsi: kegiatanBaru.deskripsi || '',
             selesai: kegiatanBaru.selesai ?? true,
             kategori: kegiatanBaru.kategori || 'Disposisi',
@@ -669,7 +718,11 @@ export default function LogbookPage() {
             suratTerkaitId: kegiatanBaru.suratTerkaitId,
             suratPerihal: kegiatanBaru.suratPerihal,
             disposisiTerkaitId: kegiatanBaru.disposisiTerkaitId,
-            createdAt: new Date().toISOString()
+            waktuMulai: autoJamMulai,
+            waktuSelesai: autoJamSelesai,
+            createdAt: kegiatanBaru.createdAt || now.toISOString(),
+            aktivitasId: kegiatanBaru.aktivitasId,
+            aktivitasNama: kegiatanBaru.aktivitasNama,
         };
         const currentKegiatan = logbookData?.kegiatan || [];
         await updateKegiatanList([...currentKegiatan, newKegiatan]);
@@ -680,11 +733,22 @@ export default function LogbookPage() {
     const handleDeleteKegiatan = async (kegiatanId: string) => { if (!window.confirm("Hapus kegiatan ini dari logbook?")) return; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.filter(k => k.id !== kegiatanId)); if (entryToEdit?.id === kegiatanId) { setIsEditModalOpen(false); setEntryToEdit(null); } };
 
     const handleOpenEkinerja = (entry: LogbookKegiatan) => {
-        const detected = detectAktivitasFromLogbookText(entry.deskripsi);
+        const isKepwalEnabled = effectiveProfile?.useKamusAktivitasKepwal !== false;
+        const detected = isKepwalEnabled ? detectAktivitasFromLogbookText(entry.deskripsi) : null;
         const rawDrive = userProfile?.googleDriveReportLink || effectiveProfile?.googleDriveReportLink || '';
         const driveUrl = rawDrive 
             ? (rawDrive.startsWith('http') ? rawDrive : `https://drive.google.com/drive/folders/${rawDrive}`)
             : '';
+
+        // Prioritaskan timestamp pencatatan asli (createdAt) jika ada
+        let entryCreatedAt: Timestamp;
+        if (entry.createdAt) {
+            const parsed = new Date(entry.createdAt);
+            entryCreatedAt = !isNaN(parsed.getTime()) ? Timestamp.fromDate(parsed) : Timestamp.fromDate(selectedDate);
+        } else {
+            entryCreatedAt = Timestamp.fromDate(selectedDate);
+        }
+
         const virtualBukti: BuktiKinerja = {
             id: `logbook_${entry.id}`,
             userId: effectiveProfile?.uid || '',
@@ -695,9 +759,11 @@ export default function LogbookPage() {
             fileName: `Logbook_${entry.id}.txt`,
             fileType: 'text/plain',
             sumber: 'logbook_rekap',
-            createdAt: Timestamp.fromDate(selectedDate),
-            aktivitasId: detected ? detected.id : undefined,
-            aktivitasNama: detected ? detected.nama : undefined,
+            createdAt: entryCreatedAt,
+            waktuMulai: entry.waktuMulai,
+            waktuSelesai: entry.waktuSelesai,
+            aktivitasId: entry.aktivitasId ?? (detected ? detected.id : undefined),
+            aktivitasNama: entry.aktivitasNama ?? (detected ? detected.nama : undefined),
         };
         setEkinerjaModalBukti(virtualBukti);
         if (!isSubscribed) {
@@ -762,6 +828,14 @@ export default function LogbookPage() {
                         className="w-full md:w-auto bg-green-600 hover:bg-green-700 sg-btn"
                     >
                         <Calendar size={16} className="mr-2"/> Rekap Bulanan
+                    </Button>
+                     <Button
+                        onClick={() => setIsSettingsOpen(true)}
+                        variant="outline"
+                        className="w-full md:w-auto sg-btn border-border/80 hover:bg-muted"
+                        title="Pengaturan Google Drive & Kamus Aktivitas"
+                    >
+                        <Settings size={16} className="mr-2 text-muted-foreground"/> Pengaturan
                     </Button>
                 </div>
             </div>
@@ -862,6 +936,16 @@ export default function LogbookPage() {
                 onSuccess={() => {
                     setIsPaywallOpen(false);
                     setIsEkinerjaModalOpen(true);
+                }}
+            />
+
+            <LogbookSettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                userProfile={effectiveProfile}
+                tenant="sigap"
+                onSaved={() => {
+                    fetchLogbookData();
                 }}
             />
         </div>

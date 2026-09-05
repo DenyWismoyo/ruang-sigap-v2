@@ -34,8 +34,8 @@ Agar pengguna tidak perlu mengetik ulang uraian pekerjaan dan mencari tautan Goo
 | 2 | **Kode Kegiatan** | Text (Readonly) | Auto / F2 | Dikelola internal portal BKPSDM |
 | 3 | **Aktivitas** | Select2 Dropdown | `item.aktivitasNama` | Wajib cocok persis dengan kamus 152 aktivitas |
 | 4 | **Nama Kegiatan Harian** | Input / Textarea | `item.judul` | Uraian kegiatan tugas |
-| 5 | **Jam Mulai** | Time Input | Default `08:00` | Format `HH:mm` |
-| 6 | **Jam Selesai** | Time Input | Default `09:30` | Format `HH:mm` |
+| 5 | **Jam Mulai** | Time Input | `item.waktuMulai` atau jam dari `item.createdAt` (fallback: `08:00`) | Format `HH:mm` |
+| 6 | **Jam Selesai** | Time Input | `item.waktuSelesai` atau `createdAt + 60m` (fallback: `09:30`) | Format `HH:mm` |
 | 7 | **Kuantitas** | Number Input | Default `1` | Sesuai satuan aktivitas (Dokumen/Kegiatan/Laporan) |
 | 8 | **URL Bukti Dukung** | Textarea/Input | `item.googleDriveLink` | Link sharing Google Drive dari uploader |
 | - | **Catatan** | Textarea | `item.deskripsi` | Keterangan tambahan pelaksanaan tugas |

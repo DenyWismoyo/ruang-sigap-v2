@@ -14,16 +14,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Send, Sparkles, Loader2, CheckCircle2, ChevronRight, FileText, Zap } from 'lucide-react';
+import { Send, Sparkles, Loader2, CheckCircle2, ChevronRight, FileText, Zap, BookOpen } from 'lucide-react';
 import { LogbookKegiatan, UserProfile } from '@/types';
 import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useToastContext } from '@/context/ToastContext';
+import { AktivitasCombobox } from '@/components/ekinerja/AktivitasCombobox';
+import { AktivitasSolo, detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
 
 interface SmartAddKegiatanModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSaveUmum: (text: string) => void;
+    onSaveUmum: (text: string, waktuMulai?: string, waktuSelesai?: string, aktivitasId?: number, aktivitasNama?: string) => void;
     onSaveTindakLanjut: (kegiatan: Partial<LogbookKegiatan>) => Promise<void>;
     userProfile: UserProfile | null;
 }
@@ -32,14 +34,32 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
     const { addToast } = useToastContext();
     const [activeTab, setActiveTab] = useState("umum");
     
+    // Helper format waktu HH:mm
+    const getCurrentTimes = () => {
+        const now = new Date();
+        const pad = (num: number) => String(num).padStart(2, '0');
+        const start = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        const endD = new Date(now.getTime() + 60 * 60 * 1000);
+        const end = `${pad(endD.getHours())}:${pad(endD.getMinutes())}`;
+        return { start, end };
+    };
+
+    // Kamus Kepwal Status & Selected Activity
+    const isKamusKepwalEnabled = userProfile?.useKamusAktivitasKepwal !== false;
+    const [selectedAktivitas, setSelectedAktivitas] = useState<AktivitasSolo | undefined>(undefined);
+
     // State Tab Umum
     const [textUmum, setTextUmum] = useState('');
+    const [jamMulaiUmum, setJamMulaiUmum] = useState('');
+    const [jamSelesaiUmum, setJamSelesaiUmum] = useState('');
 
     // State Tab Tindak Lanjut
     const [pendingDisposisi, setPendingDisposisi] = useState<any[]>([]);
     const [selectedDisposisiId, setSelectedDisposisiId] = useState<string>('');
     const [tindakanSingkat, setTindakanSingkat] = useState('');
     const [hasilTindakan, setHasilTindakan] = useState('');
+    const [jamMulaiTL, setJamMulaiTL] = useState('');
+    const [jamSelesaiTL, setJamSelesaiTL] = useState('');
     const [kategoriTerpilih, setKategoriTerpilih] = useState<LogbookKegiatan['kategori']>('Disposisi');
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -47,10 +67,16 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
     // Reset when modal opens
     useEffect(() => {
         if (isOpen) {
+            const times = getCurrentTimes();
             setTextUmum('');
+            setSelectedAktivitas(undefined);
+            setJamMulaiUmum(times.start);
+            setJamSelesaiUmum(times.end);
             setSelectedDisposisiId('');
             setTindakanSingkat('');
             setHasilTindakan('');
+            setJamMulaiTL(times.start);
+            setJamSelesaiTL(times.end);
             fetchPendingDisposisi();
         }
     }, [isOpen]);
@@ -154,6 +180,8 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
                 tanggalSelesai: new Date().toISOString()
             }, { merge: true });
 
+            const matched = isKamusKepwalEnabled ? detectAktivitasFromLogbookText(selectedDisp.suratPerihal || hasilTindakan) : null;
+
             // Panggil fungsi onSaveTindakLanjut dari parent untuk logbook
             await onSaveTindakLanjut({
                 deskripsi: hasilTindakan,
@@ -163,6 +191,11 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
                 suratTerkaitId: selectedDisp.suratId,
                 suratPerihal: selectedDisp.suratPerihal,
                 disposisiTerkaitId: selectedDisp.id,
+                waktuMulai: jamMulaiTL,
+                waktuSelesai: jamSelesaiTL,
+                createdAt: new Date().toISOString(),
+                aktivitasId: matched?.id,
+                aktivitasNama: matched?.nama,
             });
 
             addToast('Tindak lanjut berhasil disimpan dan dicatat ke logbook.', 'success');
@@ -189,9 +222,134 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
                     </TabsList>
 
                     <TabsContent value="umum" className="pt-4">
-                        <form onSubmit={(e) => { e.preventDefault(); if (textUmum.trim()) { onSaveUmum(textUmum.trim()); } onClose(); }} className="flex gap-2">
-                            <Input type="text" value={textUmum} onChange={e => setTextUmum(e.target.value)} placeholder="Tulis kegiatan harian Anda..." autoFocus />
-                            <Button type="submit" disabled={!textUmum.trim()} size="icon"><Send size={18}/></Button>
+                        <form 
+                            onSubmit={(e) => { 
+                                e.preventDefault(); 
+                                if (textUmum.trim()) { 
+                                    onSaveUmum(
+                                        textUmum.trim(), 
+                                        jamMulaiUmum, 
+                                        jamSelesaiUmum,
+                                        selectedAktivitas?.id,
+                                        selectedAktivitas?.nama
+                                    ); 
+                                } 
+                                onClose(); 
+                            }} 
+                            className="space-y-3"
+                        >
+                            {/* SMART SELECT KAMUS AKTIVITAS KE दिश */}
+                            {isKamusKepwalEnabled && (
+                                <div className="space-y-1.5 p-2.5 rounded-lg border border-border/80 bg-muted/20">
+                                    <div className="flex items-center justify-between">
+                                        <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground/90">
+                                            <BookOpen size={14} className="text-primary" /> Kamus 152 Aktivitas Kepwal Solo (Smart Select)
+                                        </Label>
+                                        <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
+                                            Kepwal 786/154/2020
+                                        </Badge>
+                                    </div>
+                                    <AktivitasCombobox
+                                        value={selectedAktivitas?.id}
+                                        onChange={(akt) => {
+                                            setSelectedAktivitas(akt);
+                                            if (akt) {
+                                                if (!textUmum.trim()) {
+                                                    setTextUmum(akt.nama);
+                                                } else if (!textUmum.includes(akt.nama)) {
+                                                    setTextUmum(`[${akt.nama}] ${textUmum}`);
+                                                }
+                                            }
+                                        }}
+                                        placeholder="Cari & pilih aktivitas resmi BKPSDM Solo..."
+                                        showQuickPills={true}
+                                    />
+                                </div>
+                            )}
+
+                            {/* Uraian Kegiatan */}
+                            <div className="space-y-1.5">
+                                <Label className="text-xs font-medium text-foreground/80">
+                                    Uraian Kegiatan Harian
+                                </Label>
+                                <div className="flex gap-2">
+                                    <Input 
+                                        type="text" 
+                                        value={textUmum} 
+                                        onChange={e => setTextUmum(e.target.value)} 
+                                        placeholder="Tulis detail kegiatan harian Anda..." 
+                                        autoFocus={!isKamusKepwalEnabled}
+                                    />
+                                    <Button type="submit" disabled={!textUmum.trim()} size="icon">
+                                        <Send size={18}/>
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* Real-time Smart Match Suggestion */}
+                            {isKamusKepwalEnabled && !selectedAktivitas && textUmum.trim().length >= 3 && (() => {
+                                const matched = detectAktivitasFromLogbookText(textUmum);
+                                if (!matched) return null;
+                                return (
+                                    <div className="flex items-center justify-between p-2 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 text-xs animate-in fade-in-50">
+                                        <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+                                            <Sparkles size={13} className="text-blue-500 shrink-0" />
+                                            <span>Saran kamus Kepwal:</span>
+                                            <span className="font-semibold text-blue-700 dark:text-blue-300 truncate">
+                                                {matched.nama} (+{matched.nilaiPoin}p)
+                                            </span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => setSelectedAktivitas(matched)}
+                                            className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline shrink-0 ml-2"
+                                        >
+                                            + Terapkan
+                                        </button>
+                                    </div>
+                                );
+                            })()}
+
+                            <div className="grid grid-cols-2 gap-3 pt-1">
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Jam Mulai</Label>
+                                    <Input 
+                                        type="time" 
+                                        value={jamMulaiUmum} 
+                                        onChange={e => setJamMulaiUmum(e.target.value)} 
+                                        className="h-8 text-xs bg-background" 
+                                    />
+                                </div>
+                                <div>
+                                    <Label className="text-xs text-muted-foreground">Jam Selesai</Label>
+                                    <Input 
+                                        type="time" 
+                                        value={jamSelesaiUmum} 
+                                        onChange={e => setJamSelesaiUmum(e.target.value)} 
+                                        className="h-8 text-xs bg-background" 
+                                    />
+                                </div>
+                            </div>
+
+                            {userProfile?.customAktivitasList && userProfile.customAktivitasList.length > 0 && (
+                                <div className="space-y-1.5 pt-1">
+                                    <Label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                        <Sparkles size={12} className="text-primary" /> Kamus Aktivitas Rutin Anda:
+                                    </Label>
+                                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                                        {userProfile.customAktivitasList.map((akt, idx) => (
+                                            <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className="cursor-pointer hover:bg-primary/10 hover:border-primary/40 text-xs font-normal py-1 px-2 transition-colors"
+                                                onClick={() => setTextUmum(akt)}
+                                            >
+                                                + {akt}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </form>
                     </TabsContent>
 
@@ -278,6 +436,26 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
                                         <span>Silakan edit jika ada yang kurang sesuai sebelum disimpan.</span>
                                         <span className="font-semibold text-primary">{kategoriTerpilih}</span>
                                     </p>
+                                </div>
+                                <div className="grid grid-cols-2 gap-3 pt-1">
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Jam Mulai</Label>
+                                        <Input 
+                                            type="time" 
+                                            value={jamMulaiTL} 
+                                            onChange={e => setJamMulaiTL(e.target.value)} 
+                                            className="h-8 text-xs bg-background" 
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs text-muted-foreground">Jam Selesai</Label>
+                                        <Input 
+                                            type="time" 
+                                            value={jamSelesaiTL} 
+                                            onChange={e => setJamSelesaiTL(e.target.value)} 
+                                            className="h-8 text-xs bg-background" 
+                                        />
+                                    </div>
                                 </div>
                                 <Button type="submit" disabled={isSaving || !hasilTindakan.trim()} className="w-full font-bold">
                                     {isSaving ? <Loader2 size={16} className="animate-spin mr-2" /> : <Send size={16} className="mr-2" />}

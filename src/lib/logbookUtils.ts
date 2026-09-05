@@ -88,7 +88,11 @@ export const writeLogbookEntry = async (
   opdId: string,
   entry: Partial<LogbookKegiatan> & { deskripsi: string }
 ) => {
-  const tanggal = new Date(); // Hari ini
+  const now = new Date();
+  const pad = (num: number) => String(num).padStart(2, '0');
+  const defaultWaktuMulai = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+  const end = new Date(now.getTime() + 60 * 60 * 1000);
+  const defaultWaktuSelesai = `${pad(end.getHours())}:${pad(end.getMinutes())}`;
   
   const kegiatanBaruRaw = {
     id: entry.id || `kegiatan_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
@@ -101,9 +105,9 @@ export const writeLogbookEntry = async (
     disposisiTerkaitId: entry.disposisiTerkaitId,
     tugasTerkaitId: entry.tugasTerkaitId,
     tugasTerkaitJudul: entry.tugasTerkaitJudul,
-    waktuMulai: entry.waktuMulai,
-    waktuSelesai: entry.waktuSelesai,
-    createdAt: new Date().toISOString(),
+    waktuMulai: entry.waktuMulai || defaultWaktuMulai,
+    waktuSelesai: entry.waktuSelesai || defaultWaktuSelesai,
+    createdAt: entry.createdAt || now.toISOString(),
   };
 
   // Firebase Firestore akan throw error jika ada value undefined
@@ -114,5 +118,5 @@ export const writeLogbookEntry = async (
     }
   }
 
-  await updateLogbook(userId, opdId, tanggal, kegiatanBaru);
+  await updateLogbook(userId, opdId, now, kegiatanBaru);
 };

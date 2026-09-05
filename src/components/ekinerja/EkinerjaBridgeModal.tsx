@@ -88,8 +88,42 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
       setUrlBuktiDukung(bukti.googleDriveLink || '');
       setCatatan(bukti.deskripsi || 'Bukti kinerja tercatat di RUANG SIGAP / POROS E-Office Kota Surakarta');
       setKuantitas(1);
-      setJamMulai('08:00');
-      setJamSelesai('09:30');
+
+      // Inferensi cerdas Jam Mulai & Jam Selesai dari waktu pencatatan (createdAt)
+      const pad = (num: number) => String(num).padStart(2, '0');
+      let inferredJamMulai = '08:00';
+      let inferredJamSelesai = '09:30';
+
+      if (bukti.waktuMulai) {
+        inferredJamMulai = bukti.waktuMulai;
+        if (bukti.waktuSelesai) {
+          inferredJamSelesai = bukti.waktuSelesai;
+        } else {
+          const [h, m] = bukti.waktuMulai.split(':').map(Number);
+          if (!isNaN(h) && !isNaN(m)) {
+            const endH = (h + 1) % 24;
+            inferredJamSelesai = `${pad(endH)}:${pad(m)}`;
+          }
+        }
+      } else if (bukti.createdAt) {
+        const createDate = (bukti.createdAt as any)?.toDate 
+          ? (bukti.createdAt as any).toDate() 
+          : new Date(bukti.createdAt as any);
+        
+        if (createDate instanceof Date && !isNaN(createDate.getTime())) {
+          const h = createDate.getHours();
+          const m = createDate.getMinutes();
+          // Jika bukan 00:00 default (berarti memiliki timestamp jam pencatatan presisi)
+          if (!(h === 0 && m === 0)) {
+            inferredJamMulai = `${pad(h)}:${pad(m)}`;
+            const endH = (h + 1) % 24;
+            inferredJamSelesai = `${pad(endH)}:${pad(m)}`;
+          }
+        }
+      }
+
+      setJamMulai(inferredJamMulai);
+      setJamSelesai(inferredJamSelesai);
 
       if (bukti.aktivitasId) {
         const found = getAktivitasSoloById(bukti.aktivitasId);

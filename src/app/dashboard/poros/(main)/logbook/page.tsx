@@ -10,10 +10,11 @@ import { UserProfile, LogbookHarian, LogbookKegiatan, Tugas, BuktiKinerja } from
 import { db } from '@/lib/firebase';
 import { collection, query, where, onSnapshot, doc, setDoc, getDoc, Timestamp, orderBy, getDocs, addDoc } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
-import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText, Zap, Download } from 'lucide-react';
+import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, ClipboardCheck, Send, MoreVertical, BrainCircuit, GripVertical, X, HelpCircle, Calendar, FileDown, ChevronLeft, ChevronRight, Edit, Link as LinkIcon, CheckSquare, Square, Save, ListChecks, FileText, Zap, Download, Settings } from 'lucide-react';
 import FormTugas from '@/app/dashboard/poros/(main)/tugas/components/FormTugas';
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/poros/hooks/useGoogleDriveUploader';
 import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
+import { LogbookSettingsModal } from '@/components/logbook/LogbookSettingsModal';
 import { detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -483,6 +484,16 @@ const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks
                 <DialogHeader><DialogTitle>Edit Kegiatan</DialogTitle></DialogHeader>
                 <form onSubmit={handleSave} className="space-y-4 pt-2">
                     <div><Label htmlFor="edit-deskripsi">Deskripsi Kegiatan</Label><Textarea id="edit-deskripsi" value={currentEntry.deskripsi} onChange={(e) => setCurrentEntry({ ...currentEntry, deskripsi: e.target.value })} rows={3} autoFocus /></div>
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <Label htmlFor="edit-jam-mulai" className="text-xs">Jam Mulai</Label>
+                            <Input id="edit-jam-mulai" type="time" value={currentEntry.waktuMulai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuMulai: e.target.value })} />
+                        </div>
+                        <div>
+                            <Label htmlFor="edit-jam-selesai" className="text-xs">Jam Selesai</Label>
+                            <Input id="edit-jam-selesai" type="time" value={currentEntry.waktuSelesai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuSelesai: e.target.value })} />
+                        </div>
+                    </div>
                     <div><Label htmlFor="tugas-terkait">Tautkan ke Tugas (Opsional)</Label><Select value={currentEntry.tugasTerkaitId || ''} onValueChange={(value) => { const task = tasks.find(t => t.id === value); setCurrentEntry({ ...currentEntry, tugasTerkaitId: value || undefined, tugasTerkaitJudul: task?.judulTugas || undefined }); }}><SelectTrigger id="tugas-terkait"><SelectValue placeholder="-- Tidak ditautkan --" /></SelectTrigger><SelectContent><SelectItem value="">-- Tidak ditautkan --</SelectItem>{tasks.map(t => <SelectItem key={t.id} value={t.id!}>{t.judulTugas}</SelectItem>)}</SelectContent></Select></div>
                     <DialogFooter className="sm:justify-between"><Button type="button" variant="destructive" onClick={() => onFullDelete(currentEntry.id)}><Trash2 size={16} className="mr-2" /> Hapus</Button><Button type="submit" disabled={!currentEntry.deskripsi.trim()}><Save size={16} className="mr-2" /> Simpan</Button></DialogFooter>
                 </form>
@@ -536,6 +547,11 @@ const LogbookItem = ({
                     {k.waktuMulai && k.waktuSelesai && (
                         <span className="text-[10px] text-muted-foreground flex items-center gap-1">
                             <Calendar size={10} /> {k.waktuMulai} - {k.waktuSelesai}
+                        </span>
+                    )}
+                    {k.aktivitasNama && (
+                        <span className="text-[10px] font-semibold text-teal-700 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 border border-teal-200 dark:border-teal-900/60 px-2 py-0.5 rounded-full flex items-center gap-1">
+                            ⭐ {k.aktivitasNama}
                         </span>
                     )}
                 </div>
@@ -620,6 +636,7 @@ export default function LogbookPage() {
     const [isRekapOpen, setIsRekapOpen] = useState(false);
     const [ekinerjaModalBukti, setEkinerjaModalBukti] = useState<BuktiKinerja | null>(null);
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -713,11 +730,36 @@ export default function LogbookPage() {
              await fetchLogbookData();
         } catch (error) { console.error("Error updating logbook:", error); alert("Gagal menyimpan perubahan ke logbook."); throw error; }
     };
-    const handleAddKegiatan = async (text: string) => { const newKegiatan: LogbookKegiatan = { id: new Date().getTime().toString(), deskripsi: text, selesai: false }; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList([...currentKegiatan, newKegiatan]); };
+    const handleAddKegiatan = async (text: string, waktuMulaiInput?: string, waktuSelesaiInput?: string, aktivitasId?: number, aktivitasNama?: string) => { 
+        const now = new Date();
+        const pad = (num: number) => String(num).padStart(2, '0');
+        const autoJamMulai = waktuMulaiInput || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        const autoEndDate = new Date(now.getTime() + 60 * 60 * 1000);
+        const autoJamSelesai = waktuSelesaiInput || `${pad(autoEndDate.getHours())}:${pad(autoEndDate.getMinutes())}`;
+
+        const newKegiatan: LogbookKegiatan = { 
+            id: now.getTime().toString(), 
+            deskripsi: text, 
+            selesai: false,
+            waktuMulai: autoJamMulai,
+            waktuSelesai: autoJamSelesai,
+            createdAt: now.toISOString(),
+            aktivitasId: aktivitasId,
+            aktivitasNama: aktivitasNama,
+        }; 
+        const currentKegiatan = logbookData?.kegiatan || []; 
+        await updateKegiatanList([...currentKegiatan, newKegiatan]); 
+    };
     
     const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
+        const now = new Date();
+        const pad = (num: number) => String(num).padStart(2, '0');
+        const autoJamMulai = kegiatanBaru.waktuMulai || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+        const autoEndDate = new Date(now.getTime() + 60 * 60 * 1000);
+        const autoJamSelesai = kegiatanBaru.waktuSelesai || `${pad(autoEndDate.getHours())}:${pad(autoEndDate.getMinutes())}`;
+
         const newKegiatan: LogbookKegiatan = {
-            id: new Date().getTime().toString(),
+            id: now.getTime().toString(),
             deskripsi: kegiatanBaru.deskripsi || '',
             selesai: kegiatanBaru.selesai ?? true,
             kategori: kegiatanBaru.kategori || 'Disposisi',
@@ -725,7 +767,11 @@ export default function LogbookPage() {
             suratTerkaitId: kegiatanBaru.suratTerkaitId,
             suratPerihal: kegiatanBaru.suratPerihal,
             disposisiTerkaitId: kegiatanBaru.disposisiTerkaitId,
-            createdAt: new Date().toISOString()
+            waktuMulai: autoJamMulai,
+            waktuSelesai: autoJamSelesai,
+            createdAt: kegiatanBaru.createdAt || now.toISOString(),
+            aktivitasId: kegiatanBaru.aktivitasId,
+            aktivitasNama: kegiatanBaru.aktivitasNama,
         };
         const currentKegiatan = logbookData?.kegiatan || [];
         await updateKegiatanList([...currentKegiatan, newKegiatan]);
@@ -735,7 +781,18 @@ export default function LogbookPage() {
     const handleDeleteKegiatan = async (kegiatanId: string) => { if (!window.confirm("Hapus kegiatan ini dari logbook?")) return; const currentKegiatan = logbookData?.kegiatan || []; await updateKegiatanList(currentKegiatan.filter(k => k.id !== kegiatanId)); if (entryToEdit?.id === kegiatanId) { setIsEditModalOpen(false); setEntryToEdit(null); } };
 
     const handleOpenEkinerja = (entry: LogbookKegiatan) => {
-        const detected = detectAktivitasFromLogbookText(entry.deskripsi);
+        const isKepwalEnabled = effectiveProfile?.useKamusAktivitasKepwal !== false;
+        const detected = isKepwalEnabled ? detectAktivitasFromLogbookText(entry.deskripsi) : null;
+        
+        // Prioritaskan timestamp pencatatan asli (createdAt) jika ada
+        let entryCreatedAt: Timestamp;
+        if (entry.createdAt) {
+            const parsed = new Date(entry.createdAt);
+            entryCreatedAt = !isNaN(parsed.getTime()) ? Timestamp.fromDate(parsed) : Timestamp.fromDate(selectedDate);
+        } else {
+            entryCreatedAt = Timestamp.fromDate(selectedDate);
+        }
+
         const virtualBukti: BuktiKinerja = {
             id: `logbook_${entry.id}`,
             userId: effectiveProfile?.uid || '',
@@ -748,9 +805,11 @@ export default function LogbookPage() {
             fileName: `Logbook_${entry.id}.txt`,
             fileType: 'text/plain',
             sumber: 'logbook_rekap',
-            createdAt: Timestamp.fromDate(selectedDate),
-            aktivitasId: detected ? detected.id : undefined,
-            aktivitasNama: detected ? detected.nama : undefined,
+            createdAt: entryCreatedAt,
+            waktuMulai: entry.waktuMulai,
+            waktuSelesai: entry.waktuSelesai,
+            aktivitasId: entry.aktivitasId ?? (detected ? detected.id : undefined),
+            aktivitasNama: entry.aktivitasNama ?? (detected ? detected.nama : undefined),
         };
         setEkinerjaModalBukti(virtualBukti);
         setIsEkinerjaModalOpen(true);
@@ -813,6 +872,14 @@ export default function LogbookPage() {
                         className="w-full md:w-auto bg-green-600 hover:bg-green-700 text-white border border-green-700/50"
                     >
                         <Calendar size={16} className="mr-2"/> Rekap Bulanan
+                    </Button>
+                     <Button
+                        onClick={() => setIsSettingsOpen(true)}
+                        variant="outline"
+                        className="w-full md:w-auto bg-transparent border-[var(--nk-glass-border)] hover:bg-muted/20"
+                        title="Pengaturan Google Drive & Kamus Aktivitas"
+                    >
+                        <Settings size={16} className="mr-2 text-muted-foreground"/> Pengaturan
                     </Button>
                 </div>
             </NkCard>
@@ -903,6 +970,16 @@ export default function LogbookPage() {
                 onClose={() => setIsEkinerjaModalOpen(false)}
                 bukti={ekinerjaModalBukti}
                 tenant="poros"
+            />
+
+            <LogbookSettingsModal
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                userProfile={effectiveProfile}
+                tenant="poros"
+                onSaved={() => {
+                    fetchLogbookData();
+                }}
             />
         </div>
     );
