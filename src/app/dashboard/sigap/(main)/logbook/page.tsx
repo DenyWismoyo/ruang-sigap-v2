@@ -14,6 +14,8 @@ import { Plus, Trash2, ClipboardList, Sparkles, Loader2, BookOpen, ChevronDown, 
 import FormTugas from '@/app/dashboard/sigap/(main)/tugas/components/FormTugas';
 import { useGoogleDriveUploader, UploadStatus } from '@/app/dashboard/sigap/hooks/useGoogleDriveUploader';
 import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
+import { EkinerjaPaywallModal } from '@/components/ekinerja/EkinerjaPaywallModal';
+import { useEkinerjaSubscription } from '@/hooks/useEkinerjaSubscription';
 import { detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
 
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -560,6 +562,8 @@ export default function LogbookPage() {
     const [isRekapOpen, setIsRekapOpen] = useState(false);
     const [ekinerjaModalBukti, setEkinerjaModalBukti] = useState<BuktiKinerja | null>(null);
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
+    const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+    const { isSubscribed } = useEkinerjaSubscription();
 
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -696,6 +700,10 @@ export default function LogbookPage() {
             aktivitasNama: detected ? detected.nama : undefined,
         };
         setEkinerjaModalBukti(virtualBukti);
+        if (!isSubscribed) {
+            setIsPaywallOpen(true);
+            return;
+        }
         setIsEkinerjaModalOpen(true);
     };
 
@@ -844,6 +852,17 @@ export default function LogbookPage() {
                 onClose={() => setIsEkinerjaModalOpen(false)}
                 bukti={ekinerjaModalBukti}
                 tenant="sigap"
+                onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+
+            <EkinerjaPaywallModal
+                isOpen={isPaywallOpen}
+                onClose={() => setIsPaywallOpen(false)}
+                tenant="sigap"
+                onSuccess={() => {
+                    setIsPaywallOpen(false);
+                    setIsEkinerjaModalOpen(true);
+                }}
             />
         </div>
     );

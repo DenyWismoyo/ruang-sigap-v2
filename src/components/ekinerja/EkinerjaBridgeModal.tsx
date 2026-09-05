@@ -11,6 +11,7 @@ import {
 } from '@/lib/ekinerjaBookmarklet';
 import { AktivitasCombobox } from './AktivitasCombobox';
 import { getAktivitasSoloById, AktivitasSolo } from '@/data/masterAktivitasSolo';
+import { useEkinerjaSubscription } from '@/hooks/useEkinerjaSubscription';
 import { 
   Dialog, 
   DialogContent, 
@@ -48,6 +49,7 @@ interface EkinerjaBridgeModalProps {
   onClose: () => void;
   bukti: BuktiKinerja | null;
   tenant?: 'sigap' | 'poros';
+  onOpenPaywall?: () => void;
 }
 
 export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
@@ -55,7 +57,9 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
   onClose,
   bukti,
   tenant = 'sigap',
+  onOpenPaywall,
 }) => {
+  const { isSubscribed, formattedExpiry, daysRemaining, isExpiringSoon } = useEkinerjaSubscription();
   const [activeTab, setActiveTab] = useState<'form' | 'extension' | 'bookmarklet'>('form');
   
   // 8 Kolom e-Kinerja
@@ -236,6 +240,30 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
                 <DialogDescription className="text-xs mt-0.5">
                   Sinkronkan bukti dukung Google Drive ke 8 kolom formulir e-Kinerja Kota Surakarta.
                 </DialogDescription>
+
+                {/* Indikator Lisensi Premium Personal (Mayar) */}
+                {isSubscribed && formattedExpiry && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Badge className={cn(
+                      "text-[11px] font-medium py-0.5 px-2 flex items-center gap-1 border",
+                      isExpiringSoon
+                        ? "bg-amber-50 text-amber-800 border-amber-300 dark:bg-amber-950/50 dark:text-amber-300"
+                        : "bg-emerald-50 text-emerald-800 border-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-300"
+                    )}>
+                      <CheckCircle2 className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                      ⭐ Premium Aktif s.d. {formattedExpiry} ({daysRemaining} hari lagi)
+                    </Badge>
+                    {onOpenPaywall && (
+                      <button
+                        type="button"
+                        onClick={onOpenPaywall}
+                        className="text-[11px] text-blue-600 dark:text-teal-400 hover:underline font-semibold"
+                      >
+                        + Perpanjang (Rp 50.000)
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>

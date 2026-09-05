@@ -17,6 +17,7 @@ import * as lintasOpd from "./lintasOpd";
 import * as migrateSubcollections from "./migrateSubcollections";
 import * as compressPdf from "./compressPdf";
 import * as validasiDisposisi from "./validasiDisposisi";
+import * as paymentService from "./paymentService";
 
 const allModules = {
     ...api,
@@ -33,6 +34,7 @@ const allModules = {
     ...migrateSubcollections,
     ...compressPdf,
     ...validasiDisposisi,
+    ...paymentService,
 };
 
 // Revert to original behavior: export modules without 'dev_' prefix

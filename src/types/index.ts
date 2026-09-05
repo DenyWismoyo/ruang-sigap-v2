@@ -115,6 +115,40 @@ export interface UserProfile {
   
   // Fitur Multi-UI Theme (Opsi Tema)
   app_theme?: AppTheme;
+
+  // Add-on Personal e-Kinerja Premium (Mayar.id)
+  ekinerjaSubscription?: EkinerjaSubscription;
+}
+
+export interface EkinerjaSubscription {
+  isActive: boolean;
+  status: 'ACTIVE' | 'EXPIRED' | 'INACTIVE';
+  planId: 'EKINERJA_PREMIUM_MONTHLY';
+  activeUntil: any; // Firestore Timestamp
+  lastPaidAt?: any;
+  lastTransactionId?: string;
+  amount?: number;
+}
+
+export interface EkinerjaTransaction {
+  id?: string;
+  transactionId: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  packageId: 'EKINERJA_PREMIUM_MONTHLY';
+  packageName: string;
+  amount: number;
+  status: 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';
+  paymentMethod?: string;
+  paymentChannel?: string;
+  paymentLink?: string;
+  qrCodeUrl?: string;
+  mayarTransactionId?: string | null;
+  quotaGranted?: boolean;
+  quotaGrantedAt?: any;
+  createdAt: any;
+  paidAt?: any;
 }
 
 export interface ServiceTemplate {

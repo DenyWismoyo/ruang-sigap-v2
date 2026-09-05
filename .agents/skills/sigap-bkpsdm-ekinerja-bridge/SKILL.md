@@ -139,4 +139,72 @@ Setiap item aktivitas di Logbook (disposisi surat, sebar pemberitahuan, tindak l
    - `rekap / menyiapkan` → ID 150 / 142
 3. **Multi-Domain Ready**: Mendukung environment `http://localhost:*`, portal web Firebase `*.web.app`, serta custom domain production `https://sgp.omnifit.cloud`.
 
+---
 
+## 💎 Model Lisensi & Monetisasi Fitur e-Kinerja (Mayar.id Gateway)
+
+Fitur otomasi integrasi e-Kinerja dikelola dengan model **Add-on Personal Premium (B2C)** untuk masing-masing pegawai ASN:
+
+### 1. Tarif & Ketentuan Layanan
+- **Tarif Resmi:** **Rp 50.000,- / bulan** (atau kelipatan paket bulanan).
+- **Cakupan Akses Premium:**
+  - ⚡ Ekstensi Chrome SIGAP Bridge (*Zero-Click* lintas tab).
+  - ⚡ Bookmarklet JavaScript 1-Klik.
+  - ⚡ Auto-mapping 152 Kamus Aktivitas Kepwal 786/154/2020.
+- **Fitur Tetap Gratis (Core Logbook):** Pencatatan aktivitas kerja harian, cetak laporan bulanan PDF tanda tangan basah/elektronik, penarikan histori surat disposisi & tugas, serta notulensi rapat.
+
+### 2. Skema Data Firestore
+
+#### A. Dokumen Pengguna (`users/{userId}`)
+```typescript
+interface EkinerjaSubscription {
+  isActive: boolean;
+  status: 'ACTIVE' | 'EXPIRED' | 'INACTIVE';
+  planId: 'EKINERJA_PREMIUM_MONTHLY';
+  activeUntil: Timestamp;         // Tanggal kedaluwarsa akses
+  lastPaidAt: Timestamp;
+  lastTransactionId: string;
+  amount: number;                 // 50000
+}
+```
+
+#### B. Dokumen Transaksi (`transactions/{transactionId}`)
+```typescript
+interface EkinerjaTransaction {
+  transactionId: string;          // Format: EKIN-{timestamp}-{random}
+  userId: string;
+  userEmail: string;
+  userName: string;
+  packageId: 'EKINERJA_PREMIUM_MONTHLY';
+  packageName: string;
+  amount: 50000;
+  status: 'PENDING' | 'PAID' | 'FAILED' | 'EXPIRED';
+  paymentMethod?: string;         // 'QRIS' | 'VA' | dll
+  mayarTransactionId?: string;
+  paymentLink?: string;
+  qrCodeUrl?: string;
+  quotaGranted: boolean;          // Idempotency flag
+  createdAt: Timestamp;
+  paidAt?: Timestamp;
+}
+```
+
+### 3. Arsitektur Cloud Functions (Mayar.id)
+- **`createEkinerjaPaymentInvoice` / `createDynamicQris` (Callable v2):**
+  - Menggunakan secret `MAYAR_API_KEY`.
+  - Menerbitkan invoice / QRIS dinamis Mayar dengan nominal Rp 50.000.
+  - Menyimpan record `PENDING` di koleksi `transactions`.
+- **`mayarWebhook` (HTTP onRequest v2):**
+  - Menggunakan secret `MAYAR_WEBHOOK_SECRET` untuk verifikasi HMAC SHA-256 (`x-mayar-signature`).
+  - Bypass event `testing` atau `ping` untuk verifikasi webhook dashboard Mayar.
+  - **Atomic Transaction & Idempotency Guard:**
+    - Cek status transaksi: jika sudah `PAID` atau `quotaGranted === true`, langsung abaikan (mencegah duplikasi masa aktif).
+    - **Logika Perpanjangan Akumulatif (*Rollover*):**
+      Jika user membayar sebelum masa aktif habis, tambahkan 30 hari dari tanggal kedaluwarsa lama (`existingExpiry + 30 days`), bukan dari tanggal transaksi, sehingga pengguna tidak rugi durasi.
+
+### 4. Gatekeeper UX di Frontend
+- Pada tombol `⚡ e-Kinerja` di Logbook (`logbook/page.tsx`) dan Bukti Kinerja (`bukti-kinerja/page.tsx`):
+  - Jika `user.ekinerjaSubscription?.isActive && activeUntil > now`:
+    Langsung buka `EkinerjaBridgeModal` dengan indikator status premium aktif.
+  - Jika belum aktif / kedaluwarsa:
+    Buka `EkinerjaPaywallModal` yang menampilkan ringkasan manfaat, opsi pembayaran instan QRIS (Rp 50.000), dan listener realtime status pembayaran.

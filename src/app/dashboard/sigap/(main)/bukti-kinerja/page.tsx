@@ -14,6 +14,8 @@ import Link from 'next/link';
 import { safeFormatDate } from '@/lib/utils';
 import { AktivitasCombobox } from '@/components/ekinerja/AktivitasCombobox';
 import { EkinerjaBridgeModal } from '@/components/ekinerja/EkinerjaBridgeModal';
+import { EkinerjaPaywallModal } from '@/components/ekinerja/EkinerjaPaywallModal';
+import { useEkinerjaSubscription } from '@/hooks/useEkinerjaSubscription';
 import { AktivitasSolo } from '@/data/masterAktivitasSolo';
 
 // --- Impor Komponen Shadcn ---
@@ -98,6 +100,8 @@ export default function BuktiKinerjaPage() {
     // Modal e-Kinerja Bridge State
     const [activeModalBukti, setActiveModalBukti] = useState<BuktiKinerja | null>(null);
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
+    const [isPaywallOpen, setIsPaywallOpen] = useState(false);
+    const { isSubscribed } = useEkinerjaSubscription();
     
     const [riwayatList, setRiwayatList] = useState<BuktiKinerja[]>([]);
     const [loadingRiwayat, setLoadingRiwayat] = useState(true);
@@ -264,6 +268,10 @@ export default function BuktiKinerjaPage() {
 
     const handleOpenEkinerjaModal = (item: BuktiKinerja) => {
         setActiveModalBukti(item);
+        if (!isSubscribed) {
+            setIsPaywallOpen(true);
+            return;
+        }
         setIsEkinerjaModalOpen(true);
     };
 
@@ -461,6 +469,17 @@ export default function BuktiKinerjaPage() {
                 onClose={() => setIsEkinerjaModalOpen(false)}
                 bukti={activeModalBukti}
                 tenant="sigap"
+                onOpenPaywall={() => setIsPaywallOpen(true)}
+            />
+
+            <EkinerjaPaywallModal
+                isOpen={isPaywallOpen}
+                onClose={() => setIsPaywallOpen(false)}
+                tenant="sigap"
+                onSuccess={() => {
+                    setIsPaywallOpen(false);
+                    setIsEkinerjaModalOpen(true);
+                }}
             />
         </div>
     );
