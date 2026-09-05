@@ -208,3 +208,19 @@ interface EkinerjaTransaction {
     Langsung buka `EkinerjaBridgeModal` dengan indikator status premium aktif.
   - Jika belum aktif / kedaluwarsa:
     Buka `EkinerjaPaywallModal` yang menampilkan ringkasan manfaat, opsi pembayaran instan QRIS (Rp 50.000), dan listener realtime status pembayaran.
+
+---
+
+### 5. Standar Simetri Form Logbook (Tambah & Edit)
+Setiap formulir logbook, baik `SmartAddKegiatanModal` (Tambah) maupun `EditKegiatanModal` (Edit), **WAJIB** menerapkan kapabilitas yang simetris dan konsisten:
+1. **Smart Select Aktivitas (`AktivitasCombobox`):**
+   - Tampil jika `userProfile.useKamusAktivitasKepwal !== false`.
+   - Mengambil data resmi dari `masterAktivitasSolo.ts` (152 aktivitas Kepwal 786/154/2020).
+   - Menyimpan `aktivitasId` dan `aktivitasNama` secara persisten pada objek `LogbookKegiatan`.
+2. **Real-Time Match Suggestion:**
+   - Jika pengguna mengetik teks uraian bebas tanpa memilih dropdown, sistem otomatis mendeteksi kata kunci Kepwal dan menawarkan banner saran `+ Terapkan`.
+3. **Kamus Rutinitas Pribadi:**
+   - Menampilkan quick pills dari `userProfile.customAktivitasList` untuk input cepat 1-klik.
+4. **Preservasi Metadata e-Kinerja:**
+   - Saat entri diedit, `aktivitasId` dan `aktivitasNama` yang sudah ada tidak boleh hilang secara tidak sengaja, dan harus diteruskan langsung ke `virtualBukti` saat dikirim ke portal e-Kinerja.
+

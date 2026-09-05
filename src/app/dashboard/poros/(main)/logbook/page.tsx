@@ -45,6 +45,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from '@/components/ui/progress'; 
+import { Badge } from "@/components/ui/badge";
+import { AktivitasCombobox } from "@/components/ekinerja/AktivitasCombobox"; 
 
 const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
@@ -473,29 +475,191 @@ const ShortcutNav = () => (
 
 // SmartAddKegiatanModal diimpor dari file terpisah
 
-const EditKegiatanModal = ({ isOpen, onClose, onSave, onFullDelete, entry, tasks }: { isOpen: boolean, onClose: () => void, onSave: (entry: LogbookKegiatan) => void, onFullDelete: (id: string) => void, entry: LogbookKegiatan | null, tasks: Tugas[] }) => {
+const EditKegiatanModal = ({ 
+    isOpen, 
+    onClose, 
+    onSave, 
+    onFullDelete, 
+    entry, 
+    tasks,
+    userProfile,
+}: { 
+    isOpen: boolean, 
+    onClose: () => void, 
+    onSave: (entry: LogbookKegiatan) => void, 
+    onFullDelete: (id: string) => void, 
+    entry: LogbookKegiatan | null, 
+    tasks: Tugas[],
+    userProfile: UserProfile | null,
+}) => {
     const [currentEntry, setCurrentEntry] = useState<LogbookKegiatan | null>(null);
-    useEffect(() => { if (isOpen && entry) { setCurrentEntry(entry); } else { setCurrentEntry(null); } }, [isOpen, entry]);
+    const isKamusKepwalEnabled = userProfile?.useKamusAktivitasKepwal !== false;
+
+    useEffect(() => { 
+        if (isOpen && entry) { 
+            setCurrentEntry(entry); 
+        } else { 
+            setCurrentEntry(null); 
+        } 
+    }, [isOpen, entry]);
+
     if (!isOpen || !currentEntry) return null;
-    const handleSave = (e: React.FormEvent) => { e.preventDefault(); if (currentEntry.deskripsi.trim()) { onSave(currentEntry); } };
+
+    const handleSave = (e: React.FormEvent) => { 
+        e.preventDefault(); 
+        if (currentEntry.deskripsi.trim()) { 
+            onSave(currentEntry); 
+        } 
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent className="sm:max-w-lg bg-card border-border">
                 <DialogHeader><DialogTitle>Edit Kegiatan</DialogTitle></DialogHeader>
                 <form onSubmit={handleSave} className="space-y-4 pt-2">
-                    <div><Label htmlFor="edit-deskripsi">Deskripsi Kegiatan</Label><Textarea id="edit-deskripsi" value={currentEntry.deskripsi} onChange={(e) => setCurrentEntry({ ...currentEntry, deskripsi: e.target.value })} rows={3} autoFocus /></div>
+                    {/* SMART SELECT KAMUS AKTIVITAS KE दिश */}
+                    {isKamusKepwalEnabled && (
+                        <div className="space-y-1.5 p-2.5 rounded-lg border border-border/80 bg-muted/20">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground/90">
+                                    <BookOpen size={14} className="text-primary" /> Kamus 152 Aktivitas Kepwal Solo (Smart Select)
+                                </Label>
+                                <Badge variant="outline" className="text-[10px] bg-primary/10 text-primary border-primary/30">
+                                    Kepwal 786/154/2020
+                                </Badge>
+                            </div>
+                            <AktivitasCombobox
+                                value={currentEntry.aktivitasId}
+                                onChange={(akt) => {
+                                    if (akt) {
+                                        setCurrentEntry({
+                                            ...currentEntry,
+                                            aktivitasId: akt.id,
+                                            aktivitasNama: akt.nama,
+                                            deskripsi: currentEntry.deskripsi.trim()
+                                                ? (currentEntry.deskripsi.includes(akt.nama) ? currentEntry.deskripsi : `[${akt.nama}] ${currentEntry.deskripsi}`)
+                                                : akt.nama
+                                        });
+                                    } else {
+                                        setCurrentEntry({
+                                            ...currentEntry,
+                                            aktivitasId: undefined,
+                                            aktivitasNama: undefined,
+                                        });
+                                    }
+                                }}
+                                placeholder="Cari & pilih aktivitas resmi BKPSDM Solo..."
+                                showQuickPills={true}
+                            />
+                        </div>
+                    )}
+
+                    {/* Deskripsi Kegiatan */}
+                    <div className="space-y-1.5">
+                        <Label htmlFor="edit-deskripsi" className="text-xs font-medium text-foreground/80">Deskripsi Kegiatan</Label>
+                        <Textarea 
+                            id="edit-deskripsi" 
+                            value={currentEntry.deskripsi} 
+                            onChange={(e) => setCurrentEntry({ ...currentEntry, deskripsi: e.target.value })} 
+                            rows={3} 
+                            autoFocus={!isKamusKepwalEnabled} 
+                        />
+                    </div>
+
+                    {/* Real-time Smart Match Suggestion */}
+                    {isKamusKepwalEnabled && !currentEntry.aktivitasId && currentEntry.deskripsi.trim().length >= 3 && (() => {
+                        const matched = detectAktivitasFromLogbookText(currentEntry.deskripsi);
+                        if (!matched) return null;
+                        return (
+                            <div className="flex items-center justify-between p-2 rounded-md bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200/70 text-xs animate-in fade-in-50">
+                                <div className="flex items-center gap-1.5 text-muted-foreground truncate">
+                                    <Sparkles size={13} className="text-blue-500 shrink-0" />
+                                    <span>Saran kamus Kepwal:</span>
+                                    <span className="font-semibold text-blue-700 dark:text-blue-300 truncate">
+                                        {matched.nama} (+{matched.nilaiPoin}p)
+                                    </span>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setCurrentEntry({
+                                            ...currentEntry,
+                                            aktivitasId: matched.id,
+                                            aktivitasNama: matched.nama,
+                                        });
+                                    }}
+                                    className="text-[11px] font-semibold text-blue-600 hover:text-blue-800 dark:text-blue-400 hover:underline shrink-0 ml-2"
+                                >
+                                    + Terapkan
+                                </button>
+                            </div>
+                        );
+                    })()}
+
+                    {/* Jam Mulai & Jam Selesai */}
                     <div className="grid grid-cols-2 gap-3">
                         <div>
-                            <Label htmlFor="edit-jam-mulai" className="text-xs">Jam Mulai</Label>
-                            <Input id="edit-jam-mulai" type="time" value={currentEntry.waktuMulai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuMulai: e.target.value })} />
+                            <Label htmlFor="edit-jam-mulai" className="text-xs text-muted-foreground">Jam Mulai</Label>
+                            <Input id="edit-jam-mulai" type="time" value={currentEntry.waktuMulai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuMulai: e.target.value })} className="h-8 text-xs bg-background" />
                         </div>
                         <div>
-                            <Label htmlFor="edit-jam-selesai" className="text-xs">Jam Selesai</Label>
-                            <Input id="edit-jam-selesai" type="time" value={currentEntry.waktuSelesai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuSelesai: e.target.value })} />
+                            <Label htmlFor="edit-jam-selesai" className="text-xs text-muted-foreground">Jam Selesai</Label>
+                            <Input id="edit-jam-selesai" type="time" value={currentEntry.waktuSelesai || ''} onChange={(e) => setCurrentEntry({ ...currentEntry, waktuSelesai: e.target.value })} className="h-8 text-xs bg-background" />
                         </div>
                     </div>
-                    <div><Label htmlFor="tugas-terkait">Tautkan ke Tugas (Opsional)</Label><Select value={currentEntry.tugasTerkaitId || ''} onValueChange={(value) => { const task = tasks.find(t => t.id === value); setCurrentEntry({ ...currentEntry, tugasTerkaitId: value || undefined, tugasTerkaitJudul: task?.judulTugas || undefined }); }}><SelectTrigger id="tugas-terkait"><SelectValue placeholder="-- Tidak ditautkan --" /></SelectTrigger><SelectContent><SelectItem value="">-- Tidak ditautkan --</SelectItem>{tasks.map(t => <SelectItem key={t.id} value={t.id!}>{t.judulTugas}</SelectItem>)}</SelectContent></Select></div>
-                    <DialogFooter className="sm:justify-between"><Button type="button" variant="destructive" onClick={() => onFullDelete(currentEntry.id)}><Trash2 size={16} className="mr-2" /> Hapus</Button><Button type="submit" disabled={!currentEntry.deskripsi.trim()}><Save size={16} className="mr-2" /> Simpan</Button></DialogFooter>
+
+                    {/* Tautkan ke Tugas */}
+                    <div>
+                        <Label htmlFor="tugas-terkait" className="text-xs text-muted-foreground">Tautkan ke Tugas (Opsional)</Label>
+                        <Select 
+                            value={currentEntry.tugasTerkaitId || ''} 
+                            onValueChange={(value) => { 
+                                const task = tasks.find(t => t.id === value); 
+                                setCurrentEntry({ 
+                                    ...currentEntry, 
+                                    tugasTerkaitId: value || undefined, 
+                                    tugasTerkaitJudul: task?.judulTugas || undefined 
+                                }); 
+                            }}
+                        >
+                            <SelectTrigger id="tugas-terkait"><SelectValue placeholder="-- Tidak ditautkan --" /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">-- Tidak ditautkan --</SelectItem>
+                                {tasks.map(t => <SelectItem key={t.id} value={t.id!}>{t.judulTugas}</SelectItem>)}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    {/* Kamus Aktivitas Rutin Pribadi */}
+                    {userProfile?.customAktivitasList && userProfile.customAktivitasList.length > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                            <Label className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                <Sparkles size={12} className="text-primary" /> Kamus Aktivitas Rutin Anda:
+                            </Label>
+                            <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                                {userProfile.customAktivitasList.map((akt, idx) => (
+                                    <Badge
+                                        key={idx}
+                                        variant="outline"
+                                        className="cursor-pointer hover:bg-primary/10 hover:border-primary/40 text-xs font-normal py-1 px-2 transition-colors"
+                                        onClick={() => {
+                                            setCurrentEntry({
+                                                ...currentEntry,
+                                                deskripsi: currentEntry.deskripsi ? `${currentEntry.deskripsi} - ${akt}` : akt
+                                            });
+                                        }}
+                                    >
+                                        + {akt}
+                                    </Badge>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <DialogFooter className="sm:justify-between pt-2">
+                        <Button type="button" variant="destructive" onClick={() => onFullDelete(currentEntry.id)}><Trash2 size={16} className="mr-2" /> Hapus</Button>
+                        <Button type="submit" disabled={!currentEntry.deskripsi.trim()}><Save size={16} className="mr-2" /> Simpan</Button>
+                    </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
@@ -953,7 +1117,15 @@ export default function LogbookPage() {
                 onSaveTindakLanjut={handleAddTindakLanjut}
                 userProfile={effectiveProfile}
             />
-            <EditKegiatanModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} onSave={handleEditSave} onFullDelete={handleDeleteKegiatan} entry={entryToEdit} tasks={tasks} />
+            <EditKegiatanModal 
+                isOpen={isEditModalOpen} 
+                onClose={() => setIsEditModalOpen(false)} 
+                onSave={handleEditSave} 
+                onFullDelete={handleDeleteKegiatan} 
+                entry={entryToEdit} 
+                tasks={tasks} 
+                userProfile={effectiveProfile}
+            />
             <BantuanHalamanModal isOpen={isBantuanOpen} onClose={() => setIsBantuanOpen(false)} />
             
             <RekapBulananModal 

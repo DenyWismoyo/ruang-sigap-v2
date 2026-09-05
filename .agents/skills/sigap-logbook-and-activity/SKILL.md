@@ -105,3 +105,5 @@ await logActivity(
 3. **Deskripsi logbook harus informatif:** Sertakan nama/judul yang relevan, bukan hanya ID.
 4. **Activity log di backend:** Jika aksi dipicu dari Cloud Function, gunakan `createLogbookEntry` dari `utils/helpers.ts` bukan dari frontend.
 5. **Perekaman Waktu Otomatis:** `writeLogbookEntry` secara otomatis menginjeksi `waktuMulai` (jam eksekusi aktual `HH:mm`), `waktuSelesai` (durasi default +60m), dan `createdAt` presisi jika tidak disertakan oleh pemanggil. Hal ini memastikan integrasi jembatan e-Kinerja BKPSDM memiliki data jam yang presisi tanpa perlu input berulang dari pengguna.
+6. **Simetri Tambah & Edit Logbook:** Setiap formulir pengeditan (`EditKegiatanModal`) tidak boleh menghilangkan atau mengabaikan metadata `aktivitasId` dan `aktivitasNama`. Form edit harus menyediakan UI Smart Select (`AktivitasCombobox`), rekomendasi kecocokan real-time, dan pill rutinitas kustom yang setara dengan form tambah kegiatan.
+
