@@ -76,6 +76,23 @@ export const UnifiedQuickActionHub: React.FC<UnifiedQuickActionHubProps> = ({
     setIsOpen(false);
   }, [pathname]);
 
+  // Dengarkan pemicu dari BottomNavBar di mobile
+  useEffect(() => {
+    const handleToggle = () => setIsOpen((prev) => !prev);
+    const handleOpen = () => setIsOpen(true);
+    const handleClose = () => setIsOpen(false);
+
+    window.addEventListener('sigap:toggle-quick-action-hub', handleToggle);
+    window.addEventListener('sigap:open-quick-action-hub', handleOpen);
+    window.addEventListener('sigap:close-quick-action-hub', handleClose);
+
+    return () => {
+      window.removeEventListener('sigap:toggle-quick-action-hub', handleToggle);
+      window.removeEventListener('sigap:open-quick-action-hub', handleOpen);
+      window.removeEventListener('sigap:close-quick-action-hub', handleClose);
+    };
+  }, []);
+
   if (loading) return null;
 
   return (
@@ -259,7 +276,7 @@ export const UnifiedQuickActionHub: React.FC<UnifiedQuickActionHubProps> = ({
           aria-label={isOpen ? "Tutup Menu Akses Cepat" : "Buka Menu Akses Cepat"}
           title={isOpen ? "Tutup Akses Cepat" : "Akses Cepat (Swipe, Upload, Copilot, Tools)"}
           className={cn(
-            "relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center shadow-xl transition-all duration-200 active:scale-95 focus:outline-hidden",
+            "hidden md:flex relative w-12 h-12 md:w-14 md:h-14 rounded-full items-center justify-center shadow-xl transition-all duration-200 active:scale-95 focus:outline-hidden",
             isOpen
               ? "bg-muted text-foreground border border-border rotate-90"
               : isPoros

@@ -189,9 +189,10 @@ Dilarang keras menyebarkan lebih dari 1 floating action button (FAB) independen 
 **Aturan Standar Floating Hub:**
 1. **Pintu Masuk Tunggal (Single Entry Point):**
    - Seluruh akses cepat tingkat global (Upload Surat Masuk, Copilot/Knowledge Base, Tools AI/Portal Pintar, dan Swipe Disposisi Masal) disatukan ke dalam satu komponen: `UnifiedQuickActionHub`.
-2. **Visual Hierarchy & Smart Badge:**
-   - Tombol utama berukuran proporsional (`w-12 h-12` s/d `w-14 h-14`) dengan posisi aman di kanan bawah (`bottom-[calc(var(--bottom-nav-height,60px)+0.75rem)] right-3 md:right-6` di mobile, `bottom-6 right-6` di desktop).
-   - Jika terdapat disposisi overdue (> 2 hari), tombol utama menampilkan badge counter notifikasi merah (`animate-pulse`) tanpa memerlukan FAB oranye terpisah.
+2. **Integrasi Mobile Bottom Navigation Bar & Desktop Floating Trigger:**
+   - **Tampilan Ponsel (`< md`)**: Dilarang menampilkan tombol bulat melayang (FAB) di atas layar ponsel yang dapat menabrak floating action dock modul (seperti pada modul Logbook). Pemicu Akses Cepat diintegrasikan langsung sebagai **Tab ke-4 di Bottom Navigation Bar ("Aksi Cepat")** menggantikan menu Tugas. Menjamin layar ponsel 100% bersih, lapang, dan bebas tabrakan antarmuka.
+   - **Tampilan Desktop (`>= md`)**: Tombol bulat melayang (`UnifiedQuickActionHub`) tetap aktif di pojok kanan bawah desktop (`bottom-6 right-6`).
+   - **Smart Overdue Badge**: Tab Aksi Cepat pada BottomNavBar (mobile) dan tombol FAB (desktop) otomatis menyematkan badge counter notifikasi merah (`animate-pulse`) jika ada disposisi overdue (> 2 hari).
 3. **Menu Aksi Melayang (Speed Dial Action Palette):**
    - Saat disentuh, tombol membuka palette melayang dengan backdrop blur lembut yang menyajikan 4 aksi terorganisir dengan ikon, judul, dan status ringkas:
      - ⚡ **Swipe Disposisi / Lapor Masal** (badge jumlah pending jika ada).

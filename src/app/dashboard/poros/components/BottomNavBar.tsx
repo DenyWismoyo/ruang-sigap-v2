@@ -3,9 +3,11 @@
 import React from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { LayoutGrid, Briefcase, Inbox, ListChecks, Menu } from 'lucide-react';
+import { LayoutGrid, Briefcase, Inbox, Sparkles, Menu } from 'lucide-react';
 import { DrawerTrigger } from "@/components/ui/drawer";
 import { WelcomeSummary } from '@/types';
+import { useRuangKerjaFeed } from '@/app/dashboard/sigap/hooks/useRuangKerjaFeed';
+import { differenceInDays } from 'date-fns';
 
 interface BottomNavBarProps {
   pathname: string;
@@ -14,11 +16,32 @@ interface BottomNavBarProps {
 }
 
 export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: BottomNavBarProps) {
+    const { feedItems } = useRuangKerjaFeed();
+
+    // Hitung disposisi overdue (> 2 hari) untuk badge tab Aksi Cepat
+    const overdueCount = React.useMemo(() => {
+        const pending = (feedItems || []).filter(
+            (i) => i.type === 'surat_disposisi' && (i as any).disposisi?.status !== 'Selesai'
+        );
+        return pending.filter((i) => {
+            if (i.type !== 'surat_disposisi' || !(i as any).disposisi?.tanggalDisposisi) return false;
+            let t: Date;
+            try {
+                t = typeof (i as any).disposisi.tanggalDisposisi.toDate === 'function'
+                    ? (i as any).disposisi.tanggalDisposisi.toDate()
+                    : new Date((i as any).disposisi.tanggalDisposisi.seconds * 1000);
+            } catch {
+                t = new Date();
+            }
+            return differenceInDays(new Date(), t) >= 2;
+        }).length;
+    }, [feedItems]);
+
     const navLinks = [
-        { href: '/dashboard', label: 'Beranda', icon: LayoutGrid, notifKey: 'none' as const },
-        { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, notifKey: 'none' as const },
-        { href: '/dashboard/surat', label: 'Surat', icon: Inbox, notifKey: 'surat' as const },
-        { href: '/dashboard/tugas', label: 'Tugas', icon: ListChecks, notifKey: 'tugas' as const },
+        { href: '/dashboard', label: 'Beranda', icon: LayoutGrid, notifKey: 'none' as const, isQuickAction: false },
+        { href: '/dashboard/ruang-kerja', label: 'Ruang Kerja', icon: Briefcase, notifKey: 'none' as const, isQuickAction: false },
+        { href: '/dashboard/surat', label: 'Surat', icon: Inbox, notifKey: 'surat' as const, isQuickAction: false },
+        { href: '#aksi-cepat', label: 'Aksi Cepat', icon: Sparkles, notifKey: 'aksi_cepat' as const, isQuickAction: true },
     ];
 
     return (
@@ -31,15 +54,47 @@ export default function BottomNavBar({ pathname, onLinkClick, welcomeSummary }: 
             {navLinks.map(link => {
                 let notifCount = 0;
                 if (link.notifKey === 'surat') notifCount = welcomeSummary.suratBaruCount || 0;
-                if (link.notifKey === 'tugas') notifCount = welcomeSummary.tugasBaruCount || 0;
+                if (link.notifKey === 'aksi_cepat') notifCount = overdueCount;
                 
                 const isActive = pathname === link.href;
+
+                if (link.isQuickAction) {
+                    return (
+                        <button
+                            key={link.href}
+                            type="button"
+                            onClick={() => window.dispatchEvent(new CustomEvent('sigap:toggle-quick-action-hub'))}
+                            className="flex-1 h-full"
+                        >
+                            <motion.div 
+                                whileTap={{ scale: 0.85 }} 
+                                className="relative flex flex-col items-center justify-center w-full h-full py-1 text-muted-foreground hover:text-[var(--nk-teal-mid)] transition-colors duration-200 group"
+                            >
+                                {notifCount > 0 && (
+                                    <motion.span 
+                                        animate={{ rotate: [0, -10, 10, -10, 0] }}
+                                        transition={{ repeat: Infinity, repeatDelay: 3, duration: 0.5 }}
+                                        className="absolute top-2 right-1/2 translate-x-3 w-4 h-4 bg-[var(--nk-gold)] text-[var(--nk-deep)] text-[10px] font-bold rounded-full flex items-center justify-center border-2 border-[var(--nk-surface-2)] shadow-sm"
+                                    >
+                                        {notifCount > 9 ? '!' : notifCount}
+                                    </motion.span>
+                                )}
+                                <div className="w-5 h-5 mb-1 flex items-center justify-center rounded-full text-teal-600 dark:text-teal-400 group-hover:scale-110 transition-transform">
+                                    <Sparkles className="w-5 h-5" />
+                                </div>
+                                <span className="text-[10px] font-semibold text-teal-600 dark:text-teal-400">
+                                    {link.label}
+                                </span>
+                            </motion.div>
+                        </button>
+                    );
+                }
 
                 return (
                     <Link 
                         key={link.href} 
                         href={link.href} 
-                        onClick={() => onLinkClick(link.notifKey)} 
+                        onClick={() => onLinkClick(link.notifKey as any)} 
                         className="flex-1 h-full"
                     >
                         <motion.div 
