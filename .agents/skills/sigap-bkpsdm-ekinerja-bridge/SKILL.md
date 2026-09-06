@@ -202,12 +202,35 @@ interface EkinerjaTransaction {
     - **Logika Perpanjangan Akumulatif (*Rollover*):**
       Jika user membayar sebelum masa aktif habis, tambahkan 30 hari dari tanggal kedaluwarsa lama (`existingExpiry + 30 days`), bukan dari tanggal transaksi, sehingga pengguna tidak rugi durasi.
 
-### 4. Gatekeeper UX di Frontend
-- Pada tombol `⚡ e-Kinerja` di Logbook (`logbook/page.tsx`) dan Bukti Kinerja (`bukti-kinerja/page.tsx`):
+### 4. Gatekeeper UX & Arsitektur Paywall Modal (`EkinerjaPaywallModal`)
+- **Trigger Gatekeeper:**
+  - Tombol `⚡ e-Kinerja` di Logbook (`logbook/page.tsx`) dan Bukti Kinerja (`bukti-kinerja/page.tsx`).
   - Jika `user.ekinerjaSubscription?.isActive && activeUntil > now`:
-    Langsung buka `EkinerjaBridgeModal` dengan indikator status premium aktif.
-  - Jika belum aktif / kedaluwarsa:
-    Buka `EkinerjaPaywallModal` yang menampilkan ringkasan manfaat, opsi pembayaran instan QRIS (Rp 50.000), dan listener realtime status pembayaran.
+    Langsung buka `EkinerjaBridgeModal` dengan status premium aktif.
+  - Jika belum aktif atau kedaluwarsa:
+    Buka `EkinerjaPaywallModal` yang menyajikan proposisi nilai terstruktur, opsi pembayaran instan QRIS / Invoice Mayar (Rp 50.000/30 hari), dan listener status transaksi realtime.
+
+- **Prinsip Copywriting Berorientasi ROI (ASN Value Framing):**
+  1. *Headline Emosional & Relevan*: "⚡ Akselerator e-Kinerja & AI Logbook Solo" dengan tagline "Tuntaskan kewajiban e-Kinerja BKPSDM dalam 1-Klik, maksimalkan capaian SKP, dan pastikan pencairan TPP 100% aman tanpa lembur."
+  2. *Benefit Pills Cepat*: `⏱️ Hemat 2 Jam/Hari`, `🎯 Target TPP 100% Aman`, `🤖 AI Multi-Activity`, `🚀 Zero-Click Sync`.
+  3. *Framing Investasi Harian*: Menyorot biaya `Rp 50.000 / 30 Hari` sebagai `~Rp 1.660 / hari` (setara biaya parkir harian motor) untuk memproteksi penerimaan TPP bulanan bernilai jutaan rupiah.
+
+- **Arsitektur Tampilan Tab Interaktif:**
+  Modal menggunakan Tabs Radix UI (`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`) dengan 2 tab:
+  - **Tab 1 ("Keunggulan Fitur")**: 4 kartu fitur visual:
+    1. *AI Multi-Activity Decomposer*: Otomatis mengurai catatan narasi bebas menjadi 2–6 kegiatan Kepwal non-overlapping tanpa merangkum.
+    2. *Realtime SKP/TPP Point Tracker*: Monitor target 1.200 poin dan 112,5 jam kerja efektif secara presisi.
+    3. *Chrome Bridge & Bookmarklet 1-Klik*: Kirim data 8 kolom form BKPSDM instan tanpa copas satu per satu.
+    4. *Google Drive & Time Sync*: Integrasi URL bukti dukung cloud drive otomatis & sinkronisasi jam kerja.
+  - **Tab 2 ("Perbandingan Free vs PRO")**: Matriks perbandingan 8 baris fitur kontras:
+    - *Pencatatan Logbook Harian Mandiri*: Free (Ya) vs PRO (Ya)
+    - *Cetak Rekap Bulanan PDF ASN*: Free (Ya) vs PRO (Ya)
+    - *Kamus 152 Aktivitas Kepwal Solo*: Free (Manual) vs PRO (Smart Select Otomatis)
+    - *AI Smart Entry (Multi-Activity Decomposer)*: Free (Tidak) vs PRO (Unlimited)
+    - *Tracker Poin SKP & Target Jam TPP*: Free (Tidak) vs PRO (Aktif Penuh)
+    - *Jembatan 1-Klik e-Kinerja BKPSDM*: Free (Tidak) vs PRO (Aktif Penuh)
+    - *Ekstensi Chrome Bridge (Zero-Click)*: Free (Tidak) vs PRO (Aktif Penuh)
+    - *Penyematan Google Drive Otomatis*: Free (Manual) vs PRO (Otomatis Terhubung)
 
 ---
 
