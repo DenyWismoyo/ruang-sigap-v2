@@ -106,4 +106,16 @@ await logActivity(
 4. **Activity log di backend:** Jika aksi dipicu dari Cloud Function, gunakan `createLogbookEntry` dari `utils/helpers.ts` bukan dari frontend.
 5. **Perekaman Waktu Otomatis:** `writeLogbookEntry` secara otomatis menginjeksi `waktuMulai` (jam eksekusi aktual `HH:mm`), `waktuSelesai` (durasi default +60m), dan `createdAt` presisi jika tidak disertakan oleh pemanggil. Hal ini memastikan integrasi jembatan e-Kinerja BKPSDM memiliki data jam yang presisi tanpa perlu input berulang dari pengguna.
 6. **Simetri Tambah & Edit Logbook:** Setiap formulir pengeditan (`EditKegiatanModal`) tidak boleh menghilangkan atau mengabaikan metadata `aktivitasId` dan `aktivitasNama`. Form edit harus menyediakan UI Smart Select (`AktivitasCombobox`), rekomendasi kecocokan real-time, dan pill rutinitas kustom yang setara dengan form tambah kegiatan.
+7. **AI Bureaucratic Tone Polisher:** Formulir logbook (Tambah dan Edit) dilengkapi tombol *"✨ Poles Bahasa Birokrasi"* yang memanggil `/api/ai/polish-kegiatan` untuk mengubah bahasa informal menjadi kalimat naskah dinas formal aparatur pemerintah dan menyelaraskan ID Kepwal secara otomatis.
+8. **Target Kinerja Bulanan 8.400 MKE & Anti-Overlapping:** Target standar bulanan ASN Pemkot Surakarta adalah **8.400 Menit Kerja Efektif (MKE) / Poin (setara 140 Jam Kerja Efektif)**. Sistem wajib memvalidasi agar tidak terjadi tabrakan waktu (*overlapping*) antar-kegiatan di hari yang sama dengan fitur *"⚡ Runtunkan Jam Otomatis"*.
 
+---
+
+## 🌟 Logbook Premium Feature Suite (Standar & Arsitektur)
+
+Modul Logbook (`/dashboard/logbook`) mengimplementasikan kapabilitas tingkat premium:
+1. **Target Bulanan 8.400 MKE & 140 Jam Kerja:** Pemantauan real-time status pemenuhan jam kerja efektif agar hak TPP 100% aman.
+2. **Audit Gap Finder (Deteksi Hari Bolong):** Mendeteksi otomatis hari kerja efektif (Senin–Jumat) yang belum terisi kegiatan sebelum tutup buku e-Kinerja BKPSDM.
+3. **Anti-Overlapping Time Inspector:** Pendeteksi tabrakan waktu jam kerja harian dan otomasi penyusunan jam secara sekuensial.
+4. **AI Multi-Activity Decomposer (`SmartAiEntryModal`):** Pemecah catatan narasi/dikte menjadi butir kegiatan mandiri berbobot poin tanpa merangkum.
+5. **AI Bureaucratic Tone Polisher (`/api/ai/polish-kegiatan`):** Penyempurna tata naskah dinas formal dalam 1-klik.

@@ -16,6 +16,7 @@ interface KinerjaTrackerCardProps {
   selectedMonth: string; // 'YYYY-MM'
   onOpenAiAssistant: () => void;
   onOpenEkinerjaSync?: () => void;
+  onAutoArrangeTimes?: () => void;
   tenant?: 'sigap' | 'poros';
 }
 
@@ -25,14 +26,16 @@ export function KinerjaTrackerCard({
   selectedMonth,
   onOpenAiAssistant,
   onOpenEkinerjaSync,
+  onAutoArrangeTimes,
   tenant = 'sigap',
 }: KinerjaTrackerCardProps) {
   const [monthlyLogs, setMonthlyLogs] = useState<LogbookHarian[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
   // Target standar kinerja bulanan ASN Pemkot Surakarta (Kepwal 786/154/2020)
-  const TARGET_POIN_BULANAN = 1200; // Target rata-rata poin kinerja bulanan
-  const TARGET_JAM_BULANAN = 112.5; // 112,5 Jam kerja efektif (5.625 menit / bulan)
+  // Standar: 8.400 Menit Kerja Efektif (MKE) / Poin = 140 Jam Kerja Efektif per Bulan
+  const TARGET_POIN_BULANAN = 8400; // Target resmi 8.400 Menit Kerja Efektif (MKE) / Poin
+  const TARGET_JAM_BULANAN = 140; // 140 Jam kerja efektif (8.400 menit / 60)
 
   // Fetch semua logbook bulan berjalan untuk user ini
   useEffect(() => {
@@ -78,11 +81,11 @@ export function KinerjaTrackerCard({
 
   // Helper kalkulasi poin dan durasi sebuah kegiatan
   const calculateKegiatanMetrics = (k: LogbookKegiatan) => {
-    let poin = 0;
+    let basePoin = 0;
     if (k.aktivitasId) {
-      poin = getAktivitasSoloById(k.aktivitasId)?.nilaiPoin || 35;
+      basePoin = getAktivitasSoloById(k.aktivitasId)?.nilaiPoin || 35;
     } else {
-      poin = detectAktivitasFromLogbookText(k.deskripsi)?.nilaiPoin || 35;
+      basePoin = detectAktivitasFromLogbookText(k.deskripsi)?.nilaiPoin || 35;
     }
 
     let menit = 60; // default 1 jam
@@ -94,6 +97,9 @@ export function KinerjaTrackerCard({
         menit = diff > 0 ? diff : 60;
       }
     }
+
+    const kuantitas = k.kuantitas && k.kuantitas > 0 ? k.kuantitas : 1;
+    const poin = basePoin * kuantitas;
 
     return { poin, menit };
   };
@@ -144,15 +150,78 @@ export function KinerjaTrackerCard({
     };
   }, [currentDayKegiatan]);
 
+  // Deteksi Hari Kerja Bolong (Audit Gap Finder)
+  const gapFinder = useMemo(() => {
+    if (!selectedMonth) return { missingCount: 0 };
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const now = new Date();
+    const isCurrentMonth = now.getFullYear() === year && (now.getMonth() + 1) === month;
+    const maxDay = isCurrentMonth ? now.getDate() : new Date(year, month, 0).getDate();
+
+    const loggedDates = new Set<string>();
+    monthlyLogs.forEach(log => {
+      if (log.kegiatan && log.kegiatan.length > 0 && log.tanggal && typeof log.tanggal.toDate === 'function') {
+        const d = log.tanggal.toDate();
+        loggedDates.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
+      }
+    });
+
+    let missing = 0;
+    for (let day = 1; day <= maxDay; day++) {
+      const checkDate = new Date(year, month - 1, day);
+      const dayOfWeek = checkDate.getDay();
+      if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+        const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        if (!loggedDates.has(dateStr)) {
+          missing++;
+        }
+      }
+    }
+    return { missingCount: missing };
+  }, [monthlyLogs, selectedMonth]);
+
+  // Deteksi Overlapping Jam Kerja pada Kegiatan Hari Ini
+  const overlapWarning = useMemo(() => {
+    if (!currentDayKegiatan || currentDayKegiatan.length < 2) return null;
+
+    const parsed = currentDayKegiatan.map((k, idx) => {
+      let start = -1;
+      let end = -1;
+      if (k.waktuMulai && k.waktuSelesai) {
+        const [sh, sm] = k.waktuMulai.split(':').map(Number);
+        const [eh, em] = k.waktuSelesai.split(':').map(Number);
+        if (!isNaN(sh) && !isNaN(eh)) {
+          start = sh * 60 + sm;
+          end = eh * 60 + em;
+        }
+      }
+      return { idx, start, end, deskripsi: k.deskripsi };
+    }).filter(t => t.start >= 0 && t.end > t.start);
+
+    for (let i = 0; i < parsed.length; i++) {
+      for (let j = i + 1; j < parsed.length; j++) {
+        const t1 = parsed[i];
+        const t2 = parsed[j];
+        if (t1.start < t2.end && t2.start < t1.end) {
+          return {
+            hasConflict: true,
+            message: `Waktu "${t1.deskripsi.slice(0, 24)}..." bertabrakan dengan "${t2.deskripsi.slice(0, 24)}..."`,
+          };
+        }
+      }
+    }
+    return null;
+  }, [currentDayKegiatan]);
+
   // Status TPP & Rekomendasi
   const getStatusTPP = () => {
     const poin = monthlyMetrics.totalPoin;
     if (poin >= TARGET_POIN_BULANAN) {
       return {
-        label: "Target TPP Terpenuhi (100%)",
+        label: "Target 100% Terpenuhi",
         color: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30",
         icon: CheckCircle2,
-        tip: "Luar biasa! Target kinerja bulan ini sudah melampaui batas aman TPP 100%."
+        tip: "Luar biasa! Target kinerja 8.400 Menit Kerja Efektif (140 jam) bulan ini sudah aman 100%."
       };
     }
     if (poin >= TARGET_POIN_BULANAN * 0.7) {
@@ -161,7 +230,7 @@ export function KinerjaTrackerCard({
         label: "Aman (On Track)",
         color: "bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-500/30",
         icon: Sparkles,
-        tip: `Tersisa ${sisa} poin lagi untuk mengunci target poin TPP 100% bulan ini.`
+        tip: `Tersisa ${sisa} poin lagi untuk mengunci target 8.400 poin (140 jam) TPP 100% bulan ini.`
       };
     }
     const sisa = TARGET_POIN_BULANAN - poin;
@@ -169,7 +238,7 @@ export function KinerjaTrackerCard({
       label: "Perlu Ditingkatkan",
       color: "bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30",
       icon: AlertCircle,
-      tip: `Kekurangan ${sisa} poin. Gunakan AI Smart Entry untuk mencatat setiap aktivitas harian secara detail!`
+      tip: `Kekurangan ${sisa} poin menuju target 8.400 MKE. Gunakan AI Smart Entry untuk mencatat setiap aktivitas!`
     };
   };
 
@@ -192,17 +261,26 @@ export function KinerjaTrackerCard({
             <Trophy size={20} />
           </div>
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-bold text-sm sm:text-base leading-tight">
-                Tracker Kinerja & Poin SKP
+                Tracker Kinerja & Target 8.400 MKE
               </h3>
               <Badge variant="outline" className={`text-[11px] font-semibold border ${status.color}`}>
                 <StatusIcon size={12} className="mr-1" />
                 {status.label}
               </Badge>
+              {gapFinder.missingCount > 0 ? (
+                <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
+                  ⚠️ {gapFinder.missingCount} Hari Bolong
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[10px] bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30">
+                  ✅ Hari Kerja Terisi
+                </Badge>
+              )}
             </div>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Periode {monthName} (Kepwal Solo No. 786/154/2020)
+              Periode {monthName} • Target 8.400 Menit Kerja Efektif (Kepwal Solo No. 786/154/2020)
             </p>
           </div>
         </div>
@@ -234,13 +312,33 @@ export function KinerjaTrackerCard({
         </div>
       </div>
 
+      {/* Alert Overlapping Waktu (Jika Terdeteksi) */}
+      {overlapWarning?.hasConflict && (
+        <div className="mt-3 p-2.5 rounded-lg border border-red-500/30 bg-red-500/10 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-red-700 dark:text-red-300">
+          <div className="flex items-center gap-1.5">
+            <AlertCircle size={14} className="text-red-500 shrink-0" />
+            <span><strong>Peringatan Tabrakan Jam:</strong> {overlapWarning.message}</span>
+          </div>
+          {onAutoArrangeTimes && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={onAutoArrangeTimes}
+              className="h-7 text-xs border-red-400 text-red-700 dark:text-red-300 hover:bg-red-500/20 font-semibold shrink-0"
+            >
+              ⚡ Runtunkan Jam Otomatis
+            </Button>
+          )}
+        </div>
+      )}
+
       {/* Grid Statistik Poin & Jam Kerja */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-3.5">
         {/* Kolom 1: Akumulasi Poin Bulanan */}
         <div className="p-3 rounded-lg bg-muted/40 border border-border/50 flex flex-col justify-between">
           <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
             <span className="font-semibold text-foreground/80 flex items-center gap-1">
-              <Trophy size={13} className="text-amber-500" /> Akumulasi Poin
+              <Trophy size={13} className="text-amber-500" /> Akumulasi Poin (MKE)
             </span>
             <span className="font-mono font-bold text-foreground">
               {monthlyMetrics.totalPoin} <span className="text-muted-foreground font-normal">/ {TARGET_POIN_BULANAN}p</span>
@@ -265,8 +363,8 @@ export function KinerjaTrackerCard({
           </div>
           <Progress value={monthlyMetrics.persenJam} className="h-2 bg-muted" />
           <div className="flex justify-between items-center text-[10px] text-muted-foreground mt-1.5">
-            <span>Target: {monthlyMetrics.persenJam}%</span>
-            <span>22 Hari Kerja</span>
+            <span>Target: {monthlyMetrics.persenJam}% (140 Jam)</span>
+            <span>Standar 8.400 Menit</span>
           </div>
         </div>
 

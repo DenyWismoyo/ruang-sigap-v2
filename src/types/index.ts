@@ -551,7 +551,7 @@ export interface RepositoryItem {
   aiSummary?: string;
   aiClassification?: string;
 }
-export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; aktivitasId?: number; aktivitasNama?: string; }
+export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; aktivitasId?: number; aktivitasNama?: string; kuantitas?: number; satuan?: string; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
 export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; aktivitasId?: number; aktivitasNama?: string; createdAt: Timestamp; waktuMulai?: string; waktuSelesai?: string; }
 export interface NotulensiRapat { id?: string; opdId: string; judulRapat: string; tanggalRapat: Timestamp; pemimpinRapat: string; notulis: string; peserta: string; createdBy: string; createdAt: Timestamp; isiNotulensi: string; }

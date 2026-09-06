@@ -495,7 +495,40 @@ const EditKegiatanModal = ({
     userProfile: UserProfile | null,
 }) => {
     const [currentEntry, setCurrentEntry] = useState<LogbookKegiatan | null>(null);
+    const [isPolishing, setIsPolishing] = useState(false);
     const isKamusKepwalEnabled = userProfile?.useKamusAktivitasKepwal !== false;
+
+    const handlePolish = async () => {
+        if (!currentEntry?.deskripsi?.trim() || isPolishing) return;
+        setIsPolishing(true);
+        try {
+            const res = await fetch('/api/ai/polish-kegiatan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: currentEntry.deskripsi,
+                    userJabatan: userProfile?.namaJabatan,
+                    currentAktivitasId: currentEntry.aktivitasId,
+                }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setCurrentEntry(prev => {
+                    if (!prev) return prev;
+                    return {
+                        ...prev,
+                        deskripsi: data.polishedText || prev.deskripsi,
+                        aktivitasId: data.aktivitasId || prev.aktivitasId,
+                        aktivitasNama: data.aktivitasNama || prev.aktivitasNama,
+                    };
+                });
+            }
+        } catch (e) {
+            console.warn("Gagal poles bahasa:", e);
+        } finally {
+            setIsPolishing(false);
+        }
+    };
 
     useEffect(() => { 
         if (isOpen && entry) { 
@@ -558,7 +591,21 @@ const EditKegiatanModal = ({
 
                     {/* Deskripsi Kegiatan */}
                     <div className="space-y-1.5">
-                        <Label htmlFor="edit-deskripsi" className="text-xs font-medium text-foreground/80">Deskripsi Kegiatan</Label>
+                        <div className="flex items-center justify-between">
+                            <Label htmlFor="edit-deskripsi" className="text-xs font-medium text-foreground/80">Deskripsi Kegiatan</Label>
+                            {currentEntry.deskripsi.trim().length >= 3 && (
+                                <button
+                                    type="button"
+                                    onClick={handlePolish}
+                                    disabled={isPolishing}
+                                    className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center gap-1 transition-colors"
+                                    title="Poles bahasa menjadi tata naskah dinas formal baku ASN via AI"
+                                >
+                                    {isPolishing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-amber-500" />}
+                                    Poles Bahasa Birokrasi
+                                </button>
+                            )}
+                        </div>
                         <Textarea 
                             id="edit-deskripsi" 
                             value={currentEntry.deskripsi} 
@@ -922,6 +969,44 @@ export default function LogbookPage() {
         const currentKegiatan = logbookData?.kegiatan || [];
         await updateKegiatanList([...currentKegiatan, ...kegiatanList]);
     };
+
+    const handleAutoArrangeTimes = async () => {
+        if (!logbookData?.kegiatan || logbookData.kegiatan.length === 0) return;
+        try {
+            let currentHour = 8;
+            let currentMinute = 0;
+
+            const arranged = logbookData.kegiatan.map((k) => {
+                const startStr = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
+                let durationMinutes = 60;
+                if (k.waktuMulai && k.waktuSelesai) {
+                    const [sh, sm] = k.waktuMulai.split(':').map(Number);
+                    const [eh, em] = k.waktuSelesai.split(':').map(Number);
+                    if (!isNaN(sh) && !isNaN(eh)) {
+                        const diff = (eh * 60 + em) - (sh * 60 + sm);
+                        if (diff > 0) durationMinutes = diff;
+                    }
+                }
+                const endTotalMinutes = currentHour * 60 + currentMinute + durationMinutes;
+                const endHour = Math.min(17, Math.floor(endTotalMinutes / 60));
+                const endMinute = endTotalMinutes % 60;
+                const endStr = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
+
+                currentHour = endHour;
+                currentMinute = endMinute;
+
+                return {
+                    ...k,
+                    waktuMulai: startStr,
+                    waktuSelesai: endStr,
+                };
+            });
+
+            await updateKegiatanList(arranged);
+        } catch (err) {
+            console.error("Gagal meruntunkan jam kegiatan:", err);
+        }
+    };
     
     const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
         const now = new Date();
@@ -1070,6 +1155,7 @@ export default function LogbookPage() {
                     currentDayKegiatan={logbookData?.kegiatan || []}
                     selectedMonth={toYYYYMMDD(selectedDate).slice(0, 7)}
                     onOpenAiAssistant={() => setIsAiEntryOpen(true)}
+                    onAutoArrangeTimes={handleAutoArrangeTimes}
                     tenant="poros"
                 />
             </div>

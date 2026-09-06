@@ -219,7 +219,7 @@ interface EkinerjaTransaction {
   Modal menggunakan Tabs Radix UI (`Tabs`, `TabsList`, `TabsTrigger`, `TabsContent`) dengan 2 tab:
   - **Tab 1 ("Keunggulan Fitur")**: 4 kartu fitur visual:
     1. *AI Multi-Activity Decomposer*: Otomatis mengurai catatan narasi bebas menjadi 2–6 kegiatan Kepwal non-overlapping tanpa merangkum.
-    2. *Realtime SKP/TPP Point Tracker*: Monitor target 1.200 poin dan 112,5 jam kerja efektif secara presisi.
+    2. *Realtime SKP/TPP Point Tracker*: Monitor target resmi 8.400 Menit Kerja Efektif (MKE) / 140 jam kerja bulanan secara presisi.
     3. *Chrome Bridge & Bookmarklet 1-Klik*: Kirim data 8 kolom form BKPSDM instan tanpa copas satu per satu.
     4. *Google Drive & Time Sync*: Integrasi URL bukti dukung cloud drive otomatis & sinkronisasi jam kerja.
   - **Tab 2 ("Perbandingan Free vs PRO")**: Matriks perbandingan 8 baris fitur kontras:
@@ -227,7 +227,7 @@ interface EkinerjaTransaction {
     - *Cetak Rekap Bulanan PDF ASN*: Free (Ya) vs PRO (Ya)
     - *Kamus 152 Aktivitas Kepwal Solo*: Free (Manual) vs PRO (Smart Select Otomatis)
     - *AI Smart Entry (Multi-Activity Decomposer)*: Free (Tidak) vs PRO (Unlimited)
-    - *Tracker Poin SKP & Target Jam TPP*: Free (Tidak) vs PRO (Aktif Penuh)
+    - *Tracker Poin SKP & Target Jam TPP*: Free (Tidak) vs PRO (Aktif Penuh - Target 8.400 MKE)
     - *Jembatan 1-Klik e-Kinerja BKPSDM*: Free (Tidak) vs PRO (Aktif Penuh)
     - *Ekstensi Chrome Bridge (Zero-Click)*: Free (Tidak) vs PRO (Aktif Penuh)
     - *Penyematan Google Drive Otomatis*: Free (Manual) vs PRO (Otomatis Terhubung)
@@ -240,8 +240,9 @@ Setiap formulir logbook, baik `SmartAddKegiatanModal` (Tambah) maupun `EditKegia
    - Tampil jika `userProfile.useKamusAktivitasKepwal !== false`.
    - Mengambil data resmi dari `masterAktivitasSolo.ts` (152 aktivitas Kepwal 786/154/2020).
    - Menyimpan `aktivitasId` dan `aktivitasNama` secara persisten pada objek `LogbookKegiatan`.
-2. **Real-Time Match Suggestion:**
+2. **Real-Time Match Suggestion & AI Bureaucratic Tone Polisher:**
    - Jika pengguna mengetik teks uraian bebas tanpa memilih dropdown, sistem otomatis mendeteksi kata kunci Kepwal dan menawarkan banner saran `+ Terapkan`.
+   - Tombol **"✨ Poles Bahasa Birokrasi"** (`/api/ai/polish-kegiatan`) untuk memoles kalimat santai menjadi tata naskah dinas formal baku ASN secara instan.
 3. **Kamus Rutinitas Pribadi:**
    - Menampilkan quick pills dari `userProfile.customAktivitasList` untuk input cepat 1-klik.
 4. **Preservasi Metadata e-Kinerja:**
@@ -251,6 +252,6 @@ Setiap formulir logbook, baik `SmartAddKegiatanModal` (Tambah) maupun `EditKegia
 
 ### 6. Prinsip AI Logbook: "Decomposition Over Summarization" & Poin Tracker
 - **Larangan Merangkum (No Summarization):** Pada sistem e-Kinerja ASN, poin dihitung per kegiatan mandiri. Asisten AI (`/api/ai/parse-kegiatan`) **dilarang menggabungkan** banyak aktivitas menjadi satu kalimat rangkuman. AI wajib memecah (*decompose*) catatan bebas atau jejak digital menjadi 2–6 butir kegiatan terpisah dengan alokasi jam kerja yang runtut dan tidak saling bertabrakan (*non-overlapping*).
-- **Kalkulator & Tracker Poin Realtime (`KinerjaTrackerCard`):** Menampilkan akumulasi poin Kepwal Solo (target: 1.200 poin) dan jam kerja efektif bulanan (target: 112,5 jam) untuk menjamin kepastian 100% TPP pegawai sebelum tutup buku portal e-Kinerja BKPSDM.
+- **Kalkulator & Tracker Poin Realtime (`KinerjaTrackerCard`):** Menampilkan akumulasi poin Kepwal Solo (target: 8.400 Menit Kerja Efektif / 140 jam kerja bulanan) untuk menjamin kepastian 100% TPP pegawai sebelum tutup buku portal e-Kinerja BKPSDM. Dilengkapi Audit Gap Finder (deteksi hari kerja bolong) dan Anti-Overlapping Time Inspector.
 
 

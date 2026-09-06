@@ -20,7 +20,7 @@ import { collection, query, where, getDocs, doc, setDoc, getDoc } from 'firebase
 import { db } from '@/lib/firebase';
 import { useToastContext } from '@/context/ToastContext';
 import { AktivitasCombobox } from '@/components/ekinerja/AktivitasCombobox';
-import { AktivitasSolo, detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
+import { AktivitasSolo, detectAktivitasFromLogbookText, getAktivitasSoloById } from '@/data/masterAktivitasSolo';
 
 interface SmartAddKegiatanModalProps {
     isOpen: boolean;
@@ -52,6 +52,38 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
     const [textUmum, setTextUmum] = useState('');
     const [jamMulaiUmum, setJamMulaiUmum] = useState('');
     const [jamSelesaiUmum, setJamSelesaiUmum] = useState('');
+    const [isPolishing, setIsPolishing] = useState(false);
+
+    const handlePolishUmum = async () => {
+        if (!textUmum.trim() || isPolishing) return;
+        setIsPolishing(true);
+        try {
+            const res = await fetch('/api/ai/polish-kegiatan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    text: textUmum,
+                    userJabatan: userProfile?.namaJabatan,
+                    currentAktivitasId: selectedAktivitas?.id,
+                }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.polishedText) {
+                    setTextUmum(data.polishedText);
+                }
+                if (data.aktivitasId) {
+                    const matched = getAktivitasSoloById(Number(data.aktivitasId));
+                    if (matched) setSelectedAktivitas(matched);
+                }
+                addToast('✨ Bahasa kegiatan disempurnakan sesuai naskah dinas formal!', 'success');
+            }
+        } catch (e) {
+            console.warn("Gagal poles bahasa:", e);
+        } finally {
+            setIsPolishing(false);
+        }
+    };
 
     // State Tab Tindak Lanjut
     const [pendingDisposisi, setPendingDisposisi] = useState<any[]>([]);
@@ -269,9 +301,23 @@ export function SmartAddKegiatanModal({ isOpen, onClose, onSaveUmum, onSaveTinda
 
                             {/* Uraian Kegiatan */}
                             <div className="space-y-1.5">
-                                <Label className="text-xs font-medium text-foreground/80">
-                                    Uraian Kegiatan Harian
-                                </Label>
+                                <div className="flex items-center justify-between">
+                                    <Label className="text-xs font-medium text-foreground/80">
+                                        Uraian Kegiatan Harian
+                                    </Label>
+                                    {textUmum.trim().length >= 3 && (
+                                        <button
+                                            type="button"
+                                            onClick={handlePolishUmum}
+                                            disabled={isPolishing}
+                                            className="text-[11px] font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 flex items-center gap-1 transition-colors"
+                                            title="Poles bahasa menjadi tata naskah dinas formal baku ASN via AI"
+                                        >
+                                            {isPolishing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-amber-500" />}
+                                            Poles Bahasa Birokrasi
+                                        </button>
+                                    )}
+                                </div>
                                 <div className="flex gap-2">
                                     <Input 
                                         type="text" 
