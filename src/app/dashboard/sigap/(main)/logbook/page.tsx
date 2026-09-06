@@ -27,6 +27,7 @@ import { KinerjaTrackerCard } from '@/components/logbook/KinerjaTrackerCard';
 import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
+import { LogbookTutorialModal } from '@/components/logbook/LogbookTutorialModal';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -56,32 +57,7 @@ import { AktivitasCombobox } from "@/components/ekinerja/AktivitasCombobox";
 const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-    return (
-        <SigapHelpModal isOpen={isOpen} onClose={onClose} title="Logbook Harian">
-            <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
-            <p>Menu "Logbook Harian" adalah buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari.</p>
-            
-            <h3 className="font-semibold text-lg text-foreground mt-4">Cara Menggunakan:</h3>
-            <ol className="list-decimal list-inside space-y-2">
-                <li><strong>Membuat Kegiatan Baru:</strong>
-                    <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                        <li>Klik tombol "Tambah Kegiatan".</li>
-                        <li>Tulis deskripsi pekerjaan Anda.</li>
-                        <li>Klik Simpan.</li>
-                    </ul>
-                </li>
-                <li><strong>Rekapitulasi Bulanan (E-Kinerja):</strong>
-                    <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                        <li>Klik tombol "Rekap Bulanan".</li>
-                        <li>Pilih Bulan dan Tahun.</li>
-                        <li>Klik "Generate Rekap" untuk melihat preview.</li>
-                        <li>Klik "Upload ke Bukti Kinerja" untuk mengirim laporan langsung ke folder Google Drive E-Kinerja Anda (Folder Bulanan).</li>
-                        <li>Anda juga bisa mengunduh versi PDF untuk dicetak.</li>
-                    </ul>
-                </li>
-            </ol>
-        </SigapHelpModal>
-    );
+    return <LogbookTutorialModal isOpen={isOpen} onClose={onClose} tenant="sigap" />;
 };
 
 // --- Komponen Modal Rekap Bulanan ---
@@ -447,7 +423,7 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
     );
 };
 
-const ShortcutNav = () => (
+const ShortcutNav = ({ onOpenTutorial }: { onOpenTutorial?: () => void }) => (
     <div className="mb-6 flex items-center gap-2 flex-wrap"> 
         <span className="text-sm font-semibold text-muted-foreground shrink-0">Akses Cepat:</span>
         <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
@@ -461,6 +437,18 @@ const ShortcutNav = () => (
             <Download size={13} className="mr-1.5 text-emerald-600 dark:text-emerald-400" /> Ekstensi e-Kinerja (.ZIP)
           </a>
         </Button>
+        {onOpenTutorial && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={onOpenTutorial}
+            className="rounded-full sg-btn border-blue-300 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-medium"
+            title="Buka Buku Panduan Lengkap Logbook & e-Kinerja (.MD)"
+          >
+            <BookOpen size={13} className="mr-1.5 text-blue-600 dark:text-blue-400" /> Buku Panduan (.MD)
+          </Button>
+        )}
     </div>
 );
 
@@ -1059,12 +1047,24 @@ export default function LogbookPage() {
                 title="Logbook"
                 icon={BookOpen}
                 actions={
-                    <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary">
-                        <HelpCircle size={20} />
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                        <Button 
+                            onClick={() => setIsBantuanOpen(true)} 
+                            title="Buka Buku Panduan Lengkap (.md)" 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs font-semibold flex items-center gap-1.5 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 shadow-xs"
+                        >
+                            <BookOpen size={14} className="text-blue-600 dark:text-blue-400" />
+                            <span className="hidden sm:inline">Buku Panduan</span>
+                        </Button>
+                        <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary h-8 w-8">
+                            <HelpCircle size={18} />
+                        </Button>
+                    </div>
                 }
             >
-                <ShortcutNav />
+                <ShortcutNav onOpenTutorial={() => setIsBantuanOpen(true)} />
             </SigapPageHeader>
 
             <div className="p-4 bg-card sg-mobile-borderless flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">

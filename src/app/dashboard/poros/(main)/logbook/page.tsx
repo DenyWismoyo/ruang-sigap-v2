@@ -24,6 +24,7 @@ import { SmartAddKegiatanModal } from './components/SmartAddKegiatanModal';
 import { KinerjaTrackerCard } from '@/components/logbook/KinerjaTrackerCard';
 import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
 import { NkPageHeader, NkCard } from '@/app/dashboard/poros/components/NkCard';
+import { LogbookTutorialModal } from '@/components/logbook/LogbookTutorialModal';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -53,47 +54,7 @@ import { AktivitasCombobox } from "@/components/ekinerja/AktivitasCombobox";
 const toYYYYMMDD = (date: Date) => date.toISOString().split('T')[0];
 
 const BantuanHalamanModal = ({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) => {
-    return (
-        <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-2xl bg-card border-border">
-                <DialogHeader>
-                    <DialogTitle className="flex items-center">
-                        <HelpCircle className="mr-3 text-blue-600" />
-                        Bantuan: Logbook Harian
-                    </DialogTitle>
-                </DialogHeader>
-                 <ScrollArea className="max-h-[70vh] -mx-6 px-6">
-                    <div className="space-y-4 text-foreground/90">
-                        <h3 className="font-semibold text-lg text-foreground">Apa Kegunaan Menu Ini?</h3>
-                        <p>Menu "Logbook Harian" adalah buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari.</p>
-                        
-                        <h3 className="font-semibold text-lg text-foreground">Cara Menggunakan:</h3>
-                        <ol className="list-decimal list-inside space-y-2">
-                            <li><strong>Membuat Kegiatan Baru:</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Klik tombol "Tambah Kegiatan".</li>
-                                    <li>Tulis deskripsi pekerjaan Anda.</li>
-                                    <li>Klik Simpan.</li>
-                                </ul>
-                            </li>
-                            <li><strong>Rekapitulasi Bulanan (E-Kinerja):</strong>
-                                <ul className="list-disc list-inside pl-4 mt-1 text-sm space-y-1">
-                                    <li>Klik tombol "Rekap Bulanan".</li>
-                                    <li>Pilih Bulan dan Tahun.</li>
-                                    <li>Klik "Generate Rekap" untuk melihat preview.</li>
-                                    <li>Klik "Upload ke Bukti Kinerja" untuk mengirim laporan langsung ke folder Google Drive E-Kinerja Anda (Folder Bulanan).</li>
-                                    <li>Anda juga bisa mengunduh versi PDF untuk dicetak.</li>
-                                </ul>
-                            </li>
-                        </ol>
-                    </div>
-                </ScrollArea>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose}>Saya Mengerti</Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    );
+    return <LogbookTutorialModal isOpen={isOpen} onClose={onClose} tenant="poros" />;
 };
 
 // --- Komponen Modal Rekap Bulanan ---
@@ -458,7 +419,7 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
     );
 };
 
-const ShortcutNav = () => (
+const ShortcutNav = ({ onOpenTutorial }: { onOpenTutorial?: () => void }) => (
     <div className="mb-6 flex items-center gap-2 flex-wrap"> 
         <span className="text-sm font-semibold text-muted-foreground shrink-0">Akses Cepat:</span>
         <Button asChild variant="secondary" size="sm" className="rounded-full">
@@ -472,6 +433,18 @@ const ShortcutNav = () => (
             <Download size={13} className="mr-1.5 text-teal-600 dark:text-teal-400" /> Ekstensi e-Kinerja (.ZIP)
           </a>
         </Button>
+        {onOpenTutorial && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            onClick={onOpenTutorial}
+            className="rounded-full border-teal-500/30 bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 font-medium"
+            title="Buka Buku Panduan Lengkap Logbook & e-Kinerja (.MD)"
+          >
+            <BookOpen size={13} className="mr-1.5 text-teal-600 dark:text-teal-400" /> Buku Panduan (.MD)
+          </Button>
+        )}
     </div>
 );
 
@@ -1102,13 +1075,25 @@ export default function LogbookPage() {
                 subtitle="Buku catatan digital Anda untuk mencatat semua kegiatan yang Anda lakukan setiap hari"
                 icon={BookOpen}
                 actions={
-                    <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-[var(--nk-teal-mid)] bg-[var(--nk-surface-3)] border-[var(--nk-glass-border)]">
-                        <HelpCircle size={20} />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            onClick={() => setIsBantuanOpen(true)} 
+                            title="Buka Buku Panduan Lengkap (.md)" 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 text-xs font-semibold flex items-center gap-1.5 border-teal-500/30 bg-teal-500/10 text-teal-600 dark:text-teal-400 hover:bg-teal-500/20 shadow-xs"
+                        >
+                            <BookOpen size={14} />
+                            <span className="hidden sm:inline">Buku Panduan</span>
+                        </Button>
+                        <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-[var(--nk-teal-mid)] bg-[var(--nk-surface-3)] border-[var(--nk-glass-border)] h-8 w-8">
+                            <HelpCircle size={18} />
+                        </Button>
+                    </div>
                 }
             />
             <div className="mb-6 -mt-2 ml-14">
-                <ShortcutNav />
+                <ShortcutNav onOpenTutorial={() => setIsBantuanOpen(true)} />
             </div>
 
             <NkCard className="p-4 rounded-xl flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)]">

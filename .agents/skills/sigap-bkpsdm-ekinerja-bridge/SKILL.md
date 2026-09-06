@@ -289,6 +289,13 @@ Otomasi integrasi RUANG SIGAP **BUKAN bot server-side liar** yang menembak datab
 - **Alternatif Full Extension di Android:**
   Bagi pengguna Android yang menginginkan fitur otomatisasi *Zero-Click Cross-Tab* yang sama persis seperti di laptop tanpa perlu mengetik di address bar, dapat menggunakan **Kiwi Browser** (tersedia gratis di Play Store), mengaktifkan Developer Mode, dan memuat file `sigap-chrome-bridge.zip`.
 
+---
 
-
-
+### 9. 📚 Standar Dokumentasi Pengguna & Self-Service Onboarding In-App (`.md` & Tutorial Modal)
+Fitur-fitur kompleks dan multi-platform (seperti Logbook Kepwal 786/154/2020, AI Decomposer, Tracker 8.400 MKE, Google Drive Sync, Ekstensi Chrome PC, dan Bookmarklet Ponsel) **WAJIB** dilengkapi dengan dokumentasi operasional mandiri (*self-service guide*) yang dapat diakses langsung oleh ASN tanpa hambatan:
+1. **Master Markdown Document (`public/docs/PANDUAN_LOGBOOK_DAN_EKINERJA.md`):**
+   - Disimpan di folder publik agar dapat diunduh langsung oleh klien atau diakses via path URL statis (`/docs/PANDUAN_LOGBOOK_DAN_EKINERJA.md`).
+   - Berisi 8 bab komprehensif: Pengenalan, Kamus Kepwal 152, AI Smart Entry, Target 8.400 MKE, Rekap PDF, e-Kinerja Bridge (PC Ekstensi vs HP Bookmarklet), Google Drive, dan FAQ.
+2. **Interactive In-App Guidebook Modal (`LogbookTutorialModal.tsx`):**
+   - Modal responsif berbasis `react-markdown` dan `remark-gfm` dengan navigasi bab cepat (*quick chapter pills*), live search filter, highlight badges platform, tombol **"📥 Unduh .MD"**, dan tombol **"📋 Salin .MD"**.
+   - Tersemat langsung pada header utama dan shortcut nav Logbook di kedua tenant (SIGAP dan POROS) melalui tombol **"📖 Buku Panduan"**.
