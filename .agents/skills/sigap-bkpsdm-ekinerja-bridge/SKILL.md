@@ -266,15 +266,29 @@ Otomasi integrasi RUANG SIGAP **BUKAN bot server-side liar** yang menembak datab
 ---
 
 ### 8. 📱 Kompatibilitas Mobile (Ponsel) & Strategi Eksekusi Multi-Platform
-- **Batasan Browser Mobile:** Google Chrome Mobile (Android & iOS) dan Safari Mobile secara default **TIDAK MENDUKUNG Chrome Extension (Manifest V3)** karena pembatasan sistem operasi oleh vendor.
+- **Batasan Browser Mobile:**
+  Google Chrome Mobile (Android & iOS) dan Apple Safari iOS secara default **TIDAK MENDUKUNG Chrome Extension (Manifest V3)** karena pembatasan sistem operasi oleh vendor.
 - **Strategi Resmi di Ponsel: Bookmarklet 1-Klik (`src/lib/ekinerjaBookmarklet.ts`):**
-  1. Pengguna menyimpan tautan script JavaScript Bookmarklet di daftar Bookmark browser ponsel sekali saja (`⚡ Isi e-Kinerja Solo`).
-  2. Di RUANG SIGAP HP: Klik *"Salin Data Form (1-Klik)"* (data form masuk ke clipboard).
-  3. Buka tab baru portal e-Kinerja BKPSDM di browser ponsel dan buka formulir Tambah Kegiatan.
-  4. Jalankan bookmarklet dari address bar / bookmark browser HP.
-  5. 8 kolom langsung terisi instan, dan pegawai cukup menekan tombol **Simpan**.
+  Menggunakan standar web universal Bookmarklet (`javascript:...`) yang didukung penuh oleh semua browser smartphone tanpa perlu menginstal aplikasi pihak ketiga apa pun.
+
+#### A. Prosedur Pemasangan Sekali Saja di Ponsel (Durasi: ~1 Menit):
+1. **Salin Skrip Bookmarklet:** Di RUANG SIGAP HP (menu Logbook/Bukti Kinerja $\rightarrow$ modal `⚡ e-Kinerja` $\rightarrow$ tab Bookmarklet), ketuk tombol **"Salin Skrip URL"** (kode `javascript:...` otomatis tersalin ke clipboard HP).
+2. **Buat Bookmark Baru:** Di Chrome/Safari HP, buat bookmark halaman apa saja sembarang (misal ketuk tanda bintang ⭐).
+3. **Edit Bookmark:** Buka menu Bookmark $\rightarrow$ Edit bookmark yang baru dibuat:
+   - Ganti nama menjadi: `⚡ Isi e-Kinerja Solo` (atau `Isi Kinerja`).
+   - Pada kolom URL: Hapus URL lama, lalu **Tempel / Paste** skrip `javascript:...` yang tadi disalin.
+   - Ketuk **Simpan / Selesai**.
+
+#### B. Prosedur Pengisian Harian di Ponsel (Durasi: ~10 Detik per Kegiatan):
+1. **Salin Form di SIGAP HP:** Pada kegiatan yang dipilih, ketuk `⚡ e-Kinerja` $\rightarrow$ ketuk **"Salin Form"** (data form masuk ke clipboard HP).
+2. **Buka Tab e-Kinerja BKPSDM:** Buka portal e-Kinerja Solo (`http://103.115.227.196/e-kinerja/v4/d_kegiatan_harian`) $\rightarrow$ ketuk **Tambah Kegiatan**.
+3. **Eksekusi dari Address Bar:** Ketuk kolom URL (address bar) di bagian atas browser ponsel $\rightarrow$ ketik `Isi Kinerja` (atau `⚡`) $\rightarrow$ ketuk rekomendasi bookmark `⭐ ⚡ Isi e-Kinerja Solo`.
+4. **Otomatis Terisi & Sorot Hijau:** Seluruh 8 kolom form langsung terisi otomatis dan tersorot warna hijau dengan notifikasi sukses.
+5. **Simpan:** Pegawai menekan tombol resmi **Simpan** di portal e-Kinerja.
+
 - **Alternatif Full Extension di Android:**
-  Pengguna Android yang menginginkan fitur *Zero-Click Cross-Tab* yang sama persis dengan laptop dapat menggunakan **Kiwi Browser** (tersedia gratis di Play Store), mengaktifkan Developer Mode, dan memuat `sigap-chrome-bridge.zip`.
+  Bagi pengguna Android yang menginginkan fitur otomatisasi *Zero-Click Cross-Tab* yang sama persis seperti di laptop tanpa perlu mengetik di address bar, dapat menggunakan **Kiwi Browser** (tersedia gratis di Play Store), mengaktifkan Developer Mode, dan memuat file `sigap-chrome-bridge.zip`.
+
 
 
 
