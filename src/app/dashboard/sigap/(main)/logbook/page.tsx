@@ -28,6 +28,10 @@ import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 import { LogbookTutorialModal } from '@/components/logbook/LogbookTutorialModal';
+import { LogbookDateStrip } from '@/components/logbook/LogbookDateStrip';
+import { LogbookTimelineCard } from '@/components/logbook/LogbookTimelineCard';
+import { LogbookMobileActionDock } from '@/components/logbook/LogbookMobileActionDock';
+import { MASTER_AKTIVITAS_SOLO } from '@/data/masterAktivitasSolo';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -791,7 +795,8 @@ export default function LogbookPage() {
     const [isAiEntryOpen, setIsAiEntryOpen] = useState(false);
     const { isSubscribed } = useEkinerjaSubscription();
 
-    const parentRef = useRef<HTMLDivElement>(null);
+    const [filterStatus, setFilterStatus] = useState<'all' | 'uncompleted' | 'completed'>('all');
+    const [isTrackerExpanded, setIsTrackerExpanded] = useState(false);
 
     useEffect(() => {
         if (userProfile?.opdId && localUserCache.size === 0 && !authLoading) {
@@ -1020,34 +1025,99 @@ export default function LogbookPage() {
 
     const changeDate = (offset: number) => setSelectedDate(prev => { const d = new Date(prev); d.setDate(d.getDate() + offset); return d; });
 
-    const progress = useMemo(() => {
-        const kegiatan = logbookData?.kegiatan;
-        if (!kegiatan || kegiatan.length === 0) return { percent: 0, text: '0/0' };
+    const dailyStats = useMemo(() => {
+        const kegiatan = logbookData?.kegiatan || [];
         const total = kegiatan.length;
         const completed = kegiatan.filter(k => k.selesai).length;
-        return { percent: Math.round((completed / total) * 100), text: `${completed}/${total}` };
-    }, [logbookData]);
+        
+        let totalMenitKerja = 0;
+        let totalPoinMke = 0;
+        const isKepwalEnabled = effectiveProfile?.useKamusAktivitasKepwal !== false;
 
-    const isToday = toYYYYMMDD(selectedDate) === toYYYYMMDD(new Date());
+        kegiatan.forEach(k => {
+            // Durasi jam kerja
+            if (k.waktuMulai && k.waktuSelesai) {
+                const [hM, mM] = k.waktuMulai.split(':').map(Number);
+                const [hS, mS] = k.waktuSelesai.split(':').map(Number);
+                if (!isNaN(hM) && !isNaN(mM) && !isNaN(hS) && !isNaN(mS)) {
+                    const diff = (hS * 60 + mS) - (hM * 60 + mM);
+                    if (diff > 0) totalMenitKerja += diff;
+                }
+            }
 
-    const rowVirtualizer = useVirtualizer({
-        count: logbookData?.kegiatan.length || 0,
-        getScrollElement: () => parentRef.current,
-        estimateSize: () => 85,
-        overscan: 5,
-    });
-    
+            // Bobot poin MKE Kepwal
+            if (isKepwalEnabled) {
+                if (k.aktivitasId) {
+                    const found = MASTER_AKTIVITAS_SOLO.find(a => a.id === k.aktivitasId);
+                    if (found) totalPoinMke += found.nilaiPoin;
+                } else {
+                    const detected = detectAktivitasFromLogbookText(k.deskripsi);
+                    if (detected) totalPoinMke += detected.nilaiPoin;
+                }
+            }
+        });
+
+        const targetMke = 300;
+        const targetPercent = Math.min(100, Math.round((totalPoinMke / targetMke) * 100));
+
+        return {
+            total,
+            completed,
+            uncompleted: total - completed,
+            totalMenitKerja,
+            jamKerjaText: `${Math.floor(totalMenitKerja / 60)}j ${totalMenitKerja % 60}m`,
+            totalPoinMke,
+            targetMke,
+            targetPercent,
+            isTargetMet: totalPoinMke >= targetMke || totalMenitKerja >= 300,
+            percent: total > 0 ? Math.round((completed / total) * 100) : 0,
+            text: `${completed}/${total}`
+        };
+    }, [logbookData, effectiveProfile]);
+
+    const filteredKegiatan = useMemo(() => {
+        const kegiatan = logbookData?.kegiatan || [];
+        if (filterStatus === 'completed') {
+            return kegiatan.filter(k => k.selesai);
+        }
+        if (filterStatus === 'uncompleted') {
+            return kegiatan.filter(k => !k.selesai);
+        }
+        return kegiatan;
+    }, [logbookData, filterStatus]);
+
     if (authLoading || isCacheLoading) {
         return <p className="text-center p-8">Memuat data pengguna...</p>;
     }
 
     return (
-        <div className="sg-page">
+        <div className="sg-page pb-32 md:pb-12 space-y-4">
+            {/* Header Halaman */}
             <SigapPageHeader 
-                title="Logbook"
+                title="Logbook Harian"
+                description="Pencatatan kegiatan harian, konversi bukti kinerja, dan integrasi e-Kinerja BKPSDM"
                 icon={BookOpen}
                 actions={
                     <div className="flex items-center gap-1.5">
+                        <Button 
+                            onClick={() => setIsRekapOpen(true)}
+                            variant="outline"
+                            size="sm"
+                            className="hidden sm:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                        >
+                            <Calendar size={14} className="text-emerald-600 dark:text-emerald-400" />
+                            <span>Rekap Bulanan</span>
+                        </Button>
+                        <Button 
+                            onClick={() => setIsSettingsOpen(true)}
+                            variant="outline"
+                            size="sm"
+                            className="hidden sm:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-border"
+                            title="Pengaturan Google Drive & Kamus Aktivitas"
+                        >
+                            <Settings size={14} className="text-muted-foreground" />
+                            <span>Pengaturan</span>
+                        </Button>
                         <Button 
                             onClick={() => setIsBantuanOpen(true)} 
                             title="Buka Buku Panduan Lengkap (.md)" 
@@ -1067,17 +1137,80 @@ export default function LogbookPage() {
                 <ShortcutNav onOpenTutorial={() => setIsBantuanOpen(true)} />
             </SigapPageHeader>
 
-            <div className="p-4 bg-card sg-mobile-borderless flex flex-col md:flex-row justify-between items-center gap-4 sticky top-0 z-10 md:static">
-                <div className="flex items-center space-x-2">
-                    <Button onClick={() => changeDate(-1)} variant="outline" size="icon"><ChevronLeft/></Button>
-                    <span className="md:hidden font-semibold">{selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</span>
-                    <Input type="date" value={toYYYYMMDD(selectedDate)} onChange={e => setSelectedDate(new Date(e.target.value + 'T00:00:00'))} className="hidden md:block"/>
-                    <Button onClick={() => changeDate(1)} variant="outline" size="icon"><ChevronRight/></Button>
-                    <Button onClick={() => setSelectedDate(new Date())} variant={isToday ? "default" : "secondary"}>Hari Ini</Button>
+            {/* Horizontal 7-Day Date Strip */}
+            <LogbookDateStrip 
+                selectedDate={selectedDate}
+                onSelectDate={setSelectedDate}
+                tenant="sigap"
+            />
+
+            {/* Daily Metric Bar */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {/* Metrik 1: Progress Penyelesaian */}
+                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+                        <span className="font-semibold uppercase tracking-wider">Status Kegiatan</span>
+                        <span className="font-bold text-foreground">{dailyStats.text} Selesai</span>
+                    </div>
+                    <Progress value={dailyStats.percent} className="h-2 mb-1.5 bg-muted" />
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                        <span>{dailyStats.percent}% terlaksana</span>
+                        {dailyStats.uncompleted > 0 && (
+                            <span className="text-amber-600 dark:text-amber-400 font-medium">{dailyStats.uncompleted} pending</span>
+                        )}
+                    </div>
                 </div>
-                
-                <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
-                     <Button 
+
+                {/* Metrik 2: Jam Kerja */}
+                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <span className="font-semibold uppercase tracking-wider">Durasi Jam Kerja</span>
+                        <Badge variant="outline" className="text-[10px] font-medium border-blue-200 text-blue-700 dark:text-blue-300 dark:border-blue-800">
+                            Harian
+                        </Badge>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-extrabold text-foreground">{dailyStats.jamKerjaText}</span>
+                        <span className="text-[11px] text-muted-foreground">dari rentang waktu</span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-1 truncate">
+                        {dailyStats.totalMenitKerja >= 300 ? '✅ Memenuhi standar 5+ jam efektif' : 'Pastikan mencatat jam mulai & selesai'}
+                    </p>
+                </div>
+
+                {/* Metrik 3: Poin e-Kinerja Kepwal */}
+                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                        <span className="font-semibold uppercase tracking-wider">Poin MKE Hari Ini</span>
+                        {dailyStats.isTargetMet ? (
+                            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white text-[10px] font-bold">
+                                Target Terpenuhi
+                            </Badge>
+                        ) : (
+                            <Badge variant="outline" className="text-[10px] font-medium border-amber-300 text-amber-700 dark:text-amber-400 dark:border-amber-800">
+                                {dailyStats.totalPoinMke}/300m
+                            </Badge>
+                        )}
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                        <span className="text-xl font-extrabold text-foreground">{dailyStats.totalPoinMke}</span>
+                        <span className="text-xs text-muted-foreground font-semibold">/ 300 Menit (Target)</span>
+                    </div>
+                    <Progress value={dailyStats.targetPercent} className="h-1.5 mt-1.5 bg-muted" />
+                </div>
+            </div>
+
+            {/* Desktop Command Bar & SKP Collapsible Toggle */}
+            <div className="flex flex-wrap items-center justify-between gap-2.5 pt-1">
+                {/* Tombol Aksi Desktop */}
+                <div className="hidden md:flex items-center gap-2">
+                    <Button 
+                        onClick={() => setIsAddModalOpen(true)} 
+                        className="sg-btn sg-btn-primary h-9 px-4 font-semibold text-xs shadow-xs"
+                    >
+                        <Plus size={15} className="mr-1.5" /> Tambah Kegiatan
+                    </Button>
+                    <Button 
                         onClick={() => {
                             if (!isSubscribed) {
                                 setIsPaywallOpen(true);
@@ -1085,110 +1218,186 @@ export default function LogbookPage() {
                             }
                             setIsAiEntryOpen(true);
                         }}
-                        className="w-full md:w-auto bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold sg-btn shadow-sm"
+                        className="h-9 px-4 text-xs font-semibold bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white shadow-xs"
                         title="Asisten AI: Pecah catatan atau jejak hari ini menjadi kegiatan mandiri"
-                     >
-                        <Sparkles size={16} className="mr-2 text-amber-200 animate-pulse"/> AI Smart Entry
-                     </Button>
-                     <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto sg-btn sg-btn-primary">
-                        <Plus size={16} className="mr-2"/> Tambah Kegiatan
-                    </Button>
-                     <Button
-                        onClick={() => setIsRekapOpen(true)}
-                        className="w-full md:w-auto bg-green-600 hover:bg-green-700 sg-btn"
                     >
-                        <Calendar size={16} className="mr-2"/> Rekap Bulanan
+                        <Sparkles size={15} className="mr-1.5 text-amber-200 animate-pulse"/> AI Smart Entry
                     </Button>
-                     <Button
-                        onClick={() => setIsSettingsOpen(true)}
+                    <Button 
+                        onClick={() => setIsRekapOpen(true)} 
                         variant="outline"
-                        className="w-full md:w-auto sg-btn border-border/80 hover:bg-muted"
-                        title="Pengaturan Google Drive & Kamus Aktivitas"
+                        className="h-9 px-3 text-xs font-semibold border-border hover:bg-muted text-foreground"
                     >
-                        <Settings size={16} className="mr-2 text-muted-foreground"/> Pengaturan
+                        <Calendar size={14} className="mr-1.5 text-emerald-600 dark:text-emerald-400"/> Rekap Bulanan
+                    </Button>
+                    <Button 
+                        onClick={() => setIsSettingsOpen(true)} 
+                        variant="outline"
+                        className="h-9 px-3 text-xs font-semibold border-border hover:bg-muted text-foreground"
+                    >
+                        <Settings size={14} className="mr-1.5 text-muted-foreground"/> Pengaturan
                     </Button>
                 </div>
+
+                {/* Toggle SKP Tracker Collapsible */}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setIsTrackerExpanded(!isTrackerExpanded)}
+                    className="text-xs font-semibold text-muted-foreground hover:text-foreground h-8 px-2.5 ml-auto flex items-center gap-1.5 border border-dashed border-border/80 rounded-lg hover:bg-muted/50"
+                >
+                    <Zap size={14} className={isTrackerExpanded ? "text-amber-500" : "text-muted-foreground"} />
+                    <span>{isTrackerExpanded ? "Tutup Target SKP Bulanan" : "Lihat Target SKP Bulanan (8.400 Menit)"}</span>
+                    <ChevronDown size={14} className={`transition-transform duration-200 ${isTrackerExpanded ? "rotate-180" : ""}`} />
+                </Button>
             </div>
 
-            {/* Realtime SKP/TPP Point & Effective Hours Tracker */}
-            <div className="px-4 py-2">
-                <KinerjaTrackerCard
-                    userProfile={effectiveProfile}
-                    currentDayKegiatan={logbookData?.kegiatan || []}
-                    selectedMonth={toYYYYMMDD(selectedDate).slice(0, 7)}
-                    onOpenAiAssistant={() => {
-                        if (!isSubscribed) {
-                            setIsPaywallOpen(true);
-                            return;
-                        }
-                        setIsAiEntryOpen(true);
-                    }}
-                    onAutoArrangeTimes={handleAutoArrangeTimes}
-                    tenant="sigap"
-                />
-            </div>
+            {/* Collapsible Monthly SKP Tracker */}
+            {isTrackerExpanded && (
+                <div className="animate-in fade-in slide-in-from-top-3 duration-200">
+                    <KinerjaTrackerCard
+                        userProfile={effectiveProfile}
+                        currentDayKegiatan={logbookData?.kegiatan || []}
+                        selectedMonth={toYYYYMMDD(selectedDate).slice(0, 7)}
+                        onOpenAiAssistant={() => {
+                            if (!isSubscribed) {
+                                setIsPaywallOpen(true);
+                                return;
+                            }
+                            setIsAiEntryOpen(true);
+                        }}
+                        onAutoArrangeTimes={handleAutoArrangeTimes}
+                        tenant="sigap"
+                    />
+                </div>
+            )}
 
-            <div className="sg-section">
-                 {loading ? <p className="text-center p-8 text-muted-foreground">Memuat data logbook...</p> : (
-                    <>
-                        {logbookData && logbookData.kegiatan.length > 0 ? (
-                           <div className="space-y-4">
-                               <div className="mb-4 sticky top-[160px] md:static z-10 bg-background/80 backdrop-blur-sm -mx-4 px-4 py-3 md:p-0 md:bg-transparent md:dark:bg-transparent">
-                                    <h3 className="text-sm font-semibold text-muted-foreground">Progress: {progress.text} Selesai</h3>
-                                    <Progress value={progress.percent} className="h-2 mt-1" />
-                                </div>
-                                
-                                <div 
-                                    ref={parentRef} 
-                                    className="h-[600px] overflow-y-auto rounded-none border-x-0 border-t-0 border-b border-border bg-transparent p-0 md:rounded-lg md:border sg-glass-panel md:p-2"
-                                    style={{ contain: 'strict' }}
+            {/* Filter Tabs & Timeline Kegiatan */}
+            <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between border-b border-border pb-2">
+                    <div className="flex items-center gap-1.5">
+                        <Button
+                            type="button"
+                            variant={filterStatus === 'all' ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => setFilterStatus('all')}
+                            className="h-8 text-xs font-semibold rounded-lg px-3"
+                        >
+                            Semua ({dailyStats.total})
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={filterStatus === 'uncompleted' ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => setFilterStatus('uncompleted')}
+                            className="h-8 text-xs font-semibold rounded-lg px-3"
+                        >
+                            Belum ({dailyStats.uncompleted})
+                        </Button>
+                        <Button
+                            type="button"
+                            variant={filterStatus === 'completed' ? "default" : "ghost"}
+                            size="sm"
+                            onClick={() => setFilterStatus('completed')}
+                            className="h-8 text-xs font-semibold rounded-lg px-3"
+                        >
+                            Selesai ({dailyStats.completed})
+                        </Button>
+                    </div>
+
+                    <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
+                        {filteredKegiatan.length} item ditampilkan
+                    </span>
+                </div>
+
+                {/* List Timeline Kegiatan */}
+                {loading ? (
+                    <div className="p-12 text-center text-muted-foreground space-y-2">
+                        <Loader2 size={24} className="animate-spin mx-auto text-primary" />
+                        <p className="text-sm font-medium">Memuat catatan logbook...</p>
+                    </div>
+                ) : filteredKegiatan.length > 0 ? (
+                    <div className="space-y-3">
+                        {filteredKegiatan.map((k) => (
+                            <LogbookTimelineCard
+                                key={k.id}
+                                k={k}
+                                onToggle={handleToggleSelesai}
+                                onEdit={(entry) => { setEntryToEdit(entry); setIsEditModalOpen(true); }}
+                                onDelete={handleDeleteKegiatan}
+                                onKirimEkinerja={handleOpenEkinerja}
+                                tenant="sigap"
+                            />
+                        ))}
+                    </div>
+                ) : (
+                    /* Interactive Empty State */
+                    <div className="p-8 sm:p-12 bg-card rounded-2xl border border-dashed border-border/90 flex flex-col items-center justify-center text-center space-y-4">
+                        <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
+                            <BookOpen size={26} />
+                        </div>
+                        <div className="space-y-1 max-w-md">
+                            <h3 className="text-base font-bold text-foreground">
+                                {filterStatus !== 'all' ? 'Tidak Ada Kegiatan Sesuai Filter' : 'Belum Ada Kegiatan pada Tanggal Ini'}
+                            </h3>
+                            <p className="text-xs text-muted-foreground">
+                                {filterStatus !== 'all' 
+                                    ? 'Coba ubah tab filter ke "Semua" untuk melihat daftar lengkap kegiatan.'
+                                    : 'Mulai dokumentasikan kegiatan harian Anda. Kegiatan dapat diisi manual atau dibantu oleh AI Smart Entry.'}
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap items-center justify-center gap-2 pt-2">
+                            {filterStatus !== 'all' ? (
+                                <Button 
+                                    size="sm" 
+                                    variant="outline" 
+                                    onClick={() => setFilterStatus('all')}
+                                    className="text-xs font-semibold"
                                 >
-                                    <div
-                                        style={{
-                                            height: `${rowVirtualizer.getTotalSize()}px`,
-                                            width: '100%',
-                                            position: 'relative',
-                                        }}
+                                    Tampilkan Semua Kegiatan
+                                </Button>
+                            ) : (
+                                <>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => setIsAddModalOpen(true)}
+                                        className="sg-btn sg-btn-primary text-xs font-semibold h-9 px-3.5"
                                     >
-                                        {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                                            const k = logbookData.kegiatan[virtualRow.index];
-                                            return (
-                                                <div
-                                                    key={virtualRow.key}
-                                                    data-index={virtualRow.index}
-                                                    ref={rowVirtualizer.measureElement}
-                                                    style={{
-                                                        position: 'absolute',
-                                                        top: 0,
-                                                        left: 0,
-                                                        width: '100%',
-                                                        transform: `translateY(${virtualRow.start}px)`,
-                                                    }}
-                                                    className="pb-0 md:pb-3"
-                                                >
-                                                    <LogbookItem 
-                                                        k={k} 
-                                                        onToggle={handleToggleSelesai} 
-                                                        onDelete={handleDeleteKegiatan} 
-                                                        onEdit={(entry) => { setEntryToEdit(entry); setIsEditModalOpen(true); }}
-                                                        onKirimEkinerja={handleOpenEkinerja}
-                                                    />
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                </div>
-                           </div>
-                        ) : (
-                            <div className="mt-8 p-10 bg-card rounded-xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center">
-                                <BookOpen size={48} className="text-muted-foreground/30 mb-4" />
-                                <h2 className="text-xl font-semibold text-foreground">Logbook Kosong</h2>
-                                <p className="mt-2 text-muted-foreground max-w-md">Belum ada kegiatan yang dicatat untuk tanggal ini. Tambahkan kegiatan baru menggunakan tombol (+).</p>
-                            </div>
-                        )}
-                    </>
-                 )}
+                                        <Plus size={14} className="mr-1.5" /> Tambah Kegiatan
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        onClick={() => {
+                                            if (!isSubscribed) {
+                                                setIsPaywallOpen(true);
+                                                return;
+                                            }
+                                            setIsAiEntryOpen(true);
+                                        }}
+                                        className="h-9 px-3.5 text-xs font-semibold bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white"
+                                    >
+                                        <Sparkles size={14} className="mr-1.5 text-amber-200 animate-pulse" /> AI Smart Entry
+                                    </Button>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                )}
             </div>
+
+            {/* Mobile Floating Action Dock */}
+            <LogbookMobileActionDock
+                onAddKegiatan={() => setIsAddModalOpen(true)}
+                onOpenAiEntry={() => {
+                    if (!isSubscribed) {
+                        setIsPaywallOpen(true);
+                        return;
+                    }
+                    setIsAiEntryOpen(true);
+                }}
+                tenant="sigap"
+            />
             
             <SmartAddKegiatanModal
                 isOpen={isAddModalOpen}

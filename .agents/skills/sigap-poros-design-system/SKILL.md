@@ -153,8 +153,39 @@ Hindari font desktop yang terlalu besar di layar ponsel. Gunakan skala berikut:
    - Di mobile, jangan paksakan teks nama kegiatan panjang di dalam sel tanggal sempit ~45px. Gunakan dot indikator berwarna (Biru: Disetujui, Kuning: Menunggu Persetujuan) dan tampilkan detail agenda di bawah kalender saat tanggal disentuh.
 4. **Desktop Preservation**:
    - Layar desktop (`md:` dan `lg:`) tetap mempertahankan grid 7-kolom luas (`min-h-[8rem]`) dan sidebar samping *Agenda Bulan Ini*.
-5. **Safe Bottom Padding**:
-   - Pastikan root container memiliki `pb-[calc(5.5rem+env(safe-area-inset-bottom,0px))] md:pb-6` agar seluruh baris kalender tidak tertutup FAB / Bottom Nav.
+### F. Standarisasi Menu Logbook / Catatan Kinerja Harian (Ponsel & Desktop)
+
+Modul Logbook Harian (`/dashboard/sigap/logbook` & `/dashboard/poros/logbook`) wajib memenuhi standar ergonomi dan produktivitas ASN berikut:
+
+1. **Interactive 7-Day Horizontal Date Strip (`LogbookDateStrip`)**:
+   - Menghilangkan navigasi tanggal dropdown/input kaku yang tersembunyi.
+   - Menyajikan 7 pill tanggal horizontal yang menyoroti hari aktif, penanda "Hari Ini", tombol cepat melompat pekan lalu/pekan depan, serta tombol kalender native.
+   - Menghitung tanggal yang memiliki kegiatan dengan dot indicator kecil.
+
+2. **Daily Metric Bar Ringkas (3 Pilar Harian)**:
+   - **Status Kegiatan**: Menampilkan rasio selesai/total (misal `4/5 Selesai`) disertai bar progress persentase.
+   - **Durasi Jam Kerja**: Mengkalkulasi jam kerja riil dari selisih waktu mulai & selesai kegiatan (standar $\ge$ 5 jam efektif).
+   - **Poin MKE Harian**: Menampilkan akumulasi menit aktivitas Kepwal 786/154/2020 terhadap target harian (300 menit). Memberikan status visual badge *Target Terpenuhi* (emerald) jika $\ge$ 300 menit atau badge amber jika belum tercapai.
+
+3. **Executive Timeline Card & Zero Scroll-Trapping (`LogbookTimelineCard`)**:
+   - **Anti Scroll-Trapping**: Dilarang keras membungkus feed kegiatan dengan kontainer kaku `h-[600px] overflow-y-auto` yang menyebabkan *double-scrollbar* dan menjebak gesture scroll pada layar smartphone. Gunakan aliran halaman alami dengan padding bawah yang cukup (`pb-32 md:pb-12`).
+   - **Node Garis Waktu Visual**: Setiap kegiatan memiliki dot node status (hijau saat selesai, abu/lingkaran saat belum), label jam mulai-selesai yang jelas, dan tag durasi waktu.
+   - **Aksen e-Kinerja Tegas**: Tombol `⚡ e-Kinerja` berwarna amber yang kontras dan mudah disentuh (touch-target $\ge$ 40px) untuk memicu sinkronisasi bookmarklet / extension BKPSDM.
+   - **Dropdown Aksi Lengkap**: Menyediakan opsi Salin Teks, Edit Kegiatan, dan Hapus Kegiatan.
+
+4. **Mobile Floating Action Dock (`LogbookMobileActionDock`)**:
+   - Pada viewport ponsel (`< 768px`), tombol tambah aksi tidak boleh tenggelam di atas halaman yang ter-scroll.
+   - Gunakan dock melayang (*floating dock*) dengan posisi:
+     `bottom-[calc(var(--bottom-nav-height,60px)+0.75rem)] left-4 right-4 z-40`
+     agar berada tepat dan aman di atas Bottom Navigation Bar.
+   - Terdiri atas tombol utama `+ Tambah Kegiatan` dan tombol cepat `✨ AI Entry`.
+
+5. **Collapsible Monthly SKP Tracker**:
+   - Kartu akumulasi target bulanan 8.400 menit (`KinerjaTrackerCard`) dibuat *collapsible* (default tersembunyi/ringkas) dengan tombol toggle chevron, sehingga di smartphone pengguna langsung melihat kegiatan hari ini tanpa harus scroll melewati kartu analitik yang tinggi.
+
+6. **Isolasi Multi-Tenant**:
+   - SIGAP: Menggunakan `tenant="sigap"`, tema Royal Blue (`sg-btn-primary`, `border-border`).
+   - POROS: Menggunakan `tenant="poros"`, tema Sovereign Teal (`[var(--nk-teal-mid)]`, `NkCard`, `border-[var(--nk-glass-border)]`).
 
 ---
 
