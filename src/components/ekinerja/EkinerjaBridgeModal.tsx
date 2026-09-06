@@ -323,6 +323,34 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
         <div className="flex-1 overflow-y-auto p-6 space-y-5">
           {activeTab === 'form' && (
             <div className="space-y-4">
+              {/* Banner Edukasi: Keharusan Membuka Halaman e-Kinerja BKPSDM */}
+              <div className="p-3 bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/60 rounded-xl text-xs space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-blue-900 dark:text-blue-200">
+                    <Info size={14} className="text-blue-600 dark:text-blue-400 shrink-0" />
+                    <span>Halaman e-Kinerja BKPSDM Tetap Wajib Dibuka di Browser</span>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] border-blue-300 text-blue-700 dark:text-blue-300">
+                    Sesi Resmi ASN
+                  </Badge>
+                </div>
+                <p className="text-[11px] text-blue-800/90 dark:text-blue-300/90 leading-relaxed">
+                  Untuk keamanan sesi login dan pembentukan <strong>Kode Kegiatan (F2)</strong> yang sah, proses penyimpanan tetap harus dilakukan di tab resmi e-Kinerja BKPSDM Anda (Ponsel maupun Desktop). RUANG SIGAP membantu mengisi 8 kolom formulir secara instan dalam 1-klik!
+                </p>
+                <div className="pt-0.5 flex items-center gap-2">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs border-blue-300 dark:border-blue-800 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/40 font-medium"
+                  >
+                    <a href="http://103.115.227.196/e-kinerja/v4/d_kegiatan_harian" target="_blank" rel="noopener noreferrer">
+                      <ExternalLink size={12} className="mr-1.5" /> Buka Tab Formulir e-Kinerja BKPSDM
+                    </a>
+                  </Button>
+                </div>
+              </div>
+
               {/* Kolom 1 & 2: Tgl & Kode Kegiatan */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
@@ -620,9 +648,22 @@ export const EkinerjaBridgeModal: React.FC<EkinerjaBridgeModalProps> = ({
           {/* Tab 3: Bookmarklet */}
           {activeTab === 'bookmarklet' && (
             <div className="space-y-5">
+              {/* Panduan Khusus Pengguna Ponsel (Smartphone / Tablet) */}
+              <div className="p-3.5 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-xs space-y-2">
+                <div className="flex items-center gap-1.5 font-bold text-emerald-900 dark:text-emerald-200">
+                  <span>📱 Panduan Khusus Pengguna Ponsel (Android &amp; iPhone):</span>
+                </div>
+                <ol className="list-decimal list-inside space-y-1 text-[11px] text-emerald-900/90 dark:text-emerald-300/90 leading-relaxed">
+                  <li><strong>Salin Data Form</strong>: Klik tombol <em>&quot;Salin Data Form (1-Klik)&quot;</em> di bawah ini.</li>
+                  <li><strong>Buka Tab e-Kinerja di HP</strong>: Buka formulir Tambah Kegiatan di browser ponsel Anda.</li>
+                  <li><strong>Jalankan Bookmarklet</strong>: Di address bar browser HP, ketik dan klik bookmark <code>⚡ Isi e-Kinerja Solo</code>.</li>
+                  <li><strong>Simpan</strong>: 8 kolom terisi otomatis, periksa kembali, dan tekan tombol <strong>Simpan</strong> di portal e-Kinerja.</li>
+                </ol>
+              </div>
+
               <div className="p-4 bg-accent/40 rounded-xl border border-border">
                 <h4 className="font-bold text-sm text-foreground flex items-center gap-2 mb-2">
-                  <Zap size={16} className={accentColor} /> Tombol Bookmarklet Otomatis
+                  <Zap size={16} className={accentColor} /> Tombol Bookmarklet Otomatis (Desktop &amp; Laptop)
                 </h4>
                 <p className="text-xs text-muted-foreground leading-relaxed mb-4">
                   Tarik tombol di bawah ini langsung ke <strong>Bookmarks Bar browser Chrome</strong> Anda (Tekan <kbd className="px-1 py-0.5 bg-muted rounded border text-[10px]">Ctrl + Shift + B</kbd> bila Bookmarks Bar belum muncul).

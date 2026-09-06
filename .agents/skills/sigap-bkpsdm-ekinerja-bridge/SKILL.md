@@ -254,4 +254,27 @@ Setiap formulir logbook, baik `SmartAddKegiatanModal` (Tambah) maupun `EditKegia
 - **Larangan Merangkum (No Summarization):** Pada sistem e-Kinerja ASN, poin dihitung per kegiatan mandiri. Asisten AI (`/api/ai/parse-kegiatan`) **dilarang menggabungkan** banyak aktivitas menjadi satu kalimat rangkuman. AI wajib memecah (*decompose*) catatan bebas atau jejak digital menjadi 2–6 butir kegiatan terpisah dengan alokasi jam kerja yang runtut dan tidak saling bertabrakan (*non-overlapping*).
 - **Kalkulator & Tracker Poin Realtime (`KinerjaTrackerCard`):** Menampilkan akumulasi poin Kepwal Solo (target: 8.400 Menit Kerja Efektif / 140 jam kerja bulanan) untuk menjamin kepastian 100% TPP pegawai sebelum tutup buku portal e-Kinerja BKPSDM. Dilengkapi Audit Gap Finder (deteksi hari kerja bolong) dan Anti-Overlapping Time Inspector.
 
+---
+
+### 7. 🌐 Prinsip Client-Side Assistive Automation: Keharusan Membuka Halaman Portal e-Kinerja
+Otomasi integrasi RUANG SIGAP **BUKAN bot server-side liar** yang menembak database secara sembunyi-sembunyi, melainkan **Asisten Otomasi Pengisian Formulir (Client-Side Assistive Copilot)**.
+- **Mengapa Halaman Formulir e-Kinerja BKPSDM Tetap Wajib Dibuka di Browser?**
+  1. **Keamanan Sesi Resmi Pegawai (Session & Cookie Isolation):** Portal e-Kinerja BKPSDM (`http://103.115.227.196/e-kinerja/v4/`) memvalidasi sesi login aktif dan token anti-CSRF per sesi browser. Cloud Functions eksternal tidak memiliki akses sesi resmi pegawai.
+  2. **Penomoran Kode Kegiatan Otomatis (F2 / Internal AJAX):** Tombol F2 dan generator kode kegiatan internal portal BKPSDM hanya berjalan di dalam lingkungan DOM halaman web e-Kinerja.
+  3. **Keabsahan & Legalitas Verifikasi ASN:** Secara regulasi birokrasi, ASN wajib melihat formulir yang telah terisi otomatis untuk melakukan verifikasi akhir sebelum menekan tombol **Simpan** secara sadar dan sah.
+
+---
+
+### 8. 📱 Kompatibilitas Mobile (Ponsel) & Strategi Eksekusi Multi-Platform
+- **Batasan Browser Mobile:** Google Chrome Mobile (Android & iOS) dan Safari Mobile secara default **TIDAK MENDUKUNG Chrome Extension (Manifest V3)** karena pembatasan sistem operasi oleh vendor.
+- **Strategi Resmi di Ponsel: Bookmarklet 1-Klik (`src/lib/ekinerjaBookmarklet.ts`):**
+  1. Pengguna menyimpan tautan script JavaScript Bookmarklet di daftar Bookmark browser ponsel sekali saja (`⚡ Isi e-Kinerja Solo`).
+  2. Di RUANG SIGAP HP: Klik *"Salin Data Form (1-Klik)"* (data form masuk ke clipboard).
+  3. Buka tab baru portal e-Kinerja BKPSDM di browser ponsel dan buka formulir Tambah Kegiatan.
+  4. Jalankan bookmarklet dari address bar / bookmark browser HP.
+  5. 8 kolom langsung terisi instan, dan pegawai cukup menekan tombol **Simpan**.
+- **Alternatif Full Extension di Android:**
+  Pengguna Android yang menginginkan fitur *Zero-Click Cross-Tab* yang sama persis dengan laptop dapat menggunakan **Kiwi Browser** (tersedia gratis di Play Store), mengaktifkan Developer Mode, dan memuat `sigap-chrome-bridge.zip`.
+
+
 
