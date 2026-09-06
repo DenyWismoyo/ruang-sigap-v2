@@ -12,12 +12,34 @@ export interface EkinerjaSubscriptionInfo {
   daysRemaining: number;
   isExpiringSoon: boolean;
   subscription: EkinerjaSubscription | null;
+  isPaymentDisabled?: boolean; // Flag untuk mode evaluasi / pemaksimalan fitur gratis
 }
+
+/**
+ * Sakelar Sentral Pembayaran e-Kinerja:
+ * Set false: Semua fitur premium (AI Smart Entry, e-Kinerja Bridge, Poin Tracker) terbuka gratis tanpa paywall.
+ * Set true: Sistem langganan Mayar.id & paywall aktif kembali.
+ */
+export const IS_EKINERJA_PAYMENT_ENABLED = false;
 
 export function useEkinerjaSubscription(): EkinerjaSubscriptionInfo {
   const { userProfile } = useAuth();
 
   return useMemo(() => {
+    // JIKA SISTEM PEMBAYARAN DINONAKTIFKAN (MODE EVALUASI & PEMAKSIMALAN FITUR):
+    if (!IS_EKINERJA_PAYMENT_ENABLED) {
+      return {
+        isSubscribed: true,
+        status: 'ACTIVE',
+        expiryDate: null,
+        formattedExpiry: 'Akses Penuh Terbuka (Mode Evaluasi)',
+        daysRemaining: 999,
+        isExpiringSoon: false,
+        subscription: null,
+        isPaymentDisabled: true,
+      };
+    }
+
     const subscription = userProfile?.ekinerjaSubscription || null;
 
     if (!subscription || !subscription.activeUntil) {
@@ -29,6 +51,7 @@ export function useEkinerjaSubscription(): EkinerjaSubscriptionInfo {
         daysRemaining: 0,
         isExpiringSoon: false,
         subscription: null,
+        isPaymentDisabled: false,
       };
     }
 

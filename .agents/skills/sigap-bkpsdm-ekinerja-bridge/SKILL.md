@@ -232,6 +232,15 @@ interface EkinerjaTransaction {
     - *Ekstensi Chrome Bridge (Zero-Click)*: Free (Tidak) vs PRO (Aktif Penuh)
     - *Penyematan Google Drive Otomatis*: Free (Manual) vs PRO (Otomatis Terhubung)
 
+- **4.1 Sakelar Sentral Feature Flag & Evaluation Sandbox Mode (`IS_EKINERJA_PAYMENT_ENABLED`):**
+  - **Lokasi Sentral:** `src/hooks/useEkinerjaSubscription.ts` $\rightarrow$ `export const IS_EKINERJA_PAYMENT_ENABLED = false;`.
+  - **Tujuan Arsitektur:** Membuka seluruh fitur premium (*AI Smart Entry*, *e-Kinerja Bridge*, *Poin Tracker*) secara gratis dan tanpa batas selama fase evaluasi & pemaksimalan fitur (*product-led adoption*).
+  - **Perilaku saat Dinonaktifkan (`false`):**
+    - `useEkinerjaSubscription()` mengembalikan `isSubscribed: true`, `status: 'ACTIVE'`, `isPaymentDisabled: true`, dan `formattedExpiry: 'Akses Penuh Terbuka (Mode Evaluasi)'`.
+    - Tidak ada modal pembayaran Mayar / invoice / QRIS yang muncul saat pengguna mengklik fitur-fitur premium.
+    - Pada modal e-Kinerja Bridge, tombol tagihan `+ Perpanjang (Rp 50.000)` disembunyikan dan digantikan badge informatif `⭐ Akses Seluruh Fitur Terbuka (Mode Evaluasi)`.
+  - **Re-Aktivasi Monetisasi:** Ketika seluruh fitur sudah matang dan disetujui untuk dimonetisasi, cukup ubah variabel menjadi `true`. Seluruh infrastruktur pembayaran Mayar, webhook Cloud Functions, dan Paywall Modal akan langsung aktif kembali secara mulus tanpa perlu merombak kode.
+
 ---
 
 ### 5. Standar Simetri Form Logbook (Tambah & Edit)
