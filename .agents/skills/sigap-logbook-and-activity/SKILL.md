@@ -119,6 +119,12 @@ Modul Logbook (`/dashboard/logbook`) mengimplementasikan kapabilitas tingkat pre
 3. **Anti-Overlapping Time Inspector:** Pendeteksi tabrakan waktu jam kerja harian dan otomasi penyusunan jam secara sekuensial.
 4. **AI Multi-Activity Decomposer (`SmartAiEntryModal`):** Pemecah catatan narasi/dikte menjadi butir kegiatan mandiri berbobot poin tanpa merangkum.
 5. **AI Bureaucratic Tone Polisher (`/api/ai/polish-kegiatan`):** Penyempurna tata naskah dinas formal dalam 1-klik.
+6. **Auto-Evidence Deep-Link (`buktiUrl` & `buktiNama`):** Menautkan langsung link PDF surat masuk/disposisi, notulensi rapat, atau file tugas ke entri logbook sehingga kolom URL Bukti Dukung e-Kinerja terisi otomatis tanpa perlu re-upload ke Google Drive.
+7. **Smart Presensi Clamping (`getClampedSchedule`):** Otomatis menyelaraskan titik awal dan akhir jam kegiatan hari itu persis mengikuti jam absensi masuk (`jamMasuk`) dan jam pulang (`jamPulang`) riil aparatur pemerintah tanpa tabrakan waktu.
+8. **QR Code Verification Pass & Public Route (`/verify/logbook`):** Lembar PDF rekapitulasi bulanan ASN dilengkapi stempel QR Code unik terenkripsi yang dapat dipindai oleh bendahara gaji dan Inspektorat untuk membuktikan keabsahan hukum laporan secara publik.
+9. **Notulensi Rapat Direct Integration:** Integrasi 1-klik dari modul Notulensi (`/dashboard/notulensi`) untuk mencatat kegiatan rapat peserta dan penyusun notulen (Aktivitas Kepwal ID 97 & 96).
+10. **SIGAP Sentinel Sore (16:30 WIB):** Scheduler Cloud Function yang secara proaktif memindai aparatur dengan jam kerja $< 300$ menit atau memiliki jejak digital (footprint) belum tercatat, lalu mengirim notifikasi FCM & In-App pengingat untuk memproteksi hak TPP.
+11. **Sequential Batch Loop Chrome Extension:** Ekstensi Chrome SIGAP Bridge mendukung mode antrean sekuensial untuk memproses beberapa kegiatan sekaligus di formulir e-Kinerja BKPSDM dalam satu sesi browser.
 
 ---
 

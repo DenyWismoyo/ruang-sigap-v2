@@ -21,7 +21,7 @@ import { detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
-import { SmartAddKegiatanModal } from '@/app/dashboard/poros/(main)/logbook/components/SmartAddKegiatanModal';
+import { SmartAddKegiatanModal } from '@/components/logbook/SmartAddKegiatanModal';
 import { LogbookSettingsModal } from '@/components/logbook/LogbookSettingsModal';
 import { KinerjaTrackerCard } from '@/components/logbook/KinerjaTrackerCard';
 import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
@@ -33,6 +33,14 @@ import { LogbookTimelineCard } from '@/components/logbook/LogbookTimelineCard';
 import { LogbookMobileActionDock } from '@/components/logbook/LogbookMobileActionDock';
 import { MASTER_AKTIVITAS_SOLO } from '@/data/masterAktivitasSolo';
 import { TemplateFavoritSection } from '@/components/logbook/TemplateFavoritSection';
+import { useDigitalFootprint } from '@/hooks/useDigitalFootprint';
+import { DigitalFootprintBanner } from '@/components/logbook/DigitalFootprintBanner';
+import { usePresensiLogbookSync } from '@/hooks/usePresensiLogbookSync';
+import { VoiceLogbookModal } from '@/components/logbook/VoiceLogbookModal';
+import { EkinerjaBatchModal } from '@/components/ekinerja/EkinerjaBatchModal';
+import { BknRhkManagerModal } from '@/components/ekinerja/BknRhkManagerModal';
+import { BknEvidenceExporterModal } from '@/components/ekinerja/BknEvidenceExporterModal';
+import { Mic, Target } from 'lucide-react';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -428,32 +436,20 @@ const RekapBulananModal = ({ isOpen, onClose, userProfile, uploader, jabatanNama
     );
 };
 
-const ShortcutNav = ({ onOpenTutorial }: { onOpenTutorial?: () => void }) => (
-    <div className="mb-6 flex items-center gap-2 flex-wrap"> 
-        <span className="text-sm font-semibold text-muted-foreground shrink-0">Akses Cepat:</span>
-        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
-          <Link href="/dashboard/tugas"><ClipboardCheck size={14} /> Tugas</Link>
+const ShortcutNav = () => (
+    <div className="hidden md:flex items-center gap-2 mb-2 flex-wrap"> 
+        <span className="text-xs font-semibold text-muted-foreground/70 shrink-0">Pintasan:</span>
+        <Button asChild variant="secondary" size="sm" className="h-7 px-2.5 text-xs rounded-full sg-btn">
+          <Link href="/dashboard/tugas"><ClipboardCheck size={13} className="mr-1" /> Tugas</Link>
         </Button>
-        <Button asChild variant="secondary" size="sm" className="rounded-full sg-btn">
-          <Link href="/dashboard/checklist"><ListChecks size={14} /> Checklist</Link>
+        <Button asChild variant="secondary" size="sm" className="h-7 px-2.5 text-xs rounded-full sg-btn">
+          <Link href="/dashboard/checklist"><ListChecks size={13} className="mr-1" /> Checklist</Link>
         </Button>
-        <Button asChild variant="outline" size="sm" className="rounded-full sg-btn border-emerald-300 dark:border-emerald-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 font-medium">
+        <Button asChild variant="outline" size="sm" className="h-7 px-2.5 text-xs rounded-full sg-btn border-emerald-300 dark:border-emerald-700 bg-emerald-50/70 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/60 font-medium">
           <a href="/downloads/sigap-chrome-bridge.zip" download="sigap-chrome-bridge.zip" title="Unduh Ekstensi Chrome Bridge untuk Otomasi e-Kinerja Solo">
-            <Download size={13} className="mr-1.5 text-emerald-600 dark:text-emerald-400" /> Ekstensi e-Kinerja (.ZIP)
+            <Download size={12} className="mr-1 text-emerald-600 dark:text-emerald-400" /> Ekstensi Chrome
           </a>
         </Button>
-        {onOpenTutorial && (
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            onClick={onOpenTutorial}
-            className="rounded-full sg-btn border-blue-300 dark:border-blue-700 bg-blue-50/70 dark:bg-blue-950/40 text-blue-800 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 font-medium"
-            title="Buka Buku Panduan Lengkap Logbook & e-Kinerja (.MD)"
-          >
-            <BookOpen size={13} className="mr-1.5 text-blue-600 dark:text-blue-400" /> Buku Panduan (.MD)
-          </Button>
-        )}
     </div>
 );
 
@@ -568,6 +564,39 @@ const EditKegiatanModal = ({
                                 placeholder="Cari & pilih aktivitas resmi BKPSDM Solo..."
                                 showQuickPills={true}
                             />
+                        </div>
+                    )}
+
+                    {/* RHK SKP BKN SMART SELECT */}
+                    {userProfile?.rhkBknList && userProfile.rhkBknList.length > 0 && (
+                        <div className="space-y-1.5 p-2.5 rounded-lg border border-border/80 bg-muted/20">
+                            <div className="flex items-center justify-between">
+                                <Label className="text-xs font-semibold flex items-center gap-1.5 text-foreground/90">
+                                    <Target size={14} className="text-blue-600" /> Tautkan ke RHK SKP BKN (Opsional)
+                                </Label>
+                                <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700 border-blue-200">
+                                    PermenPANRB 6
+                                </Badge>
+                            </div>
+                            <select
+                                value={currentEntry.rhkId || ''}
+                                onChange={(e) => {
+                                    const selectedRhk = userProfile.rhkBknList?.find(r => r.id === e.target.value);
+                                    setCurrentEntry({
+                                        ...currentEntry,
+                                        rhkId: selectedRhk ? selectedRhk.id : undefined,
+                                        rhkNama: selectedRhk ? selectedRhk.rencanaHasilKerja : undefined,
+                                    });
+                                }}
+                                className="w-full h-8 text-xs rounded-md border border-input bg-background px-2 text-foreground"
+                            >
+                                <option value="">-- Tidak Ditautkan ke RHK Spesifik --</option>
+                                {userProfile.rhkBknList.map(rhk => (
+                                    <option key={rhk.id} value={rhk.id}>
+                                        [{rhk.jenis}] {rhk.rencanaHasilKerja}
+                                    </option>
+                                ))}
+                            </select>
                         </div>
                     )}
 
@@ -794,6 +823,10 @@ export default function LogbookPage() {
     const [isPaywallOpen, setIsPaywallOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isAiEntryOpen, setIsAiEntryOpen] = useState(false);
+    const [isVoiceModalOpen, setIsVoiceModalOpen] = useState(false);
+    const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
+    const [isBknExporterOpen, setIsBknExporterOpen] = useState(false);
+    const [isBknRhkManagerOpen, setIsBknRhkManagerOpen] = useState(false);
     const { isSubscribed } = useEkinerjaSubscription();
 
     const [filterStatus, setFilterStatus] = useState<'all' | 'uncompleted' | 'completed'>('all');
@@ -868,6 +901,37 @@ export default function LogbookPage() {
         }
     }, [fetchLogbookData, isCacheLoading]);
 
+    // Hook Pemindai Jejak Digital Hari Ini (Modul A)
+    const {
+        unloggedItems: footprintItems,
+        isInjecting: isInjectingFootprint,
+        injectAllFootprints,
+    } = useDigitalFootprint(
+        effectiveProfile,
+        selectedDate,
+        logbookData?.kegiatan || [],
+        () => {
+            fetchLogbookData();
+        }
+    );
+
+    // Hook Sinkronisasi Presensi Riil & Safety Guard (Modul D)
+    const {
+        jamMasuk,
+        jamPulang,
+        statusKehadiran,
+        checkTimeSafety,
+        getClampedSchedule,
+    } = usePresensiLogbookSync(effectiveProfile, selectedDate);
+
+    const presensiInfo = useMemo(() => {
+        return {
+            jamMasuk,
+            jamPulang,
+            statusKehadiran,
+        };
+    }, [jamMasuk, jamPulang, statusKehadiran]);
+
     useEffect(() => {
         if (!userProfile) return;
         const fetchTasks = async () => {
@@ -889,7 +953,7 @@ export default function LogbookPage() {
              await fetchLogbookData();
         } catch (error) { console.error("Error updating logbook:", error); alert("Gagal menyimpan perubahan ke logbook."); throw error; }
     };
-    const handleAddKegiatan = async (text: string, waktuMulaiInput?: string, waktuSelesaiInput?: string, aktivitasId?: number, aktivitasNama?: string) => { 
+    const handleAddKegiatan = async (text: string, waktuMulaiInput?: string, waktuSelesaiInput?: string, aktivitasId?: number, aktivitasNama?: string, rhkId?: string, rhkNama?: string) => { 
         const now = new Date();
         const pad = (num: number) => String(num).padStart(2, '0');
         const autoJamMulai = waktuMulaiInput || `${pad(now.getHours())}:${pad(now.getMinutes())}`;
@@ -905,6 +969,8 @@ export default function LogbookPage() {
             createdAt: now.toISOString(),
             aktivitasId: aktivitasId,
             aktivitasNama: aktivitasNama,
+            rhkId: rhkId,
+            rhkNama: rhkNama,
         }; 
         const currentKegiatan = logbookData?.kegiatan || []; 
         await updateKegiatanList([...currentKegiatan, newKegiatan]); 
@@ -918,35 +984,7 @@ export default function LogbookPage() {
     const handleAutoArrangeTimes = async () => {
         if (!logbookData?.kegiatan || logbookData.kegiatan.length === 0) return;
         try {
-            let currentHour = 8;
-            let currentMinute = 0;
-
-            const arranged = logbookData.kegiatan.map((k) => {
-                const startStr = `${String(currentHour).padStart(2, '0')}:${String(currentMinute).padStart(2, '0')}`;
-                let durationMinutes = 60;
-                if (k.waktuMulai && k.waktuSelesai) {
-                    const [sh, sm] = k.waktuMulai.split(':').map(Number);
-                    const [eh, em] = k.waktuSelesai.split(':').map(Number);
-                    if (!isNaN(sh) && !isNaN(eh)) {
-                        const diff = (eh * 60 + em) - (sh * 60 + sm);
-                        if (diff > 0) durationMinutes = diff;
-                    }
-                }
-                const endTotalMinutes = currentHour * 60 + currentMinute + durationMinutes;
-                const endHour = Math.min(17, Math.floor(endTotalMinutes / 60));
-                const endMinute = endTotalMinutes % 60;
-                const endStr = `${String(endHour).padStart(2, '0')}:${String(endMinute).padStart(2, '0')}`;
-
-                currentHour = endHour;
-                currentMinute = endMinute;
-
-                return {
-                    ...k,
-                    waktuMulai: startStr,
-                    waktuSelesai: endStr,
-                };
-            });
-
+            const arranged = getClampedSchedule(logbookData.kegiatan);
             await updateKegiatanList(arranged);
         } catch (err) {
             console.error("Gagal meruntunkan jam kegiatan:", err);
@@ -1006,8 +1044,8 @@ export default function LogbookPage() {
             opdId: effectiveProfile?.opdId || '',
             judul: entry.deskripsi,
             deskripsi: `Dicatat melalui Logbook Harian SIGAP pada ${selectedDate.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}.`,
-            googleDriveLink: driveUrl,
-            fileName: `Logbook_${entry.id}.txt`,
+            googleDriveLink: entry.buktiUrl || driveUrl,
+            fileName: entry.buktiNama || `Logbook_${entry.id}.txt`,
             fileType: 'text/plain',
             sumber: 'logbook_rekap',
             createdAt: entryCreatedAt,
@@ -1096,59 +1134,76 @@ export default function LogbookPage() {
             {/* Header Halaman */}
             <SigapPageHeader 
                 title="Logbook Harian"
-                description="Pencatatan kegiatan harian, konversi bukti kinerja, dan integrasi e-Kinerja BKPSDM"
+                description="Pencatatan kegiatan harian & integrasi e-Kinerja BKPSDM"
                 icon={BookOpen}
                 actions={
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 md:gap-2">
+                        <Button 
+                            onClick={() => setIsBatchModalOpen(true)}
+                            variant="outline"
+                            size="sm"
+                            className="hidden md:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-amber-300 dark:border-amber-700 bg-amber-50/70 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60 shadow-xs"
+                            title="Ekspor seluruh kegiatan hari ini sekaligus ke formulir e-Kinerja BKPSDM"
+                        >
+                            <Zap size={14} className="fill-amber-500 text-amber-500" />
+                            <span>Batch e-Kinerja</span>
+                        </Button>
                         <Button 
                             onClick={() => setIsRekapOpen(true)}
                             variant="outline"
                             size="sm"
-                            className="hidden sm:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50"
+                            className="hidden md:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-emerald-950/50 shadow-xs"
+                            title="Rekap Bulanan"
                         >
                             <Calendar size={14} className="text-emerald-600 dark:text-emerald-400" />
-                            <span>Rekap Bulanan</span>
+                            <span>Rekap</span>
                         </Button>
                         <Button 
                             onClick={() => setIsSettingsOpen(true)}
                             variant="outline"
                             size="sm"
-                            className="hidden sm:inline-flex h-8 text-xs font-semibold items-center gap-1.5 border-border"
+                            className="h-8 text-xs font-semibold flex items-center gap-1.5 border-border px-2.5 sm:px-3"
                             title="Pengaturan Google Drive & Kamus Aktivitas"
                         >
                             <Settings size={14} className="text-muted-foreground" />
-                            <span>Pengaturan</span>
+                            <span className="hidden sm:inline">Pengaturan</span>
                         </Button>
                         <Button 
                             onClick={() => setIsBantuanOpen(true)} 
-                            title="Buka Buku Panduan Lengkap (.md)" 
+                            title="Buku Panduan Lengkap" 
                             variant="outline" 
                             size="sm" 
-                            className="h-8 text-xs font-semibold flex items-center gap-1.5 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 shadow-xs"
+                            className="h-8 text-xs font-semibold flex items-center gap-1.5 border-blue-300 dark:border-blue-700 text-blue-700 dark:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-950/50 shadow-xs px-2.5 sm:px-3"
                         >
                             <BookOpen size={14} className="text-blue-600 dark:text-blue-400" />
-                            <span className="hidden sm:inline">Buku Panduan</span>
-                        </Button>
-                        <Button onClick={() => setIsBantuanOpen(true)} title="Bantuan" variant="ghost" size="icon" className="text-muted-foreground hover:text-primary h-8 w-8">
-                            <HelpCircle size={18} />
+                            <span className="hidden sm:inline">Panduan</span>
                         </Button>
                     </div>
                 }
             >
-                <ShortcutNav onOpenTutorial={() => setIsBantuanOpen(true)} />
+                <ShortcutNav />
             </SigapPageHeader>
 
-            {/* Horizontal 7-Day Date Strip */}
+            {/* Horizontal 7-Day Date Strip with Real-time Presensi Badge */}
             <LogbookDateStrip 
                 selectedDate={selectedDate}
                 onSelectDate={setSelectedDate}
+                tenant="sigap"
+                presensiInfo={presensiInfo}
+            />
+
+            {/* Digital Footprint Auto-Collector Banner (Modul A) */}
+            <DigitalFootprintBanner
+                unloggedItems={footprintItems}
+                isInjecting={isInjectingFootprint}
+                onInjectAll={injectAllFootprints}
                 tenant="sigap"
             />
 
             {/* Daily Metric Bar */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Metrik 1: Progress Penyelesaian */}
-                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+                <div className="sg-card sg-mobile-borderless p-3.5 flex flex-col justify-between">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
                         <span className="font-semibold uppercase tracking-wider">Status Kegiatan</span>
                         <span className="font-bold text-foreground">{dailyStats.text} Selesai</span>
@@ -1163,7 +1218,7 @@ export default function LogbookPage() {
                 </div>
 
                 {/* Metrik 2: Poin e-Kinerja Kepwal */}
-                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
+                <div className="sg-card sg-mobile-borderless p-3.5 flex flex-col justify-between">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span className="font-semibold uppercase tracking-wider">Poin MKE Hari Ini</span>
                         {dailyStats.isTargetMet ? (
@@ -1206,6 +1261,30 @@ export default function LogbookPage() {
                         title="Asisten AI: Pecah catatan atau jejak hari ini menjadi kegiatan mandiri"
                     >
                         <Sparkles size={15} className="mr-1.5 text-amber-200 animate-pulse"/> AI Smart Entry
+                    </Button>
+                    <Button 
+                        onClick={() => setIsVoiceModalOpen(true)} 
+                        variant="outline"
+                        className="h-9 px-3 text-xs font-semibold border-blue-300 dark:border-blue-700/60 bg-blue-50/60 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60"
+                        title="Dikte Suara: Bicara langsung untuk membuat kegiatan logbook via Gemini Flash-Lite"
+                    >
+                        <Mic size={14} className="mr-1.5 text-blue-600 dark:text-blue-400 animate-pulse"/> Dikte Suara
+                    </Button>
+                    <Button 
+                        onClick={() => setIsBatchModalOpen(true)} 
+                        variant="outline"
+                        className="h-9 px-3 text-xs font-semibold border-amber-300 dark:border-amber-700/60 bg-amber-50/60 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/60"
+                        title="Ekspor Seluruh Hari Ini ke e-Kinerja (Batch)"
+                    >
+                        <Zap size={14} className="mr-1.5 fill-amber-500 text-amber-500"/> Batch e-Kinerja
+                    </Button>
+                    <Button 
+                        onClick={() => setIsBknExporterOpen(true)} 
+                        variant="outline"
+                        className="h-9 px-3 text-xs font-semibold border-indigo-300 dark:border-indigo-700/60 bg-indigo-50/60 dark:bg-indigo-950/40 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-900/60"
+                        title="Eksportir Eviden & Rencana Aksi e-Kinerja BKN Nasional (PermenPANRB 6/2022)"
+                    >
+                        <Target size={14} className="mr-1.5 text-indigo-600 dark:text-indigo-400"/> e-Kinerja BKN
                     </Button>
                     <Button 
                         onClick={() => setIsRekapOpen(true)} 
@@ -1313,21 +1392,25 @@ export default function LogbookPage() {
                     </div>
                 ) : filteredKegiatan.length > 0 ? (
                     <div className="space-y-3">
-                        {filteredKegiatan.map((k) => (
-                            <LogbookTimelineCard
-                                key={k.id}
-                                k={k}
-                                onToggle={handleToggleSelesai}
-                                onEdit={(entry) => { setEntryToEdit(entry); setIsEditModalOpen(true); }}
-                                onDelete={handleDeleteKegiatan}
-                                onKirimEkinerja={handleOpenEkinerja}
-                                tenant="sigap"
-                            />
-                        ))}
+                        {filteredKegiatan.map((k) => {
+                            const safety = checkTimeSafety(k.waktuMulai, k.waktuSelesai);
+                            return (
+                                <LogbookTimelineCard
+                                    key={k.id}
+                                    k={k}
+                                    onToggle={handleToggleSelesai}
+                                    onEdit={(entry) => { setEntryToEdit(entry); setIsEditModalOpen(true); }}
+                                    onDelete={handleDeleteKegiatan}
+                                    onKirimEkinerja={handleOpenEkinerja}
+                                    timeWarning={safety.isWarning ? safety.reason : null}
+                                    tenant="sigap"
+                                />
+                            );
+                        })}
                     </div>
                 ) : (
                     /* Interactive Empty State */
-                    <div className="p-8 sm:p-12 bg-card rounded-2xl border border-dashed border-border/90 flex flex-col items-center justify-center text-center space-y-4">
+                    <div className="p-8 sm:p-12 sg-card sg-mobile-borderless border-2 border-dashed border-border/90 flex flex-col items-center justify-center text-center space-y-4">
                         <div className="w-14 h-14 rounded-2xl bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 flex items-center justify-center text-blue-600 dark:text-blue-400 shadow-xs">
                             <BookOpen size={26} />
                         </div>
@@ -1390,6 +1473,7 @@ export default function LogbookPage() {
                     }
                     setIsAiEntryOpen(true);
                 }}
+                onOpenVoiceEntry={() => setIsVoiceModalOpen(true)}
                 tenant="sigap"
             />
             
@@ -1455,6 +1539,51 @@ export default function LogbookPage() {
                 selectedDate={selectedDate}
                 onSaveBatch={handleBatchAddKegiatan}
                 tenant="sigap"
+            />
+
+            <VoiceLogbookModal
+                isOpen={isVoiceModalOpen}
+                onClose={() => setIsVoiceModalOpen(false)}
+                userProfile={effectiveProfile}
+                selectedDate={selectedDate}
+                onSaveBatch={handleBatchAddKegiatan}
+                tenant="sigap"
+            />
+
+            <EkinerjaBatchModal
+                isOpen={isBatchModalOpen}
+                onClose={() => setIsBatchModalOpen(false)}
+                selectedDate={selectedDate}
+                kegiatanList={logbookData?.kegiatan || []}
+                userProfile={effectiveProfile}
+                tenant="sigap"
+            />
+
+            <BknEvidenceExporterModal
+                isOpen={isBknExporterOpen}
+                onClose={() => setIsBknExporterOpen(false)}
+                userProfile={effectiveProfile}
+                logbookHistory={logbookData ? [logbookData] : []}
+                tenant="sigap"
+                onOpenRhkManager={() => {
+                    setIsBknExporterOpen(false);
+                    setIsBknRhkManagerOpen(true);
+                }}
+            />
+
+            <BknRhkManagerModal
+                isOpen={isBknRhkManagerOpen}
+                onClose={() => setIsBknRhkManagerOpen(false)}
+                userProfile={effectiveProfile}
+                tenant="sigap"
+                onProfileUpdated={(updatedList) => {
+                    if (effectiveProfile) {
+                        effectiveProfile.rhkBknList = updatedList;
+                    }
+                    if (userProfile) {
+                        userProfile.rhkBknList = updatedList;
+                    }
+                }}
             />
         </div>
     );

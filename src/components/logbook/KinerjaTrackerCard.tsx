@@ -5,10 +5,11 @@ import { UserProfile, LogbookHarian, LogbookKegiatan } from '@/types';
 import { db } from '@/lib/firebase';
 import { collection, query, where, getDocs, Timestamp } from 'firebase/firestore';
 import { getAktivitasSoloById, detectAktivitasFromLogbookText } from '@/data/masterAktivitasSolo';
-import { Trophy, Clock, Sparkles, Zap, ChevronRight, CheckCircle2, AlertCircle, Calendar } from 'lucide-react';
+import { Trophy, Clock, Sparkles, Zap, ChevronRight, CheckCircle2, AlertCircle, Calendar, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 interface KinerjaTrackerCardProps {
   userProfile: UserProfile | null;
@@ -245,15 +246,62 @@ export function KinerjaTrackerCard({
   const status = getStatusTPP();
   const StatusIcon = status.icon;
 
+  // Kalkulator Proyeksi Hak TPP 100%
+  const tppProjection = useMemo(() => {
+    const poin = monthlyMetrics.totalPoin;
+    if (poin >= TARGET_POIN_BULANAN) {
+      return {
+        isSafe: true,
+        projectedDateStr: "Sudah 100% Terkunci",
+        dailyAvg: 0,
+        tip: "Selamat! Hak TPP 100% Anda bulan ini sudah terkunci aman.",
+      };
+    }
+
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const now = new Date();
+    const isCurrentMonth = now.getFullYear() === year && (now.getMonth() + 1) === month;
+    const currentDay = isCurrentMonth ? Math.max(1, now.getDate()) : new Date(year, month, 0).getDate();
+
+    const dailyAvg = Math.round(poin / currentDay);
+    const remainingPoin = TARGET_POIN_BULANAN - poin;
+
+    if (dailyAvg > 0) {
+      const daysNeeded = Math.ceil(remainingPoin / dailyAvg);
+      const projectedDay = currentDay + daysNeeded;
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const isSafe = projectedDay <= daysInMonth;
+
+      return {
+        isSafe,
+        projectedDateStr: isSafe
+          ? `Tercapai ~${Math.min(daysInMonth, projectedDay)} ${new Date(year, month - 1).toLocaleString('id-ID', { month: 'short' })}`
+          : `Proyeksi melewati bulan`,
+        dailyAvg,
+        tip: isSafe
+          ? `Laju kinerja: ~${dailyAvg} MKE/hari. Target diproyeksikan tuntas ${Math.min(daysInMonth, projectedDay)} ${new Date(year, month - 1).toLocaleString('id-ID', { month: 'short' })}. Hak TPP AMAN 100%!`
+          : `Laju saat ini ~${dailyAvg} MKE/hari. Perlu percepatan minimal ${Math.ceil(remainingPoin / Math.max(1, (daysInMonth - currentDay)))} MKE/hari agar TPP 100% aman.`,
+      };
+    }
+
+    return {
+      isSafe: false,
+      projectedDateStr: "Belum ada laju",
+      dailyAvg: 0,
+      tip: "Mulai catat kegiatan harian Anda untuk mengaktifkan kalkulator proyeksi TPP.",
+    };
+  }, [monthlyMetrics.totalPoin, selectedMonth]);
+
   const [yearStr, monthStr] = selectedMonth.split('-');
   const monthName = new Date(Number(yearStr), Number(monthStr) - 1).toLocaleString('id-ID', { month: 'long', year: 'numeric' });
 
   return (
-    <div className={`rounded-xl border p-4 sm:p-5 transition-all shadow-sm ${
+    <div className={cn(
+      "p-4 sm:p-5 transition-all",
       tenant === 'poros' 
-        ? 'nk-card border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)] text-foreground'
-        : 'bg-card text-card-foreground border-border/80 sg-glass-panel'
-    }`}>
+        ? 'nk-card nk-mobile-borderless border-b border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)] text-foreground'
+        : 'sg-card sg-mobile-borderless border-b border-border/80 bg-card text-card-foreground sg-glass-panel'
+    )}>
       {/* Header Tracker */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3.5 border-b border-border/60">
         <div className="flex items-center gap-2.5">
@@ -268,6 +316,10 @@ export function KinerjaTrackerCard({
               <Badge variant="outline" className={`text-[11px] font-semibold border ${status.color}`}>
                 <StatusIcon size={12} className="mr-1" />
                 {status.label}
+              </Badge>
+              <Badge variant="outline" className={`text-[10px] font-semibold border ${tppProjection.isSafe ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/30' : 'bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30'}`}>
+                <ShieldCheck size={12} className="mr-1" />
+                TPP: {tppProjection.isSafe ? 'Aman 100%' : 'Perlu Pacu'}
               </Badge>
               {gapFinder.missingCount > 0 ? (
                 <Badge variant="outline" className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-500/30">
@@ -388,15 +440,15 @@ export function KinerjaTrackerCard({
         </div>
       </div>
 
-      {/* Smart Tip Bar */}
-      <div className="mt-3 pt-2.5 border-t border-border/40 flex items-center justify-between text-xs text-muted-foreground">
-        <span className="truncate flex items-center gap-1.5">
-          <Sparkles size={12} className="text-amber-500 shrink-0" />
-          <span className="truncate">{status.tip}</span>
+      {/* Smart Tip Bar & Proyeksi TPP */}
+      <div className="mt-3 pt-2.5 border-t border-border/40 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-xs text-muted-foreground">
+        <span className="truncate flex items-center gap-1.5 min-w-0">
+          <ShieldCheck size={13} className={tppProjection.isSafe ? "text-emerald-500 shrink-0" : "text-amber-500 shrink-0"} />
+          <span className="truncate font-medium">{tppProjection.tip}</span>
         </span>
         <button
           onClick={onOpenAiAssistant}
-          className="text-[11px] font-semibold text-primary hover:underline shrink-0 ml-2 flex items-center gap-0.5"
+          className="text-[11px] font-semibold text-primary hover:underline shrink-0 flex items-center gap-0.5 self-end sm:self-auto"
         >
           Catat via AI <ChevronRight size={12} />
         </button>

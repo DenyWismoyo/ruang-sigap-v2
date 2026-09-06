@@ -17,41 +17,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Teks uraian kegiatan tidak boleh kosong.' }, { status: 400 });
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const candidateModels = [
-      "gemini-2.5-flash",
-      "gemini-2.0-flash",
-      "gemini-1.5-flash"
-    ];
-
-    let model;
-    for (const modelName of candidateModels) {
-      try {
-        model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.3,
-            responseMimeType: "application/json",
-          }
-        });
-        break;
-      } catch (e) {
-        // coba model berikutnya
-      }
-    }
-
-    if (!model) {
-      // Fallback local jika inisialisasi AI gagal
-      const detected = detectAktivitasFromLogbookText(text);
-      return NextResponse.json({
-        polishedText: text.charAt(0).toUpperCase() + text.slice(1),
-        aktivitasId: detected?.id || currentAktivitasId || 41,
-        aktivitasNama: detected?.nama || "Membuat laporan",
-        nilaiPoin: detected?.nilaiPoin || 64,
-        explanation: "Poles lokal standar tata bahasa."
-      });
-    }
-
     const prompt = `
 Anda adalah Pakar Tata Naskah Dinas & Analis Kinerja Kepegawaian Pemerintah Kota Surakarta.
 Tugas Anda adalah memoles (polish) catatan pekerjaan/kegiatan harian ASN yang ditulis secara santai, singkat, atau informal menjadi kalimat naskah dinas formal aparatur pemerintah yang elegan, lugas, profesional, dan akuntabel bagi verifikator atasan / Inspektorat.
@@ -78,8 +43,44 @@ Kembalikan respon dalam format JSON:
 }
 `;
 
-    const result = await model.generateContent(prompt);
-    const responseText = result.response.text();
+    const genAI = new GoogleGenerativeAI(apiKey);
+    // Hanya gunakan varian Flash Lite terbaru (efisien, cepat, dan ekonomis)
+    const candidateModels = [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3.1-flash-lite",
+      "gemini-2.5-flash-lite"
+    ];
+
+    let responseText = "";
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.3,
+            responseMimeType: "application/json",
+          }
+        });
+        const result = await model.generateContent(prompt);
+        responseText = result.response.text();
+        if (responseText) break;
+      } catch (e) {
+        console.warn(`[Polish Kegiatan] Percobaan model ${modelName} gagal, mencoba fallback:`, e);
+      }
+    }
+
+    if (!responseText) {
+      // Fallback local jika inisialisasi / generasi AI gagal
+      const detected = detectAktivitasFromLogbookText(text);
+      return NextResponse.json({
+        polishedText: text.charAt(0).toUpperCase() + text.slice(1),
+        aktivitasId: detected?.id || currentAktivitasId || 41,
+        aktivitasNama: detected?.nama || "Membuat laporan",
+        nilaiPoin: detected?.nilaiPoin || 64,
+        explanation: "Poles lokal standar tata bahasa."
+      });
+    }
 
     try {
       const parsed = JSON.parse(responseText);

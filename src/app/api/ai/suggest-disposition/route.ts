@@ -4,7 +4,7 @@
 // - Menerima data surat dan daftar bawahan.
 // - Prompt direkayasa untuk memilih TEPAT 1 (SATU) bawahan yang paling relevan.
 // - Mengembalikan format JSON berisi ID penerima dan saran instruksi.
-// - [FIX] Update Model AI ke gemini-2.0-flash
+// - [FIX] Update Model AI ke gemini-3.5-flash-lite
 
 import { NextResponse } from 'next/server';
 

@@ -11,34 +11,13 @@ export async function POST(req: NextRequest) {
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+    // Hanya gunakan varian Flash Lite terbaru (efisien, cepat, dan ekonomis)
     const candidateModels = [
       "gemini-3.5-flash-lite",
       "gemini-flash-lite-latest",
-      "gemini-3.5-flash",
       "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite",
-      "gemini-1.5-flash"
+      "gemini-2.5-flash-lite"
     ];
-
-    let model;
-    for (const modelName of candidateModels) {
-      try {
-        model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.5,
-            responseMimeType: "application/json",
-          }
-        });
-        break;
-      } catch (e) {
-        // coba model berikutnya
-      }
-    }
-
-    if (!model) {
-      throw new Error("Gagal menginisialisasi model Generative AI.");
-    }
 
     const body = await req.json();
     const { rawNotes, systemTraces, userNama, userJabatan, tanggalStr } = body;
@@ -109,8 +88,27 @@ Pastikan format JSON yang dikembalikan persis seperti ini:
 Kategori yang valid: "Persuratan" | "Disposisi" | "Laporan" | "Rapat" | "Tugas" | "Umum".
 `;
 
-    const result = await model.generateContent(promptText);
-    const responseText = result.response.text();
+    let responseText = "";
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.5,
+            responseMimeType: "application/json",
+          }
+        });
+        const result = await model.generateContent(promptText);
+        responseText = result.response.text();
+        if (responseText) break;
+      } catch (e) {
+        console.warn(`[Parse Kegiatan] Percobaan model ${modelName} gagal, mencoba fallback:`, e);
+      }
+    }
+
+    if (!responseText) {
+      throw new Error("Gagal mendapatkan respons dari model Gemini Flash Lite.");
+    }
     const parsedData = JSON.parse(responseText);
 
     const rawList = Array.isArray(parsedData.kegiatanList) ? parsedData.kegiatanList : [];

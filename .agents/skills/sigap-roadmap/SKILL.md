@@ -149,11 +149,12 @@ Fitur yang dibangun:
 ## Fase VI — "SIGAP Intelligence Layer" 🚧 DIRENCANAKAN
 **Target: September – Oktober 2026**
 
-Fitur yang direncanakan:
-- **SIGAP Sentinel**: Cron per jam memantau deadline disposisi/tugas, kirim alert proaktif via FCM
+Fitur yang direncanakan & dibangun:
+- **SIGAP Sentinel**: Cron per jam memantau deadline disposisi/tugas & cron sore (16:30 WIB) memantau keterisian logbook harian via FCM
+- **Logbook Enterprise Integration Hub**: Auto-evidence tautan PDF surat dinas/notulensi, Smart Presensi Clamping sekuensial jam kerja, dan QR Code Verification Pass pada PDF rekap bulanan (`/verify/logbook`)
 - **AI Daily Briefing**: Cron pukul 07.00 WIB — ringkasan harian personal ke setiap ASN via push notification
 - **SigapCopilot v2 Agentic**: Upgrade dari chatbot ke AI Agent yang bisa eksekusi aksi (buat disposisi, query surat, tambah jadwal)
-- Rujuk skill `sigap-sentinel-and-proactive-ai` untuk pola implementasi
+- Rujuk skill `sigap-sentinel-and-proactive-ai` dan `sigap-logbook-and-activity` untuk pola implementasi
 
 ---
 
@@ -171,8 +172,8 @@ Fitur yang direncanakan:
 **Target: November – Desember 2026**
 
 Fitur yang direncanakan:
-- **Konektor SIASN/BKN**: Sinkronisasi data ASN otomatis dari API BKN
-- **Konektor e-Kinerja BKN**: Export logbook SIGAP → format BKN, zero double-entry
+- **Universal e-Kinerja BKN & SIASN Pipeline**: Standar integrasi PermenPANRB 6/2022 & 1/2023, alur 2-tahap (Rencana Aksi & Target → Bukti Dukung Link Google Drive & Realisasi), RHK Tagging di Logbook, Gemini AI Auto-Formulator narasi capaian, dan Ekstensi Universal Chrome Bridge (`kinerja.bkn.go.id`). Rujuk skill `sigap-bkn-ekinerja-pipeline`.
+- **Konektor SIASN/BKN**: Sinkronisasi data ASN dan konversi otomatis SK PAK ke profil MyASN untuk percepatan kenaikan pangkat otomatis.
 - **WhatsApp Business Integration**: Notifikasi via WA — field `nomorWa` sudah ada di `users` schema, tinggal dipakai
 - **Integrasi SPSE/SIMDA**: Webhook receiver untuk sistem pemerintahan lain
 

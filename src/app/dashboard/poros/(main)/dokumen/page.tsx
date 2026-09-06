@@ -25,8 +25,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StorageIndicator from './components/StorageIndicator';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import SigapEmptyState from '@/app/dashboard/sigap/components/SigapEmptyState';
-import ConfirmModal from '@/app/dashboard/sigap/components/ConfirmModal';
+import NkEmptyState from '@/app/dashboard/poros/components/NkEmptyState';
+import ConfirmModal from '@/app/dashboard/poros/components/ConfirmModal';
 import RepositoryBreadcrumbs from './components/RepositoryBreadcrumbs';
 import RepositoryItemModal from './components/RepositoryItemModal';
 
@@ -346,7 +346,7 @@ export default function RepositoryDokumenPage() {
                     )}
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center bg-card p-3 md:p-4 sg-mobile-borderless">
+                <div className="flex flex-col md:flex-row gap-3 md:gap-4 justify-between items-center bg-card p-3 md:p-4 nk-mobile-borderless">
                     
                     <div className="w-full md:w-1/2 relative flex gap-2">
                         <div className="relative flex-1">
@@ -442,7 +442,7 @@ export default function RepositoryDokumenPage() {
                         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                     </div>
                 ) : currentItems.length === 0 ? (
-                    <SigapEmptyState 
+                    <NkEmptyState 
                         icon={FolderArchive}
                         title={searchTerm ? "Pencarian Tidak Ditemukan" : "Folder Kosong"}
                         description={searchTerm ? "Coba gunakan kata kunci lain." : "Belum ada dokumen atau folder di sini."}
@@ -463,7 +463,7 @@ export default function RepositoryDokumenPage() {
                                 onDragOver={(e) => item.tipe === 'folder' && handleDragOverInternal(e, item.id!)}
                                 onDragLeave={(e) => item.tipe === 'folder' && handleDragLeaveInternal(e)}
                                 onDrop={(e) => item.tipe === 'folder' && handleDropInternal(e, item.id!)}
-                                className={`group relative sg-glass-panel sg-mobile-borderless hover:border-primary/50 hover:bg-accent/30 transition-all duration-200 ${
+                                className={`group relative nk-glass-panel nk-mobile-borderless hover:border-primary/50 hover:bg-accent/30 transition-all duration-200 ${
                                     viewMode === 'grid' ? 'flex flex-col items-center p-4 text-center h-40 justify-center' : 'flex items-center justify-between p-3'
                                 } ${dragOverTargetFolderId === item.id ? 'border-primary ring-2 ring-primary/50 bg-primary/10' : ''} ${selectedItemIds.includes(item.id!) ? 'border-primary bg-primary/5 ring-1 ring-primary/50' : ''}`}
                             >

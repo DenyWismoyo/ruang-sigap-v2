@@ -1,19 +1,21 @@
 "use client";
 
 import React from 'react';
-import { Plus, Sparkles } from 'lucide-react';
+import { Plus, Sparkles, Mic } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 interface LogbookMobileActionDockProps {
   onAddKegiatan: () => void;
   onOpenAiEntry: () => void;
+  onOpenVoiceEntry?: () => void;
   tenant?: 'sigap' | 'poros';
 }
 
 export const LogbookMobileActionDock: React.FC<LogbookMobileActionDockProps> = ({
   onAddKegiatan,
   onOpenAiEntry,
+  onOpenVoiceEntry,
   tenant = 'sigap',
 }) => {
   const isPoros = tenant === 'poros';
@@ -42,6 +44,23 @@ export const LogbookMobileActionDock: React.FC<LogbookMobileActionDockProps> = (
         <Plus size={18} className="shrink-0" />
         <span>+ Tambah Kegiatan</span>
       </Button>
+
+      {/* Tombol Mikrofon: Dikte Cepat */}
+      {onOpenVoiceEntry && (
+        <Button
+          type="button"
+          onClick={onOpenVoiceEntry}
+          className={cn(
+            "h-11 px-3 rounded-xl font-bold text-xs shadow-sm flex items-center justify-center shrink-0 border",
+            isPoros
+              ? "bg-teal-950/40 border-teal-500/40 text-teal-300 hover:bg-teal-900/60"
+              : "bg-blue-950/40 border-blue-500/40 text-blue-300 hover:bg-blue-900/60"
+          )}
+          title="Dikte Suara: Bicara langsung untuk membuat kegiatan logbook"
+        >
+          <Mic size={16} className="shrink-0 animate-pulse" />
+        </Button>
+      )}
 
       {/* Tombol Cepat: AI Smart Entry */}
       <Button

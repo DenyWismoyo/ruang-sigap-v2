@@ -722,4 +722,96 @@ export const periodicPendingCheck = onSchedule(
             logger.error("Error running periodicPendingCheck:", error);
         }
     }
-);
+);
+
+/**
+ * SIGAP Sentinel Sore (16:30 WIB):
+ * Memeriksa keterisian logbook harian sebelum jam pulang kantor.
+ * Mengirim notifikasi pengingat via FCM & In-App kepada ASN yang belum mengisi logbook
+ * atau capaian jam kerja hari ini masih di bawah 300 menit (5 jam) guna memproteksi hak TPP.
+ */
+export const sigapSentinelLogbookEvening = onSchedule(
+    { schedule: "30 16 * * 1-5", region: REGION, timeZone: "Asia/Jakarta" },
+    async (event) => {
+        logger.log("Menjalankan SIGAP Sentinel Sore Pengingat Logbook...");
+        const now = new Date();
+        const dateStr = now.toISOString().split("T")[0];
+
+        try {
+            // Ambil semua pengguna aktif
+            const usersSnap = await db.collection("users")
+                .where("status", "==", "aktif")
+                .get();
+
+            if (usersSnap.empty) {
+                logger.log("Tidak ada pengguna aktif untuk dipindai.");
+                return;
+            }
+
+            logger.log(`Memindai logbook harian untuk ${usersSnap.size} pengguna aktif...`);
+
+            for (const userDoc of usersSnap.docs) {
+                const user = userDoc.data() as UserProfile;
+                if (!user.uid) continue;
+
+                const logDocId = `${user.uid}_${dateStr}`;
+                const logDoc = await db.collection("logbookHarian").doc(logDocId).get();
+
+                let totalMenit = 0;
+                let kegiatanCount = 0;
+
+                if (logDoc.exists) {
+                    const data = logDoc.data();
+                    const kegiatan = data?.kegiatan || [];
+                    kegiatanCount = kegiatan.length;
+
+                    for (const k of kegiatan) {
+                        if (k.waktuMulai && k.waktuSelesai) {
+                            const [sh, sm] = k.waktuMulai.split(":").map(Number);
+                            const [eh, em] = k.waktuSelesai.split(":").map(Number);
+                            if (!isNaN(sh) && !isNaN(eh)) {
+                                const diff = (eh * 60 + em) - (sh * 60 + sm);
+                                if (diff > 0) totalMenit += diff;
+                            }
+                        } else {
+                            totalMenit += 60; // default 1 jam jika tanpa waktu spesifik
+                        }
+                    }
+                }
+
+                // Jika kegiatan belum ada sama sekali atau jam kerja masih < 300 menit (5 jam)
+                if (kegiatanCount === 0 || totalMenit < 300) {
+                    const sapaan = user.namaLengkap ? user.namaLengkap.split(" ")[0] : "Rekan ASN";
+                    const pesan = kegiatanCount === 0
+                        ? `Halo ${sapaan}, Anda belum mencatat kegiatan dinas hari ini di Logbook. Segera lengkapi sebelum jam pulang untuk mengamankan poin TPP!`
+                        : `Halo ${sapaan}, capaian logbook hari ini baru ${totalMenit} menit (target harian ~360 menit). Periksa kembali bila ada tugas yang belum tercatat.`;
+
+                    // 1. Simpan in-app notification
+                    await db.collection("notifications").add({
+                        userId: user.uid,
+                        userNip: user.nip || "",
+                        opdId: user.opdId || "",
+                        type: "sentinel_logbook",
+                        message: pesan,
+                        link: "/dashboard/logbook",
+                        isRead: false,
+                        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+                    });
+
+                    // 2. Kirim FCM Push Notification ke ponsel
+                    await sendFcmMessageByUid(
+                        user.uid,
+                        "📢 Pengingat Logbook Sore",
+                        pesan,
+                        "/dashboard/logbook",
+                        "sentinel-logbook-evening"
+                    );
+                }
+            }
+
+            logger.log("SIGAP Sentinel Sore selesai dijalankan.");
+        } catch (error) {
+            logger.error("Error menjalankan sigapSentinelLogbookEvening:", error);
+        }
+    }
+);

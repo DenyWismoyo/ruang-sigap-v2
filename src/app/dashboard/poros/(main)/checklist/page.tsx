@@ -354,7 +354,7 @@ const MobileItemCard = ({ item, onUpdateStatus, onDelete, onLogbook, onConvertTo
     };
 
     return (
-        <div className="bg-card p-3 rounded-md shadow-sm border border-border group">
+        <div className="nk-card nk-mobile-borderless p-3 group border-b border-border/40 bg-card">
             <p className="text-sm text-foreground">{item.teks}</p>
             <div className="flex justify-between items-center mt-2 gap-2">
                 <div className="flex gap-2">
@@ -959,14 +959,14 @@ export default function ChecklistPage() {
                                     <TabsTrigger value="Done">Selesai ({doneItems.length})</TabsTrigger>
                                 </TabsList>
                             </div>
-                            <TabsContent value="Todo" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
-                                {todoItems.length > 0 ? todoItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
+                            <TabsContent value="Todo" className="flex-1 overflow-y-auto p-0 space-y-1.5 bg-transparent mx-0 mb-4">
+                                {todoItems.length > 0 ? todoItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-8">Kosong</p>}
                             </TabsContent>
-                             <TabsContent value="In Progress" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
-                                {inProgressItems.length > 0 ? inProgressItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
+                             <TabsContent value="In Progress" className="flex-1 overflow-y-auto p-0 space-y-1.5 bg-transparent mx-0 mb-4">
+                                {inProgressItems.length > 0 ? inProgressItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-8">Kosong</p>}
                             </TabsContent>
-                             <TabsContent value="Done" className="flex-1 overflow-y-auto p-2 space-y-2 bg-muted rounded-b-lg mx-4 md:mx-0 mb-4">
-                                {doneItems.length > 0 ? doneItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-4">Kosong</p>}
+                             <TabsContent value="Done" className="flex-1 overflow-y-auto p-0 space-y-1.5 bg-transparent mx-0 mb-4">
+                                {doneItems.length > 0 ? doneItems.map(item => <MobileItemCard key={item.id} item={item} onUpdateStatus={handleUpdateItemStatus} onDelete={handleDeleteItem} onLogbook={handleLogbookIntegration} onConvertToTugas={handleConvertToTugas}/>) : <p className="text-center text-sm text-muted-foreground py-8">Kosong</p>}
                             </TabsContent>
                         </Tabs>
                     </div>

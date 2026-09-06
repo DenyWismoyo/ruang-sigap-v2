@@ -308,3 +308,14 @@ Fitur-fitur kompleks dan multi-platform (seperti Logbook Kepwal 786/154/2020, AI
 2. **Interactive In-App Guidebook Modal (`LogbookTutorialModal.tsx`):**
    - Modal responsif berbasis `react-markdown` dan `remark-gfm` dengan navigasi bab cepat (*quick chapter pills*), live search filter, highlight badges platform, tombol **"📥 Unduh .MD"**, dan tombol **"📋 Salin .MD"**.
    - Tersemat langsung pada header utama dan shortcut nav Logbook di kedua tenant (SIGAP dan POROS) melalui tombol **"📖 Buku Panduan"**.
+
+---
+
+## 🌐 10. Sinergi Dual-Compliance: Integrasi dengan e-Kinerja BKN Nasional
+Selain pemenuhan TPP harian BKPSDM Surakarta (Kepwal 786/154/2020), ASN juga diwajibkan memenuhi pelaporan SKP periodik ke **e-Kinerja BKN Nasional (`kinerja.bkn.go.id`)** untuk Kenaikan Pangkat di SIASN.
+
+RUANG SIGAP menerapkan paradigma **"One Logbook, Dual-Compliance"**:
+1. **Tagging RHK BKN:** Entri logbook harian selain memiliki `aktivitasId` (152 Kepwal Solo) juga dapat memiliki `rhkId` dan `rhkNama` (RHK Tahunan BKN).
+2. **Jalur Harian (BKPSDM):** Dikirim via Ekstensi/Bookmarklet untuk mengamankan 8.400 MKE dan TPP bulanan.
+3. **Jalur Periodik (BKN):** Seluruh dokumen dan aktivitas dalam rentang triwulan otomatis diorganisasi ke Google Drive per RHK dan disintesis oleh Gemini AI untuk mengisi Rencana Aksi & Realisasi BKN.
+4. **Rujukan Panduan BKN:** Lihat skill resmi [sigap-bkn-ekinerja-pipeline](file:///d:/DENY/project/ruang-sigap-v2/.agents/skills/sigap-bkn-ekinerja-pipeline/SKILL.md) untuk arsitektur lengkap BKN Nasional.

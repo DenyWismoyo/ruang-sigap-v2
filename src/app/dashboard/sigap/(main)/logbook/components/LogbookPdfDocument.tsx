@@ -1,5 +1,5 @@
 import React from 'react';
-import { Page, Text, View, Document, StyleSheet } from '@react-pdf/renderer';
+import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
 import { UserProfile, LogbookHarian } from '@/types';
 
 const styles = StyleSheet.create({
@@ -107,16 +107,48 @@ const styles = StyleSheet.create({
   
   // Footer / Tanda Tangan
   footer: {
-    marginTop: 30,
+    marginTop: 25,
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+  },
+  qrSection: {
+    width: 210,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    borderRadius: 4,
+    backgroundColor: '#f9fafb',
+  },
+  qrImage: {
+    width: 52,
+    height: 52,
+    marginRight: 8,
+  },
+  qrTextContainer: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  qrTitle: {
+    fontSize: 7.5,
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    color: '#1e3a8a',
+    marginBottom: 2,
+  },
+  qrDesc: {
+    fontSize: 6,
+    color: '#4b5563',
+    lineHeight: 1.25,
   },
   signatureBlock: {
-    width: 250,
+    width: 220,
     textAlign: 'center',
   },
   signatureSpace: {
-    height: 60,
+    height: 50,
   },
   signatureLine: {
     borderBottomWidth: 1,
@@ -161,6 +193,8 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
     const safeJabatan = jabatanNama || '-';
     const safeOpd = opdNama ? opdNama.toUpperCase() : 'ORGANISASI PERANGKAT DAERAH';
     const safePeriode = periode || '-';
+    const verifyUrl = `https://sgp.omnifit.cloud/verify/logbook?uid=${userProfile?.uid || ''}&nip=${userProfile?.nip || ''}&periode=${encodeURIComponent(safePeriode)}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(verifyUrl)}`;
 
     return (
         <Document>
@@ -248,8 +282,19 @@ export const LogbookPdfDocument = ({ userProfile, jabatanNama, opdNama, periode,
                     )}
                 </View>
 
-                {/* Footer / Tanda Tangan */}
+                {/* Footer / Tanda Tangan & QR Verification Pass */}
                 <View style={styles.footer}>
+                    {/* QR Code Verification Pass */}
+                    <View style={styles.qrSection}>
+                        <Image src={qrCodeUrl} style={styles.qrImage} />
+                        <View style={styles.qrTextContainer}>
+                            <Text style={styles.qrTitle}>Dokumen Sah Terverifikasi</Text>
+                            <Text style={styles.qrDesc}>Pemerintah Kota Surakarta</Text>
+                            <Text style={styles.qrDesc}>Pindai QR Code untuk memvalidasi keaslian laporan kinerja ini pada portal RUANG SIGAP / POROS.</Text>
+                        </View>
+                    </View>
+
+                    {/* Blok Tanda Tangan Pelapor */}
                     <View style={styles.signatureBlock}>
                         <Text>Surakarta, {new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</Text>
                         <Text>Yang Melaporkan,</Text>

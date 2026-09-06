@@ -14,7 +14,8 @@
     "https://*.surakarta.go.id/*",
     "https://*.web.app/*",
     "https://*.firebaseapp.com/*",
-    "*://sgp.omnifit.cloud/*"
+    "*://sgp.omnifit.cloud/*",
+    "https://kinerja.bkn.go.id/*"
   ],
   "background": {
     "service_worker": "background.js"
@@ -36,6 +37,13 @@
         "http://103.115.227.196/e-kinerja/*"
       ],
       "js": ["content-ekinerja.js"],
+      "run_at": "document_end"
+    },
+    {
+      "matches": [
+        "https://kinerja.bkn.go.id/*"
+      ],
+      "js": ["content-bkn.js"],
       "run_at": "document_end"
     }
   ],

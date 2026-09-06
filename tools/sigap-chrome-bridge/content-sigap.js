@@ -82,5 +82,22 @@
         }, '*');
       });
     }
+
+    // 3. Pengiriman data Rencana Aksi / Eviden ke portal e-Kinerja BKN Nasional
+    if (event.data.type === 'SIGAP_BRIDGE_SEND_BKN') {
+      const payload = event.data;
+      console.log("[SIGAP Bridge] Menerima data BKN dari SIGAP:", payload);
+
+      safeSendMessage({
+        action: 'SEND_TO_BKN',
+        payload: payload
+      }, (response) => {
+        console.log("[SIGAP Bridge] Respons BKN dari background:", response);
+        window.postMessage({
+          type: 'SIGAP_BRIDGE_RESPONSE_BKN',
+          response: response
+        }, '*');
+      });
+    }
   });
 })();

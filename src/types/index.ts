@@ -122,6 +122,27 @@ export interface UserProfile {
   // Pengaturan Tambahan Logbook & e-Kinerja
   useKamusAktivitasKepwal?: boolean;
   customAktivitasList?: string[];
+
+  // Master RHK e-Kinerja BKN Nasional (PermenPANRB 6/2022)
+  rhkBknList?: RencanaHasilKerjaBkn[];
+}
+
+export interface RencanaHasilKerjaBkn {
+  id: string;
+  tahun: number; // e.g. 2026
+  klasifikasi: 'Organisasi' | 'Individu';
+  jenis: 'Utama' | 'Tambahan';
+  rhkPimpinan: string; // RHK Pimpinan yang diintervensi
+  rencanaHasilKerja: string; // Uraian RHK Pegawai
+  penugasanDari?: string;
+  aspekKuantitas?: { indikator: string; target: string };
+  aspekKualitas?: { indikator: string; target: string };
+  aspekWaktu?: { indikator: string; target: string };
+  rencanaAksiDefault?: string;
+  targetDefault?: string;
+  googleDriveFolderUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface EkinerjaSubscription {
@@ -551,7 +572,7 @@ export interface RepositoryItem {
   aiSummary?: string;
   aiClassification?: string;
 }
-export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist' | 'disposisi'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; aktivitasId?: number; aktivitasNama?: string; kuantitas?: number; satuan?: string; }
+export interface LogbookKegiatan { id: string; deskripsi: string; selesai: boolean; tugasTerkaitId?: string; tugasTerkaitJudul?: string; kategori?: 'Surat' | 'Disposisi' | 'Tugas' | 'Rapat' | 'Laporan' | 'Umum'; sumber?: 'manual' | 'copilot' | 'laporan_tindak_lanjut' | 'tugas' | 'checklist' | 'disposisi' | 'footprint' | 'recurring'; suratTerkaitId?: string; suratPerihal?: string; disposisiTerkaitId?: string; waktuMulai?: string; waktuSelesai?: string; createdAt?: string; aktivitasId?: number; aktivitasNama?: string; kuantitas?: number; satuan?: string; buktiUrl?: string; buktiNama?: string; isVerifiedEkinerja?: boolean; rhkId?: string; rhkNama?: string; rhkAspek?: 'Kuantitas' | 'Kualitas' | 'Waktu'; }
 export interface LogbookHarian { id?: string; userId: string; opdId: string; tanggal: Timestamp; kegiatan: LogbookKegiatan[]; }
 export interface TemplateLogbookItem {
   id: string;
@@ -564,6 +585,10 @@ export interface TemplateLogbookItem {
   usageCount: number;
   lastUsedAt?: Timestamp;
   createdAt: Timestamp;
+  recurringDays?: number[]; // 1=Senin s/d 5=Jumat, 0=Minggu, 6=Sabtu
+  recurringWaktuMulai?: string;
+  recurringWaktuSelesai?: string;
+  isAutoRecurring?: boolean;
 }
 export interface TemplateLogbook { userId: string; templates: TemplateLogbookItem[]; }
 export interface BuktiKinerja { id?: string; userId: string; opdId: string; judul: string; deskripsi?: string; sumber?: string; googleDriveLink: string; fileName: string; fileType: string; aktivitasId?: number; aktivitasNama?: string; createdAt: Timestamp; waktuMulai?: string; waktuSelesai?: string; }

@@ -96,7 +96,7 @@ export default function DokumenPenagihanPage() {
                 </p>
             </div>
 
-            <div className="nk-card overflow-hidden">
+            <div className="sg-card overflow-hidden">
                 <div className="p-4 border-b border-white/10 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50">
                     <h2 className="text-lg font-semibold flex items-center gap-2">
                         <Receipt size={18} /> Daftar Tagihan & Kelengkapan Dokumen

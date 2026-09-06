@@ -133,17 +133,9 @@
   }
 }
 
-/* Untuk sg-card yang borderless di mobile (Deprecated, sudah otomatis di .sg-card) */
+/* Sg-card mobile borderless parity */
 [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
-  /* Dipertahankan untuk backward compatibility */
-}
-
-@media (min-width: 768px) {
-  [data-tenant="sigap"] .sg-card.sg-mobile-borderless {
-    border: 1px solid hsl(var(--border) / 0.8);
-    border-radius: var(--radius);
-    box-shadow: var(--sg-shadow-sm);
-  }
+  @apply border-x-0 border-t-0 rounded-none shadow-none md:border md:rounded-[var(--radius)] md:shadow-sm;
 }
 
 [data-tenant="sigap"] .sg-card:hover {

@@ -7,28 +7,118 @@ console.log("[SIGAP Bridge] Content script e-Kinerja BKPSDM siap.");
 // 1. Dengarkan pesan dari background service worker
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'FILL_FORM') {
-    console.log("[SIGAP Bridge] Menerima instruksi pengisian form:", request.payload);
+    console.log("[SIGAP Bridge] Menerima instruksi pengisian form tunggal:", request.payload);
     const result = fillEkinerjaForm(request.payload);
     sendResponse(result);
+  } else if (request.action === 'FILL_BATCH_QUEUE') {
+    console.log("[SIGAP Bridge] Menerima antrean batch:", request.payload);
+    const items = request.payload?.items || [];
+    if (items.length > 0) {
+      if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+        chrome.storage.local.set({ sigapBatchQueue: items, sigapBatchIndex: 0 }, () => {
+          const result = fillEkinerjaForm(items[0]);
+          showBatchProgressWidget(1, items.length, items);
+          sendResponse(result);
+        });
+      } else {
+        const result = fillEkinerjaForm(items[0]);
+        sendResponse(result);
+      }
+    } else {
+      sendResponse({ success: false, reason: 'Antrean batch kosong' });
+    }
   }
 });
 
-// 2. Cek apakah ada antrean data pending saat halaman baru dimuat
+// 2. Cek apakah ada antrean data pending atau batch saat halaman baru dimuat
 document.addEventListener('DOMContentLoaded', () => {
   setTimeout(() => {
     try {
       if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
-        chrome.storage.local.get(['pendingPayload'], (res) => {
+        // Cek antrean tunggal
+        chrome.storage.local.get(['pendingPayload', 'sigapBatchQueue', 'sigapBatchIndex'], (res) => {
           if (res?.pendingPayload) {
             console.log("[SIGAP Bridge] Mengisi data pending dari antrean:", res.pendingPayload);
             fillEkinerjaForm(res.pendingPayload);
             chrome.storage.local.remove('pendingPayload');
+          } else if (res?.sigapBatchQueue && Array.isArray(res.sigapBatchQueue)) {
+            const queue = res.sigapBatchQueue;
+            const idx = res.sigapBatchIndex || 0;
+            if (idx < queue.length) {
+              showBatchProgressWidget(idx + 1, queue.length, queue);
+            }
           }
         });
       }
     } catch (e) {}
   }, 1000);
 });
+
+// Helper Widget Antrean Batch Sequential
+function showBatchProgressWidget(currentIndex, totalItems, queue) {
+  let widget = document.getElementById('sigap-batch-widget');
+  if (!widget) {
+    widget = document.createElement('div');
+    widget.id = 'sigap-batch-widget';
+    widget.style.cssText = `
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 9999998;
+      background: #0f172a;
+      color: #ffffff;
+      padding: 14px 18px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3), 0 0 0 1px rgba(255,255,255,0.1);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    `;
+    document.body.appendChild(widget);
+  }
+
+  const currentItem = queue[currentIndex - 1];
+  const nextItem = queue[currentIndex];
+
+  widget.innerHTML = `
+    <div style="font-size: 20px;">⚡</div>
+    <div>
+      <div style="font-weight: 700; font-size: 13px; color: #38bdf8;">
+        SIGAP Batch Sequential: [${currentIndex} / ${totalItems}]
+      </div>
+      <div style="font-size: 11px; opacity: 0.85; max-width: 240px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+        Aktif: ${currentItem?.namaKegiatan || 'Kegiatan Harian'}
+      </div>
+    </div>
+    ${nextItem ? `
+      <button id="sigap-btn-next-batch" style="
+        background: #0284c7; color: white; border: none; border-radius: 8px;
+        padding: 6px 12px; font-size: 11px; font-weight: 600; cursor: pointer;
+      ">Lanjut Item ${currentIndex + 1} &rarr;</button>
+    ` : `
+      <span style="color: #4ade80; font-weight: 600; font-size: 11px;">✓ Batch Selesai</span>
+    `}
+    <button id="sigap-btn-close-batch" style="background: none; border: none; color: #94a3b8; cursor: pointer; font-size: 14px; margin-left: 4px;">&times;</button>
+  `;
+
+  document.getElementById('sigap-btn-next-batch')?.addEventListener('click', () => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.set({ sigapBatchIndex: currentIndex }, () => {
+        fillEkinerjaForm(queue[currentIndex]);
+        showBatchProgressWidget(currentIndex + 1, totalItems, queue);
+      });
+    }
+  });
+
+  document.getElementById('sigap-btn-close-batch')?.addEventListener('click', () => {
+    if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+      chrome.storage.local.remove(['sigapBatchQueue', 'sigapBatchIndex']);
+    }
+    widget.remove();
+  });
+}
 
 // 3. Fungsi Inti Pengisian Form Kegiatan Harian
 function fillEkinerjaForm(data) {

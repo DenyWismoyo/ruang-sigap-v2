@@ -117,7 +117,7 @@ const SuratCard = React.memo(({
     const bgClass = isBaru ? 'bg-card' : 'bg-slate-50/70 dark:bg-muted/20';
 
     return (
-        <Card className={`transition-all duration-200 border-x-0 border-b border-t-0 border-border/50 rounded-none shadow-none md:border md:rounded-xl md:shadow-sm md:hover:shadow-md border-l-[3px] md:border-l-[4px] ${borderColorClass} overflow-hidden ${bgClass}`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
+        <Card className={`nk-list-card transition-all duration-200 ${borderColorClass} ${bgClass}`} onMouseEnter={() => onPrefetch && onPrefetch(surat.id)}>
             <div className="p-4 md:p-4 cursor-pointer relative" onClick={onNavigate}>
                 
                 <div className="absolute top-2 right-2" onClick={e => e.stopPropagation()}>
@@ -794,7 +794,7 @@ export default function KotakMasukPage() {
                             transition={{ duration: 0.2 }}
                         >
                     {/* Filters */}
-                    <div className="px-4 md:px-0 flex flex-col md:flex-row gap-3 mb-6">
+                    <div className="nk-filter-bar mb-6">
                         <div className="relative flex-1">
                             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <Input 

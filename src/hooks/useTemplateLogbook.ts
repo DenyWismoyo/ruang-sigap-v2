@@ -1,5 +1,5 @@
 // src/hooks/useTemplateLogbook.ts
-// Hook untuk CRUD Template Kegiatan Favorit logbook pengguna
+// Hook untuk CRUD Template Kegiatan Favorit dan Jadwal Rutinitas Otomatis logbook pengguna
 // Data disimpan di Firestore: templateLogbook/{userId}
 
 'use client';
@@ -11,7 +11,7 @@ import {
 } from 'firebase/firestore';
 import { useUserAuth } from '@/context/AuthContext';
 import { writeLogbookEntry } from '@/lib/logbookUtils';
-import { TemplateLogbookItem } from '@/types';
+import { TemplateLogbookItem, LogbookKegiatan } from '@/types';
 
 const EMOJI_BY_KATEGORI: Record<string, string> = {
   'Disposisi': '📨',
@@ -57,7 +57,7 @@ export function useTemplateLogbook() {
 
   // --- TAMBAH template baru ---
   const addTemplate = useCallback(async (
-    item: Pick<TemplateLogbookItem, 'nama' | 'deskripsi' | 'kategori' | 'aktivitasId' | 'aktivitasNama' | 'emoji'>
+    item: Pick<TemplateLogbookItem, 'nama' | 'deskripsi' | 'kategori' | 'aktivitasId' | 'aktivitasNama' | 'emoji' | 'recurringDays' | 'recurringWaktuMulai' | 'recurringWaktuSelesai' | 'isAutoRecurring'>
   ): Promise<boolean> => {
     if (!userProfile?.uid) return false;
     setIsSaving(true);
@@ -72,6 +72,10 @@ export function useTemplateLogbook() {
         emoji: item.emoji || EMOJI_BY_KATEGORI[item.kategori] || '🏢',
         usageCount: 0,
         createdAt: Timestamp.now(),
+        recurringDays: item.recurringDays || [],
+        recurringWaktuMulai: item.recurringWaktuMulai,
+        recurringWaktuSelesai: item.recurringWaktuSelesai,
+        isAutoRecurring: item.isAutoRecurring ?? false,
       };
 
       const docRef = doc(db, 'templateLogbook', userProfile.uid);
@@ -112,8 +116,8 @@ export function useTemplateLogbook() {
     }
   }, [userProfile?.uid, templates]);
 
-  // --- GUNAKAN template (1-tap ke logbook hari ini) ---
-  const useTemplate = useCallback(async (templateId: string): Promise<boolean> => {
+  // --- GUNAKAN template (1-tap ke logbook hari ini atau tanggal target) ---
+  const useTemplate = useCallback(async (templateId: string, targetDate?: Date): Promise<boolean> => {
     if (!userProfile?.uid || !userProfile.opdId) return false;
 
     const template = templates.find(t => t.id === templateId);
@@ -121,15 +125,17 @@ export function useTemplateLogbook() {
 
     setIsSaving(true);
     try {
-      // 1. Tulis ke logbook hari ini
+      // 1. Tulis ke logbook hari ini / target date
       await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
         deskripsi: template.deskripsi,
         kategori: template.kategori,
         aktivitasId: template.aktivitasId,
         aktivitasNama: template.aktivitasNama,
-        sumber: 'manual',
+        sumber: template.recurringDays && template.recurringDays.length > 0 ? 'recurring' : 'manual',
+        waktuMulai: template.recurringWaktuMulai,
+        waktuSelesai: template.recurringWaktuSelesai,
         selesai: true,
-      });
+      }, targetDate);
 
       // 2. Increment usageCount di Firestore (replace template lama)
       const updatedTemplate: TemplateLogbookItem = {
@@ -139,7 +145,7 @@ export function useTemplateLogbook() {
       };
 
       const docRef = doc(db, 'templateLogbook', userProfile.uid);
-      // Hapus yang lama, tambah yang baru (karena arrayUnion tidak bisa update in-place)
+      // Hapus yang lama, tambah yang baru
       await setDoc(docRef, {
         userId: userProfile.uid,
         templates: arrayRemove(template),
@@ -163,6 +169,20 @@ export function useTemplateLogbook() {
     }
   }, [userProfile?.uid, userProfile?.opdId, templates]);
 
+  // --- DETEKSI template rutin yang terjadwal pada hari ini yang belum masuk logbook ---
+  const getScheduledTemplatesForDate = useCallback((date: Date, existingKegiatan: LogbookKegiatan[]): TemplateLogbookItem[] => {
+    const dayOfWeek = date.getDay(); // 0=Minggu, 1=Senin, ..., 5=Jumat, 6=Sabtu
+    const existingDescs = new Set(existingKegiatan.map(k => k.deskripsi.toLowerCase().trim()));
+
+    return templates.filter(tmpl => {
+      if (!tmpl.recurringDays || tmpl.recurringDays.length === 0) return false;
+      const isScheduledToday = tmpl.recurringDays.includes(dayOfWeek);
+      if (!isScheduledToday) return false;
+      // Periksa apakah sudah ada kegiatan dengan deskripsi serupa di hari ini
+      return !existingDescs.has(tmpl.deskripsi.toLowerCase().trim());
+    });
+  }, [templates]);
+
   return {
     templates,
     isLoading,
@@ -170,6 +190,7 @@ export function useTemplateLogbook() {
     addTemplate,
     deleteTemplate,
     useTemplate,
+    getScheduledTemplatesForDate,
     reload: loadTemplates,
     EMOJI_BY_KATEGORI,
   };

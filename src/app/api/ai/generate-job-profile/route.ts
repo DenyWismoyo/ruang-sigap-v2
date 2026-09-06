@@ -1,4 +1,4 @@
-// [FIX] Update Model AI ke gemini-2.0-flash
+// [FIX] Update Model AI ke gemini-3.5-flash-lite
 
 import { NextResponse } from 'next/server';
 

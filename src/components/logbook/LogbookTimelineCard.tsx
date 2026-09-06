@@ -15,6 +15,8 @@ import {
   Check,
   Link as LinkIcon,
   Sparkles,
+  AlertTriangle,
+  Target,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,6 +37,7 @@ interface LogbookTimelineCardProps {
   onDelete: (id: string) => void;
   onKirimEkinerja?: (entry: LogbookKegiatan) => void;
   tenant?: 'sigap' | 'poros';
+  timeWarning?: string | null;
 }
 
 export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
@@ -44,6 +47,7 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
   onDelete,
   onKirimEkinerja,
   tenant = 'sigap',
+  timeWarning,
 }) => {
   const [copied, setCopied] = useState(false);
   const isPoros = tenant === 'poros';
@@ -69,12 +73,13 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
   return (
     <div
       className={cn(
-        "group relative flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-3.5 md:p-4 rounded-2xl transition-all duration-200 border",
+        "group relative flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-3.5 md:p-4 transition-all duration-200",
+        isPoros ? "nk-card nk-mobile-borderless border-b border-border/40" : "sg-card sg-mobile-borderless border-b border-border/40",
         k.selesai
           ? "bg-card/60 opacity-80 border-border/60"
           : isPoros
-          ? "bg-card/90 backdrop-blur-md border-border/80 hover:border-teal-500/40 hover:shadow-md hover:shadow-teal-900/5"
-          : "bg-card border-border/80 hover:border-blue-500/40 hover:shadow-md hover:shadow-slate-900/5"
+          ? "bg-card/90 backdrop-blur-md hover:border-teal-500/40 hover:shadow-md hover:shadow-teal-900/5"
+          : "bg-card hover:border-blue-500/40 hover:shadow-md hover:shadow-slate-900/5"
       )}
     >
       {/* Kolom Kiri: Checkbox & Konten Utama */}
@@ -106,6 +111,18 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
               <span>{k.waktuMulai || '08:00'} - {k.waktuSelesai || '09:30'}</span>
             </span>
 
+            {/* Peringatan Waktu (Safety Guard Presensi) */}
+            {timeWarning && (
+              <Badge
+                variant="outline"
+                className="text-[10px] font-semibold py-0 px-2 bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300 dark:border-amber-800/70 flex items-center gap-1 shrink-0"
+                title={timeWarning}
+              >
+                <AlertTriangle size={11} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                <span className="truncate max-w-[200px]">{timeWarning}</span>
+              </Badge>
+            )}
+
             {/* Badge Aktivitas Kepwal */}
             {k.aktivitasNama && (
               <Badge
@@ -123,6 +140,18 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
                 {masterItem && (
                   <span className="font-bold shrink-0">+{masterItem.nilaiPoin}m</span>
                 )}
+              </Badge>
+            )}
+
+            {/* Badge RHK SKP BKN */}
+            {k.rhkNama && (
+              <Badge
+                variant="outline"
+                className="text-[10px] font-semibold py-0 px-2 flex items-center gap-1 truncate max-w-[240px] bg-indigo-50 text-indigo-800 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/60"
+                title={`RHK SKP BKN: ${k.rhkNama}`}
+              >
+                <Target size={11} className="text-indigo-600 dark:text-indigo-400 shrink-0" />
+                <span className="truncate">RHK: {k.rhkNama}</span>
               </Badge>
             )}
           </div>

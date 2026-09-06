@@ -11,36 +11,6 @@ export async function POST(req: NextRequest) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
     
-    // Prioritaskan model flash-lite
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-3.5-flash",
-      "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite",
-      "gemini-1.5-flash"
-    ];
-    
-    let model;
-    for (const modelName of candidateModels) {
-      try {
-        model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.3, // Lebih rendah untuk tata bahasa agar tidak berhalusinasi
-            responseMimeType: "application/json",
-          }
-        });
-        break; 
-      } catch (e) {
-        // fallback to next
-      }
-    }
-
-    if (!model) {
-      throw new Error("Gagal menginisialisasi model Generative AI.");
-    }
-
     const body = await req.json();
     const { content } = body;
 
@@ -66,8 +36,36 @@ Respons Anda HARUS berupa JSON murni dengan format:
 }
 `;
 
-    const result = await model.generateContent(systemInstruction);
-    const responseText = result.response.text();
+    // Hanya gunakan varian Flash Lite terbaru (efisien, cepat, dan ekonomis)
+    const candidateModels = [
+      "gemini-3.5-flash-lite",
+      "gemini-flash-lite-latest",
+      "gemini-3.1-flash-lite",
+      "gemini-2.5-flash-lite"
+    ];
+    
+    let responseText = "";
+    for (const modelName of candidateModels) {
+      try {
+        const model = genAI.getGenerativeModel({
+          model: modelName,
+          generationConfig: {
+            temperature: 0.3, // Lebih rendah untuk tata bahasa agar tidak berhalusinasi
+            responseMimeType: "application/json",
+          }
+        });
+        const result = await model.generateContent(systemInstruction);
+        responseText = result.response.text();
+        if (responseText) break;
+      } catch (e) {
+        console.warn(`[AI Grammar] Percobaan model ${modelName} gagal, mencoba fallback:`, e);
+      }
+    }
+
+    if (!responseText) {
+      throw new Error("Gagal mendapatkan respons dari model Gemini Flash Lite.");
+    }
+
     const parsedData = JSON.parse(responseText);
 
     return NextResponse.json(parsedData);

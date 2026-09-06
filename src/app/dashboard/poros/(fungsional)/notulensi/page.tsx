@@ -15,8 +15,9 @@ import {
     Plus, ListChecks, Search, Edit, Trash2, Send, Eye, FileDown, 
     HelpCircle, MoreVertical,
     ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
-    Loader2
+    Loader2, BookOpen
 } from 'lucide-react';
+import { writeLogbookEntry } from '@/lib/logbookUtils';
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType } from 'docx';
 import { saveAs } from 'file-saver';
 import ConfirmModal from '@/app/dashboard/poros/components/ConfirmModal'; 
@@ -115,6 +116,7 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
     onConvertToTugas: (text: string) => void
 }) => {
     const { userProfile } = useUserAuth();
+    const { addToast } = useToast();
 
     const { mainContent, actionItems } = useMemo(() => {
         if (!notulensi) return { mainContent: '', actionItems: [] };
@@ -251,7 +253,40 @@ const NotulensiDetailModal = ({ isOpen, onClose, notulensi, onEdit, onDelete, on
                         )}
                     </div>
                 </ScrollArea>
-                <DialogFooter className="p-4 border-t border-border">
+                <DialogFooter className="p-4 border-t border-border flex-wrap gap-2">
+                    <Button 
+                        variant="outline" 
+                        onClick={async () => {
+                            if (!userProfile?.uid || !notulensi) return;
+                            try {
+                                const isCreator = userProfile.uid === notulensi.createdBy;
+                                const desc = isCreator 
+                                    ? `Menyusun dan memvalidasi notulensi rapat dinas: "${notulensi.judulRapat}"`
+                                    : `Mengikuti rapat koordinasi kedinasan: "${notulensi.judulRapat}"`;
+                                
+                                const tanggalRapat = notulensi.tanggalRapat?.toDate ? notulensi.tanggalRapat.toDate() : new Date();
+
+                                await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+                                    deskripsi: desc,
+                                    kategori: 'Rapat',
+                                    selesai: true,
+                                    sumber: 'manual',
+                                    aktivitasId: isCreator ? 96 : 97,
+                                    aktivitasNama: isCreator ? 'Membuat notulen rapat' : 'Mengikuti rapat kedinasan',
+                                    buktiUrl: '/dashboard/notulensi',
+                                    buktiNama: `Notulensi: ${notulensi.judulRapat}`,
+                                }, tanggalRapat);
+
+                                addToast("Kegiatan rapat berhasil ditambahkan ke logbook.", "success");
+                            } catch (e) {
+                                console.error(e);
+                                addToast("Tidak dapat mencatat ke logbook.", "error");
+                            }
+                        }}
+                        className="border-teal-300 dark:border-teal-700 text-teal-700 dark:text-teal-300 hover:bg-teal-50 dark:hover:bg-teal-950/40"
+                    >
+                        <BookOpen size={16} className="mr-2 text-teal-600" /> Catat ke Logbook
+                    </Button>
                     {canManage && (
                       <>
                         <Button variant="outline" onClick={() => onEdit(notulensi)}><Edit size={16} className="mr-2"/> Edit</Button>

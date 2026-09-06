@@ -182,6 +182,16 @@ Modul Logbook Harian (`/dashboard/sigap/logbook` & `/dashboard/poros/logbook`) w
 5. **Collapsible Monthly SKP Tracker**:
    - Kartu akumulasi target bulanan 8.400 menit (`KinerjaTrackerCard`) dibuat *collapsible* (default tersembunyi/ringkas) dengan tombol toggle chevron, sehingga di smartphone pengguna langsung melihat kegiatan hari ini tanpa harus scroll melewati kartu analitik yang tinggi.
 
+6. **Mobile-First Borderless Architecture**:
+   - Seluruh elemen kartu logbook (`LogbookTimelineCard`, `LogbookDateStrip`, kartu metrik harian, `KinerjaTrackerCard`, `DigitalFootprintBanner`) wajib mematuhi aturan **Mobile Borderless**:
+     - **Ponsel (`< md`)**: `border-x-0 border-t-0 rounded-none shadow-none border-b border-border/40`. Menghapus efek kotak kapsul terisolasi dan memberikan ruang horizontal maksimal bagi teks uraian kegiatan naskah dinas.
+     - **Desktop (`>= md`)**: Mengembalikan estetika container editorial (`md:border md:rounded-[var(--radius)] md:shadow-xs hover:md:shadow-md`).
+
+7. **Zero Cross-Tenant Import Leakage & Shared Component Contract**:
+   - Komponen bersama logbook (`SmartAddKegiatanModal`, `TemplateFavoritSection`, `KinerjaTrackerCard`, `LogbookTimelineCard`, `LogbookDateStrip`) wajib berlokasi di `src/components/logbook/` dan menerima prop `tenant?: 'sigap' | 'poros'`.
+   - Dilarang mengimpor komponen antar-tenant (misal SIGAP mengimpor komponen dari `src/app/dashboard/poros/`).
+   - Di tingkat halaman, gunakan wrapper native: `.sg-page` & `.sg-card` untuk SIGAP, serta `.nk-page` & `.nk-card` untuk POROS.
+
 ### G. Standarisasi Unified Floating Action Hub (Anti-Clutter FAB)
 
 Dilarang keras menyebarkan lebih dari 1 floating action button (FAB) independen di tepi layar (misalnya menumpuk tombol Copilot, tombol Pintasan AI, tombol Upload, dan tombol Swipe Disposisi sekaligus di sisi kanan/kiri layar). Hal ini menyebabkan *floating collision* dan merusak ergonomi layar ponsel.
@@ -450,8 +460,50 @@ Token ini nilainya berbeda per tenant tapi namanya sama:
 ```bash
 # Cek token POROS yang terselip di folder SIGAP
 grep -r "--nk-" src/app/dashboard/sigap/
+grep -r "\bnk-" src/app/dashboard/sigap/
 
 # Cek token SIGAP yang terselip di folder POROS
 grep -r "--sg-" src/app/dashboard/poros/
+grep -r "\bsg-" src/app/dashboard/poros/
 ```
+
+---
+
+## ⚖️ 12. Matriks Kesetaraan Utility (Utility Parity Matrix)
+
+Setiap utilitas tata letak, card, badge, dan tombol **WAJIB** memiliki padanan 1-ke-1 di kedua tenant dengan penamaan prefix yang konsisten (`sg-*` untuk SIGAP, `nk-*` untuk POROS):
+
+| Fitur Antarmuka | SIGAP Utility (`sigap.css`) | POROS Utility (`poros.css`) | Shared Component Fallback (Shadcn/Tailwind) |
+|---|---|---|---|
+| **Mobile Borderless** | `.sg-mobile-borderless` | `.nk-mobile-borderless` | `border-x-0 border-t-0 rounded-none shadow-none md:border md:rounded-[var(--radius)] md:shadow-sm` |
+| **Full Bleed Mobile** | `.sigap-full-bleed-mobile` | `.poros-full-bleed-mobile` | `-mx-3 px-3 md:mx-0 md:px-0` |
+| **Scrollable Container** | `.sigap-scrollable` | `.poros-scrollable` | `overflow-y-auto pb-[var(--bottom-nav-height)]` |
+| **Card Dasar** | `.sg-card` | `.nk-card` | `bg-card text-card-foreground border-border` |
+| **List Card (Aksen Kiri)** | `.sg-list-card` | `.nk-list-card` | `border-x-0 border-b border-t-0 md:border md:rounded-[var(--radius)] border-l-[3px]` |
+| **Glass Panel** | `.sg-glass-panel` | `.nk-glass-panel` | `backdrop-blur-xl bg-background/80 border border-border/30` |
+| **Page Container** | `.sg-page` | `.nk-page` | `pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6` |
+| **Filter Bar** | `.sg-filter-bar` | `.nk-filter-bar` | Panel responsif dengan search input |
+| **Empty State** | `<SigapEmptyState />` (`.sg-empty-state`) | `<NkEmptyState />` (`.nk-empty-state`) | Card dashed berlatar transparan |
+| **Tombol Primary** | `.sg-btn-primary` (Royal Blue) | `.nk-btn-primary` (Sovereign Teal) | `<Button className="bg-primary text-primary-foreground">` |
+| **Badge Baru** | `.sg-badge-new` (Merah Solid) | `.nk-badge-new` (Merah Soft Teal) | `<Badge variant="destructive">` |
+| **Badge Selesai** | `.sg-badge-done` (Hijau Solid) | `.nk-badge-done` (Teal Muted) | `<Badge className="bg-green-100 text-green-800">` |
+| **Aksen Judul Seksi** | `.sg-editorial-title` | `.nk-section-title` | Judul dengan left bar 3px |
+
+---
+
+## 📱 13. Aturan Baku Mobile Borderless UI (Viewport < 768px)
+
+1. **Prinsip Bebas Clutter ("Tanpa Kotak di Dalam Kotak")**:
+   - Di smartphone (`< 768px`), kartu daftar (feed) dilarang menggunakan border keliling (`border`), border atas (`border-t`), border kiri-kanan (`border-x`), atau sudut melengkung kaku (`rounded-xl` / `rounded-md`).
+   - Gunakan format borderless:
+     - `border-x-0 border-t-0 rounded-none shadow-none`
+     - Pemisah antar kartu menggunakan garis bawah ultra tipis: `border-b border-border/30` atau `border-border/40`.
+   - Di desktop (`>= 768px`), border keliling, rounded, dan shadow diaktifkan kembali otomatis melalui breakpoint `md:border md:rounded-[var(--radius)] md:shadow-sm`.
+2. **Safe-Area Navigation Bottom Clearance**:
+   - Seluruh kontainer halaman utama (`.sg-page` dan `.nk-page`) wajib menyertakan:
+     `pb-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:pb-6`
+     agar elemen terbawah (termasuk tombol tambah dan FAB) tidak tertutup atau terpotong oleh Bottom Navigation Bar pada smartphone.
+3. **Isolasi Komponen Bersama (`src/components/ui/` & Shared Views)**:
+   - Dilarang mengimpor kelas `.sg-*` atau `.nk-*` secara mentah di komponen bersama yang dipakai kedua tenant (seperti `PresensiPageView`, `UserManagementView`, `OpdManagementView`).
+   - Gunakan kelas utilitas Tailwind responsif bawaan (`border-x-0 border-t-0 rounded-none shadow-none md:border md:rounded-[var(--radius)] md:shadow-sm`) atau helper `cn(isPoros ? 'nk-card' : 'sg-card')`.
 

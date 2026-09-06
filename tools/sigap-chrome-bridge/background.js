@@ -23,6 +23,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     checkActiveTabs(sendResponse);
     return true;
   }
+
+  if (message.action === 'SEND_TO_BKN') {
+    handleSendToBkn(message.payload, sendResponse);
+    return true;
+  }
 });
 
 // Helper pencari tab e-Kinerja Solo yang tahan banting
@@ -162,5 +167,80 @@ async function checkActiveTabs(sendResponse) {
     });
   } catch (err) {
     sendResponse({ ekinerjaOpen: false, ekinerjaCount: 0 });
+  }
+}
+
+// Helper pencari tab e-Kinerja BKN Nasional
+async function findBknTab() {
+  try {
+    const tabs = await chrome.tabs.query({
+      url: [
+        "https://kinerja.bkn.go.id/*",
+        "*://kinerja.bkn.go.id/*"
+      ]
+    });
+    if (tabs && tabs.length > 0) return tabs[0];
+  } catch (e) {
+    console.warn("[SIGAP Bridge] Query BKN tab error:", e);
+  }
+
+  try {
+    const allTabs = await chrome.tabs.query({});
+    const found = allTabs.find(t => t.url && t.url.includes('kinerja.bkn.go.id'));
+    if (found) return found;
+  } catch (e) {
+    console.warn("[SIGAP Bridge] Query all tabs for BKN error:", e);
+  }
+
+  return null;
+}
+
+// Handler pengiriman payload ke tab BKN
+async function handleSendToBkn(payload, sendResponse) {
+  try {
+    const targetTab = await findBknTab();
+
+    if (!targetTab) {
+      await chrome.storage.local.set({ pendingBknPayload: payload });
+      sendResponse({
+        success: false,
+        status: 'TAB_NOT_FOUND',
+        message: 'Tab portal https://kinerja.bkn.go.id belum dibuka. Buka portal e-Kinerja BKN di tab lain.'
+      });
+      return;
+    }
+
+    // Fokus ke tab BKN
+    await chrome.tabs.update(targetTab.id, { active: true });
+    if (targetTab.windowId) {
+      chrome.windows.update(targetTab.windowId, { focused: true });
+    }
+
+    // Kirim pesan ke content-bkn.js
+    chrome.tabs.sendMessage(targetTab.id, { action: 'FILL_BKN_FORM', payload }, (res) => {
+      if (chrome.runtime.lastError) {
+        // Fallback coba injeksi script content-bkn.js
+        try {
+          chrome.scripting.executeScript({
+            target: { tabId: targetTab.id },
+            files: ['content-bkn.js']
+          }, () => {
+            setTimeout(() => {
+              chrome.tabs.sendMessage(targetTab.id, { action: 'FILL_BKN_FORM', payload }, (retryRes) => {
+                sendResponse({ success: true, status: 'DELIVERED', detail: retryRes });
+              });
+            }, 350);
+          });
+        } catch (injectErr) {
+          sendResponse({ success: false, message: 'Gagal menginjeksi ekstensi ke tab BKN: ' + injectErr.message });
+        }
+      } else {
+        sendResponse({ success: true, status: 'DELIVERED', detail: res });
+      }
+    });
+
+  } catch (err) {
+    console.error("[SIGAP Bridge] handleSendToBkn error:", err);
+    sendResponse({ success: false, message: err.message });
   }
 }

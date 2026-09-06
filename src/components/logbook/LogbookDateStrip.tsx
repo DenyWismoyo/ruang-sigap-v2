@@ -10,6 +10,11 @@ interface LogbookDateStripProps {
   onSelectDate: (date: Date) => void;
   tenant?: 'sigap' | 'poros';
   kegiatanDates?: Set<string>; // YYYY-MM-DD dates that have kegiatan
+  presensiInfo?: {
+    jamMasuk: string | null;
+    jamPulang: string | null;
+    statusKehadiran: string | null;
+  } | null;
 }
 
 const toYYYYMMDD = (d: Date) => {
@@ -26,6 +31,7 @@ export const LogbookDateStrip: React.FC<LogbookDateStripProps> = ({
   onSelectDate,
   tenant = 'sigap',
   kegiatanDates,
+  presensiInfo,
 }) => {
   const isPoros = tenant === 'poros';
 
@@ -91,10 +97,10 @@ export const LogbookDateStrip: React.FC<LogbookDateStripProps> = ({
 
   return (
     <div className={cn(
-      "w-full rounded-2xl p-3 md:p-4 transition-all duration-200 shadow-sm border",
+      "w-full p-3 md:p-4 transition-all duration-200",
       isPoros
-        ? "bg-card/90 backdrop-blur-xl border-border/80"
-        : "bg-card border-border/80"
+        ? "nk-card nk-mobile-borderless border-b border-border/40 bg-card/90 backdrop-blur-xl"
+        : "sg-card sg-mobile-borderless border-b border-border/40 bg-card"
     )}>
       {/* Baris Atas: Bulan/Tahun, Navigasi Pekan, dan Tombol Hari Ini */}
       <div className="flex items-center justify-between gap-2 mb-3">
@@ -106,9 +112,17 @@ export const LogbookDateStrip: React.FC<LogbookDateStripProps> = ({
             <CalendarIcon size={16} />
           </div>
           <div className="min-w-0">
-            <h3 className="text-sm md:text-base font-bold text-foreground capitalize truncate leading-tight">
-              {monthYearLabel}
-            </h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="text-sm md:text-base font-bold text-foreground capitalize truncate leading-tight">
+                {monthYearLabel}
+              </h3>
+              {presensiInfo && (presensiInfo.jamMasuk || presensiInfo.jamPulang) ? (
+                <span className="text-[10px] px-2 py-0.5 rounded-full font-mono font-bold bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Presensi: {presensiInfo.jamMasuk || '--:--'} - {presensiInfo.jamPulang || 'Belum Pulang'}
+                </span>
+              ) : null}
+            </div>
             <p className="text-[11px] text-muted-foreground truncate hidden sm:block">
               {selectedDateFormatted}
             </p>

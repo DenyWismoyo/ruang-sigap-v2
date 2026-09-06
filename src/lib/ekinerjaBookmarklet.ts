@@ -15,6 +15,13 @@ export interface EkinerjaFormPayload {
   catatan?: string;
 }
 
+export interface EkinerjaBatchPayload {
+  type: 'sigap_ekinerja_batch';
+  tglPelaksanaan: string;
+  items: EkinerjaFormPayload[];
+  currentIndex?: number;
+}
+
 /**
  * Format tanggal dari Date/Timestamp ke format input e-Kinerja (DD/MM/YYYY)
  */
@@ -47,7 +54,7 @@ export function formatToEkinerjaDate(date: any): string {
 }
 
 /**
- * Salin payload e-Kinerja ke Clipboard dengan format JSON dan Teks Terstruktur
+ * Salin payload e-Kinerja tunggal ke Clipboard
  */
 export async function copyEkinerjaPayloadToClipboard(payload: EkinerjaFormPayload): Promise<boolean> {
   try {
@@ -61,11 +68,33 @@ export async function copyEkinerjaPayloadToClipboard(payload: EkinerjaFormPayloa
 }
 
 /**
+ * Salin antrean batch seluruh kegiatan hari ini ke Clipboard
+ */
+export async function copyEkinerjaBatchPayloadToClipboard(
+  items: EkinerjaFormPayload[],
+  tglPelaksanaan: string
+): Promise<boolean> {
+  try {
+    const batchPayload: EkinerjaBatchPayload = {
+      type: 'sigap_ekinerja_batch',
+      tglPelaksanaan,
+      items,
+      currentIndex: 0,
+    };
+    await navigator.clipboard.writeText(JSON.stringify(batchPayload));
+    return true;
+  } catch (err) {
+    console.warn("Gagal menyalin batch payload ke clipboard:", err);
+    return false;
+  }
+}
+
+/**
  * Kode Bookmarklet 1-Klik Browser Chrome untuk mengisi otomatis Form Kegiatan Harian di e-Kinerja Solo
  */
 export const EKINERJA_BOOKMARKLET_SCRIPT = `(function(){
   try {
-    function fillForm(data) {
+    function fillForm(data, batchInfo) {
       if (!data) return;
       var $ = window.jQuery || window.$;
 
@@ -179,11 +208,78 @@ export const EKINERJA_BOOKMARKLET_SCRIPT = `(function(){
         highlight(qtyEl);
       }
 
-      // Tampilkan Notifikasi Sukses
+      // Tampilkan Toast / Floating Batch Helper
+      var oldWidget = document.getElementById('sigap-batch-helper');
+      if (oldWidget) oldWidget.remove();
+
       var toast = document.createElement('div');
-      toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;z-index:99999;background:linear-gradient(135deg, #065f46 0%, #047857 100%);color:#fff;padding:16px 20px;border-radius:12px;font-family:sans-serif;font-size:13px;box-shadow:0 10px 25px rgba(0,0,0,0.25);display:flex;align-items:center;gap:10px;"><span>⚡</span><div><strong style=\\"display:block;font-size:14px;\\">Otomasi SIGAP Berhasil!</strong>Uraian kegiatan e-Kinerja berhasil diisi.</div></div>';
+      toast.id = 'sigap-batch-helper';
+      var subtitle = batchInfo ? 'Antrean Item ' + (batchInfo.current + 1) + ' dari ' + batchInfo.total : 'Uraian kegiatan e-Kinerja berhasil diisi.';
+      var nextButtonHtml = (batchInfo && (batchInfo.current + 1 < batchInfo.total))
+        ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.25);display:flex;align-items:center;justify-content:space-between;gap:8px;"><span style="font-size:11px;opacity:0.9;">Simpan form lalu klik:</span><button id="sigap-next-item-btn" style="background:#fff;color:#065f46;border:none;padding:5px 12px;border-radius:6px;font-weight:bold;font-size:11px;cursor:pointer;box-shadow:0 2px 5px rgba(0,0,0,0.2);">Lanjut Item ' + (batchInfo.current + 2) + ' ➡️</button></div>'
+        : (batchInfo ? '<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.25);font-size:11px;color:#a7f3d0;">🎉 Seluruh kegiatan hari ini telah selesai diisi!</div>' : '');
+
+      toast.innerHTML = '<div style="position:fixed;top:20px;right:20px;z-index:99999;background:linear-gradient(135deg, #065f46 0%, #047857 100%);color:#fff;padding:14px 18px;border-radius:12px;font-family:sans-serif;font-size:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);max-width:340px;">' +
+        '<div style="display:flex;align-items:center;gap:8px;">' +
+        '<span style="font-size:16px;">⚡</span>' +
+        '<div style="flex:1;"><strong style="display:block;font-size:13px;">Otomasi SIGAP Berhasil!</strong>' + subtitle + '</div>' +
+        '<button id="sigap-close-helper-btn" style="background:transparent;border:none;color:#fff;font-size:18px;line-height:1;cursor:pointer;opacity:0.8;">&times;</button>' +
+        '</div>' +
+        nextButtonHtml +
+        '</div>';
       document.body.appendChild(toast);
-      setTimeout(function(){ toast.remove(); }, 4000);
+
+      var closeBtn = document.getElementById('sigap-close-helper-btn');
+      if (closeBtn) {
+        closeBtn.onclick = function() { toast.remove(); };
+      }
+
+      var nextBtn = document.getElementById('sigap-next-item-btn');
+      if (nextBtn && batchInfo) {
+        nextBtn.onclick = function() {
+          try {
+            var batchData = JSON.parse(sessionStorage.getItem('sigap_ekinerja_batch') || '{}');
+            if (batchData && batchData.items) {
+              batchData.currentIndex = (batchData.currentIndex || 0) + 1;
+              sessionStorage.setItem('sigap_ekinerja_batch', JSON.stringify(batchData));
+              var nextItem = batchData.items[batchData.currentIndex];
+              if (nextItem) {
+                fillForm(nextItem, { current: batchData.currentIndex, total: batchData.items.length });
+              }
+            }
+          } catch(e) {
+            alert('Gagal memuat item berikutnya: ' + e.message);
+          }
+        };
+      }
+
+      if (!batchInfo) {
+        setTimeout(function(){ if (toast && toast.parentNode) toast.remove(); }, 4000);
+      }
+    }
+
+    function processPayload(rawObj) {
+      if (!rawObj) return;
+      // Cek apakah ini batch
+      if (rawObj.type === 'sigap_ekinerja_batch' && Array.isArray(rawObj.items) && rawObj.items.length > 0) {
+        sessionStorage.setItem('sigap_ekinerja_batch', JSON.stringify(rawObj));
+        var idx = rawObj.currentIndex || 0;
+        fillForm(rawObj.items[idx], { current: idx, total: rawObj.items.length });
+        return;
+      }
+      // Cek apakah ada antrean aktif di sessionStorage yang belum selesai
+      var activeBatch = sessionStorage.getItem('sigap_ekinerja_batch');
+      if (activeBatch && !rawObj.urlBuktiDukung) {
+        try {
+          var bObj = JSON.parse(activeBatch);
+          if (bObj && bObj.items && bObj.currentIndex < bObj.items.length) {
+            fillForm(bObj.items[bObj.currentIndex], { current: bObj.currentIndex, total: bObj.items.length });
+            return;
+          }
+        } catch(e){}
+      }
+      // Single payload
+      fillForm(rawObj);
     }
 
     // Coba baca dari Clipboard API
@@ -191,8 +287,8 @@ export const EKINERJA_BOOKMARKLET_SCRIPT = `(function(){
       navigator.clipboard.readText().then(function(clipText){
         try {
           var payload = JSON.parse(clipText);
-          if (payload && payload.urlBuktiDukung) {
-            fillForm(payload);
+          if (payload) {
+            processPayload(payload);
             return;
           }
         } catch(e){}
@@ -208,7 +304,7 @@ export const EKINERJA_BOOKMARKLET_SCRIPT = `(function(){
       var raw = prompt("Paste Data Kinerja dari RUANG SIGAP di sini (Ctrl+V):");
       if (raw) {
         try {
-          fillForm(JSON.parse(raw));
+          processPayload(JSON.parse(raw));
         } catch(err) {
           alert("Format data tidak valid.");
         }
