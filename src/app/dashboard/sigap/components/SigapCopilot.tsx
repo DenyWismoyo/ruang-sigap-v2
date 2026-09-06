@@ -33,7 +33,11 @@ interface Chapter {
   content: string;
 }
 
-export default function SigapCopilot() {
+interface SigapCopilotProps {
+  showFab?: boolean;
+}
+
+export default function SigapCopilot({ showFab = true }: SigapCopilotProps) {
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +48,15 @@ export default function SigapCopilot() {
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
 
   const dragControls = useDragControls();
+
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+    window.addEventListener('sigap:open-copilot', handleOpen);
+    return () => window.removeEventListener('sigap:open-copilot', handleOpen);
+  }, []);
 
   useEffect(() => {
     // Load markdown when widget is opened for the first time
@@ -105,7 +118,7 @@ export default function SigapCopilot() {
     <>
       {/* FAB (Floating Action Button) */}
       <AnimatePresence>
-        {!isOpen && (
+        {showFab && !isOpen && (
           <motion.div
             initial={{ x: 80, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}

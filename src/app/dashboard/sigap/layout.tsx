@@ -29,6 +29,7 @@ import DomainBanner from '@/components/DomainBanner';
 import { QuickReportProvider } from '@/context/QuickReportContext'; // [BARU] Global Quick Report
 import GlobalQuickReport from '@/app/dashboard/sigap/components/GlobalQuickReport'; // [BARU] Global Quick Report UI
 import GlobalBatchReportWidget from '@/app/dashboard/sigap/components/GlobalBatchReportWidget'; // [BARU] Global Batch Report
+import { UnifiedQuickActionHub } from '@/components/navigation/UnifiedQuickActionHub';
 
 
 import { app, db } from '@/lib/firebase'; 
@@ -287,17 +288,9 @@ const DashboardLayoutContent = ({ children }: { children: ReactNode }) => {
               </main>
             </div>
             
-            {/* [BARU] Smart FAB Dock (Kanan) */}
-            <div className="fixed bottom-16 md:bottom-6 right-0 z-[100] flex flex-col-reverse gap-1.5 md:gap-4 items-end pointer-events-none *:pointer-events-auto">
-                <SigapCopilot />
-                <PortalPintarFab />
-                <GlobalBatchReportWidget />
-            </div>
-
-            {/* [BARU] Smart FAB Dock (Kiri) */}
-            <div className="fixed bottom-16 md:bottom-6 left-0 z-[100] flex flex-col-reverse gap-1.5 md:gap-4 items-start pointer-events-none *:pointer-events-auto">
-                <SigapUploadFab />
-            </div>
+            {/* Unified Floating Action Hub (Master Command FAB Anti-Clutter) */}
+            <UnifiedQuickActionHub tenant="sigap" />
+            <SigapCopilot showFab={false} />
 
             <GlobalQuickReport />
 

@@ -182,9 +182,25 @@ Modul Logbook Harian (`/dashboard/sigap/logbook` & `/dashboard/poros/logbook`) w
 5. **Collapsible Monthly SKP Tracker**:
    - Kartu akumulasi target bulanan 8.400 menit (`KinerjaTrackerCard`) dibuat *collapsible* (default tersembunyi/ringkas) dengan tombol toggle chevron, sehingga di smartphone pengguna langsung melihat kegiatan hari ini tanpa harus scroll melewati kartu analitik yang tinggi.
 
-6. **Isolasi Multi-Tenant**:
-   - SIGAP: Menggunakan `tenant="sigap"`, tema Royal Blue (`sg-btn-primary`, `border-border`).
-   - POROS: Menggunakan `tenant="poros"`, tema Sovereign Teal (`[var(--nk-teal-mid)]`, `NkCard`, `border-[var(--nk-glass-border)]`).
+### G. Standarisasi Unified Floating Action Hub (Anti-Clutter FAB)
+
+Dilarang keras menyebarkan lebih dari 1 floating action button (FAB) independen di tepi layar (misalnya menumpuk tombol Copilot, tombol Pintasan AI, tombol Upload, dan tombol Swipe Disposisi sekaligus di sisi kanan/kiri layar). Hal ini menyebabkan *floating collision* dan merusak ergonomi layar ponsel.
+
+**Aturan Standar Floating Hub:**
+1. **Pintu Masuk Tunggal (Single Entry Point):**
+   - Seluruh akses cepat tingkat global (Upload Surat Masuk, Copilot/Knowledge Base, Tools AI/Portal Pintar, dan Swipe Disposisi Masal) disatukan ke dalam satu komponen: `UnifiedQuickActionHub`.
+2. **Visual Hierarchy & Smart Badge:**
+   - Tombol utama berukuran proporsional (`w-12 h-12` s/d `w-14 h-14`) dengan posisi aman di kanan bawah (`bottom-[calc(var(--bottom-nav-height,60px)+0.75rem)] right-3 md:right-6` di mobile, `bottom-6 right-6` di desktop).
+   - Jika terdapat disposisi overdue (> 2 hari), tombol utama menampilkan badge counter notifikasi merah (`animate-pulse`) tanpa memerlukan FAB oranye terpisah.
+3. **Menu Aksi Melayang (Speed Dial Action Palette):**
+   - Saat disentuh, tombol membuka palette melayang dengan backdrop blur lembut yang menyajikan 4 aksi terorganisir dengan ikon, judul, dan status ringkas:
+     - ⚡ **Swipe Disposisi / Lapor Masal** (badge jumlah pending jika ada).
+     - 📄 **Upload Surat Masuk** (hanya untuk role yang berwenang).
+     - 🤖 **AI Copilot & Knowledge Base** (buku panduan interaktif & blueprint).
+     - ✨ **Portal Pintar & Tools AI** (link eksternal & utilitas ASN).
+4. **Isolasi Multi-Tenant:**
+   - SIGAP: Royal Blue aksen (`bg-blue-600`, gradient blue).
+   - POROS: Sovereign Teal aksen (`bg-[var(--nk-teal-mid)]`, gradient teal).
 
 ---
 

@@ -33,7 +33,11 @@ interface Chapter {
   content: string;
 }
 
-export default function PorosCopilot() {
+interface PorosCopilotProps {
+  showFab?: boolean;
+}
+
+export default function PorosCopilot({ showFab = true }: PorosCopilotProps) {
   const router = useRouter();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -44,6 +48,15 @@ export default function PorosCopilot() {
   const [activeChapter, setActiveChapter] = useState<Chapter | null>(null);
 
   const dragControls = useDragControls();
+
+  useEffect(() => {
+    const handleOpen = () => {
+      setIsOpen(true);
+      setIsMinimized(false);
+    };
+    window.addEventListener('sigap:open-copilot', handleOpen);
+    return () => window.removeEventListener('sigap:open-copilot', handleOpen);
+  }, []);
 
   useEffect(() => {
     // Load markdown when widget is opened for the first time
@@ -101,7 +114,7 @@ export default function PorosCopilot() {
     <>
       {/* FAB (Floating Action Button) */}
       <AnimatePresence>
-        {!isOpen && (
+        {showFab && !isOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
