@@ -48,17 +48,7 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
   const [copied, setCopied] = useState(false);
   const isPoros = tenant === 'poros';
 
-  // Hitung durasi kegiatan jika waktu mulai & selesai tersedia
-  const durationMinutes = React.useMemo(() => {
-    if (!k.waktuMulai || !k.waktuSelesai) return null;
-    const [hM, mM] = k.waktuMulai.split(':').map(Number);
-    const [hS, mS] = k.waktuSelesai.split(':').map(Number);
-    if (isNaN(hM) || isNaN(mM) || isNaN(hS) || isNaN(mS)) return null;
-    const totalMulai = hM * 60 + mM;
-    const totalSelesai = hS * 60 + mS;
-    const diff = totalSelesai - totalMulai;
-    return diff > 0 ? diff : null;
-  }, [k.waktuMulai, k.waktuSelesai]);
+
 
   // Cari bobot poin dari kamus jika aktivitas terdaftar
   const masterItem = React.useMemo(() => {
@@ -114,9 +104,6 @@ export const LogbookTimelineCard: React.FC<LogbookTimelineCardProps> = ({
             )}>
               <Clock size={12} className="text-muted-foreground shrink-0" />
               <span>{k.waktuMulai || '08:00'} - {k.waktuSelesai || '09:30'}</span>
-              {durationMinutes && (
-                <span className="text-muted-foreground/80 font-normal">({durationMinutes}m)</span>
-              )}
             </span>
 
             {/* Badge Aktivitas Kepwal */}

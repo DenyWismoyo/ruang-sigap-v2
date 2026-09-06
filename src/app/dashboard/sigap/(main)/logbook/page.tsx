@@ -1145,7 +1145,7 @@ export default function LogbookPage() {
             />
 
             {/* Daily Metric Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Metrik 1: Progress Penyelesaian */}
                 <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -1161,24 +1161,7 @@ export default function LogbookPage() {
                     </div>
                 </div>
 
-                {/* Metrik 2: Jam Kerja */}
-                <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span className="font-semibold uppercase tracking-wider">Durasi Jam Kerja</span>
-                        <Badge variant="outline" className="text-[10px] font-medium border-blue-200 text-blue-700 dark:text-blue-300 dark:border-blue-800">
-                            Harian
-                        </Badge>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-extrabold text-foreground">{dailyStats.jamKerjaText}</span>
-                        <span className="text-[11px] text-muted-foreground">dari rentang waktu</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 truncate">
-                        {dailyStats.totalMenitKerja >= 300 ? '✅ Memenuhi standar 5+ jam efektif' : 'Pastikan mencatat jam mulai & selesai'}
-                    </p>
-                </div>
-
-                {/* Metrik 3: Poin e-Kinerja Kepwal */}
+                {/* Metrik 2: Poin e-Kinerja Kepwal */}
                 <div className="bg-card border border-border/80 rounded-xl p-3.5 shadow-xs flex flex-col justify-between">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span className="font-semibold uppercase tracking-wider">Poin MKE Hari Ini</span>

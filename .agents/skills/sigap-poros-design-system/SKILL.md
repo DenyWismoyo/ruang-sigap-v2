@@ -162,10 +162,9 @@ Modul Logbook Harian (`/dashboard/sigap/logbook` & `/dashboard/poros/logbook`) w
    - Menyajikan 7 pill tanggal horizontal yang menyoroti hari aktif, penanda "Hari Ini", tombol cepat melompat pekan lalu/pekan depan, serta tombol kalender native.
    - Menghitung tanggal yang memiliki kegiatan dengan dot indicator kecil.
 
-2. **Daily Metric Bar Ringkas (3 Pilar Harian)**:
-   - **Status Kegiatan**: Menampilkan rasio selesai/total (misal `4/5 Selesai`) disertai bar progress persentase.
-   - **Durasi Jam Kerja**: Mengkalkulasi jam kerja riil dari selisih waktu mulai & selesai kegiatan (standar $\ge$ 5 jam efektif).
-   - **Poin MKE Harian**: Menampilkan akumulasi menit aktivitas Kepwal 786/154/2020 terhadap target harian (300 menit). Memberikan status visual badge *Target Terpenuhi* (emerald) jika $\ge$ 300 menit atau badge amber jika belum tercapai.
+2. **Daily Metric Bar Ringkas (2 Pilar Produktivitas)**:
+   - **Status Kegiatan**: Menampilkan rasio selesai/total (misal `0/11 Selesai`) disertai bar progress persentase dan status pending.
+   - **Poin MKE Harian**: Menampilkan akumulasi menit aktivitas Kepwal 786/154/2020 terhadap target harian (300 menit). Memberikan status visual badge *Target Terpenuhi* (emerald) jika $\ge$ 300 menit atau badge amber jika belum tercapai. Tidak memerlukan kartu durasi jam kerja konvensional karena acuan resmi ASN Surakarta adalah pemenuhan poin menit aktivitas SKP/TPP.
 
 3. **Executive Timeline Card & Zero Scroll-Trapping (`LogbookTimelineCard`)**:
    - **Anti Scroll-Trapping**: Dilarang keras membungkus feed kegiatan dengan kontainer kaku `h-[600px] overflow-y-auto` yang menyebabkan *double-scrollbar* dan menjebak gesture scroll pada layar smartphone. Gunakan aliran halaman alami dengan padding bawah yang cukup (`pb-32 md:pb-12`).

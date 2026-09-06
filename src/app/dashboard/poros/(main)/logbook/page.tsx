@@ -1171,7 +1171,7 @@ export default function LogbookPage() {
             />
 
             {/* Daily Metric Bar */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {/* Metrik 1: Progress Penyelesaian */}
                 <NkCard className="p-3.5 rounded-xl flex flex-col justify-between border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
@@ -1187,24 +1187,7 @@ export default function LogbookPage() {
                     </div>
                 </NkCard>
 
-                {/* Metrik 2: Jam Kerja */}
-                <NkCard className="p-3.5 rounded-xl flex flex-col justify-between border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)]">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
-                        <span className="font-semibold uppercase tracking-wider">Durasi Jam Kerja</span>
-                        <Badge variant="outline" className="text-[10px] font-medium border-teal-500/30 text-teal-500 bg-teal-500/10">
-                            Harian
-                        </Badge>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                        <span className="text-xl font-extrabold text-foreground">{dailyStats.jamKerjaText}</span>
-                        <span className="text-[11px] text-muted-foreground">dari rentang waktu</span>
-                    </div>
-                    <p className="text-[11px] text-muted-foreground mt-1 truncate">
-                        {dailyStats.totalMenitKerja >= 300 ? '✅ Memenuhi standar 5+ jam efektif' : 'Pastikan mencatat jam mulai & selesai'}
-                    </p>
-                </NkCard>
-
-                {/* Metrik 3: Poin e-Kinerja Kepwal */}
+                {/* Metrik 2: Poin e-Kinerja Kepwal */}
                 <NkCard className="p-3.5 rounded-xl flex flex-col justify-between border-[var(--nk-glass-border)] bg-[var(--nk-surface-2)]">
                     <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                         <span className="font-semibold uppercase tracking-wider">Poin MKE Hari Ini</span>
