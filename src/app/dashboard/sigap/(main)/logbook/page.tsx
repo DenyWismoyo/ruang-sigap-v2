@@ -23,6 +23,8 @@ import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
 import { SmartAddKegiatanModal } from '@/app/dashboard/poros/(main)/logbook/components/SmartAddKegiatanModal';
 import { LogbookSettingsModal } from '@/components/logbook/LogbookSettingsModal';
+import { KinerjaTrackerCard } from '@/components/logbook/KinerjaTrackerCard';
+import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
 import SigapPageHeader from '@/app/dashboard/sigap/components/SigapPageHeader';
 import SigapHelpModal from '@/app/dashboard/sigap/components/SigapHelpModal';
 
@@ -751,6 +753,7 @@ export default function LogbookPage() {
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
     const [isPaywallOpen, setIsPaywallOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isAiEntryOpen, setIsAiEntryOpen] = useState(false);
     const { isSubscribed } = useEkinerjaSubscription();
 
     const parentRef = useRef<HTMLDivElement>(null);
@@ -864,6 +867,11 @@ export default function LogbookPage() {
         }; 
         const currentKegiatan = logbookData?.kegiatan || []; 
         await updateKegiatanList([...currentKegiatan, newKegiatan]); 
+    };
+
+    const handleBatchAddKegiatan = async (kegiatanList: LogbookKegiatan[]) => {
+        const currentKegiatan = logbookData?.kegiatan || [];
+        await updateKegiatanList([...currentKegiatan, ...kegiatanList]);
     };
     
     const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
@@ -984,6 +992,19 @@ export default function LogbookPage() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                     <Button 
+                        onClick={() => {
+                            if (!isSubscribed) {
+                                setIsPaywallOpen(true);
+                                return;
+                            }
+                            setIsAiEntryOpen(true);
+                        }}
+                        className="w-full md:w-auto bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold sg-btn shadow-sm"
+                        title="Asisten AI: Pecah catatan atau jejak hari ini menjadi kegiatan mandiri"
+                     >
+                        <Sparkles size={16} className="mr-2 text-amber-200 animate-pulse"/> AI Smart Entry
+                     </Button>
                      <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto sg-btn sg-btn-primary">
                         <Plus size={16} className="mr-2"/> Tambah Kegiatan
                     </Button>
@@ -1002,6 +1023,23 @@ export default function LogbookPage() {
                         <Settings size={16} className="mr-2 text-muted-foreground"/> Pengaturan
                     </Button>
                 </div>
+            </div>
+
+            {/* Realtime SKP/TPP Point & Effective Hours Tracker */}
+            <div className="px-4 py-2">
+                <KinerjaTrackerCard
+                    userProfile={effectiveProfile}
+                    currentDayKegiatan={logbookData?.kegiatan || []}
+                    selectedMonth={toYYYYMMDD(selectedDate).slice(0, 7)}
+                    onOpenAiAssistant={() => {
+                        if (!isSubscribed) {
+                            setIsPaywallOpen(true);
+                            return;
+                        }
+                        setIsAiEntryOpen(true);
+                    }}
+                    tenant="sigap"
+                />
             </div>
 
             <div className="sg-section">
@@ -1119,6 +1157,15 @@ export default function LogbookPage() {
                 onSaved={() => {
                     fetchLogbookData();
                 }}
+            />
+
+            <SmartAiEntryModal
+                isOpen={isAiEntryOpen}
+                onClose={() => setIsAiEntryOpen(false)}
+                userProfile={effectiveProfile}
+                selectedDate={selectedDate}
+                onSaveBatch={handleBatchAddKegiatan}
+                tenant="sigap"
             />
         </div>
     );

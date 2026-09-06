@@ -224,3 +224,10 @@ Setiap formulir logbook, baik `SmartAddKegiatanModal` (Tambah) maupun `EditKegia
 4. **Preservasi Metadata e-Kinerja:**
    - Saat entri diedit, `aktivitasId` dan `aktivitasNama` yang sudah ada tidak boleh hilang secara tidak sengaja, dan harus diteruskan langsung ke `virtualBukti` saat dikirim ke portal e-Kinerja.
 
+---
+
+### 6. Prinsip AI Logbook: "Decomposition Over Summarization" & Poin Tracker
+- **Larangan Merangkum (No Summarization):** Pada sistem e-Kinerja ASN, poin dihitung per kegiatan mandiri. Asisten AI (`/api/ai/parse-kegiatan`) **dilarang menggabungkan** banyak aktivitas menjadi satu kalimat rangkuman. AI wajib memecah (*decompose*) catatan bebas atau jejak digital menjadi 2–6 butir kegiatan terpisah dengan alokasi jam kerja yang runtut dan tidak saling bertabrakan (*non-overlapping*).
+- **Kalkulator & Tracker Poin Realtime (`KinerjaTrackerCard`):** Menampilkan akumulasi poin Kepwal Solo (target: 1.200 poin) dan jam kerja efektif bulanan (target: 112,5 jam) untuk menjamin kepastian 100% TPP pegawai sebelum tutup buku portal e-Kinerja BKPSDM.
+
+

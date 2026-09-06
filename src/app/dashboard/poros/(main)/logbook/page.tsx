@@ -21,6 +21,8 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { PDFDownloadLink, pdf } from '@react-pdf/renderer';
 import { LogbookPdfDocument } from './components/LogbookPdfDocument'; 
 import { SmartAddKegiatanModal } from './components/SmartAddKegiatanModal';
+import { KinerjaTrackerCard } from '@/components/logbook/KinerjaTrackerCard';
+import { SmartAiEntryModal } from '@/components/logbook/SmartAiEntryModal';
 import { NkPageHeader, NkCard } from '@/app/dashboard/poros/components/NkCard';
 
 // --- Impor Komponen Shadcn ---
@@ -801,6 +803,7 @@ export default function LogbookPage() {
     const [ekinerjaModalBukti, setEkinerjaModalBukti] = useState<BuktiKinerja | null>(null);
     const [isEkinerjaModalOpen, setIsEkinerjaModalOpen] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [isAiEntryOpen, setIsAiEntryOpen] = useState(false);
 
     const parentRef = useRef<HTMLDivElement>(null);
 
@@ -913,6 +916,11 @@ export default function LogbookPage() {
         }; 
         const currentKegiatan = logbookData?.kegiatan || []; 
         await updateKegiatanList([...currentKegiatan, newKegiatan]); 
+    };
+
+    const handleBatchAddKegiatan = async (kegiatanList: LogbookKegiatan[]) => {
+        const currentKegiatan = logbookData?.kegiatan || [];
+        await updateKegiatanList([...currentKegiatan, ...kegiatanList]);
     };
     
     const handleAddTindakLanjut = async (kegiatanBaru: Partial<LogbookKegiatan>) => {
@@ -1028,6 +1036,13 @@ export default function LogbookPage() {
                 </div>
                 
                 <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+                     <Button 
+                        onClick={() => setIsAiEntryOpen(true)}
+                        className="w-full md:w-auto bg-gradient-to-r from-orange-500 via-amber-500 to-amber-600 hover:from-orange-600 hover:to-amber-700 text-white font-semibold shadow-sm"
+                        title="Asisten AI: Pecah catatan atau jejak hari ini menjadi kegiatan mandiri"
+                     >
+                        <Sparkles size={16} className="mr-2 text-amber-200 animate-pulse"/> AI Smart Entry
+                     </Button>
                      <Button onClick={() => setIsAddModalOpen(true)} className="w-full md:w-auto bg-[var(--nk-teal-mid)] hover:bg-[var(--nk-deep)] text-white">
                         <Plus size={16} className="mr-2"/> Tambah Kegiatan
                     </Button>
@@ -1047,6 +1062,17 @@ export default function LogbookPage() {
                     </Button>
                 </div>
             </NkCard>
+
+            {/* Realtime SKP/TPP Point & Effective Hours Tracker */}
+            <div className="mt-4">
+                <KinerjaTrackerCard
+                    userProfile={effectiveProfile}
+                    currentDayKegiatan={logbookData?.kegiatan || []}
+                    selectedMonth={toYYYYMMDD(selectedDate).slice(0, 7)}
+                    onOpenAiAssistant={() => setIsAiEntryOpen(true)}
+                    tenant="poros"
+                />
+            </div>
 
             <div className="mt-8">
                  {loading ? <p className="text-center p-8 text-muted-foreground">Memuat data logbook...</p> : (
@@ -1152,6 +1178,15 @@ export default function LogbookPage() {
                 onSaved={() => {
                     fetchLogbookData();
                 }}
+            />
+
+            <SmartAiEntryModal
+                isOpen={isAiEntryOpen}
+                onClose={() => setIsAiEntryOpen(false)}
+                userProfile={effectiveProfile}
+                selectedDate={selectedDate}
+                onSaveBatch={handleBatchAddKegiatan}
+                tenant="poros"
             />
         </div>
     );
