@@ -57,8 +57,8 @@ export function useLaporanTindakLanjut() {
                 createdAt: now,
             });
 
-            // 3. Tambahkan ke Logbook (Opsional, jika dicentang)
-            if (data.addToLogbook) {
+            // 3. Tambahkan ke Logbook (Default ON — kecuali eksplisit false)
+            if (data.addToLogbook !== false) {
                 const { writeLogbookEntry } = await import('@/lib/logbookUtils');
                 await writeLogbookEntry(userProfile.uid, userProfile.opdId, {
                     deskripsi: `Menindaklanjuti Surat: ${data.ringkasanTindakan}`,

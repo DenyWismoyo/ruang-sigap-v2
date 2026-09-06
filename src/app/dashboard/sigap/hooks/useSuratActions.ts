@@ -187,7 +187,20 @@ export const useSuratActions = () => {
 
       await batch.commit();
 
-
+      // [AUTO-LOGBOOK] Catat aksi disposisi ke logbook pimpinan
+      try {
+        const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+        const recipientNames = targets.map(t => t.namaLengkap).slice(0, 3).join(', ');
+        const moreCount = targets.length > 3 ? ` (+${targets.length - 3} lainnya)` : '';
+        writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+          deskripsi: `${isInformational ? 'Menyebarkan pemberitahuan' : 'Mendisposisikan surat'}: ${surat.perihal} → ${recipientNames}${moreCount}`,
+          kategori: 'Disposisi',
+          sumber: 'disposisi',
+          suratTerkaitId: surat.id,
+          suratPerihal: surat.perihal,
+          selesai: true,
+        }).catch(err => console.warn('[Logbook] Auto-write disposisi gagal:', err));
+      } catch (logErr) { console.warn('[Logbook]', logErr); }
 
       addToast(`Berhasil mengirim ke ${targets.length} orang.`, "success");
       refreshData();
@@ -331,6 +344,19 @@ export const useSuratActions = () => {
 
       await batch.commit();
 
+      // [AUTO-LOGBOOK] Catat penerimaan disposisi (selesai: false = masih dalam proses)
+      try {
+        const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+        writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+          deskripsi: `Menerima disposisi surat: ${surat.perihal}`,
+          kategori: 'Disposisi',
+          sumber: 'disposisi',
+          suratTerkaitId: surat.id,
+          suratPerihal: surat.perihal,
+          disposisiTerkaitId: disposisi.id,
+          selesai: false,
+        }).catch(err => console.warn('[Logbook] Auto-write terima disposisi gagal:', err));
+      } catch (logErr) { console.warn('[Logbook]', logErr); }
 
       addToast("Disposisi diterima.", "success");
       refreshData();
@@ -762,6 +788,19 @@ export const useSuratActions = () => {
           await logActivity(surat.id!, actorName, "Menyelesaikan Secara Mandiri (SELESAI)", "Pimpinan telah menindaklanjuti dan menyelesaikan surat secara langsung.");
 
           await batch.commit();
+
+          // [AUTO-LOGBOOK] Catat penyelesaian mandiri
+          try {
+            const { writeLogbookEntry } = await import('@/lib/logbookUtils');
+            writeLogbookEntry(userProfile.uid, userProfile.opdId, {
+              deskripsi: `Menyelesaikan surat secara mandiri: ${surat.perihal}`,
+              kategori: 'Disposisi',
+              sumber: 'disposisi',
+              suratTerkaitId: surat.id,
+              suratPerihal: surat.perihal,
+              selesai: true,
+            }).catch(err => console.warn('[Logbook] Auto-write mandiri gagal:', err));
+          } catch (logErr) { console.warn('[Logbook]', logErr); }
 
           // [SINKRONISASI UI INSTAN]
           if (effectiveJabatan?.opdId) {

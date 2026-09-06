@@ -119,3 +119,46 @@ Modul Logbook (`/dashboard/logbook`) mengimplementasikan kapabilitas tingkat pre
 3. **Anti-Overlapping Time Inspector:** Pendeteksi tabrakan waktu jam kerja harian dan otomasi penyusunan jam secara sekuensial.
 4. **AI Multi-Activity Decomposer (`SmartAiEntryModal`):** Pemecah catatan narasi/dikte menjadi butir kegiatan mandiri berbobot poin tanpa merangkum.
 5. **AI Bureaucratic Tone Polisher (`/api/ai/polish-kegiatan`):** Penyempurna tata naskah dinas formal dalam 1-klik.
+
+---
+
+## 🔄 6. Matriks Coverage Auto-Logbook (Referensi Lengkap)
+
+Setiap aksi disposisi kini **WAJIB** mencatat ke logbook. Tabel berikut adalah referensi resmi:
+
+| Aksi | Fungsi SSOT | `sumber` | `kategori` | `selesai` |
+|------|-------------|----------|------------|-----------|
+| Kirim Disposisi | `kirimDisposisi()` | `'disposisi'` | `'Disposisi'` | `true` |
+| Tindak Lanjuti Sendiri | `tindakLanjutiSendiri()` | `'disposisi'` | `'Disposisi'` | `true` |
+| Terima Disposisi | `terimaDisposisi()` | `'disposisi'` | `'Disposisi'` | `false` |
+| Kirim Tindak Lanjut | `kirimTindakLanjut()` | `'laporan_tindak_lanjut'` | `'Laporan'` | `isFinalAction` |
+| Selesaikan Tugas | `submitTaskReport()` | `'tugas'` | `'Tugas'` | `true` |
+| Laporan via Copilot | `createLaporanTindakLanjut()` | `'copilot'` | `'Laporan'` | `true` |
+| Template Favorit | `useTemplateLogbook.useTemplate()` | `'manual'` | sesuai template | `true` |
+
+> `'disposisi'` adalah nilai `sumber` baru (valid di `LogbookKegiatan.sumber` type sejak September 2026).
+
+---
+
+## ⭐ 7. Template Kegiatan Favorit
+
+ASN dapat menyimpan kegiatan rutin sebagai template dan menambahkannya ke logbook dengan 1 ketuk.
+
+### Hook: `useTemplateLogbook` (`src/hooks/useTemplateLogbook.ts`)
+
+```typescript
+import { useTemplateLogbook } from '@/hooks/useTemplateLogbook';
+const { templates, addTemplate, deleteTemplate, useTemplate } = useTemplateLogbook();
+
+await addTemplate({ nama: 'Apel Pagi', deskripsi: 'Mengikuti apel pagi', kategori: 'Umum' });
+await useTemplate(template.id);  // 1-tap → logbook hari ini, auto-increment usageCount
+await deleteTemplate(template.id);
+```
+
+### Komponen: `TemplateFavoritSection` (`src/components/logbook/TemplateFavoritSection.tsx`)
+
+```tsx
+<TemplateFavoritSection tenant="sigap" onSuccess={() => {}} />
+```
+
+Diintegrasikan di logbook SIGAP dan POROS, **di antara KinerjaTrackerCard dan Filter Tabs**. Template diurutkan berdasar `usageCount` (paling sering = paling kiri di carousel).

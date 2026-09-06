@@ -32,6 +32,7 @@ import { LogbookDateStrip } from '@/components/logbook/LogbookDateStrip';
 import { LogbookTimelineCard } from '@/components/logbook/LogbookTimelineCard';
 import { LogbookMobileActionDock } from '@/components/logbook/LogbookMobileActionDock';
 import { MASTER_AKTIVITAS_SOLO } from '@/data/masterAktivitasSolo';
+import { TemplateFavoritSection } from '@/components/logbook/TemplateFavoritSection';
 
 // --- Impor Komponen Shadcn ---
 import {
@@ -1255,6 +1256,16 @@ export default function LogbookPage() {
                     />
                 </div>
             )}
+
+            {/* === TEMPLATE KEGIATAN FAVORIT === */}
+            <div className="mt-4 px-1">
+                <TemplateFavoritSection
+                    tenant="sigap"
+                    onSuccess={() => {
+                        // Logbook di-refresh otomatis oleh Firestore listener
+                    }}
+                />
+            </div>
 
             {/* Filter Tabs & Timeline Kegiatan */}
             <div className="space-y-3 pt-2">
