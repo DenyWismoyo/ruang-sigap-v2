@@ -4,8 +4,7 @@
  * Mengutamakan efek visual 'Glassmorphism', micro-depth shadow, dan Mobile-First Borderless.
  */
 
-@layer base {
-  [data-tenant="poros"] {
+[data-tenant="poros"] {
     /* --- LIGHT MODE --- */
     --background: 150 12% 97%;     /* Warm white, sedikit kehijauan */
     --foreground: 195 60% 8%;      /* Deep ocean text */
@@ -124,7 +123,6 @@
     background-color: var(--nk-teal-mid);
     color: white;
   }
-}
 
 /* ==========================================================================
    POROS UTILITIES & COMPONENT TOKENS
