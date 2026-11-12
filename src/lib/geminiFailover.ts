@@ -1,3 +1,4 @@
+import 'server-only';
 import { GoogleGenerativeAI, ModelParams } from '@google/generative-ai';
 
 export const CANDIDATE_FLASH_LITE_MODELS = [

@@ -125,38 +125,16 @@ export default function NotulensiFormModal({
         }
         setIsAiProcessing(true);
         try {
-            const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY; 
-            if (!apiKey) throw new Error("API Key for AI service is not configured.");
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-            
-            const systemPrompt = `Anda adalah seorang notulis rapat profesional. Susun catatan mentah berikut menjadi notulensi formal. Gunakan format Markdown (Bold dan List).
-            
-            Struktur Wajib:
-            **Tanggal:** [Isi]
-            **Pimpinan:** [Isi]
-            **Peserta:** [List]
-            ---
-            **Agenda:** [Isi]
-            **Pembahasan:** [Poin-poin]
-            **Kesimpulan:** [Poin-poin]
-            **Tindak Lanjut (Action Items):**
-            - [ ] [Item Tindak Lanjut]
-            `;
-
-            const payload = {
-                contents: [{ parts: [{ text: `${systemPrompt}\n\nCatatan Rapat:\n${aiInput}` }] }],
-            };
-            
-            const response = await fetch(apiUrl, {
+            const response = await fetch('/api/ai/draft-notulensi', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ aiInput })
             });
 
-            if (!response.ok) throw new Error(`AI Error: ${response.status}`);
-            
             const result = await response.json();
-            const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!response.ok) throw new Error(result.error || `AI Error: ${response.status}`);
+            
+            const text = result.text;
             
             if (text) {
                 setFormData((prev: any) => ({ ...prev, isiNotulensi: text }));

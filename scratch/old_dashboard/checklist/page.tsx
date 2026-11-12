@@ -674,21 +674,15 @@ export default function ChecklistPage() {
     const handleAiGenerate = async (aiInput: string) => {
         if (!aiInput.trim() || !activeBoard) return;
         try {
-            const apiKey = process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-            if (!apiKey) throw new Error("API Key for AI service is not configured.");
-            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-            const prompt = `Anda adalah asisten perencana tugas. Berdasarkan tujuan utama berikut: "${aiInput}", pecahlah menjadi langkah-langkah kerja (action items) yang jelas dan ringkas dalam format JSON array berisi string. Contoh output: ["Langkah 1", "Langkah 2", "Langkah 3"]`;
-            const schema = { type: "ARRAY", items: { type: "STRING" } };
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                generationConfig: { responseMimeType: "application/json", responseSchema: schema }
-            };
-            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            if (!response.ok) throw new Error(`API call failed with status: ${response.status}`);
+            const response = await fetch('/api/ai/generate-checklist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ aiInput })
+            });
             const result = await response.json();
-            const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textPart) {
-                const generatedSteps: string[] = JSON.parse(textPart);
+            if (!response.ok) throw new Error(result.error || `API call failed with status: ${response.status}`);
+            const generatedSteps: string[] = result.steps;
+            if (Array.isArray(generatedSteps) && generatedSteps.length > 0) {
                 const newItems: ChecklistItem[] = generatedSteps.map(step => ({
                     id: Date.now().toString() + Math.random().toString(16).slice(2),
                     teks: step,

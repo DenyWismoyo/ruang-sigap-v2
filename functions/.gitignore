@@ -1,12 +1,22 @@
-Compiled JavaScript files
-lib//*.js
-lib//*.js.map
+# Compiled JavaScript files
+lib/
+*.tsbuildinfo
 
-TypeScript v1 declaration files
+# TypeScript declaration files
 typings/
 
-Node.js dependency directory
+# Node.js dependency directory
 node_modules/
 
-Local environment files
+# Environment files & Secrets
+.env*
+.secret*
 *.local
+
+# Firebase & debug logs
+firebase-debug*.log
+firestore-debug*.log
+ui-debug*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
