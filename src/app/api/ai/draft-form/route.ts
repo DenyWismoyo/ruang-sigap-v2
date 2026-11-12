@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateContentWithSdkFailover } from '@/lib/geminiFailover';
 
 export async function POST(req: Request) {
     try {
@@ -10,8 +8,6 @@ export async function POST(req: Request) {
         if (!prompt || !variables || !Array.isArray(variables)) {
             return NextResponse.json({ error: 'Prompt dan variables wajib diisi.' }, { status: 400 });
         }
-
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
 
         const systemInstruction = `
 Anda adalah asisten AI untuk mempermudah pembuatan surat di instansi pemerintahan.
@@ -32,8 +28,7 @@ Contoh output:
   "nama_pegawai": "Budi Santoso"
 }`;
 
-        const result = await model.generateContent(systemInstruction);
-        const responseText = result.response.text();
+        const { text: responseText } = await generateContentWithSdkFailover(systemInstruction);
         
         // Membersihkan jika ada backticks markdown
         const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();

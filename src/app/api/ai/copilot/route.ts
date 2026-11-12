@@ -5,13 +5,12 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebase-admin";
-
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+import { getGeminiApiKeys, CANDIDATE_FLASH_LITE_MODELS } from "@/lib/geminiFailover";
 
 export async function POST(req: Request) {
   try {
-    if (!apiKey) {
+    const apiKeys = getGeminiApiKeys();
+    if (apiKeys.length === 0) {
       return NextResponse.json(
         { error: "API Key Gemini belum dikonfigurasi pada server (GEMINI_API_KEY)." },
         { status: 500 }
@@ -386,31 +385,35 @@ Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke d
     // =========================================================================
     // 5. GENERASI KONTEN (DENGAN LOOP TOOL CALL)
     // =========================================================================
-    const modelOptions = {
-        model: "gemini-3.5-flash-lite",
-        systemInstruction,
-        tools: tools as any,
-    };
-    
-    let model = genAI.getGenerativeModel(modelOptions);
-
     let replyText = "";
     let finalPayload: any = null;
     let usedModel = "gemini-3.5-flash-lite";
+    let lastError: any = null;
 
-    // Loop execution untuk tool calls (max 3 iterasi)
-    const maxIterations = 3;
-    let iteration = 0;
-    
-    while (iteration < maxIterations) {
-        iteration++;
-        const result = await model.generateContent({
-            contents: formattedContents,
-            generationConfig: {
-                temperature: 0.1, // Diturunkan agar lebih presisi dan tidak halusinasi data
+    keyLoop: for (const currentApiKey of apiKeys) {
+      const currentGenAI = new GoogleGenerativeAI(currentApiKey);
+
+      for (const modelCandidate of CANDIDATE_FLASH_LITE_MODELS) {
+        try {
+          const model = currentGenAI.getGenerativeModel({
+            model: modelCandidate,
+            systemInstruction,
+            tools: tools as any,
+          });
+
+          const sessionContents = JSON.parse(JSON.stringify(formattedContents));
+          const maxIterations = 3;
+          let iteration = 0;
+
+          while (iteration < maxIterations) {
+            iteration++;
+            const result = await model.generateContent({
+              contents: sessionContents,
+              generationConfig: {
+                temperature: 0.1,
                 maxOutputTokens: 2048,
-            }
-        });
+              },
+            });
 
         const response = result.response;
         
@@ -419,7 +422,7 @@ Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke d
         
         if (functionCalls && functionCalls.length > 0) {
             // Tambahkan function call ke history
-            formattedContents.push({
+            sessionContents.push({
                 role: "model",
                 parts: response.candidates?.[0]?.content?.parts || []
             });
@@ -528,7 +531,7 @@ Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke d
             // Tambahkan respons fungsi ke history dan ulangi loop
             // For @google/generative-ai, function responses must be role "user" if they are the latest part before model
             // Actually it's role: "function" or role: "user" depending on SDK version. v0.24.1 uses role: "user" with functionResponse inside
-            formattedContents.push({
+            sessionContents.push({
                 role: "user",
                 parts: functionResponsesParts
             });
@@ -541,16 +544,34 @@ Jika Anda baru saja menerima hasil dari Tool Call, gabungkan hasil tersebut ke d
         try {
             const cleanJson = replyText.replace(/\`\`\`json/g, '').replace(/\`\`\`/g, '').trim();
             finalPayload = JSON.parse(cleanJson);
-            break;
         } catch (e) {
-            console.error("Gagal parse JSON dari model:", replyText);
             finalPayload = {
                 reply: replyText,
                 actions: [],
                 data_tables: []
             };
-            break;
         }
+        usedModel = modelCandidate;
+        break keyLoop;
+      }
+    } catch (err: any) {
+      lastError = err;
+      const msg = String(err?.message || '').toLowerCase();
+      if (
+        msg.includes('spending cap') ||
+        msg.includes('prepayment') ||
+        msg.includes('api key not valid') ||
+        msg.includes('402') ||
+        msg.includes('403')
+      ) {
+        continue keyLoop;
+      }
+    }
+  }
+}
+
+    if (!finalPayload) {
+      throw lastError || new Error("Gagal mendapatkan respons AI Copilot dari seluruh model/key cadangan.");
     }
 
     // =========================================================================

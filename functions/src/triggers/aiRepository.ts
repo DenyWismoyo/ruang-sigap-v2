@@ -1,6 +1,7 @@
 import { onDocumentCreated } from "firebase-functions/v2/firestore";
 import * as logger from "firebase-functions/logger";
 import { defineSecret } from "firebase-functions/params";
+import { callGeminiFlashLiteWithFailover } from "../utils/geminiFailover";
 
 const REGION = "asia-southeast2";
 const DB_TARGET = process.env.FIRESTORE_DATABASE || "database-siyap";
@@ -32,7 +33,6 @@ export const onRepositoryItemCreated = onDocumentCreated({
     try {
         const { getFirestore } = await import("firebase-admin/firestore");
         const db = getFirestore(DB_TARGET);
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
         // Prompt untuk Gemini
         const promptText = `
@@ -74,27 +74,19 @@ Keluarkan dalam format JSON murni tanpa markdown:
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const aiRes = await callGeminiFlashLiteWithFailover(apiKey, payload);
 
-        if (response.ok) {
-            const data = await response.json();
-            const textResult = data.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (textResult) {
-                const parsed = JSON.parse(textResult);
-                if (parsed.aiClassification && parsed.aiSummary) {
-                    await db.collection("repositoryItems").doc(itemId).update({
-                        aiClassification: parsed.aiClassification,
-                        aiSummary: parsed.aiSummary
-                    });
-                    logger.info(`Berhasil melakukan klasifikasi AI untuk item ${itemId}: ${parsed.aiClassification}`);
-                }
+        if (aiRes.ok && aiRes.text) {
+            const parsed = JSON.parse(aiRes.text);
+            if (parsed.aiClassification && parsed.aiSummary) {
+                await db.collection("repositoryItems").doc(itemId).update({
+                    aiClassification: parsed.aiClassification,
+                    aiSummary: parsed.aiSummary
+                });
+                logger.info(`Berhasil melakukan klasifikasi AI untuk item ${itemId}: ${parsed.aiClassification}`);
             }
         } else {
-            logger.error("AI Repository Error:", await response.text());
+            logger.error("AI Repository Error:", aiRes.errorMessage || aiRes.data);
         }
 
     } catch (error) {

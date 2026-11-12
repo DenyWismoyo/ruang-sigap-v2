@@ -1,10 +1,5 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-
-// [PERBAIKAN KEAMANAN] Penyelarasan environment agar kompatibel dengan .env.local terbaru Anda
-// Kita dahulukan GEMINI_API_KEY.
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+import { generateContentWithSdkFailover } from "@/lib/geminiFailover";
 
 export async function POST(req: Request) {
   try {
@@ -19,8 +14,6 @@ export async function POST(req: Request) {
 
     // Mengambil bagian base64 murni (menghapus prefix data:image/...)
     const base64Data = image.split(",")[1] || image;
-
-    const model = genAI.getGenerativeModel({ model: "gemini-3.5-flash-lite" });
 
     const prompt = `
       Anda adalah asisten AI yang ahli dalam mengekstrak data dari dokumen resmi pemerintah Indonesia (KTP, Kartu Keluarga, Surat Kematian, dll).
@@ -52,7 +45,7 @@ export async function POST(req: Request) {
       Jangan mengarang data.
     `;
 
-    const result = await model.generateContent([
+    const { text: rawText } = await generateContentWithSdkFailover([
       prompt,
       {
         inlineData: {
@@ -62,8 +55,7 @@ export async function POST(req: Request) {
       },
     ]);
 
-    const response = await result.response;
-    let text = response.text();
+    let text = rawText;
 
     console.log("Raw AI Response:", text); // Untuk debugging
 

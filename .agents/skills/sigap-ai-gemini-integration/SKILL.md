@@ -7,7 +7,7 @@ description: Panduan implementasi fitur AI Scan Surat menggunakan Gemini di RUAN
 
 ```
 Cloud Function : extractSuratDataAIV2 (asia-southeast2)
-Model          : gemini-2.5-flash (via Secret: GEMINI_API_KEY)
+Model          : gemini-3.5-flash-lite (via Secret: GEMINI_API_KEY)
 Rate Limit     : 30 detik per user (koleksi: rate_limits/{userId})
 Feature Gate   : opdConfig.features.aiSuratReader
 ```
@@ -181,7 +181,7 @@ export const namaFiturAIBaru = onCall(
     
     // ✅ 4. Panggil Gemini
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
     
     const prompt = `[Prompt Anda di sini]`;
     const result = await model.generateContent(prompt);

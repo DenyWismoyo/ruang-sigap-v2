@@ -87,12 +87,6 @@ const ImportModal = ({
             return;
         }
 
-        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY;
-        if (!apiKey) {
-            addToast("API Key AI tidak ditemukan.", "error");
-            return;
-        }
-
         setIsAiAnalyzing(true); // Mulai indikator loading
 
         try {
@@ -129,64 +123,40 @@ const ImportModal = ({
                 fileReader.onerror = (e) => reject(e);
             });
 
-            // 2. Kirim ke Gemini AI
-            const prompt = `
-                Analisis gambar dokumen anggaran (RKA/DPA) ini.
-                Ekstrak data tabel menjadi array JSON.
-                Ambil kolom: "Kode Rekening", "Uraian", dan "Jumlah/Pagu Anggaran".
-                
-                Abaikan baris header, tanda tangan, atau total. Ambil baris item saja.
-                Format JSON yang diharapkan:
-                [
-                    { "kode": "5.1.02...", "uraian": "Belanja ATK", "anggaran": 1500000 },
-                    ...
-                ]
-                Pastikan 'anggaran' adalah number (hilangkan Rp dan titik).
-                Kembalikan HANYA JSON Array murni tanpa markdown.
-            `;
-
-            const response = await fetch(
-                `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
-                {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{
-                            parts: [
-                                { text: prompt },
-                                { inlineData: { mimeType: "image/png", data: base64Image } }
-                            ]
-                        }]
-                    })
-                }
-            );
+            // 2. Kirim ke Backend AI Route (Gemini Flash-Lite)
+            const response = await fetch('/api/ai/extract-anggaran', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    base64Image,
+                    mimeType: 'image/png'
+                })
+            });
 
             const result = await response.json();
-            const textRes = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!response.ok) {
+                throw new Error(result.error || `Gagal memproses AI (${response.status})`);
+            }
 
-            if (textRes) {
-                // Bersihkan format JSON
-                const jsonStr = textRes.replace(/```json|```/g, '').trim();
-                const parsedData = JSON.parse(jsonStr);
+            const parsedData = result.data;
 
-                if (Array.isArray(parsedData) && parsedData.length > 0) {
-                    setExcelData(parsedData);
-                    setPreviewData(parsedData.slice(0, 5));
-                    
-                    // Fake Headers agar sesuai logika Excel
-                    const aiHeaders = ['kode', 'uraian', 'anggaran'];
-                    setHeaders(aiHeaders);
-                    
-                    // Auto Map
-                    setMapKode('kode');
-                    setMapUraian('uraian');
-                    setMapAnggaran('anggaran');
-                    
-                    addToast(`AI berhasil mengekstrak ${parsedData.length} baris data!`, "success");
-                    setStep(2);
-                } else {
-                    throw new Error("AI tidak menemukan data tabel yang valid.");
-                }
+            if (Array.isArray(parsedData) && parsedData.length > 0) {
+                setExcelData(parsedData);
+                setPreviewData(parsedData.slice(0, 5));
+                
+                // Fake Headers agar sesuai logika Excel
+                const aiHeaders = ['kode', 'uraian', 'anggaran'];
+                setHeaders(aiHeaders);
+                
+                // Auto Map
+                setMapKode('kode');
+                setMapUraian('uraian');
+                setMapAnggaran('anggaran');
+                
+                addToast(`AI berhasil mengekstrak ${parsedData.length} baris data!`, "success");
+                setStep(2);
+            } else {
+                throw new Error("AI tidak menemukan data tabel yang valid.");
             }
         } catch (err: any) {
             console.error("AI Processing Error:", err);

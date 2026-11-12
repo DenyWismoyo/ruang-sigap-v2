@@ -1,15 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateContentWithSdkFailover } from '@/lib/geminiFailover';
 import { detectAktivitasFromLogbookText, getAktivitasSoloById } from '@/data/masterAktivitasSolo';
-
-const apiKey = process.env.GEMINI_API_KEY;
 
 export async function POST(req: NextRequest) {
   try {
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API Key Gemini tidak ditemukan.' }, { status: 500 });
-    }
-
     const body = await req.json();
     const { text, userJabatan, currentAktivitasId } = body;
 
@@ -43,31 +37,17 @@ Kembalikan respon dalam format JSON:
 }
 `;
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    // Hanya gunakan varian Flash Lite terbaru (efisien, cepat, dan ekonomis)
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite"
-    ];
-
     let responseText = "";
-    for (const modelName of candidateModels) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.3,
-            responseMimeType: "application/json",
-          }
-        });
-        const result = await model.generateContent(prompt);
-        responseText = result.response.text();
-        if (responseText) break;
-      } catch (e) {
-        console.warn(`[Polish Kegiatan] Percobaan model ${modelName} gagal, mencoba fallback:`, e);
-      }
+    try {
+      const res = await generateContentWithSdkFailover(prompt, {
+        generationConfig: {
+          temperature: 0.3,
+          responseMimeType: "application/json",
+        },
+      });
+      responseText = res.text;
+    } catch (e) {
+      console.warn('[Polish Kegiatan] Seluruh key/model gagal, menggunakan fallback lokal:', e);
     }
 
     if (!responseText) {

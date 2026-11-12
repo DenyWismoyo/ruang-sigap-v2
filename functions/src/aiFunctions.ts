@@ -6,6 +6,7 @@ import * as admin from "firebase-admin";
 import { defineSecret } from "firebase-functions/params";
 
 import { getFirestore } from "firebase-admin/firestore";
+import { callGeminiFlashLiteWithFailover } from "./utils/geminiFailover";
 
 const REGION = "asia-southeast2";
 const COOLDOWN_SECONDS = 30; // JEDA MINIMAL (30 Detik)
@@ -81,8 +82,6 @@ export const extractSuratDataAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-        
         const promptText = `
               Anda adalah sekretaris ahli birokrasi. Analisis gambar surat ini untuk mengekstrak metadata.
 
@@ -189,33 +188,14 @@ export const extractSuratDataAIV2 = onCall({
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const aiRes = await callGeminiFlashLiteWithFailover(apiKey, payload);
 
-        if (!response.ok) {
-            let errorMessage = "Gagal menghubungi AI Server.";
-            try {
-                const errorBody = await response.json();
-                logger.error("Gemini API Error Details:", errorBody);
-                
-                // [PERBAIKAN] Prioritaskan pesan error asli dari server Google (jika ada)
-                if (errorBody.error && errorBody.error.message) {
-                    errorMessage = `Error AI: ${errorBody.error.message}`;
-                } else if (response.status === 429) {
-                    // Fallback jika tidak ada pesan spesifik dari Google API
-                    errorMessage = "Sistem AI sedang sibuk atau mencapai limit kuota (429). Harap tunggu beberapa saat.";
-                }
-            } catch (e) {
-                logger.error("Gemini API Raw Error:", await response.text());
-            }
-            throw new HttpsError("internal", errorMessage);
+        if (!aiRes.ok) {
+            logger.error("Gemini API Error Details:", aiRes.data);
+            throw new HttpsError("internal", aiRes.errorMessage || "Gagal menghubungi AI Server.");
         }
 
-        const result = await response.json();
-        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        const textPart = aiRes.text;
         
         if (!textPart) {
              throw new HttpsError("data-loss", "AI tidak memberikan data yang dapat dibaca.");
@@ -256,8 +236,6 @@ export const extractVoiceDisposisiAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-        
         const promptText = `
               Anda adalah asisten cerdas untuk sistem tata kelola persuratan pemerintahan.
               Tugas Anda adalah mendengarkan file rekaman suara perintah pimpinan (dilampirkan), mentranskripsinya secara internal, lalu mengubah intent perintah tersebut menjadi format JSON terstruktur untuk form disposisi otomatis.
@@ -301,20 +279,14 @@ export const extractVoiceDisposisiAIV2 = onCall({
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const aiRes = await callGeminiFlashLiteWithFailover(apiKey, payload);
 
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({}));
-            logger.error("Gemini API Error Details:", errorBody);
-            throw new HttpsError("internal", "Gagal menghubungi AI Server.");
+        if (!aiRes.ok) {
+            logger.error("Gemini API Error Details:", aiRes.data);
+            throw new HttpsError("internal", aiRes.errorMessage || "Gagal menghubungi AI Server.");
         }
 
-        const result = await response.json();
-        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        const textPart = aiRes.text;
         
         if (!textPart) {
              throw new HttpsError("data-loss", "AI tidak memberikan data yang dapat dibaca.");
@@ -350,8 +322,6 @@ export const getStrategicDisposisiAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-
         const infoSuratText = `
 [INFORMASI SURAT]
 - Pengirim: ${pengirim || '-'}
@@ -400,20 +370,14 @@ Keluarkan format JSON murni:
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const aiRes = await callGeminiFlashLiteWithFailover(apiKey, payload);
 
-        if (!response.ok) {
-            const errText = await response.text();
-            logger.error("Gemini API Error getStrategicDisposisiAIV2:", errText);
-            throw new HttpsError("internal", "Gagal menghubungi AI Server.");
+        if (!aiRes.ok) {
+            logger.error("Gemini API Error getStrategicDisposisiAIV2:", aiRes.data);
+            throw new HttpsError("internal", aiRes.errorMessage || "Gagal menghubungi AI Server.");
         }
 
-        const result = await response.json();
-        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        const textPart = aiRes.text;
         if (!textPart) {
             throw new HttpsError("data-loss", "AI tidak menghasilkan respons.");
         }
@@ -478,7 +442,6 @@ export const agentStrategicDisposition = onDocumentCreated({
 
     try {
         const db = getFirestore("database-siyap");
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
 
         // ==============================================================
         // PERSIAPAN DATA
@@ -548,11 +511,7 @@ Keluarkan dalam format JSON murni tanpa markdown:
             }
         };
 
-        const fetchAgent1 = fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payloadAgent1)
-        });
+        const fetchAgent1 = callGeminiFlashLiteWithFailover(apiKey, payloadAgent1);
 
         // ==============================================================
         // AGENT 2: THE ORGANIZATIONAL MAPPER
@@ -591,11 +550,7 @@ Keluarkan dalam format JSON murni tanpa markdown:
             }
         };
 
-        const fetchAgent2 = fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payloadAgent2)
-        });
+        const fetchAgent2 = callGeminiFlashLiteWithFailover(apiKey, payloadAgent2);
 
         // ==============================================================
         // EKSEKUSI PARALEL (MINI ORCHESTRATOR)
@@ -604,30 +559,22 @@ Keluarkan dalam format JSON murni tanpa markdown:
         
         let updateData: any = {};
         
-        if (resAgent1.ok) {
-            const data1 = await resAgent1.json();
-            const text1 = data1.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text1) {
-                const parsed1 = JSON.parse(text1);
-                if (parsed1.suggestedDisposisi?.length > 0) {
-                    updateData.suggestedDisposisi = parsed1.suggestedDisposisi;
-                }
+        if (resAgent1.ok && resAgent1.text) {
+            const parsed1 = JSON.parse(resAgent1.text);
+            if (parsed1.suggestedDisposisi?.length > 0) {
+                updateData.suggestedDisposisi = parsed1.suggestedDisposisi;
             }
         } else {
-            logger.error("Agent 1 (Instructor) Error:", await resAgent1.text());
+            logger.error("Agent 1 (Instructor) Error:", resAgent1.errorMessage || resAgent1.data);
         }
 
-        if (resAgent2.ok) {
-            const data2 = await resAgent2.json();
-            const text2 = data2.candidates?.[0]?.content?.parts?.[0]?.text;
-            if (text2) {
-                const parsed2 = JSON.parse(text2);
-                if (parsed2.suggestedPenerimaIds?.length > 0) {
-                    updateData.suggestedPenerimaIds = parsed2.suggestedPenerimaIds;
-                }
+        if (resAgent2.ok && resAgent2.text) {
+            const parsed2 = JSON.parse(resAgent2.text);
+            if (parsed2.suggestedPenerimaIds?.length > 0) {
+                updateData.suggestedPenerimaIds = parsed2.suggestedPenerimaIds;
             }
         } else {
-            logger.error("Agent 2 (Mapper) Error:", await resAgent2.text());
+            logger.error("Agent 2 (Mapper) Error:", resAgent2.errorMessage || resAgent2.data);
         }
 
         // ==============================================================
@@ -713,8 +660,6 @@ export const extractAgendaInternalAIV2 = onCall({
     }
 
     try {
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`;
-        
         const promptText = `
               Anda adalah asisten cerdas untuk sistem manajemen agenda dan rapat internal pemerintahan/korporasi.
               Tugas Anda adalah membaca dan menganalisis seluruh halaman gambar surat undangan internal (termasuk halaman pertama dan halaman lampiran daftar peserta) untuk mengekstrak data jadwal acara dan daftar peserta secara terstruktur.
@@ -783,20 +728,14 @@ export const extractAgendaInternalAIV2 = onCall({
             }
         };
 
-        const response = await fetch(apiUrl, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
+        const aiRes = await callGeminiFlashLiteWithFailover(apiKey, payload);
 
-        if (!response.ok) {
-            const errorBody = await response.json().catch(() => ({}));
-            logger.error("Gemini API Error Details (Agenda Internal):", errorBody);
-            throw new HttpsError("internal", "Gagal memproses AI pada server.");
+        if (!aiRes.ok) {
+            logger.error("Gemini API Error Details (Agenda Internal):", aiRes.data);
+            throw new HttpsError("internal", aiRes.errorMessage || "Gagal memproses AI pada server.");
         }
 
-        const result = await response.json();
-        const textPart = result.candidates?.[0]?.content?.parts?.[0]?.text;
+        const textPart = aiRes.text;
         
         if (!textPart) {
              throw new HttpsError("data-loss", "AI tidak menghasilkan respons terstruktur.");

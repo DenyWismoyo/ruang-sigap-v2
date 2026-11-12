@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+import { generateContentWithSdkFailover } from '@/lib/geminiFailover';
 
 export async function POST(req: Request) {
     try {
@@ -10,8 +8,6 @@ export async function POST(req: Request) {
         if (!prompt || !templates || !Array.isArray(templates)) {
             return NextResponse.json({ error: 'Prompt dan templates wajib diisi.' }, { status: 400 });
         }
-
-        const model = genAI.getGenerativeModel({ model: 'gemini-3.5-flash-lite' });
 
         const systemInstruction = `
 Anda adalah Asisten AI untuk membantu ASN/Pegawai Pemerintahan dalam membuat draf surat secara otomatis.
@@ -41,8 +37,7 @@ Berikan balasan HANYA berupa JSON murni (tanpa markdown blok, tanpa backtick) de
 }
 `;
 
-        const result = await model.generateContent(systemInstruction);
-        const responseText = result.response.text();
+        const { text: responseText } = await generateContentWithSdkFailover(systemInstruction);
         
         // Bersihkan markdown JSON
         const cleanJsonStr = responseText.replace(/```json/g, '').replace(/```/g, '').trim();

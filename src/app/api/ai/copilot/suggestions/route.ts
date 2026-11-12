@@ -1,21 +1,10 @@
 // Lokasi: src/app/api/ai/copilot/suggestions/route.ts
 
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase-admin";
-
-const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+import { generateContentWithSdkFailover } from "@/lib/geminiFailover";
 
 export async function POST(req: Request) {
   try {
-    if (!apiKey) {
-      return NextResponse.json(
-        { error: "API Key Gemini belum dikonfigurasi." },
-        { status: 500 }
-      );
-    }
-
     const { userContext, pageContext, welcomeSummary } = await req.json();
     const opdId = userContext?.opdId;
     const namaLengkap = userContext?.namaLengkap || 'User';
@@ -54,16 +43,21 @@ ${contextStr}
 Halaman Saat Ini: ${pageContext?.pathname || "Dashboard Utama"}
 `;
 
-    const model = genAI.getGenerativeModel({ 
-        model: "gemini-3.5-flash-lite",
-        systemInstruction,
-        generationConfig: {
+    let responseText = "";
+    try {
+      const res = await generateContentWithSdkFailover(
+        "Berikan 3 saran pertanyaan.",
+        {
+          systemInstruction,
+          generationConfig: {
             temperature: 0.1,
+          },
         }
-    });
-
-    const result = await model.generateContent("Berikan 3 saran pertanyaan.");
-    let responseText = result.response.text();
+      );
+      responseText = res.text;
+    } catch (e) {
+      console.warn("[Copilot Suggestions] Menggunakan fallback saran default:", e);
+    }
     
     let suggestions = ["Tampilkan daftar surat yang belum saya kerjakan", "Bantu saya catat logbook hari ini", "Ada berapa disposisi baru untuk saya?"];
     try {

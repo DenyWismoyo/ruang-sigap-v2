@@ -7,6 +7,7 @@
 // - [FIX] Update Model AI ke gemini-3.5-flash-lite
 
 import { NextResponse } from 'next/server';
+import { fetchGeminiWithFailover } from '@/lib/geminiFailover';
 
 export async function POST(request: Request) {
   try {
@@ -14,14 +15,6 @@ export async function POST(request: Request) {
 
     if (!surat || !bawahanList || bawahanList.length === 0) {
       return NextResponse.json({ error: 'Data tidak lengkap.' }, { status: 400 });
-    }
-
-    // 1. Siapkan API Key
-    const rawApiKey = process.env.GEMINI_API_KEY || process.env.NEXT_PUBLIC_FIREBASE_API_KEY || '';
-    const apiKey = rawApiKey.replace(/^["']|["']$/g, '').trim();
-    
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API Key AI belum dikonfigurasi.' }, { status: 500 });
     }
 
     // 2. Susun Context untuk AI (Daftar Jabatan Bawahan)
@@ -53,25 +46,16 @@ export async function POST(request: Request) {
       }
     `;
 
-    // 4. Panggil Google Gemini API
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }]
-        })
-      }
-    );
-
-    const data = await response.json();
+    // 4. Panggil Google Gemini API (Multi-Key & Multi-Model Flash-Lite Failover)
+    const aiRes = await fetchGeminiWithFailover({
+      contents: [{ parts: [{ text: prompt }] }],
+    });
 
     // 5. Parsing Response
-    const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    const textResponse = aiRes.text;
     
-    if (!textResponse) {
-      throw new Error("Tidak ada respons dari AI.");
+    if (!aiRes.ok || !textResponse) {
+      throw new Error(aiRes.data?.error?.message || "Tidak ada respons dari AI.");
     }
 
     // Bersihkan markdown formatting jika AI tetap memberikannya (fallback safety)

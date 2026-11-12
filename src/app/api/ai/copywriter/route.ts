@@ -1,26 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { generateContentWithSdkFailover } from '@/lib/geminiFailover';
 import path from 'path';
 import fs from 'fs/promises';
 
-const apiKey = process.env.GEMINI_API_KEY;
-
 export async function POST(req: NextRequest) {
   try {
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API Key Gemini tidak ditemukan.' }, { status: 500 });
-    }
-
-    const genAI = new GoogleGenerativeAI(apiKey);
-    
-    // Hanya gunakan varian Flash Lite terbaru (efisien, cepat, dan ekonomis)
-    const candidateModels = [
-      "gemini-3.5-flash-lite",
-      "gemini-flash-lite-latest",
-      "gemini-3.1-flash-lite",
-      "gemini-2.5-flash-lite"
-    ];
-
     const body = await req.json();
     const { prompt, userNama, userJabatan, role } = body;
 
@@ -71,27 +55,12 @@ Respons Anda HARUS berupa JSON murni dengan format:
 }
 `;
 
-    let responseText = "";
-    for (const modelName of candidateModels) {
-      try {
-        const model = genAI.getGenerativeModel({
-          model: modelName,
-          generationConfig: {
-            temperature: 0.7,
-            responseMimeType: "application/json",
-          }
-        });
-        const result = await model.generateContent(systemInstruction);
-        responseText = result.response.text();
-        if (responseText) break;
-      } catch (e) {
-        console.warn(`[AI Copywriter] Percobaan model ${modelName} gagal, mencoba fallback:`, e);
-      }
-    }
-
-    if (!responseText) {
-      throw new Error("Gagal mendapatkan respons dari model Gemini Flash Lite.");
-    }
+    const { text: responseText } = await generateContentWithSdkFailover(systemInstruction, {
+      generationConfig: {
+        temperature: 0.7,
+        responseMimeType: "application/json",
+      },
+    });
 
     const parsedData = JSON.parse(responseText);
 
