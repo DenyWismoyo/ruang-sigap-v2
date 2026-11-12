@@ -3,6 +3,42 @@ import type { NextRequest } from 'next/server';
 import { jwtDecode } from 'jwt-decode';
 
 export function proxy(request: NextRequest) {
+  // 1. Guard Keamanan Khusus Endpoint AI (/api/ai/): Hanya domain resmi yang boleh mengakses
+  if (request.nextUrl.pathname.startsWith('/api/ai/')) {
+    if (process.env.NODE_ENV !== 'development') {
+      const origin = request.headers.get('origin');
+      const referer = request.headers.get('referer');
+      const host = request.headers.get('host') || '';
+
+      const allowedHosts = [
+        'sigap-opd.web.app',
+        'sigap-opd.firebaseapp.com',
+        'sgp.omnifit.cloud',
+        'sigap.solo-technopark.id',
+      ];
+
+      const isAllowed = (val: string | null) => {
+        if (!val) return false;
+        try {
+          const u = new URL(val.startsWith('http') ? val : `https://${val}`);
+          return allowedHosts.some(h => u.hostname === h || u.hostname.endsWith(`.${h}`));
+        } catch {
+          return false;
+        }
+      };
+
+      if (!isAllowed(origin) && !isAllowed(referer) && !isAllowed(host)) {
+        return new NextResponse(
+          JSON.stringify({
+            error: 'Akses API AI ditolak. Endpoint ini hanya diizinkan dari domain resmi SIGAP (sigap-opd.web.app / sgp.omnifit.cloud).'
+          }),
+          { status: 403, headers: { 'content-type': 'application/json' } }
+        );
+      }
+    }
+    return NextResponse.next();
+  }
+
   const hostname = request.headers.get('host') || request.nextUrl.hostname;
   
   // Baca token dari cookie __session (karena Firebase Hosting men-strip cookie lain) atau fallback ke firebase-auth-token

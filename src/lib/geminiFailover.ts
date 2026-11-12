@@ -8,6 +8,41 @@ export const CANDIDATE_FLASH_LITE_MODELS = [
   'gemini-2.5-flash-lite',
 ] as const;
 
+export const ALLOWED_AI_DOMAINS = [
+  'sigap-opd.web.app',
+  'sigap-opd.firebaseapp.com',
+  'sgp.omnifit.cloud',
+  'sigap.solo-technopark.id',
+  'localhost',
+  '127.0.0.1',
+] as const;
+
+/**
+ * Memvalidasi apakah request yang memanggil API AI berasal dari domain resmi SIGAP
+ * (sigap-opd.web.app atau sgp.omnifit.cloud) untuk mencegah penyerang luar/bot menembak endpoint kita.
+ */
+export function isAllowedOrigin(req: Request): boolean {
+  if (process.env.NODE_ENV === 'development') {
+    return true;
+  }
+
+  const origin = req.headers.get('origin');
+  const referer = req.headers.get('referer');
+  const host = req.headers.get('host');
+
+  const check = (urlStr: string | null): boolean => {
+    if (!urlStr) return false;
+    try {
+      const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+      return ALLOWED_AI_DOMAINS.some(d => parsed.hostname === d || parsed.hostname.endsWith(`.${d}`));
+    } catch {
+      return false;
+    }
+  };
+
+  return check(origin) || check(referer) || check(host);
+}
+
 /**
  * Mengambil daftar API Key Gemini yang tersedia (Primary + Backup) secara berurutan.
  * Mendukung pemisahan koma pada GEMINI_API_KEY maupun variabel GEMINI_API_KEY_BACKUP.
@@ -60,7 +95,11 @@ export async function fetchGeminiWithFailover(
           `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`,
           {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {
+              'Content-Type': 'application/json',
+              'Referer': 'https://sigap-opd.web.app/',
+              'Origin': 'https://sigap-opd.web.app',
+            },
             body: JSON.stringify(payload),
           }
         );

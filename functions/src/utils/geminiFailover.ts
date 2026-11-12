@@ -78,7 +78,11 @@ export async function callGeminiFlashLiteWithFailover(
       try {
         const response = await fetch(apiUrl, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+            "Referer": "https://sigap-opd.web.app/",
+            "Origin": "https://sigap-opd.web.app",
+          },
           body: JSON.stringify(payload),
         });
 

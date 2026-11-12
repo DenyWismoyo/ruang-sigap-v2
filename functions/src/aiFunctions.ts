@@ -11,6 +11,16 @@ import { callGeminiFlashLiteWithFailover } from "./utils/geminiFailover";
 const REGION = "asia-southeast2";
 const COOLDOWN_SECONDS = 30; // JEDA MINIMAL (30 Detik)
 
+// Daftar Domain Resmi yang Diizinkan Mengakses AI SIGAP
+const ALLOWED_CORS_ORIGINS = [
+    "https://sigap-opd.web.app",
+    "https://sigap-opd.firebaseapp.com",
+    "https://sgp.omnifit.cloud",
+    "https://sigap.solo-technopark.id",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+];
+
 // Definisikan secret dari Google Cloud Secret Manager
 const geminiApiKey = defineSecret("GEMINI_API_KEY");
 
@@ -22,7 +32,7 @@ export const extractSuratDataAIV2 = onCall({
     region: REGION,
     timeoutSeconds: 60,
     memory: "512MiB",
-    cors: true,
+    cors: ALLOWED_CORS_ORIGINS,
     secrets: [geminiApiKey] // Sematkan secret ke dalam environment runtime fungsi ini
 }, async (request) => { 
     
@@ -217,7 +227,7 @@ export const extractVoiceDisposisiAIV2 = onCall({
     region: REGION,
     timeoutSeconds: 30,
     memory: "256MiB",
-    cors: true,
+    cors: ALLOWED_CORS_ORIGINS,
     secrets: [geminiApiKey]
 }, async (request) => {
     // 1. Validasi Autentikasi
@@ -308,7 +318,7 @@ export const getStrategicDisposisiAIV2 = onCall({
     region: REGION,
     timeoutSeconds: 45,
     memory: "256MiB",
-    cors: true,
+    cors: ALLOWED_CORS_ORIGINS,
     secrets: [geminiApiKey]
 }, async (request) => {
     if (!request.auth || !request.auth.uid) {
@@ -598,7 +608,7 @@ export const extractAgendaInternalAIV2 = onCall({
     region: REGION,
     timeoutSeconds: 60,
     memory: "512MiB",
-    cors: true,
+    cors: ALLOWED_CORS_ORIGINS,
     secrets: [geminiApiKey]
 }, async (request) => {
     // 1. Validasi Autentikasi
